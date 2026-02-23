@@ -61,7 +61,12 @@
         }
 
         async function buscarOfertas() {
-            const { data } = await _s.from('ofertas').select('preco, quantidade, regioes(nome, bandeira), fornecedores(nome, whatsapp, ativo), variacoes(capacidade, cor, produtos_mestre(nome))').eq('fornecedores.ativo', true).order('preco', {ascending:true});
+            const { data } = await _s.from('ofertas')
+                .select('preco, quantidade, regioes(nome, bandeira), fornecedores(nome, whatsapp, ativo), variacoes(capacidade, cor, produtos_mestre(nome))')
+                .eq('fornecedores.ativo', true)
+                .gt('quantidade', 0) // <--- AJUSTE FINO: SÓ MOSTRA SE ESTOQUE > 0
+                .order('preco', {ascending:true});
+            
             cacheOfertas = data || [];
             renderizar(cacheOfertas);
         }
@@ -106,6 +111,10 @@
 
         function renderizar(lista) {
             const vitrine = document.getElementById('vitrine');
+            if(lista.length === 0) {
+                vitrine.innerHTML = '<p class="text-center col-span-full text-gray-500 uppercase font-black text-[10px]">Nenhuma oferta disponível no momento.</p>';
+                return;
+            }
             vitrine.innerHTML = lista.map(o => `
                 <div class="card">
                     <div class="flex justify-between items-start mb-6">
