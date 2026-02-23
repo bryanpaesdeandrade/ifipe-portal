@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Ranking Realtime Precision</title>
+    <title>iFipe - Ranking Realtime</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -26,10 +26,10 @@
 <body id="mainContent" class="hidden">
 
     <div class="ticker-bar">
-        <span class="mr-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">USDT/BRL BINANCE:</span>
+        <span class="mr-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">USDT/BRL:</span>
         <span class="ticker-val">R$ <span id="usdtVal">0,0000</span></span>
         <span id="trendIcon" class="trend-icon"><i class="fa-solid fa-minus trend-stable"></i></span>
-        <button onclick="logout()" class="ml-auto text-[10px] text-gray-500 font-black uppercase underline">Sair do Buscador</button>
+        <button onclick="logout()" class="ml-auto text-[10px] text-gray-500 font-black uppercase underline">Sair</button>
     </div>
 
     <div class="max-w-6xl mx-auto p-6">
@@ -39,7 +39,7 @@
         </header>
 
         <div class="mb-10 flex justify-center">
-            <select id="filtroModelo" onchange="filtrar()" class="bg-[#1c1c1e] border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase cursor-pointer outline-none focus:border-blue-500">
+            <select id="filtroModelo" onchange="filtrar()" class="bg-[#1c1c1e] border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase outline-none focus:border-blue-500">
                 <option value="">Todos os iPhones</option>
             </select>
         </div>
@@ -49,28 +49,23 @@
 
     <script>
         const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-
         let lastPrice = 0;
         let ofertasCache = [];
 
-        // VALIDAÇÃO DE LOGIN ÚNICO
+        // VALIDAÇÃO DE ACESSO COM LINK CORRIGIDO
         async function validarAcesso() {
             const token = localStorage.getItem('iFipe_Token');
             const email = localStorage.getItem('iFipe_User');
 
             if (!token || !email) {
-                window.location.href = '3-pagina-login.html';
+                window.location.href = '3-pagina-login.html'; // NOME NOVO
                 return;
             }
 
-            const { data } = await _supabase
-                .from('clientes_buscador')
-                .select('last_session_id')
-                .eq('email', email)
-                .maybeSingle();
+            const { data } = await _supabase.from('clientes_buscador').select('last_session_id').eq('email', email).maybeSingle();
 
             if (!data || data.last_session_id !== token) {
-                alert("Sessão expirada ou acesso em outro dispositivo!");
+                alert("Sessão expirada!");
                 logout();
             } else {
                 document.getElementById('mainContent').classList.remove('hidden');
@@ -80,7 +75,7 @@
 
         function logout() {
             localStorage.clear();
-            window.location.href = '3-pagina-login.html';
+            window.location.href = '3-pagina-login.html'; // NOME NOVO
         }
 
         async function carregarIndicador() {
@@ -88,42 +83,23 @@
                 const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
                 const data = await res.json();
                 const currentPrice = parseFloat(data.price);
-                const valEl = document.getElementById('usdtVal');
-                const iconContainer = document.getElementById('trendIcon');
-
-                if (lastPrice > 0) {
-                    const diff = currentPrice - lastPrice;
-                    if (diff > 0.0003) iconContainer.innerHTML = '<i class="fa-solid fa-caret-down trend-up"></i>';
-                    else if (diff < -0.0003) iconContainer.innerHTML = '<i class="fa-solid fa-caret-down trend-down"></i>';
-                    else iconContainer.innerHTML = '<i class="fa-solid fa-minus trend-stable"></i>';
-                }
-                valEl.innerText = currentPrice.toFixed(4).replace('.', ',');
+                document.getElementById('usdtVal').innerText = currentPrice.toFixed(4).replace('.', ',');
                 lastPrice = currentPrice;
-            } catch (e) { console.error("Erro API Binance"); }
+            } catch (e) { console.error("Erro Binance"); }
         }
 
         async function init() {
             carregarIndicador();
             setInterval(carregarIndicador, 5000);
-            
-            // Carrega modelos para o filtro
-            const { data: modelos } = await _supabase.from('produtos_mestre').select('nome').order('id');
+            const { data: m } = await _supabase.from('produtos_mestre').select('nome').order('id');
             const select = document.getElementById('filtroModelo');
-            if (modelos) modelos.forEach(m => select.innerHTML += `<option value="${m.nome}">${m.nome}</option>`);
-            
+            if (m) m.forEach(item => select.innerHTML += `<option value="${item.nome}">${item.nome}</option>`);
             buscarOfertas();
         }
 
         async function buscarOfertas() {
-            const { data } = await _supabase
-                .from('ofertas')
-                .select(`preco, regioes(bandeira, nome), fornecedores(nome, whatsapp), variacoes(capacidade, cor, produtos_mestre(nome))`)
-                .order('preco', { ascending: true });
-            
-            if (data) {
-                ofertasCache = data;
-                renderizar(data);
-            }
+            const { data } = await _supabase.from('ofertas').select(`preco, regioes(bandeira), fornecedores(nome, whatsapp), variacoes(capacidade, cor, produtos_mestre(nome))`).order('preco', { ascending: true });
+            if (data) { ofertasCache = data; renderizar(data); }
         }
 
         function filtrar() {
@@ -133,34 +109,19 @@
 
         function renderizar(lista) {
             const container = document.getElementById('vitrine');
-            if (!lista.length) {
-                container.innerHTML = '<p class="col-span-full text-center text-gray-500 uppercase font-black py-20 tracking-widest">Nenhuma oferta ativa.</p>';
-                return;
-            }
-            
             container.innerHTML = lista.map((o, index) => {
                 const fone = o.fornecedores?.whatsapp ? o.fornecedores.whatsapp.replace(/\D/g, '') : '';
                 return `
                 <div class="price-card">
                     ${index === 0 ? '<div class="top-deal">Menor Preço</div>' : ''}
-                    <div class="flex justify-between items-center mb-6">
-                        <span class="bg-[#38383a] px-3 py-1 rounded text-[9px] font-black uppercase tracking-widest">
-                            ${o.regioes?.bandeira || ''} ${o.fornecedores?.nome || 'Lojista'}
-                        </span>
-                    </div>
+                    <div class="mb-6"><span class="bg-[#38383a] px-3 py-1 rounded text-[9px] font-black uppercase">${o.regioes?.bandeira || ''} ${o.fornecedores?.nome || 'Loja'}</span></div>
                     <h2 class="text-xl font-bold italic">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-gray-500 text-[10px] mb-8 font-black uppercase tracking-tighter">
-                        ${o.variacoes.capacidade} • ${o.variacoes.cor}
-                    </p>
-                    <div class="mb-6">
-                        <span class="block text-[9px] text-gray-600 font-black uppercase mb-1">À Vista iFipe</span>
-                        <span class="price-value">R$ ${o.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                    <a href="https://wa.me/${fone}?text=Vi no iFipe o ${o.variacoes.produtos_mestre.nome}" target="_blank" class="btn-whatsapp">WhatsApp do Lojista</a>
+                    <p class="text-gray-500 text-[10px] mb-8 font-black uppercase">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
+                    <div class="mb-6"><span class="price-value">R$ ${o.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
+                    <a href="https://wa.me/${fone}" target="_blank" class="btn-whatsapp">WhatsApp</a>
                 </div>`;
             }).join('');
         }
-
         validarAcesso();
     </script>
 </body>
