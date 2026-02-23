@@ -7,20 +7,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; margin:0; }
+        body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif; margin:0; }
         
-        /* TICKER BINANCE */
-        .ticker-bar { background:rgba(28, 28, 30, 0.9); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:12px; position:sticky; top:0; z-index:100; display:flex; justify-content:center; align-items:center; gap:12px; }
+        /* TICKER BINANCE - LADO ESQUERDO */
+        .ticker-bar { background:rgba(28, 28, 30, 0.9); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:12px 30px; position:sticky; top:0; z-index:100; display:flex; justify-content:flex-start; align-items:center; gap:12px; }
         .ticker-val { color:#32d74b; font-family:monospace; font-size:18px; font-weight:900; }
 
-        /* HEADER E PARCEIROS */
-        .sponsors-section { background:linear-gradient(180deg, #1c1c1e 0%, #000 100%); padding: 80px 20px 40px; text-align: center; }
+        /* HEADER */
+        .sponsors-section { background:linear-gradient(180deg, #1c1c1e 0%, #000 100%); padding: 60px 20px 40px; text-align: center; }
+        
+        /* GRID DE PARCEIROS - TAMANHO UNIFORME */
         .sponsor-grid { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 50px; }
-        .sponsor-card { background:#2c2c2e; border:1px solid #38383a; border-radius:16px; padding:20px 30px; font-size:11px; font-weight:900; text-transform:uppercase; color:#fff; transition:0.3s; cursor:pointer; text-decoration:none; letter-spacing: 0.15em; min-width: 220px; text-align: center; }
+        .sponsor-card { background:#2c2c2e; border:1px solid #38383a; border-radius:16px; padding:20px 0; font-size:11px; font-weight:900; text-transform:uppercase; color:#fff; transition:0.3s; cursor:pointer; text-decoration:none; letter-spacing: 0.15em; width: 250px; text-align: center; display: flex; align-items: center; justify-content: center; height: 60px; }
         .sponsor-card:hover { border-color:#0071e3; transform:translateY(-3px); background:#1c1c1e; }
 
-        /* LOGIN BOX */
-        .login-container { max-width: 450px; margin: 0 auto 80px; padding: 0 20px; }
+        /* CONTAINER PRINCIPAL DESLOCADO PARA A ESQUERDA */
+        .main-layout { max-width: 1200px; margin: 0 auto; display: flex; justify-content: flex-start; padding: 0 40px 80px; }
+        .login-container { width: 450px; }
         .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 28px; padding: 3rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
         .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 14px; padding: 18px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 15px; }
         .apple-input:focus { border-color: #0071e3; }
@@ -36,7 +39,7 @@
 
     <div class="ticker-bar">
         <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">USDT/BRL BINANCE:</span>
-        <span class="ticker-val" id="usdt_val">CARREGANDO...</span>
+        <span class="ticker-val" id="usdt_val">$ CARREGANDO...</span>
     </div>
 
     <div class="sponsors-section">
@@ -49,55 +52,55 @@
         </div>
     </div>
 
-    <div class="login-container">
-        <div class="apple-card">
-            
-            <div class="text-center mb-8">
-                <h2 class="text-2xl font-black italic">Encontre o melhor preço</h2>
-                <p class="text-[10px] text-blue-500 font-black uppercase tracking-[0.3em] mt-2">BUSCADOR APPLE ONLINE</p>
-            </div>
-
-            <div id="loginForm">
-                <label>E-mail de Acesso</label>
-                <input type="email" id="logEmail" class="apple-input" placeholder="seu@email.com">
-                <label>Senha</label>
-                <input type="password" id="logPass" class="apple-input" placeholder="••••••••">
-                <button onclick="realizarLogin()" class="apple-button">Entrar no iFipe</button>
+    <div class="main-layout">
+        <div class="login-container">
+            <div class="apple-card">
                 
-                <div class="mt-8 text-center space-y-4">
-                    <p class="text-gray-500 text-[11px] font-bold">Ainda não tem acesso? <span class="link-toggle block mt-2" onclick="toggleForm()">Solicitar Cadastro VIP</span></p>
-                    <p class="text-gray-500 text-[11px] font-bold"><span class="link-toggle" onclick="alert('Contate o suporte Master para redefinir sua senha.')">Esqueci minha senha</span></p>
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-black italic">Encontre o melhor preço</h2>
+                    <p class="text-[10px] text-blue-500 font-black uppercase tracking-[0.3em] mt-2">BUSCADOR APPLE ONLINE</p>
                 </div>
-            </div>
 
-            <div id="registerForm" class="hidden">
-                <label>Nome Completo</label><input type="text" id="regNome" class="apple-input">
-                <label>CPF</label><input type="text" id="regCpf" class="apple-input" placeholder="Apenas números">
-                <label>E-mail Oficial</label><input type="email" id="regEmail" class="apple-input">
-                <label>WhatsApp</label><input type="text" id="regWhats" class="apple-input" placeholder="DDD + Número">
-                <label>Criar Senha</label><input type="password" id="regPass" class="apple-input">
-                <button onclick="solicitarCadastro()" class="apple-button">Enviar Solicitação</button>
-                <p class="mt-8 text-center text-gray-500 text-[11px] font-bold"><span class="link-toggle" onclick="toggleForm()">Voltar ao Login</span></p>
-            </div>
+                <div id="loginForm">
+                    <label>E-mail de Acesso</label>
+                    <input type="email" id="logEmail" class="apple-input" placeholder="seu@email.com">
+                    <label>Senha</label>
+                    <input type="password" id="logPass" class="apple-input" placeholder="••••••••">
+                    <button onclick="realizarLogin()" class="apple-button">Entrar no iFipe</button>
+                    
+                    <div class="mt-8 text-center space-y-4">
+                        <p class="text-gray-500 text-[11px] font-bold">Ainda não tem acesso? <span class="link-toggle block mt-2" onclick="toggleForm()">Solicitar Cadastro VIP</span></p>
+                        <p class="text-gray-500 text-[11px] font-bold"><span class="link-toggle" onclick="alert('Contate o administrador para redefinir sua senha.')">Esqueci minha senha</span></p>
+                    </div>
+                </div>
 
-            <p id="msg" class="mt-6 text-center text-[10px] font-black uppercase tracking-widest"></p>
+                <div id="registerForm" class="hidden">
+                    <label>Nome Completo</label><input type="text" id="regNome" class="apple-input">
+                    <label>CPF</label><input type="text" id="regCpf" class="apple-input" placeholder="Apenas números">
+                    <label>E-mail Oficial</label><input type="email" id="regEmail" class="apple-input">
+                    <label>WhatsApp</label><input type="text" id="regWhats" class="apple-input" placeholder="DDD + Número">
+                    <label>Criar Senha</label><input type="password" id="regPass" class="apple-input">
+                    <button onclick="solicitarCadastro()" class="apple-button">Enviar Solicitação</button>
+                    <p class="mt-8 text-center text-gray-500 text-[11px] font-bold"><span class="link-toggle" onclick="toggleForm()">Voltar ao Login</span></p>
+                </div>
+
+                <p id="msg" class="mt-6 text-center text-[10px] font-black uppercase tracking-widest"></p>
+            </div>
         </div>
     </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
-        // CÂMBIO BINANCE REALTIME
         function iniciarCambio() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                document.getElementById('usdt_val').innerText = `R$ ${parseFloat(data.c).toFixed(4).replace('.',',')}`;
+                document.getElementById('usdt_val').innerText = `$ ${parseFloat(data.c).toFixed(4).replace('.',',')}`;
             };
         }
         iniciarCambio();
 
-        // REDIRECIONAMENTO SE LOGADO
         window.onload = () => {
             if(localStorage.getItem('iFipe_Token')) { window.location.replace('buscar.html'); }
         };
