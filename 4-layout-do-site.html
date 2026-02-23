@@ -8,18 +8,25 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background:#000; color:#fff; font-family:-apple-system, sans-serif; margin:0; }
-        .filter-bar { background:#1c1c1e; border-bottom:1px solid #38383a; padding:20px; position:sticky; top:0; z-index:50; }
-        .filter { background:#2c2c2e; border:1px solid #38383a; border-radius:12px; padding:12px; color:#fff; width:100%; font-size:11px; font-weight:900; text-transform:uppercase; outline:none; }
-        .card { background:#1c1c1e; border:1px solid #38383a; border-radius:24px; padding:2rem; transition:0.3s; position:relative; }
-        .card:hover { border-color:#0071e3; transform:translateY(-5px); }
+        .ticker-bar { background:#1c1c1e; border-bottom:1px solid #38383a; padding:10px 20px; position:sticky; top:0; z-index:100; display:flex; justify-content:center; align-items:center; gap:10px; }
+        .ticker-val { color:#32d74b; font-family:monospace; font-size:18px; font-weight:900; }
+        .filter-bar { background:#000; padding:20px; border-bottom:1px solid #1c1c1e; }
+        .filter { background:#1c1c1e; border:1px solid #38383a; border-radius:12px; padding:12px; color:#fff; width:100%; font-size:11px; font-weight:900; text-transform:uppercase; outline:none; }
+        .card { background:#1c1c1e; border:1px solid #38383a; border-radius:24px; padding:2rem; transition:0.2s; }
+        .card:hover { border-color:#0071e3; }
         .price { color:#32d74b; font-size:32px; font-weight:800; letter-spacing:-1px; }
-        .stock-badge { background:rgba(50, 215, 75, 0.1); color:#32d74b; padding:4px 10px; border-radius:8px; font-size:10px; font-weight:900; text-transform:uppercase; }
+        .stock-badge { background:rgba(50, 215, 75, 0.1); color:#32d74b; padding:4px 10px; border-radius:8px; font-size:10px; font-weight:900; }
         .btn-wa { background:#25d366; color:#fff; padding:14px; border-radius:50px; font-weight:900; text-align:center; display:block; text-decoration:none; text-transform:uppercase; font-size:11px; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body id="main" class="hidden">
     
+    <div class="ticker-bar">
+        <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">USDT/BRL BINANCE:</span>
+        <span class="ticker-val" id="usdt_val">Carregando...</span>
+    </div>
+
     <div class="filter-bar">
         <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
             <select id="fMod" class="filter" onchange="atualizarMemorias()"><option value="">Modelo</option></select>
@@ -42,9 +49,20 @@
         let cacheOfertas = [];
         let gradeVariacoes = [];
 
+        // CÂMBIO ONLINE MILÉSIMO DE SEGUNDO (BINANCE API)
+        function iniciarCambio() {
+            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const preco = parseFloat(data.c).toFixed(4).replace('.', ',');
+                document.getElementById('usdt_val').innerText = `R$ ${preco}`;
+            };
+        }
+
         async function validarSessao() {
             if(!localStorage.getItem('iFipe_Token')) { location.href='3-pagina-login.html'; return; }
             document.getElementById('main').classList.remove('hidden');
+            iniciarCambio();
             init();
         }
 
@@ -64,9 +82,8 @@
             const { data } = await _s.from('ofertas')
                 .select('preco, quantidade, regioes(nome, bandeira), fornecedores(nome, whatsapp, ativo), variacoes(capacidade, cor, produtos_mestre(nome))')
                 .eq('fornecedores.ativo', true)
-                .gt('quantidade', 0) // <--- AJUSTE FINO: SÓ MOSTRA SE ESTOQUE > 0
+                .gt('quantidade', 0)
                 .order('preco', {ascending:true});
-            
             cacheOfertas = data || [];
             renderizar(cacheOfertas);
         }
@@ -111,10 +128,6 @@
 
         function renderizar(lista) {
             const vitrine = document.getElementById('vitrine');
-            if(lista.length === 0) {
-                vitrine.innerHTML = '<p class="text-center col-span-full text-gray-500 uppercase font-black text-[10px]">Nenhuma oferta disponível no momento.</p>';
-                return;
-            }
             vitrine.innerHTML = lista.map(o => `
                 <div class="card">
                     <div class="flex justify-between items-start mb-6">
