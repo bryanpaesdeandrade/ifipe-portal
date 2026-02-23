@@ -3,122 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Ranking Realtime</title>
+    <title>iFipe - Acesso Lojista</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; margin: 0; }
-        .ticker-bar { background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 15px; position: sticky; top: 0; z-index: 50; display: flex; justify-content: center; align-items: center; }
-        .ticker-label { font-size: 12px; font-weight: 900; color: #86868b; text-transform: uppercase; letter-spacing: 2px; margin-right: 15px; }
-        .ticker-val { color: #32d74b; font-family: 'Courier New', monospace; font-size: 24px; font-weight: 900; }
-        .trend-icon { font-size: 22px; margin-left: 15px; transition: 0.3s; }
-        .trend-up { color: #0071e3; transform: rotate(180deg); } /* Azul para cima */
-        .trend-down { color: #ff3b30; } /* Vermelho para baixo */
-        .trend-stable { color: #32d74b; } /* Verde estável */
-        .price-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 1.8rem; transition: 0.3s; position: relative; }
-        .price-card:hover { border-color: #0071e3; transform: translateY(-5px); }
-        .top-deal { position: absolute; top: 0; right: 0; background: #32d74b; color: black; font-size: 9px; font-weight: 900; padding: 6px 16px; border-bottom-left-radius: 14px; text-transform: uppercase; }
-        .price-value { color: #32d74b; font-size: 32px; font-weight: 800; letter-spacing: -1.5px; }
-        .vendor-tag { font-size: 10px; font-weight: 900; color: #ffffff; background: #38383a; padding: 5px 12px; border-radius: 8px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
-        .btn-whatsapp { background: #25d366; color: white; font-size: 11px; font-weight: 900; padding: 14px; border-radius: 50px; text-transform: uppercase; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+        body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .login-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2.5rem; width: 100%; max-width: 400px; text-align: center; }
+        input, select { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 15px; color: white; width: 100%; margin-bottom: 15px; outline: none; font-size: 14px; }
+        input:focus { border-color: #0071e3; }
+        button { background: #ffffff; color: #000000; font-weight: 800; padding: 15px; border-radius: 12px; width: 100%; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        button:hover { background: #0071e3; color: white; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
-    <div class="ticker-bar">
-        <span class="ticker-label"><i class="fa-solid fa-dollar-sign mr-2"></i> USDT/BRL Binance:</span>
-        <span class="ticker-val">R$ <span id="usdtVal">0,0000</span></span>
-        <span id="trendIcon" class="trend-icon"><i class="fa-solid fa-minus trend-stable"></i></span>
+
+    <div id="telaLogin" class="login-card">
+        <h1 class="text-3xl font-black italic mb-10 tracking-tighter text-white">iFipe</h1>
+        <p class="text-[10px] font-bold uppercase text-gray-500 mb-6 tracking-widest">Acesso Lojista</p>
+        <input type="text" id="loginId" placeholder="Nome do Fornecedor ou ID">
+        <input type="password" id="loginSenha" placeholder="Sua senha">
+        <button onclick="fazerLogin()">Entrar</button>
     </div>
 
-    <div class="max-w-6xl mx-auto p-6">
-        <header class="flex flex-col md:flex-row justify-between items-center my-14 gap-8">
-            <div>
-                <h1 class="text-6xl font-black italic tracking-tighter">iFipe</h1>
-                <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-3">Ranking Realtime Precision</p>
-            </div>
-            <select id="filtroModelo" onchange="filtrar()" class="bg-[#1c1c1e] border border-[#38383a] rounded-xl p-3 text-[10px] font-bold uppercase cursor-pointer">
-                <option value="">Todos os iPhones</option>
-            </select>
-        </header>
-        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
+    <div id="painel" class="login-card hidden">
+        <h2 class="text-xl font-bold mb-6">Publicar Oferta</h2>
+        <select id="produtoSelect"></select>
+        <select id="variacaoSelect"></select>
+        <select id="regiaoSelect"></select>
+        <input type="number" id="precoInput" placeholder="Preço (ex: 3900.88)" step="0.01">
+        <button onclick="publicarOferta()">Publicar Agora</button>
+        <p id="msg" class="mt-4 text-xs font-bold"></p>
     </div>
 
     <script>
         const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
-        let lastPrice = 0;
+        let fornecedorLogado = null;
 
-        async function carregarIndicador() {
-            try {
-                const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
-                const data = await res.json();
-                const currentPrice = parseFloat(data.price);
-                const valEl = document.getElementById('usdtVal');
-                const iconContainer = document.getElementById('trendIcon');
+        async function fazerLogin() {
+            const login = document.getElementById('loginId').value;
+            const senha = document.getElementById('loginSenha').value;
 
-                if (lastPrice > 0) {
-                    const diff = currentPrice - lastPrice;
-                    if (diff > 0.0003) {
-                        iconContainer.innerHTML = '<i class="fa-solid fa-caret-down trend-up"></i>';
-                    } else if (diff < -0.0003) {
-                        iconContainer.innerHTML = '<i class="fa-solid fa-caret-down trend-down"></i>';
-                    } else {
-                        iconContainer.innerHTML = '<i class="fa-solid fa-minus trend-stable"></i>';
-                    }
-                }
+            // Busca por ID ou por Nome (Texto) conforme o novo SQL
+            const { data, error } = await _supabase
+                .from('fornecedores')
+                .select('*')
+                .or(`id.eq.${isNaN(login) ? -1 : login},nome.eq.${login}`)
+                .eq('senha', senha)
+                .single();
 
-                valEl.innerText = currentPrice.toFixed(4).replace('.', ',');
-                lastPrice = currentPrice;
-            } catch (e) { console.error("Erro na Binance API"); }
+            if (data) {
+                fornecedorLogado = data;
+                document.getElementById('telaLogin').classList.add('hidden');
+                document.getElementById('painel').classList.remove('hidden');
+                carregarOpcoes();
+            } else {
+                alert("Acesso negado. Verifique o Nome/ID e a Senha.");
+            }
         }
 
-        let ofertasCache = [];
-        async function init() {
-            carregarIndicador();
-            setInterval(carregarIndicador, 5000);
-            const { data: m } = await _supabase.from('produtos_mestre').select('nome').order('id');
-            const select = document.getElementById('filtroModelo');
-            m?.forEach(item => select.innerHTML += `<option value="${item.nome}">${item.nome}</option>`);
-            buscarOfertas();
+        async function carregarOpcoes() {
+            const { data: p } = await _supabase.from('produtos_mestre').select('*');
+            const { data: v } = await _supabase.from('variacoes').select('*');
+            const { data: r } = await _supabase.from('regioes').select('*');
+
+            const pSelect = document.getElementById('produtoSelect');
+            pSelect.innerHTML = p.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
+
+            const rSelect = document.getElementById('regiaoSelect');
+            rSelect.innerHTML = r.map(i => `<option value="${i.id}">${i.bandeira} ${i.nome}</option>`).join('');
+
+            // Atualiza variações conforme o produto
+            pSelect.onchange = () => {
+                const filtradas = v.filter(item => item.produto_id == pSelect.value);
+                document.getElementById('variacaoSelect').innerHTML = filtradas.map(i => `<option value="${i.id}">${i.capacidade} - ${i.cor}</option>`).join('');
+            };
+            pSelect.onchange();
         }
 
-        async function buscarOfertas() {
-            const { data, error } = await _supabase.from('ofertas').select(`
-                preco,
-                regioes (nome, bandeira),
-                fornecedores (nome, whatsapp),
-                variacoes (capacidade, cor, produtos_mestre (nome))
-            `).order('preco', { ascending: true });
-            if (!error && data) { ofertasCache = data; renderizar(data); }
-        }
+        async function publicarOferta() {
+            const varId = document.getElementById('variacaoSelect').value;
+            const regId = document.getElementById('regiaoSelect').value;
+            const preco = document.getElementById('precoInput').value;
 
-        function filtrar() {
-            const val = document.getElementById('filtroModelo').value;
-            renderizar(val ? ofertasCache.filter(o => o.variacoes.produtos_mestre.nome === val) : ofertasCache);
-        }
+            if (!preco || preco <= 0) {
+                alert("Insira um preço válido!");
+                return;
+            }
 
-        function renderizar(lista) {
-            const container = document.getElementById('vitrine');
-            container.innerHTML = lista.map((o, index) => {
-                const fone = o.fornecedores.whatsapp ? o.fornecedores.whatsapp.replace(/\D/g, '') : '';
-                const linkWA = `https://wa.me/${fone}?text=Olá! Vi no iFipe o ${o.variacoes.produtos_mestre.nome} por R$ ${o.preco.toLocaleString('pt-BR')}`;
-                return `
-                <div class="price-card">
-                    ${index === 0 ? '<div class="top-deal">Menor Preço</div>' : ''}
-                    <div class="flex justify-between items-center mb-8">
-                        <div class="vendor-tag"><span>${o.regioes.bandeira}</span><span>${o.fornecedores.nome}</span></div>
-                    </div>
-                    <h2 class="text-2xl font-bold tracking-tight">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-gray-500 text-[11px] mb-10 uppercase font-bold tracking-tighter">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
-                    <div class="flex flex-col gap-6">
-                        <div><span class="block text-[10px] text-gray-600 font-black uppercase mb-1">Preço iFipe à Vista</span><span class="price-value">R$ ${o.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
-                        <a href="${linkWA}" target="_blank" class="btn-whatsapp"><i class="fa-brands fa-whatsapp text-lg"></i> Comprar pelo WhatsApp</a>
-                    </div>
-                </div>`;
-            }).join('');
+            const { error } = await _supabase.from('ofertas').insert({
+                variacao_id: varId,
+                fornecedor_id: fornecedorLogado.id,
+                regiao_id: regId,
+                preco: preco
+            });
+
+            const msg = document.getElementById('msg');
+            if (!error) {
+                msg.innerText = "Oferta publicada com sucesso!";
+                msg.className = "mt-4 text-xs font-bold text-green-500";
+            } else {
+                msg.innerText = "Erro ao publicar.";
+                msg.className = "mt-4 text-xs font-bold text-red-500";
+            }
         }
-        init();
     </script>
 </body>
 </html>
