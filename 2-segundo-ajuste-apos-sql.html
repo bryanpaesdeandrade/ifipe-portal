@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>iFipe - Lojista</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background:#000; color:#fff; font-family:sans-serif; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; }
+        .card { background:#1c1c1e; padding:2rem; border-radius:20px; width:100%; max-width:400px; border:1px solid #38383a; }
+        input, select { background:#2c2c2e; border:1px solid #38383a; padding:12px; width:100%; color:#fff; margin-bottom:15px; border-radius:10px; outline:none; }
+        button { background:#fff; color:#000; width:100%; padding:15px; border-radius:50px; font-weight:bold; cursor:pointer; text-transform:uppercase; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div id="login" class="card text-center">
+        <h2 class="text-2xl font-bold mb-6 italic">iFipe Lojista</h2>
+        <input type="text" id="user" placeholder="Usuário (Ex: JOGADOR)">
+        <input type="password" id="pass" placeholder="Senha">
+        <button onclick="fazerLogin()">Acessar Painel</button>
+    </div>
+
+    <div id="painel" class="card hidden">
+        <div class="flex justify-between mb-4">
+            <span id="msg" class="text-blue-500 font-bold uppercase text-xs"></span>
+            <button onclick="location.reload()" class="w-auto p-0 bg-transparent text-gray-500 underline text-[10px]">SAIR</button>
+        </div>
+        <select id="prod" onchange="loadVar()"><option>Carregando modelos...</option></select>
+        <select id="var" disabled><option>Escolha o modelo primeiro</option></select>
+        <select id="reg"></select>
+        <input type="number" id="valor" placeholder="Preço R$">
+        <button onclick="postar()">Publicar no Ranking</button>
+    </div>
+
+    <script>
+        const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+        let loja = null; let todasVar = [];
+
+        async function fazerLogin(){
+            const u = document.getElementById('user').value; 
+            const p = document.getElementById('pass').value;
+            const isNum = !isNaN(u) && u.trim() !== "";
+            const {data} = await _s.from('fornecedores').select('*').or(`id.eq.${isNum?u:-1},nome.eq.${u}`).eq('senha',p).maybeSingle();
+            if(data){ 
+                loja=data; 
+                document.getElementById('login').classList.add('hidden'); 
+                document.getElementById('painel').classList.remove('hidden'); 
+                document.getElementById('msg').innerText="Loja: "+data.nome; 
+                init(); 
+            } else alert("Dados incorretos!");
+        }
+
+        async function init(){
+            const {data:m} = await _s.from('produtos_mestre').select('*').order('id');
+            const {data:r} = await _s.from('regioes').select('*');
+            const {data:v} = await _s.from('variacoes').select('*');
+            todasVar = v;
+            document.getElementById('prod').innerHTML = '<option>Selecione o iPhone</option>'+m.map(x=>`<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('reg').innerHTML = r.map(x=>`<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+        }
+
+        function loadVar(){
+            const id = document.getElementById('prod').value;
+            const f = todasVar.filter(x=>x.produto_id==id);
+            document.getElementById('var').innerHTML = f.map(x=>`<option value="${x.id}">${x.capacidade} - ${x.cor}</option>`).join('');
+            document.getElementById('var').disabled = false;
+        }
+
+        async function postar(){
+            const {error} = await _s.from('ofertas').insert([{fornecedor_id:loja.id, variacao_id:document.getElementById('var').value, regiao_id:document.getElementById('reg').value, preco:document.getElementById('valor').value}]);
+            if(!error) alert("Preço publicado!"); else alert("Erro ao salvar.");
+        }
+    </script>
+</body>
+</html>
