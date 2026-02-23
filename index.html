@@ -9,7 +9,8 @@
     <style>
         body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; }
         .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 18px; }
-        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 10px; padding: 12px; width: 100%; color: white; outline: none; }
+        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 10px; padding: 12px; width: 100%; color: white; outline: none; border: 1px solid transparent; transition: 0.3s; }
+        .apple-input:focus { border-color: #0071e3; }
         .apple-button { background: #ffffff; color: #000000; font-weight: 600; border-radius: 20px; padding: 14px; transition: all 0.3s; cursor: pointer; width: 100%; }
         .apple-button:hover { background: #f5f5f7; transform: scale(1.01); }
     </style>
@@ -21,15 +22,15 @@
         <form id="priceForm" class="space-y-5">
             <div>
                 <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Estabelecimento</label>
-                <select id="fornecedor_id" class="apple-input" required><option>Carregando...</option></select>
+                <select id="fornecedor_id" class="apple-input" required><option>Carregando fornecedores...</option></select>
             </div>
             <div>
-                <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Modelo do Aparelho</label>
-                <select id="variacao_id" class="apple-input" required><option>Carregando...</option></select>
+                <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Modelo e Cor</label>
+                <select id="variacao_id" class="apple-input" required><option>Carregando modelos...</option></select>
             </div>
             <div>
-                <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Região</label>
-                <select id="regiao_id" class="apple-input" required><option>Carregando...</option></select>
+                <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Região de Origem</label>
+                <select id="regiao_id" class="apple-input" required><option>Carregando regiões...</option></select>
             </div>
             <div>
                 <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Preço de Venda (R$)</label>
@@ -42,4 +43,54 @@
 
     <script>
         const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function carregarDados() {
+            try {
+                // Carregar Fornecedores
+                const { data: fornecedores } = await _supabase.from('fornecedores').select('id, nome').order('nome');
+                document.getElementById('fornecedor_id').innerHTML = fornecedores.map(f => `<option value="${f.id}">${f.nome}</option>`).join('');
+
+                // Carregar Variações (com JOIN simples para pegar o nome do modelo se possível, ou apenas capacidade/cor)
+                const { data: variacoes } = await _supabase.from('variacoes').select('id, capacidade, cor').limit(100);
+                document.getElementById('variacao_id').innerHTML = variacoes.map(v => `<option value="${v.id}">${v.capacidade} - ${v.cor}</option>`).join('');
+
+                // Carregar Regiões
+                const { data: regioes } = await _supabase.from('regioes').select('id, nome');
+                document.getElementById('regiao_id').innerHTML = regioes.map(r => `<option value="${r.id}">${r.nome}</option>`).join('');
+            } catch (err) {
+                console.error("Erro ao carregar listas:", err);
+            }
+        }
+
+        document.getElementById('priceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const status = document.getElementById('status');
+            status.innerText = "Publicando oferta...";
+            status.style.color = "white";
+            
+            const payload = {
+                fornecedor_id: parseInt(document.getElementById('fornecedor_id').value),
+                variacao_id: parseInt(document.getElementById('variacao_id').value),
+                regiao_id: parseInt(document.getElementById('regiao_id').value),
+                preco: parseFloat(document.getElementById('preco').value),
+                condicao: 'Novo'
+            };
+
+            const { error } = await _supabase.from('ofertas').insert([payload]);
+
+            if (error) {
+                status.innerText = "Erro ao salvar. Verifique a conexão.";
+                status.style.color = "#ff453a";
+            } else {
+                status.innerText = "Preço atualizado com sucesso! 🚀";
+                status.style.color = "#32d74b";
+                document.getElementById('preco').value = "";
+            }
+        });
+
+        carregarDados();
+    </script>
+</body>
+</html>
