@@ -2,43 +2,60 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>iFipe - Master Control (Edição Ativada)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iFipe - Master Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background:#0b0b0c; color:#fff; font-family:sans-serif; padding:2rem; }
-        .admin-card { background:#1c1c1e; border:1px solid #38383a; border-radius:24px; padding:2rem; }
-        .tab-btn { padding:12px 24px; border-radius:12px; font-size:11px; font-weight:900; text-transform:uppercase; cursor:pointer; border:none; transition:0.3s; }
-        .tab-active { background:#0071e3; color:#fff; }
-        .tab-inactive { background:#2c2c2e; color:#86868b; }
-        th { text-align:left; font-size:10px; color:#86868b; text-transform:uppercase; padding:12px; border-bottom:1px solid #38383a; }
-        td { padding:12px; font-size:13px; border-bottom:1px solid #1c1c1e; }
-        .btn-green { background:#32d74b; color:#000; padding:6px 12px; border-radius:8px; font-size:10px; font-weight:bold; }
-        .btn-red { background:#ff3b30; color:#fff; padding:6px 12px; border-radius:8px; font-size:10px; font-weight:bold; }
-        .btn-edit { background:#5e5ce6; color:#fff; padding:6px 12px; border-radius:8px; font-size:10px; font-weight:bold; }
-        input { background:#2c2c2e; border:1px solid #38383a; color:#fff; padding:4px 8px; border-radius:4px; width:100%; }
+        .admin-card { background:#1c1c1e; border:1px solid #38383a; border-radius:24px; padding:2rem; margin-bottom:2rem; }
+        .status-badge { padding:4px 10px; border-radius:20px; font-size:10px; font-weight:900; text-transform:uppercase; }
+        .bg-green { background:#32d74b; color:#000; }
+        .bg-red { background:#ff3b30; color:#fff; }
+        .bg-yellow { background:#ffcc00; color:#000; }
+        table { width:100%; border-collapse:collapse; margin-top:1rem; }
+        th { font-size:10px; color:#86868b; text-transform:uppercase; padding:10px; border-bottom:1px solid #38383a; }
+        td { padding:15px 10px; border-bottom:1px solid #1c1c1e; font-size:13px; }
+        .btn-action { padding:6px 12px; border-radius:8px; font-size:10px; font-weight:bold; cursor:pointer; }
     </style>
 </head>
 <body>
-    <header class="max-w-7xl mx-auto flex justify-between items-center mb-10">
-        <h1 class="text-4xl font-black italic tracking-tighter">iFipe <span class="text-blue-500">MASTER</span></h1>
-        <div class="flex gap-4">
-            <button id="tab1" onclick="switchTab('clientes')" class="tab-btn tab-active">Clientes</button>
-            <button id="tab2" onclick="switchTab('lojistas')" class="tab-btn tab-inactive">Anunciantes</button>
+
+    <header class="mb-10 flex justify-between items-center">
+        <div>
+            <h1 class="text-4xl font-black italic italic">iFipe <span class="text-blue-500">MASTER</span></h1>
+            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Controle Central de Operações</p>
         </div>
+        <button onclick="location.reload()" class="bg-white text-black px-6 py-2 rounded-full font-black text-[10px] uppercase">Atualizar Dados</button>
     </header>
 
-    <div class="max-w-7xl mx-auto admin-card overflow-x-auto">
-        <table id="secClientes" class="w-full">
+    <div class="admin-card">
+        <h2 class="text-xl font-black italic mb-4">Aprovação de Clientes (Passo 3)</h2>
+        <table>
             <thead>
-                <tr><th>Nome</th><th>E-mail / CPF</th><th>Senha</th><th>Status</th><th>Ações</th></tr>
+                <tr>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th>E-mail</th>
+                    <th>Status</th>
+                    <th>Ação</th>
+                </tr>
             </thead>
             <tbody id="listaClientes"></tbody>
         </table>
+    </div>
 
-        <table id="secLojistas" class="w-full hidden">
+    <div class="admin-card">
+        <h2 class="text-xl font-black italic mb-4">Gestão de Lojistas (Inadimplência)</h2>
+        <table>
             <thead>
-                <tr><th>Loja</th><th>WhatsApp</th><th>Senha</th><th>Status</th><th>Ações</th></tr>
+                <tr>
+                    <th>Loja</th>
+                    <th>WhatsApp</th>
+                    <th>Senha</th>
+                    <th>Financeiro</th>
+                    <th>Ação</th>
+                </tr>
             </thead>
             <tbody id="listaLojistas"></tbody>
         </table>
@@ -47,76 +64,64 @@
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
-        function switchTab(t) {
-            document.getElementById('secClientes').classList.toggle('hidden', t !== 'clientes');
-            document.getElementById('secLojistas').classList.toggle('hidden', t !== 'lojistas');
-            document.getElementById('tab1').className = t === 'clientes' ? 'tab-btn tab-active' : 'tab-btn tab-inactive';
-            document.getElementById('tab2').className = t === 'lojistas' ? 'tab-btn tab-active' : 'tab-btn tab-inactive';
-            t === 'clientes' ? carregarClientes() : carregarLojistas();
+        async function carregarTudo() {
+            const [clientes, lojistas] = await Promise.all([
+                _s.from('clientes_buscador').select('*').order('criado_em', {ascending:false}),
+                _s.from('fornecedores').select('*').order('nome')
+            ]);
+
+            renderClientes(clientes.data || []);
+            renderLojistas(lojistas.data || []);
         }
 
-        async function carregarClientes() {
-            const { data } = await _s.from('clientes_buscador').select('*').order('criado_em', { ascending: false });
+        function renderClientes(data) {
             document.getElementById('listaClientes').innerHTML = data.map(c => `
-                <tr id="row-cli-${c.id}">
-                    <td><input id="n-${c.id}" value="${c.nome}"></td>
+                <tr>
+                    <td class="font-bold">${c.nome}</td>
+                    <td class="font-mono text-gray-400">${c.cpf}</td>
+                    <td>${c.email}</td>
+                    <td><span class="status-badge ${c.aprovado ? 'bg-green' : 'bg-yellow'}">${c.aprovado ? 'Ativo' : 'Pendente'}</span></td>
                     <td>
-                        <input id="e-${c.id}" value="${c.email}" class="mb-1 text-[11px]">
-                        <input id="c-${c.id}" value="${c.cpf}" class="text-[11px] text-blue-400">
-                    </td>
-                    <td><input id="s-${c.id}" value="${c.senha}"></td>
-                    <td class="${c.aprovado ? 'text-green-500' : 'text-red-500'} font-bold text-[10px]">${c.aprovado ? 'ATIVO' : 'PENDENTE'}</td>
-                    <td>
-                        <div class="flex flex-col gap-1">
-                            <button onclick="salvarCli(${c.id})" class="btn-edit text-[9px]">SALVAR</button>
-                            <button onclick="statusCli(${c.id}, ${!c.aprovado})" class="${c.aprovado ? 'btn-red' : 'btn-green'} text-[9px]">${c.aprovado ? 'BLOQUEAR' : 'APROVAR'}</button>
-                        </div>
+                        ${!c.aprovado ? `<button onclick="aprovarCliente(${c.id})" class="btn-action bg-blue-600 text-white">APROVAR</button>` : `<button onclick="removerCliente(${c.id})" class="btn-action bg-red text-white">BANIR</button>`}
                     </td>
                 </tr>
             `).join('');
         }
 
-        async function carregarLojistas() {
-            const { data } = await _s.from('fornecedores').select('*').order('nome');
+        function renderLojistas(data) {
             document.getElementById('listaLojistas').innerHTML = data.map(l => `
                 <tr>
-                    <td><input id="ln-${l.id}" value="${l.nome}"></td>
-                    <td><input id="lw-${l.id}" value="${l.whatsapp}"></td>
-                    <td><input id="ls-${l.id}" value="${l.senha}"></td>
-                    <td class="${l.ativo ? 'text-green-500' : 'text-red-500'} font-bold text-[10px]">${l.ativo ? 'PAGO' : 'ATRASADO'}</td>
+                    <td class="font-bold text-blue-500">${l.nome}</td>
+                    <td>${l.whatsapp}</td>
+                    <td class="font-mono">${l.senha}</td>
+                    <td><span class="status-badge ${l.ativo ? 'bg-green' : 'bg-red'}">${l.ativo ? 'Em Dia' : 'Bloqueado'}</span></td>
                     <td>
-                        <div class="flex flex-col gap-1">
-                            <button onclick="salvarLoj(${l.id})" class="btn-edit text-[9px]">SALVAR</button>
-                            <button onclick="statusLoj(${l.id}, ${!l.ativo})" class="${l.ativo ? 'btn-red' : 'btn-green'} text-[9px]">${l.ativo ? 'SUSPENDER' : 'ATIVAR'}</button>
-                        </div>
+                        <button onclick="toggleLojista(${l.id}, ${l.ativo})" class="btn-action ${l.ativo ? 'bg-red' : 'bg-green'} text-black">
+                            ${l.ativo ? 'SUSPENDER' : 'REATIVAR'}
+                        </button>
                     </td>
                 </tr>
             `).join('');
         }
 
-        async function salvarCli(id) {
-            await _s.from('clientes_buscador').update({ 
-                nome: document.getElementById('n-'+id).value,
-                email: document.getElementById('e-'+id).value,
-                cpf: document.getElementById('c-'+id).value,
-                senha: document.getElementById('s-'+id).value
-            }).eq('id', id);
-            alert("Cliente atualizado!"); carregarClientes();
+        async function aprovarCliente(id) {
+            await _s.from('clientes_buscador').update({ aprovado: true }).eq('id', id);
+            carregarTudo();
         }
 
-        async function salvarLoj(id) {
-            await _s.from('fornecedores').update({ 
-                nome: document.getElementById('ln-'+id).value,
-                whatsapp: document.getElementById('lw-'+id).value,
-                senha: document.getElementById('ls-'+id).value
-            }).eq('id', id);
-            alert("Lojista atualizado!"); carregarLojistas();
+        async function removerCliente(id) {
+            if(confirm("Deseja realmente banir este cliente?")) {
+                await _s.from('clientes_buscador').delete().eq('id', id);
+                carregarTudo();
+            }
         }
 
-        async function statusCli(id, val) { await _s.from('clientes_buscador').update({ aprovado: val }).eq('id', id); carregarClientes(); }
-        async function statusLoj(id, val) { await _s.from('fornecedores').update({ ativo: val }).eq('id', id); carregarLojistas(); }
+        async function toggleLojista(id, statusAtual) {
+            await _s.from('fornecedores').update({ ativo: !statusAtual }).eq('id', id);
+            carregarTudo();
+        }
 
-        carregarClientes();
+        carregarTudo();
     </script>
 </body>
 </html>
