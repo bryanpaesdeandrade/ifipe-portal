@@ -8,55 +8,66 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; }
-        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 20px; padding: 2rem; width: 100%; max-width: 400px; }
-        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 12px; width: 100%; color: white; outline: none; margin-bottom: 1rem; }
-        .apple-button { background: #ffffff; color: #000000; font-weight: 600; border-radius: 20px; padding: 14px; width: 100%; cursor: pointer; transition: 0.2s; }
-        label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 4px; font-weight: 600; margin-top: 1rem; }
+        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 14px; width: 100%; color: white; outline: none; margin-bottom: 1rem; border: 1px solid transparent; }
+        .apple-input:focus { border-color: #0071e3; background: #3a3a3c; }
+        .apple-button { background: #ffffff; color: #000000; font-weight: 600; border-radius: 24px; padding: 16px; width: 100%; cursor: pointer; transition: 0.3s; margin-top: 1rem; }
+        .apple-button:hover { background: #f5f5f7; transform: scale(1.02); }
+        label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.05em; margin-top: 1rem; }
         .hidden { display: none; }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-4">
-    <h1 class="text-3xl font-bold mb-8 italic">iFipe</h1>
+<body class="flex flex-col items-center justify-center min-h-screen p-4 text-sm">
+    <h1 class="text-3xl font-bold mb-10 italic tracking-tighter">iFipe</h1>
 
-    <div id="loginSection" class="apple-card text-sm">
-        <h2 class="text-center mb-6 font-semibold uppercase text-xs">Identificação</h2>
+    <div id="loginSection" class="apple-card">
+        <h2 class="text-center mb-6 font-semibold uppercase text-xs tracking-widest">Acesso Lojista</h2>
         <label>ID Fornecedor</label>
         <input type="number" id="loginId" class="apple-input w-full" placeholder="Ex: 1">
         <label>Senha</label>
         <input type="password" id="loginPass" class="apple-input w-full" placeholder="Sua senha">
         <button onclick="fazerLogin()" class="apple-button w-full">Acessar Painel</button>
-        <p id="loginError" class="text-red-500 text-[10px] mt-4 text-center"></p>
+        <p id="loginError" class="text-red-500 text-[10px] mt-4 text-center font-bold"></p>
     </div>
 
-    <div id="formSection" class="apple-card hidden text-sm">
-        <div class="flex justify-between mb-6">
-            <span id="welcomeMsg" class="font-bold text-blue-500 uppercase"></span>
-            <button onclick="location.reload()" class="text-[10px] text-gray-500 underline uppercase">Sair</button>
+    <div id="formSection" class="apple-card hidden">
+        <div class="flex justify-between items-center mb-8">
+            <span id="welcomeMsg" class="font-bold text-blue-500 uppercase tracking-tighter"></span>
+            <button onclick="location.reload()" class="text-[10px] text-gray-500 underline font-bold uppercase">Sair</button>
         </div>
         <form id="priceForm">
             <label>Modelo do iPhone</label>
-            <select id="produto_id" class="apple-input w-full" required><option value="">Selecione</option></select>
+            <select id="produto_id" class="apple-input w-full" required>
+                <option value="">Selecione o modelo</option>
+            </select>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div><label>Memória</label><select id="memoria" class="apple-input w-full" required disabled><option value="">-</option></select></div>
-                <div><label>Cor</label><select id="cor" class="apple-input w-full" required disabled><option value="">-</option></select></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label>Memória</label>
+                    <select id="memoria" class="apple-input w-full" required disabled><option value="">-</option></select>
+                </div>
+                <div>
+                    <label>Cor Original</label>
+                    <select id="cor" class="apple-input w-full" required disabled><option value="">-</option></select>
+                </div>
             </div>
 
-            <label>Região de Origem</label>
+            <label>Região (Origem)</label>
             <select id="regiao_id" class="apple-input w-full" required></select>
 
-            <label>Preço de Venda (R$)</label>
+            <label>Preço Final de Venda (R$)</label>
             <input type="text" id="preco" class="apple-input w-full" placeholder="Ex: 7.699,77" required>
 
-            <button type="submit" class="apple-button w-full mt-2">Publicar Oferta</button>
+            <button type="submit" class="apple-button w-full">Publicar Oferta</button>
         </form>
-        <p id="status" class="mt-4 text-center text-xs font-bold"></p>
+        <p id="status" class="mt-6 text-center text-[11px] font-bold"></p>
     </div>
 
     <script>
         const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let fornecedorLogado = null;
 
+        // Login por ENTER
         document.getElementById('loginPass').addEventListener('keypress', (e) => { if (e.key === 'Enter') fazerLogin(); });
 
         async function fazerLogin() {
@@ -67,53 +78,65 @@
                     fornecedorLogado = id;
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('formSection').classList.remove('hidden');
-                    document.getElementById('welcomeMsg').innerText = data.nome;
-                    carregarListas();
-                } else { document.getElementById('loginError').innerText = "ID inválido."; }
+                    document.getElementById('welcomeMsg').innerText = "Loja: " + data.nome;
+                    carregarListasIniciais();
+                } else { document.getElementById('loginError').innerText = "ID não encontrado."; }
             } else { document.getElementById('loginError').innerText = "Senha incorreta."; }
         }
 
-        async function carregarListas() {
+        async function carregarListasIniciais() {
             const { data: m } = await _supabase.from('produtos_mestre').select('id, nome').order('id');
-            document.getElementById('produto_id').innerHTML = '<option value="">Selecione</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
+            document.getElementById('produto_id').innerHTML = '<option value="">Escolha o iPhone</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
             const { data: r } = await _supabase.from('regioes').select('id, nome, bandeira').order('id');
             document.getElementById('regiao_id').innerHTML = r.map(i => `<option value="${i.id}">${i.bandeira} ${i.nome}</option>`).join('');
         }
 
+        // MOTOR DE BUSCA DE VARIAÇÕES (AJUSTE DE COMUNICAÇÃO)
         document.getElementById('produto_id').addEventListener('change', async (e) => {
-            const mem = document.getElementById('memoria');
-            const cor = document.getElementById('cor');
+            const memSelect = document.getElementById('memoria');
+            const corSelect = document.getElementById('cor');
             
-            // Limpeza Antecipada: Evita dados viciados do modelo anterior
-            mem.innerHTML = '<option value="">Carregando...</option>';
-            cor.innerHTML = '<option value="">-</option>';
-            mem.disabled = true; cor.disabled = true;
+            memSelect.innerHTML = '<option value="">Carregando...</option>';
+            corSelect.innerHTML = '<option value="">...</option>';
+            memSelect.disabled = true; corSelect.disabled = true;
 
             const { data: v } = await _supabase.from('variacoes').select('capacidade, cor').eq('produto_id', e.target.value);
             
             if (v && v.length > 0) {
-                mem.innerHTML = [...new Set(v.map(x => x.capacidade))].map(m => `<option value="${m}">${m}</option>`).join('');
-                cor.innerHTML = [...new Set(v.map(x => x.cor))].map(c => `<option value="${c}">${c}</option>`).join('');
-                mem.disabled = false; cor.disabled = false;
+                const mems = [...new Set(v.map(x => x.capacidade))];
+                const cors = [...new Set(v.map(x => x.cor))];
+                memSelect.innerHTML = mems.map(m => `<option value="${m}">${m}</option>`).join('');
+                corSelect.innerHTML = cors.map(c => `<option value="${c}">${c}</option>`).join('');
+                memSelect.disabled = false; corSelect.disabled = false;
             } else {
-                mem.innerHTML = '<option value="">Sem estoque</option>';
+                memSelect.innerHTML = '<option value="">Sem estoque</option>';
+                corSelect.innerHTML = '<option value="">-</option>';
             }
         });
 
         document.getElementById('priceForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const status = document.getElementById('status');
-            const { data: vId } = await _supabase.from('variacoes').select('id').eq('produto_id', document.getElementById('produto_id').value).eq('capacidade', document.getElementById('memoria').value).eq('cor', document.getElementById('cor').value).single();
-            const valorTratado = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
+            status.innerText = "Publicando...";
+            status.style.color = "white";
+
+            const { data: vId } = await _supabase.from('variacoes').select('id')
+                .eq('produto_id', document.getElementById('produto_id').value)
+                .eq('capacidade', document.getElementById('memoria').value)
+                .eq('cor', document.getElementById('cor').value).single();
+
+            const valorLimpo = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
+
             const { error } = await _supabase.from('ofertas').insert([{
                 fornecedor_id: parseInt(fornecedorLogado),
                 variacao_id: vId.id,
                 regiao_id: parseInt(document.getElementById('regiao_id').value),
-                preco: parseFloat(valorTratado),
+                preco: parseFloat(valorLimpo),
                 condicao: 'Novo'
             }]);
-            if (error) { status.innerText = "Erro ao publicar."; status.style.color = "red"; }
-            else { status.innerText = "Publicado com sucesso! 🚀"; status.style.color = "#32d74b"; e.target.reset(); }
+
+            if (error) { status.innerText = "Erro ao publicar: " + error.message; status.style.color = "#ff453a"; }
+            else { status.innerText = "OFERTA PUBLICADA COM SUCESSO! 🚀"; status.style.color = "#32d74b"; e.target.reset(); }
         });
     </script>
 </body>
