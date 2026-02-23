@@ -2,78 +2,100 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Admin Master</title>
+    <title>iFipe - Master Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background:#0b0b0c; color:#fff; font-family:sans-serif; padding:2rem; }
-        .admin-card { background:#1c1c1e; border:1px solid #38383a; border-radius:20px; padding:1.5rem; }
+        .admin-card { background:#1c1c1e; border:1px solid #38383a; border-radius:24px; padding:2rem; }
+        .tab-btn { padding:12px 24px; border-radius:12px; font-size:11px; font-weight:900; text-transform:uppercase; cursor:pointer; border:none; transition:0.3s; }
+        .tab-active { background:#0071e3; color:#fff; }
+        .tab-inactive { background:#2c2c2e; color:#86868b; }
         th { text-align:left; font-size:10px; color:#86868b; text-transform:uppercase; padding:12px; border-bottom:1px solid #38383a; }
         td { padding:12px; font-size:13px; border-bottom:1px solid #1c1c1e; }
-        .btn-green { background:#32d74b; color:#000; padding:8px 15px; border-radius:10px; font-size:10px; font-weight:900; cursor:pointer; }
-        .btn-red { background:#ff3b30; color:#fff; padding:8px 15px; border-radius:10px; font-size:10px; font-weight:900; cursor:pointer; }
-        .data-cell { font-family: monospace; font-weight: bold; color: #0071e3; }
+        .btn-green { background:#32d74b; color:#000; padding:8px 15px; border-radius:10px; font-size:10px; font-weight:bold; }
+        .btn-red { background:#ff3b30; color:#fff; padding:8px 15px; border-radius:10px; font-size:10px; font-weight:bold; }
+        .btn-kick { background:#3a3a3c; color:#fff; padding:8px 15px; border-radius:10px; font-size:10px; font-weight:bold; }
     </style>
 </head>
 <body>
     <header class="max-w-7xl mx-auto flex justify-between items-center mb-10">
         <div>
-            <h1 class="text-4xl font-black italic tracking-tighter">iFipe <span class="text-blue-500 text-2xl">MASTER</span></h1>
-            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.3em]">Gestão de Usuários e Segurança</p>
+            <h1 class="text-4xl font-black italic tracking-tighter">iFipe <span class="text-blue-500">MASTER</span></h1>
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2">Controle Total de Operações</p>
         </div>
-        <button onclick="carregar()" class="bg-white text-black px-6 py-2 rounded-full font-black text-xs uppercase hover:bg-blue-500 hover:text-white transition">Sincronizar</button>
+        <div class="flex gap-4">
+            <button id="tab1" onclick="switchTab('clientes')" class="tab-btn tab-active">Clientes</button>
+            <button id="tab2" onclick="switchTab('lojistas')" class="tab-btn tab-inactive">Anunciantes</button>
+        </div>
     </header>
 
     <div class="max-w-7xl mx-auto admin-card overflow-x-auto">
-        <table class="w-full">
+        <table id="secClientes" class="w-full">
             <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>CPF</th>
-                    <th>E-mail</th>
-                    <th>Senha</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                </tr>
+                <tr><th>Nome</th><th>CPF</th><th>E-mail</th><th>Senha</th><th>Status</th><th>Ações</th></tr>
             </thead>
-            <tbody id="lista"></tbody>
+            <tbody id="listaClientes"></tbody>
+        </table>
+
+        <table id="secLojistas" class="w-full hidden">
+            <thead>
+                <tr><th>Loja</th><th>WhatsApp</th><th>Senha</th><th>Status Financeiro</th><th>Ação Master</th></tr>
+            </thead>
+            <tbody id="listaLojistas"></tbody>
         </table>
     </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
-        async function carregar() {
+        function switchTab(t) {
+            document.getElementById('secClientes').classList.toggle('hidden', t !== 'clientes');
+            document.getElementById('secLojistas').classList.toggle('hidden', t !== 'lojistas');
+            document.getElementById('tab1').className = t === 'clientes' ? 'tab-btn tab-active' : 'tab-btn tab-inactive';
+            document.getElementById('tab2').className = t === 'lojistas' ? 'tab-btn tab-active' : 'tab-btn tab-inactive';
+            t === 'clientes' ? carregarClientes() : carregarLojistas();
+        }
+
+        async function carregarClientes() {
             const { data } = await _s.from('clientes_buscador').select('*').order('criado_em', { ascending: false });
-            if (data) {
-                document.getElementById('lista').innerHTML = data.map(c => `
-                    <tr>
-                        <td class="font-black">${c.nome}</td>
-                        <td class="data-cell">${c.cpf}</td>
-                        <td class="text-gray-400 text-xs">${c.email}</td>
-                        <td class="data-cell text-yellow-500">${c.senha}</td>
-                        <td class="${c.aprovado ? 'text-green-500' : 'text-red-500'} font-bold text-[10px]">${c.aprovado ? 'ATIVO' : 'BLOQUEADO'}</td>
-                        <td class="flex gap-2">
-                            ${!c.aprovado ? `<button onclick="status(${c.id}, true)" class="btn-green">APROVAR</button>` : `<button onclick="status(${c.id}, false)" class="btn-red">BLOQUEAR</button>`}
-                            <button onclick="derrubar(${c.id})" class="bg-gray-700 p-2 rounded text-[9px] font-bold">DERRUBAR</button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
+            document.getElementById('listaClientes').innerHTML = data.map(c => `
+                <tr>
+                    <td class="font-bold italic">${c.nome}</td>
+                    <td class="font-mono text-blue-400">${c.cpf}</td>
+                    <td class="text-gray-400 text-xs">${c.email}</td>
+                    <td class="font-mono text-yellow-500">${c.senha}</td>
+                    <td class="${c.aprovado ? 'text-green-500' : 'text-red-500'} font-bold">${c.aprovado ? 'ATIVO' : 'BLOQUEADO'}</td>
+                    <td class="flex gap-2">
+                        <button onclick="statusCli(${c.id}, ${!c.aprovado})" class="${c.aprovado ? 'btn-red' : 'btn-green'}">${c.aprovado ? 'BLOQUEAR' : 'APROVAR'}</button>
+                        <button onclick="kickCli(${c.id})" class="btn-kick">DERRUBAR</button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
-        async function status(id, val) {
-            await _s.from('clientes_buscador').update({ aprovado: val }).eq('id', id);
-            carregar();
+        async function carregarLojistas() {
+            const { data } = await _s.from('fornecedores').select('*').order('nome');
+            document.getElementById('listaLojistas').innerHTML = data.map(l => `
+                <tr>
+                    <td class="font-bold">${l.nome}</td>
+                    <td>${l.whatsapp}</td>
+                    <td class="font-mono text-yellow-500">${l.senha}</td>
+                    <td class="${l.ativo ? 'text-green-500' : 'text-red-500'} font-bold">${l.ativo ? 'EM DIA' : 'INADIMPLENTE'}</td>
+                    <td>
+                        <button onclick="statusLoj(${l.id}, ${!l.ativo})" class="${l.ativo ? 'btn-red' : 'btn-green'}">
+                            ${l.ativo ? 'SUSPENDER ANÚNCIOS' : 'LIBERAR ANÚNCIOS'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
-        async function derrubar(id) {
-            await _s.from('clientes_buscador').update({ last_session_id: null }).eq('id', id);
-            alert("Usuário desconectado!");
-            carregar();
-        }
-        carregar();
+        async function statusCli(id, val) { await _s.from('clientes_buscador').update({ aprovado: val }).eq('id', id); carregarClientes(); }
+        async function kickCli(id) { await _s.from('clientes_buscador').update({ last_session_id: null }).eq('id', id); carregarClientes(); }
+        async function statusLoj(id, val) { await _s.from('fornecedores').update({ ativo: val }).eq('id', id); carregarLojistas(); }
+
+        carregarClientes();
     </script>
 </body>
 </html>
