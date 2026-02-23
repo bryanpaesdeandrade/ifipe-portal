@@ -46,9 +46,9 @@
             <label>Modelo do iPhone</label>
             <select id="produto_id" class="apple-input" required></select>
 
-            <label>Capacidade e Cor</label>
+            <label>Capacidade e Cor (Filtrados)</label>
             <select id="variacao_id" class="apple-input" required disabled>
-                <option value="">Selecione o modelo primeiro</option>
+                <option value="">Escolha o modelo primeiro</option>
             </select>
 
             <label>Origem / Região</label>
@@ -70,9 +70,15 @@
             const login = document.getElementById('loginId').value;
             const pass = document.getElementById('loginPass').value;
             const isNumeric = !isNaN(login) && login.trim() !== "";
-            const { data } = await _supabase.from('fornecedores').select('*').or(`id.eq.${isNumeric ? login : -1},nome.eq.${login}`).eq('senha', pass).maybeSingle();
+            
+            // BUSCA O FORNECEDOR E VERIFICA SE ESTÁ ATIVO
+            const { data, error } = await _supabase.from('fornecedores').select('*').or(`id.eq.${isNumeric ? login : -1},nome.eq.${login}`).eq('senha', pass).maybeSingle();
             
             if (data) {
+                if (!data.ativo) {
+                    document.getElementById('loginError').innerText = "ACESSO SUSPENSO: FINANCEIRO PENDENTE.";
+                    return;
+                }
                 fornecedorLogado = data;
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('formSection').classList.remove('hidden');
@@ -86,7 +92,7 @@
         async function carregarBases() {
             const { data: m } = await _supabase.from('produtos_mestre').select('id, nome').order('id');
             const { data: r } = await _supabase.from('regioes').select('id, nome, bandeira').order('id');
-            const { data: v } = await _supabase.from('variacoes').select('*');
+            const { data: v } = await _supabase.from('variacoes').select('*').order('capacidade');
             
             const pS = document.getElementById('produto_id');
             const rS = document.getElementById('regiao_id');
@@ -95,10 +101,17 @@
             pS.innerHTML = '<option value="">Escolha o Modelo</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
             rS.innerHTML = r.map(i => `<option value="${i.id}">${i.bandeira} ${i.nome}</option>`).join('');
             
+            // INTELIGÊNCIA DE FILTRO CASADO: SÓ MOSTRA O QUE EXISTE NO SQL
             pS.onchange = (e) => {
                 const filtradas = v.filter(item => item.produto_id == e.target.value);
-                vS.innerHTML = filtradas.map(item => `<option value="${item.id}">${item.capacidade} • ${item.cor}</option>`).join('');
-                vS.disabled = filtradas.length === 0;
+                if (filtradas.length > 0) {
+                    vS.innerHTML = '<option value="">Selecione Capacidade/Cor</option>' + 
+                                  filtradas.map(item => `<option value="${item.id}">${item.capacidade} • ${item.cor}</option>`).join('');
+                    vS.disabled = false;
+                } else {
+                    vS.innerHTML = '<option value="">Sem variações para este modelo</option>';
+                    vS.disabled = true;
+                }
             };
         }
 
@@ -110,6 +123,7 @@
             status.innerText = "Sincronizando com o Ranking...";
             status.style.color = "#86868b";
 
+            // PUBLICAÇÃO COM SEGURANÇA
             const { error } = await _supabase.from('ofertas').insert([{
                 fornecedor_id: fornecedorLogado.id,
                 variacao_id: document.getElementById('variacao_id').value,
@@ -118,12 +132,12 @@
             }]);
 
             if (error) { 
-                status.innerText = "Falha na Publicação!"; 
+                status.innerText = "Falha na Publicação: Erro de conexão."; 
                 status.style.color = "#ff3b30"; 
             } else { 
                 status.innerText = "Preço Publicado com Sucesso! 🚀"; 
                 status.style.color = "#32d74b"; 
-                e.target.reset(); 
+                document.getElementById('preco').value = ""; // Limpa apenas o preço para nova inserção
             }
         };
     </script>
