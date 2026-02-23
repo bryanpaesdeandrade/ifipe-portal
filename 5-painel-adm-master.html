@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>iFipe - Master Control</title>
+    <title>iFipe - Master Control (Edição Ativada)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -13,17 +13,15 @@
         .tab-inactive { background:#2c2c2e; color:#86868b; }
         th { text-align:left; font-size:10px; color:#86868b; text-transform:uppercase; padding:12px; border-bottom:1px solid #38383a; }
         td { padding:12px; font-size:13px; border-bottom:1px solid #1c1c1e; }
-        .btn-green { background:#32d74b; color:#000; padding:8px 15px; border-radius:10px; font-size:10px; font-weight:bold; }
-        .btn-red { background:#ff3b30; color:#fff; padding:8px 15px; border-radius:10px; font-size:10px; font-weight:bold; }
-        .btn-kick { background:#3a3a3c; color:#fff; padding:8px 15px; border-radius:10px; font-size:10px; font-weight:bold; }
+        .btn-green { background:#32d74b; color:#000; padding:6px 12px; border-radius:8px; font-size:10px; font-weight:bold; }
+        .btn-red { background:#ff3b30; color:#fff; padding:6px 12px; border-radius:8px; font-size:10px; font-weight:bold; }
+        .btn-edit { background:#5e5ce6; color:#fff; padding:6px 12px; border-radius:8px; font-size:10px; font-weight:bold; }
+        input { background:#2c2c2e; border:1px solid #38383a; color:#fff; padding:4px 8px; border-radius:4px; width:100%; }
     </style>
 </head>
 <body>
     <header class="max-w-7xl mx-auto flex justify-between items-center mb-10">
-        <div>
-            <h1 class="text-4xl font-black italic tracking-tighter">iFipe <span class="text-blue-500">MASTER</span></h1>
-            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-2">Controle Total de Operações</p>
-        </div>
+        <h1 class="text-4xl font-black italic tracking-tighter">iFipe <span class="text-blue-500">MASTER</span></h1>
         <div class="flex gap-4">
             <button id="tab1" onclick="switchTab('clientes')" class="tab-btn tab-active">Clientes</button>
             <button id="tab2" onclick="switchTab('lojistas')" class="tab-btn tab-inactive">Anunciantes</button>
@@ -33,14 +31,14 @@
     <div class="max-w-7xl mx-auto admin-card overflow-x-auto">
         <table id="secClientes" class="w-full">
             <thead>
-                <tr><th>Nome</th><th>CPF</th><th>E-mail</th><th>Senha</th><th>Status</th><th>Ações</th></tr>
+                <tr><th>Nome</th><th>E-mail / CPF</th><th>Senha</th><th>Status</th><th>Ações</th></tr>
             </thead>
             <tbody id="listaClientes"></tbody>
         </table>
 
         <table id="secLojistas" class="w-full hidden">
             <thead>
-                <tr><th>Loja</th><th>WhatsApp</th><th>Senha</th><th>Status Financeiro</th><th>Ação Master</th></tr>
+                <tr><th>Loja</th><th>WhatsApp</th><th>Senha</th><th>Status</th><th>Ações</th></tr>
             </thead>
             <tbody id="listaLojistas"></tbody>
         </table>
@@ -60,15 +58,19 @@
         async function carregarClientes() {
             const { data } = await _s.from('clientes_buscador').select('*').order('criado_em', { ascending: false });
             document.getElementById('listaClientes').innerHTML = data.map(c => `
-                <tr>
-                    <td class="font-bold italic">${c.nome}</td>
-                    <td class="font-mono text-blue-400">${c.cpf}</td>
-                    <td class="text-gray-400 text-xs">${c.email}</td>
-                    <td class="font-mono text-yellow-500">${c.senha}</td>
-                    <td class="${c.aprovado ? 'text-green-500' : 'text-red-500'} font-bold">${c.aprovado ? 'ATIVO' : 'BLOQUEADO'}</td>
-                    <td class="flex gap-2">
-                        <button onclick="statusCli(${c.id}, ${!c.aprovado})" class="${c.aprovado ? 'btn-red' : 'btn-green'}">${c.aprovado ? 'BLOQUEAR' : 'APROVAR'}</button>
-                        <button onclick="kickCli(${c.id})" class="btn-kick">DERRUBAR</button>
+                <tr id="row-cli-${c.id}">
+                    <td><input id="n-${c.id}" value="${c.nome}"></td>
+                    <td>
+                        <input id="e-${c.id}" value="${c.email}" class="mb-1 text-[11px]">
+                        <input id="c-${c.id}" value="${c.cpf}" class="text-[11px] text-blue-400">
+                    </td>
+                    <td><input id="s-${c.id}" value="${c.senha}"></td>
+                    <td class="${c.aprovado ? 'text-green-500' : 'text-red-500'} font-bold text-[10px]">${c.aprovado ? 'ATIVO' : 'PENDENTE'}</td>
+                    <td>
+                        <div class="flex flex-col gap-1">
+                            <button onclick="salvarCli(${c.id})" class="btn-edit text-[9px]">SALVAR</button>
+                            <button onclick="statusCli(${c.id}, ${!c.aprovado})" class="${c.aprovado ? 'btn-red' : 'btn-green'} text-[9px]">${c.aprovado ? 'BLOQUEAR' : 'APROVAR'}</button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -78,21 +80,40 @@
             const { data } = await _s.from('fornecedores').select('*').order('nome');
             document.getElementById('listaLojistas').innerHTML = data.map(l => `
                 <tr>
-                    <td class="font-bold">${l.nome}</td>
-                    <td>${l.whatsapp}</td>
-                    <td class="font-mono text-yellow-500">${l.senha}</td>
-                    <td class="${l.ativo ? 'text-green-500' : 'text-red-500'} font-bold">${l.ativo ? 'EM DIA' : 'INADIMPLENTE'}</td>
+                    <td><input id="ln-${l.id}" value="${l.nome}"></td>
+                    <td><input id="lw-${l.id}" value="${l.whatsapp}"></td>
+                    <td><input id="ls-${l.id}" value="${l.senha}"></td>
+                    <td class="${l.ativo ? 'text-green-500' : 'text-red-500'} font-bold text-[10px]">${l.ativo ? 'PAGO' : 'ATRASADO'}</td>
                     <td>
-                        <button onclick="statusLoj(${l.id}, ${!l.ativo})" class="${l.ativo ? 'btn-red' : 'btn-green'}">
-                            ${l.ativo ? 'SUSPENDER ANÚNCIOS' : 'LIBERAR ANÚNCIOS'}
-                        </button>
+                        <div class="flex flex-col gap-1">
+                            <button onclick="salvarLoj(${l.id})" class="btn-edit text-[9px]">SALVAR</button>
+                            <button onclick="statusLoj(${l.id}, ${!l.ativo})" class="${l.ativo ? 'btn-red' : 'btn-green'} text-[9px]">${l.ativo ? 'SUSPENDER' : 'ATIVAR'}</button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
         }
 
+        async function salvarCli(id) {
+            await _s.from('clientes_buscador').update({ 
+                nome: document.getElementById('n-'+id).value,
+                email: document.getElementById('e-'+id).value,
+                cpf: document.getElementById('c-'+id).value,
+                senha: document.getElementById('s-'+id).value
+            }).eq('id', id);
+            alert("Cliente atualizado!"); carregarClientes();
+        }
+
+        async function salvarLoj(id) {
+            await _s.from('fornecedores').update({ 
+                nome: document.getElementById('ln-'+id).value,
+                whatsapp: document.getElementById('lw-'+id).value,
+                senha: document.getElementById('ls-'+id).value
+            }).eq('id', id);
+            alert("Lojista atualizado!"); carregarLojistas();
+        }
+
         async function statusCli(id, val) { await _s.from('clientes_buscador').update({ aprovado: val }).eq('id', id); carregarClientes(); }
-        async function kickCli(id) { await _s.from('clientes_buscador').update({ last_session_id: null }).eq('id', id); carregarClientes(); }
         async function statusLoj(id, val) { await _s.from('fornecedores').update({ ativo: val }).eq('id', id); carregarLojistas(); }
 
         carregarClientes();
