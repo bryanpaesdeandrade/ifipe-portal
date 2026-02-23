@@ -9,39 +9,32 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; margin: 0; }
-        .ticker-bar { background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 12px; font-size: 10px; font-weight: 800; color: #86868b; display: flex; justify-content: center; gap: 25px; }
-        .ticker-val { color: #32d74b; }
+        .ticker-bar { background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 12px; font-size: 11px; font-weight: 800; color: #86868b; display: flex; justify-content: center; gap: 40px; }
+        .ticker-val { color: #32d74b; font-family: 'Courier New', monospace; letter-spacing: 1px; }
         .price-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 1.8rem; transition: 0.3s; position: relative; }
-        .price-card:hover { border-color: #0071e3; transform: scale(1.02); }
+        .price-card:hover { border-color: #0071e3; transform: translateY(-5px); }
         .top-deal { position: absolute; top: 0; right: 0; background: #32d74b; color: black; font-size: 9px; font-weight: 900; padding: 6px 16px; border-bottom-left-radius: 14px; text-transform: uppercase; }
         .price-value { color: #32d74b; font-size: 32px; font-weight: 800; letter-spacing: -1.5px; }
-        .vendor-tag { font-size: 10px; font-weight: 900; color: #ffffff; background: #38383a; padding: 4px 12px; border-radius: 8px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
-        .trend-up { color: #ff3b30; font-size: 10px; font-weight: bold; }
-        .trend-down { color: #32d74b; font-size: 10px; font-weight: bold; }
+        .vendor-tag { font-size: 10px; font-weight: 900; color: #ffffff; background: #38383a; padding: 5px 12px; border-radius: 8px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
         .btn-whatsapp { background: #25d366; color: white; font-size: 11px; font-weight: 900; padding: 14px; border-radius: 50px; text-transform: uppercase; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
     </style>
 </head>
 <body>
     <div class="ticker-bar uppercase tracking-widest">
-        <span>USD/BRL: <span id="usdVal" class="ticker-val">...</span></span>
-        <span>USDT/BRL: <span id="usdtVal" class="ticker-val">...</span></span>
+        <span><i class="fa-solid fa-landmark mr-2"></i>USD/BRL (Yahoo): <span id="usdVal" class="ticker-val">0,0000</span></span>
+        <span><i class="fa-solid fa-coins mr-2"></i>USDT/BRL (Binance): <span id="usdtVal" class="ticker-val">0,0000</span></span>
     </div>
 
     <div class="max-w-6xl mx-auto p-6">
-        <header class="flex flex-col md:flex-row justify-between items-center my-10 gap-8">
+        <header class="flex flex-col md:flex-row justify-between items-center my-14 gap-8">
             <div>
                 <h1 class="text-6xl font-black italic tracking-tighter">iFipe</h1>
-                <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-3">Histórico e Ranking de Preços</p>
+                <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-3">Preços Inteligentes em Tempo Real</p>
             </div>
-            <div class="flex gap-4">
-                <select id="filtroModelo" onchange="filtrar()" class="bg-[#1c1c1e] border border-[#38383a] rounded-xl p-3 text-[10px] font-bold uppercase"></select>
-            </div>
+            <select id="filtroModelo" onchange="filtrar()" class="bg-[#1c1c1e] border border-[#38383a] rounded-xl p-3 text-[10px] font-bold uppercase cursor-pointer">
+                <option value="">Todos os iPhones</option>
+            </select>
         </header>
-
-        <div id="topBuscados" class="mb-12">
-            <h3 class="text-[10px] font-black uppercase text-blue-500 mb-4 tracking-widest italic">Mais Procurados dos últimos 7 dias</h3>
-            <div id="destaqueGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
-        </div>
 
         <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
     </div>
@@ -49,85 +42,82 @@
     <script>
         const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
-        async function carregarCambio() {
+        // BUSCA CÂMBIO REAL-TIME COM 4 CASAS DECIMAIS
+        async function carregarIndicadores() {
             try {
+                // USD/BRL - Yahoo Finance (via API ExchangeRate)
                 const resUSD = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-                const dUSD = await resUSD.json();
-                document.getElementById('usdVal').innerText = `R$ ${dUSD.rates.BRL.toFixed(2)}`;
+                const dataUSD = await resUSD.json();
+                document.getElementById('usdVal').innerText = dataUSD.rates.BRL.toFixed(4).replace('.', ',');
+
+                // USDT/BRL - Binance Spot API
                 const resUSDT = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
-                const dUSDT = await resUSDT.json();
-                document.getElementById('usdtVal').innerText = `R$ ${parseFloat(dUSDT.price).toFixed(2)}`;
-            } catch (e) {}
+                const dataUSDT = await resUSDT.json();
+                document.getElementById('usdtVal').innerText = parseFloat(dataUSDT.price).toFixed(4).replace('.', ',');
+            } catch (e) { console.error("Erro na busca de indicadores"); }
         }
 
-        async function registrarBusca(produtoId) {
-            await _supabase.rpc('increment_busca', { row_id: produtoId });
+        let ofertasCache = [];
+
+        async function init() {
+            carregarIndicadores();
+            const { data: m } = await _supabase.from('produtos_mestre').select('nome').order('id');
+            const select = document.getElementById('filtroModelo');
+            m?.forEach(item => select.innerHTML += `<option value="${item.nome}">${item.nome}</option>`);
+            buscarOfertas();
         }
 
-        async function buscarDados() {
-            const { data: ofertas } = await _supabase.from('ofertas').select(`
+        async function buscarOfertas() {
+            const { data, error } = await _supabase.from('ofertas').select(`
                 preco,
-                variacao_id,
-                regioes (bandeira, nome),
+                regioes (nome, bandeira),
                 fornecedores (nome, whatsapp),
-                variacoes (id, capacidade, cor, produto_id, produtos_mestre (id, nome, total_buscas))
+                variacoes (capacidade, cor, produtos_mestre (nome))
             `).order('preco', { ascending: true });
 
-            const { data: historico } = await _supabase.from('historico_precos').select('*');
-
-            // Renderizar Top Buscados
-            const tops = [...new Set(ofertas.map(o => o.variacoes.produtos_mestre))].sort((a,b) => b.total_buscas - a.total_buscas).slice(0, 4);
-            document.getElementById('destaqueGrid').innerHTML = tops.map(t => `
-                <div class="bg-[#1c1c1e] p-4 rounded-2xl border border-[#38383a]">
-                    <p class="text-[8px] font-black text-gray-500 uppercase">${t.total_buscas} buscas</p>
-                    <p class="font-bold text-xs">${t.nome}</p>
-                </div>
-            `).join('');
-
-            renderizar(ofertas, historico);
+            if (!error && data) {
+                ofertasCache = data;
+                renderizar(data);
+            }
         }
 
-        function renderizar(lista, hist) {
+        function filtrar() {
+            const val = document.getElementById('filtroModelo').value;
+            renderizar(val ? ofertasCache.filter(o => o.variacoes.produtos_mestre.nome === val) : ofertasCache);
+        }
+
+        function renderizar(lista) {
             const container = document.getElementById('vitrine');
             container.innerHTML = lista.map((o, index) => {
-                // Lógica de Tendência
-                const precosAntigos = hist.filter(h => h.variacao_id === o.variacao_id);
-                let tendencia = '<span class="text-gray-600">--</span>';
-                if(precosAntigos.length > 1) {
-                    const penultimo = precosAntigos[precosAntigos.length - 2].preco;
-                    if (o.preco < penultimo) tendencia = '<span class="trend-down">⬇ Baixou</span>';
-                    else if (o.preco > penultimo) tendencia = '<span class="trend-up">⬆ Subiu</span>';
-                }
-
                 const fone = o.fornecedores.whatsapp ? o.fornecedores.whatsapp.replace(/\D/g, '') : '';
-                const linkWA = `https://wa.me/${fone}?text=Tenho interesse no ${o.variacoes.produtos_mestre.nome}`;
+                const linkWA = `https://wa.me/${fone}?text=Olá! Vi no iFipe o ${o.variacoes.produtos_mestre.nome} por R$ ${o.preco.toLocaleString('pt-BR')}`;
 
                 return `
                 <div class="price-card">
-                    ${index === 0 ? '<div class="top-deal">Melhor Preço</div>' : ''}
-                    <div class="flex justify-between items-center mb-6">
-                        <div class="vendor-tag">${o.regioes.bandeira} ${o.fornecedores.nome}</div>
-                        ${tendencia}
+                    ${index === 0 ? '<div class="top-deal">Menor Preço</div>' : ''}
+                    <div class="flex justify-between items-center mb-8">
+                        <div class="vendor-tag">
+                            <span>${o.regioes.bandeira}</span>
+                            <span>${o.fornecedores.nome}</span>
+                        </div>
                     </div>
-                    <h2 class="text-xl font-bold">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-gray-500 text-[10px] mb-8 font-bold uppercase">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
-                    <span class="block text-[10px] text-gray-600 font-black uppercase mb-1">À Vista</span>
-                    <span class="price-value">R$ ${o.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                    <a href="${linkWA}" target="_blank" onclick="registrarBusca(${o.variacoes.produtos_mestre.id})" class="btn-whatsapp mt-6">
-                        <i class="fa-brands fa-whatsapp text-lg"></i> Comprar
-                    </a>
+                    <h2 class="text-2xl font-bold tracking-tight">${o.variacoes.produtos_mestre.nome}</h2>
+                    <p class="text-gray-500 text-[11px] mb-10 uppercase font-bold tracking-tighter">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
+                    <div class="flex flex-col gap-6">
+                        <div>
+                            <span class="block text-[10px] text-gray-600 font-black uppercase mb-1">Preço iFipe à Vista</span>
+                            <span class="price-value">R$ ${o.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <a href="${linkWA}" target="_blank" class="btn-whatsapp">
+                            <i class="fa-brands fa-whatsapp text-lg"></i> Comprar pelo WhatsApp
+                        </a>
+                    </div>
                 </div>
-                `;
-            }).join('');
+            `}).join('');
         }
 
         init();
-        async function init() {
-            carregarCambio();
-            const { data } = await _supabase.from('produtos_mestre').select('nome');
-            document.getElementById('filtroModelo').innerHTML = '<option value="">Todos iPhones</option>' + data.map(m => `<option value="${m.nome}">${m.nome}</option>`);
-            buscarDados();
-        }
+        setInterval(carregarIndicadores, 30000); // Atualiza os dois indicadores a cada 30 segundos
     </script>
 </body>
 </html>
