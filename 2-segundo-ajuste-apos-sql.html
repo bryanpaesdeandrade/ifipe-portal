@@ -10,6 +10,7 @@
         body { background-color: #000; color: #fff; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 28px; padding: 3rem; width: 95%; max-width: 550px; }
         .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 14px; padding: 18px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 16px; }
+        .apple-input:focus { border-color: #0071e3; }
         .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 20px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 14px; transition: 0.3s; }
         .apple-button:hover { background: #0071e3; color: #fff; }
         label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 900; margin-top: 1rem; }
@@ -41,13 +42,13 @@
                 <div>
                     <label>Memória</label>
                     <select id="capacidade" class="apple-input" required disabled onchange="resetarEFiltarCores()">
-                        <option value="">Aguardando...</option>
+                        <option value="">Escolha o Modelo</option>
                     </select>
                 </div>
                 <div>
                     <label>Cor</label>
                     <select id="cor" class="apple-input" required disabled>
-                        <option value="">Aguardando...</option>
+                        <option value="">Escolha a Memória</option>
                     </select>
                 </div>
             </div>
@@ -87,7 +88,7 @@
             const { data: v } = await _s.from('variacoes').select('*');
             gradeVariacoes = v;
 
-            document.getElementById('produto_id').innerHTML = '<option value="">Escolha o Modelo</option>' + m.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('produto_id').innerHTML = '<option value="">Selecione o Modelo</option>' + m.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('regiao_id').innerHTML = r.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
         }
 
@@ -96,9 +97,8 @@
             const selCap = document.getElementById('capacidade');
             const selCor = document.getElementById('cor');
 
-            // Limpa tudo para não misturar
-            selCap.innerHTML = '<option value="">Escolha</option>';
-            selCor.innerHTML = '<option value="">Aguardando...</option>';
+            selCap.innerHTML = '<option value="">Escolha a Memória</option>';
+            selCor.innerHTML = '<option value="">Escolha a Memória</option>';
             selCor.disabled = true;
 
             if(modId) {
@@ -114,7 +114,7 @@
             const cap = document.getElementById('capacidade').value;
             const selCor = document.getElementById('cor');
 
-            selCor.innerHTML = '<option value="">Escolha</option>';
+            selCor.innerHTML = '<option value="">Escolha a Cor</option>';
 
             if(cap) {
                 const filtradas = gradeVariacoes.filter(x => x.produto_id == modId && x.capacidade == cap);
@@ -130,21 +130,39 @@
             const cap = document.getElementById('capacidade').value;
             const cor = document.getElementById('cor').value;
             
-            const { data: v } = await _s.from('variacoes').select('id').eq('produto_id', modId).eq('capacidade', cap).eq('cor', cor).maybeSingle();
-            const preco = parseFloat(document.getElementById('preco').value.replace(/\./g, '').replace(',', '.'));
+            status.innerText = "⏳ PUBLICANDO...";
+
+            // BUSCA O ID DA VARIAÇÃO
+            const { data: v, error: vError } = await _s.from('variacoes')
+                .select('id')
+                .eq('produto_id', modId)
+                .eq('capacidade', cap)
+                .eq('cor', cor)
+                .maybeSingle();
+
+            if (!v) {
+                status.innerText = "❌ ERRO: VARIAÇÃO NÃO ENCONTRADA.";
+                status.style.color = "#ff3b30";
+                return;
+            }
+
+            const precoLimpo = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
 
             const { error } = await _s.from('ofertas').insert([{
                 fornecedor_id: loja.id,
                 variacao_id: v.id,
                 regiao_id: document.getElementById('regiao_id').value,
-                preco: preco
+                preco: parseFloat(precoLimpo)
             }]);
 
             if (!error) { 
                 status.innerText = "🚀 PUBLICADO COM SUCESSO!"; 
                 status.style.color = "#32d74b"; 
                 document.getElementById('preco').value = ""; 
-            } else { status.innerText = "ERRO AO PUBLICAR!"; status.style.color = "#ff3b30"; }
+            } else { 
+                status.innerText = "ERRO AO PUBLICAR NO BANCO!"; 
+                status.style.color = "#ff3b30"; 
+            }
         };
     </script>
 </body>
