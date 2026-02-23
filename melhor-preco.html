@@ -10,7 +10,7 @@
     <style>
         body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; margin: 0; }
         .ticker-bar { background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 12px; font-size: 11px; font-weight: 800; color: #86868b; display: flex; justify-content: center; gap: 40px; position: sticky; top: 0; z-index: 50; }
-        .ticker-val { color: #32d74b; font-family: 'Courier New', monospace; letter-spacing: 1px; transition: 0.3s; }
+        .ticker-val { color: #32d74b; font-family: 'Courier New', monospace; letter-spacing: 1px; }
         .price-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 1.8rem; transition: 0.3s; position: relative; }
         .price-card:hover { border-color: #0071e3; transform: translateY(-5px); }
         .top-deal { position: absolute; top: 0; right: 0; background: #32d74b; color: black; font-size: 9px; font-weight: 900; padding: 6px 16px; border-bottom-left-radius: 14px; text-transform: uppercase; }
@@ -21,7 +21,7 @@
 </head>
 <body>
     <div class="ticker-bar uppercase tracking-widest">
-        <span><i class="fa-solid fa-landmark mr-2"></i>USD/BRL (YAHOO): <span id="usdVal" class="ticker-val">0,0000</span></span>
+        <span><i class="fa-solid fa-chart-line mr-2"></i>USD/BRL (YAHOO): <span id="usdVal" class="ticker-val">0,0000</span></span>
         <span><i class="fa-solid fa-coins mr-2"></i>USDT/BRL (BINANCE): <span id="usdtVal" class="ticker-val">0,0000</span></span>
     </div>
 
@@ -42,28 +42,30 @@
     <script>
         const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
-        // BUSCA CÂMBIO ULTRA-RÁPIDO (A CADA 5 SEGUNDOS)
+        // BUSCA CÂMBIO ULTRA-RÁPIDO (FREQUÊNCIA DE 5 SEGUNDOS)
         async function carregarIndicadores() {
             try {
-                // USD/BRL - Yahoo Finance Estilo (API ExchangeRate)
-                const resUSD = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                // USD/BRL - Busca via AwesomeAPI (Referência Yahoo/Comercial Realtime)
+                const resUSD = await fetch('https://economia.awesomeapi.com.br/last/USD-BRL');
                 const dataUSD = await resUSD.json();
-                document.getElementById('usdVal').innerText = dataUSD.rates.BRL.toFixed(4).replace('.', ',');
+                if(dataUSD.USDBRL) {
+                    document.getElementById('usdVal').innerText = parseFloat(dataUSD.USDBRL.bid).toFixed(4).replace('.', ',');
+                }
 
                 // USDT/BRL - Binance Spot API Direta
                 const resUSDT = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
                 const dataUSDT = await resUSDT.json();
                 document.getElementById('usdtVal').innerText = parseFloat(dataUSDT.price).toFixed(4).replace('.', ',');
             } catch (e) { 
-                console.error("Erro na busca de indicadores realtime"); 
+                console.error("Erro na busca de indicadores"); 
             }
         }
 
         let ofertasCache = [];
 
         async function init() {
-            carregarIndicadores(); // Primeira carga
-            setInterval(carregarIndicadores, 5000); // Atualização a cada 5 segundos
+            carregarIndicadores(); 
+            setInterval(carregarIndicadores, 5000); // Atualiza a cada 5 segundos
             
             const { data: m } = await _supabase.from('produtos_mestre').select('nome').order('id');
             const select = document.getElementById('filtroModelo');
