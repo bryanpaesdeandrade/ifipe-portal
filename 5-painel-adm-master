@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iFipe - Admin Master Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background-color: #0b0b0c; color: #ffffff; font-family: -apple-system, sans-serif; }
+        .admin-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 20px; padding: 1.5rem; }
+        .tab-btn { padding: 10px 20px; border-radius: 12px; font-size: 12px; font-weight: 900; text-transform: uppercase; transition: 0.3s; }
+        .tab-active { background: #0071e3; color: white; }
+        .tab-inactive { background: #2c2c2e; color: #86868b; }
+        th { text-align: left; font-size: 10px; color: #86868b; text-transform: uppercase; padding: 12px; border-bottom: 1px solid #38383a; }
+        td { padding: 12px; font-size: 13px; border-bottom: 1px solid #1c1c1e; }
+        .status-active { color: #32d74b; font-weight: bold; }
+        .btn-danger { background: #ff3b30; color: white; padding: 5px 10px; border-radius: 8px; font-size: 10px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+
+    <header class="max-w-6xl mx-auto flex justify-between items-center mb-10">
+        <div>
+            <h1 class="text-3xl font-black italic tracking-tighter italic">iFipe <span class="text-blue-500">ADMIN</span></h1>
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Central de Comando iFipe Precision</p>
+        </div>
+        <button onclick="location.reload()" class="bg-white text-black px-6 py-2 rounded-full font-black text-xs uppercase">Atualizar Painel</button>
+    </header>
+
+    <div class="max-w-6xl mx-auto">
+        <div class="flex flex-wrap gap-4 mb-8">
+            <button id="btnLojistas" onclick="switchTab('lojistas')" class="tab-btn tab-active">Lojistas</button>
+            <button id="btnClientes" onclick="switchTab('clientes')" class="tab-btn tab-inactive">Buscadores</button>
+            <button id="btnOfertas" onclick="switchTab('ofertas')" class="tab-btn tab-inactive">Ofertas</button>
+        </div>
+
+        <div id="secLojistas" class="admin-card overflow-x-auto">
+            <table class="w-full">
+                <thead><tr><th>ID</th><th>Loja</th><th>WhatsApp</th><th>Ações</th></tr></thead>
+                <tbody id="listaLojistas"></tbody>
+            </table>
+        </div>
+
+        <div id="secClientes" class="admin-card hidden overflow-x-auto">
+            <table class="w-full">
+                <thead><tr><th>Nome</th><th>E-mail</th><th>Status</th><th>Ações</th></tr></thead>
+                <tbody id="listaClientes"></tbody>
+            </table>
+        </div>
+
+        <div id="secOfertas" class="admin-card hidden overflow-x-auto">
+            <table class="w-full">
+                <thead><tr><th>Aparelho</th><th>Lojista</th><th>Preço</th><th>Ações</th></tr></thead>
+                <tbody id="listaOfertas"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+
+        function switchTab(tab) {
+            document.querySelectorAll('.admin-card').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => { el.classList.remove('tab-active'); el.classList.add('tab-inactive'); });
+            if(tab === 'lojistas') { document.getElementById('secLojistas').classList.remove('hidden'); document.getElementById('btnLojistas').className = 'tab-btn tab-active'; loadLojistas(); }
+            if(tab === 'clientes') { document.getElementById('secClientes').classList.remove('hidden'); document.getElementById('btnClientes').className = 'tab-btn tab-active'; loadClientes(); }
+            if(tab === 'ofertas') { document.getElementById('secOfertas').classList.remove('hidden'); document.getElementById('btnOfertas').className = 'tab-btn tab-active'; loadOfertas(); }
+        }
+
+        async function loadLojistas() {
+            const { data } = await _supabase.from('fornecedores').select('*').order('id');
+            document.getElementById('listaLojistas').innerHTML = data.map(l => `<tr><td>#${l.id}</td><td class="font-bold">${l.nome}</td><td>${l.whatsapp}</td><td><button class="btn-danger">Bloquear</button></td></tr>`).join('');
+        }
+
+        async function loadClientes() {
+            const { data } = await _supabase.from('clientes_buscador').select('*').order('criado_em', {ascending: false});
+            document.getElementById('listaClientes').innerHTML = data.map(c => `<tr><td class="font-bold">${c.nome}</td><td>${c.email}</td><td class="${c.last_session_id ? 'status-active' : ''}">${c.last_session_id ? 'ON' : 'OFF'}</td><td><button onclick="resetarSessao(${c.id})" class="btn-danger">Derrubar</button></td></tr>`).join('');
+        }
+
+        async function loadOfertas() {
+            const { data } = await _supabase.from('ofertas').select(`id, preco, fornecedores(nome), variacoes(produtos_mestre(nome))`).order('criado_em', {ascending: false});
+            document.getElementById('listaOfertas').innerHTML = data.map(o => `<tr><td class="font-bold">${o.variacoes.produtos_mestre.nome}</td><td>${o.fornecedores.nome}</td><td class="text-green-500 font-bold">R$ ${o.preco}</td><td><button onclick="excluirOferta(${o.id})" class="btn-danger">Excluir</button></td></tr>`).join('');
+        }
+
+        async function resetarSessao(id) {
+            await _supabase.from('clientes_buscador').update({ last_session_id: null }).eq('id', id);
+            loadClientes();
+        }
+
+        async function excluirOferta(id) {
+            await _supabase.from('ofertas').delete().eq('id', id);
+            loadOfertas();
+        }
+
+        loadLojistas();
+    </script>
+</body>
+</html>
