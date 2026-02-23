@@ -31,7 +31,7 @@
             <input type="password" id="loginPass" class="apple-input" placeholder="••••••••">
         </div>
         
-        <button onclick="fazerLogin()" class="apple-button">Acessar Painel</button>
+        <button onclick="fazerLogin()" class="apple-button">Acessar Sistema</button>
         <p id="loginError" class="text-red-500 text-[10px] mt-4 font-bold uppercase tracking-widest"></p>
     </div>
 
@@ -42,33 +42,33 @@
         </div>
 
         <form id="priceForm">
-            <label>Selecione o iPhone</label>
+            <label>Modelo do Aparelho</label>
             <select id="produto_id" class="apple-input" required>
                 <option value="">Carregando modelos...</option>
             </select>
 
-            <label>Variação Disponível</label>
+            <label>Grade Disponível</label>
             <select id="variacao_id" class="apple-input" required disabled>
                 <option value="">Aguardando modelo...</option>
             </select>
 
-            <label>Região / Origem</label>
+            <label>Origem / Região</label>
             <select id="regiao_id" class="apple-input" required></select>
 
-            <label>Preço de Venda (R$)</label>
-            <input type="number" id="preco" class="apple-input" placeholder="Ex: 7500.00" step="0.01" min="1" required>
+            <label>Valor à Vista (R$)</label>
+            <input type="number" id="preco" class="apple-input" placeholder="Ex: 7490.00" step="0.01" min="1" required>
 
-            <button type="submit" class="apple-button">Publicar Preço</button>
+            <button type="submit" class="apple-button">Publicar Oferta</button>
         </form>
         <p id="status" class="mt-6 text-center text-[10px] font-black uppercase tracking-widest"></p>
     </div>
 
     <script>
-        // Conexão direta com o Supabase
+        // Configuração Supabase
         const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let fornecedorLogado = null;
 
-        // Função de Login que aceita Texto ou ID
+        // Login flexível (Aceita Nome ou ID)
         async function fazerLogin() {
             const login = document.getElementById('loginId').value;
             const pass = document.getElementById('loginPass').value;
@@ -90,11 +90,11 @@
                 document.getElementById('welcomeMsg').innerText = "Loja: " + data.nome;
                 carregarBases();
             } else {
-                errorEl.innerText = "Dados incorretos. Verifique Nome/ID e Senha.";
+                errorEl.innerText = "Acesso Negado: Verifique seus dados.";
             }
         }
 
-        // Carrega dados sincronizados do SQL Master
+        // Sincronização com o Banco Master
         async function carregarBases() {
             const { data: m } = await _supabase.from('produtos_mestre').select('id, nome').order('id');
             const { data: r } = await _supabase.from('regioes').select('id, nome, bandeira').order('id');
@@ -104,7 +104,7 @@
             const rS = document.getElementById('regiao_id');
             const vS = document.getElementById('variacao_id');
 
-            pS.innerHTML = '<option value="">Selecione o aparelho</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
+            pS.innerHTML = '<option value="">Escolha o iPhone</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
             rS.innerHTML = r.map(i => `<option value="${i.id}">${i.bandeira} ${i.nome}</option>`).join('');
             
             pS.onchange = (e) => {
@@ -114,7 +114,7 @@
             };
         }
 
-        // Publica a oferta vinculada ao lojista
+        // Publicação de Oferta
         document.getElementById('priceForm').onsubmit = async (e) => {
             e.preventDefault();
             const status = document.getElementById('status');
@@ -129,10 +129,10 @@
             }]);
 
             if (error) {
-                status.innerText = "Erro ao publicar!";
+                status.innerText = "Falha ao publicar!";
                 status.style.color = "#ff3b30";
             } else {
-                status.innerText = "Sucesso: Preço Publicado! 🚀";
+                status.innerText = "Sucesso: Preço no Ranking! 🚀";
                 status.style.color = "#32d74b";
                 e.target.reset();
             }
