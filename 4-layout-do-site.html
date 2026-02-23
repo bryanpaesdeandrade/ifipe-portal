@@ -34,7 +34,7 @@
 
     <div class="max-w-6xl mx-auto p-6">
         <header class="my-14 text-center">
-            <h1 class="text-6xl font-black italic tracking-tighter">iFipe</h1>
+            <h1 class="text-6xl font-black italic tracking-tighter italic">iFipe</h1>
             <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.4em] mt-3">Ranking Realtime Precision</p>
         </header>
 
@@ -59,7 +59,7 @@
             const email = localStorage.getItem('iFipe_User');
 
             if (!token || !email) {
-                window.location.href = 'acesso-cliente.html';
+                window.location.href = '3-pagina-login.html';
                 return;
             }
 
@@ -70,7 +70,7 @@
                 .maybeSingle();
 
             if (!data || data.last_session_id !== token) {
-                alert("Sessão expirada. Sua conta foi acessada em outro dispositivo.");
+                alert("Sessão expirada ou acesso em outro dispositivo!");
                 logout();
             } else {
                 document.getElementById('mainContent').classList.remove('hidden');
@@ -80,7 +80,7 @@
 
         function logout() {
             localStorage.clear();
-            window.location.href = 'acesso-cliente.html';
+            window.location.href = '3-pagina-login.html';
         }
 
         async function carregarIndicador() {
@@ -99,13 +99,14 @@
                 }
                 valEl.innerText = currentPrice.toFixed(4).replace('.', ',');
                 lastPrice = currentPrice;
-            } catch (e) { console.error("Erro Binance API"); }
+            } catch (e) { console.error("Erro API Binance"); }
         }
 
         async function init() {
             carregarIndicador();
             setInterval(carregarIndicador, 5000);
             
+            // Carrega modelos para o filtro
             const { data: modelos } = await _supabase.from('produtos_mestre').select('nome').order('id');
             const select = document.getElementById('filtroModelo');
             if (modelos) modelos.forEach(m => select.innerHTML += `<option value="${m.nome}">${m.nome}</option>`);
@@ -133,14 +134,12 @@
         function renderizar(lista) {
             const container = document.getElementById('vitrine');
             if (!lista.length) {
-                container.innerHTML = '<p class="col-span-full text-center text-gray-500 uppercase font-black py-20 tracking-widest">Nenhuma oferta publicada no momento.</p>';
+                container.innerHTML = '<p class="col-span-full text-center text-gray-500 uppercase font-black py-20 tracking-widest">Nenhuma oferta ativa.</p>';
                 return;
             }
             
             container.innerHTML = lista.map((o, index) => {
                 const fone = o.fornecedores?.whatsapp ? o.fornecedores.whatsapp.replace(/\D/g, '') : '';
-                const linkWA = `https://wa.me/${fone}?text=Vi no iFipe o ${o.variacoes.produtos_mestre.nome} por R$ ${o.preco.toLocaleString('pt-BR')}`;
-                
                 return `
                 <div class="price-card">
                     ${index === 0 ? '<div class="top-deal">Menor Preço</div>' : ''}
@@ -157,7 +156,7 @@
                         <span class="block text-[9px] text-gray-600 font-black uppercase mb-1">À Vista iFipe</span>
                         <span class="price-value">R$ ${o.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                     </div>
-                    <a href="${linkWA}" target="_blank" class="btn-whatsapp">WhatsApp do Lojista</a>
+                    <a href="https://wa.me/${fone}?text=Vi no iFipe o ${o.variacoes.produtos_mestre.nome}" target="_blank" class="btn-whatsapp">WhatsApp do Lojista</a>
                 </div>`;
             }).join('');
         }
