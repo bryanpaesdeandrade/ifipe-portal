@@ -20,22 +20,16 @@
 <body>
 
     <div id="loginSection" class="apple-card text-center">
-        <h1 class="text-5xl font-black italic mb-2 tracking-tighter italic">iFipe</h1>
-        <p class="text-[10px] font-bold uppercase text-gray-400 mb-12 tracking-[0.4em]">Gestão do Anunciante</p>
-        <div class="text-left">
-            <label>Sua Loja (Nome)</label>
-            <input type="text" id="loginId" class="apple-input" placeholder="Ex: JOGADOR">
-            <label>Senha de Acesso</label>
-            <input type="password" id="loginPass" class="apple-input" placeholder="••••••••">
-        </div>
+        <h1 class="text-5xl font-black italic mb-8 italic">iFipe</h1>
+        <input type="text" id="loginId" class="apple-input" placeholder="Nome da Loja">
+        <input type="password" id="loginPass" class="apple-input" placeholder="Senha">
         <button onclick="fazerLogin()" class="apple-button">Acessar Painel</button>
-        <p id="loginError" class="text-red-500 text-[10px] mt-6 font-bold uppercase tracking-widest"></p>
     </div>
 
     <div id="formSection" class="apple-card hidden">
-        <div class="flex justify-between items-center mb-10">
+        <div class="flex justify-between items-center mb-8">
             <h2 class="text-xl font-black italic">Novo Anúncio</h2>
-            <button onclick="location.reload()" class="text-[10px] text-gray-500 underline font-black uppercase hover:text-white transition">Sair</button>
+            <button onclick="location.reload()" class="text-[10px] text-gray-500 underline uppercase">Sair</button>
         </div>
 
         <form id="priceForm">
@@ -59,13 +53,19 @@
                 </div>
             </div>
 
-            <label>Origem / Região</label>
-            <select id="regiao_id" class="apple-input" required>
-                <option value="">Carregando regiões...</option>
-            </select>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label>Região / Origem</label>
+                    <select id="regiao_id" class="apple-input" required></select>
+                </div>
+                <div>
+                    <label>Qtd em Estoque</label>
+                    <input type="number" id="quantidade" class="apple-input" value="1" min="1" required>
+                </div>
+            </div>
 
             <label>Valor de Venda (R$)</label>
-            <input type="text" id="preco" class="apple-input" placeholder="Ex: 7.990,00" required>
+            <input type="text" id="preco" class="apple-input" placeholder="Ex: 7.500,00" required>
 
             <button type="submit" class="apple-button">Publicar no Ranking</button>
         </form>
@@ -80,16 +80,14 @@
         async function fazerLogin() {
             const user = document.getElementById('loginId').value;
             const pass = document.getElementById('loginPass').value;
-            const { data, error } = await _s.from('fornecedores').select('*').eq('nome', user).eq('senha', pass).maybeSingle();
+            const { data } = await _s.from('fornecedores').select('*').eq('nome', user).eq('senha', pass).maybeSingle();
             
             if (data && data.ativo) {
                 loja = data;
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('formSection').classList.remove('hidden');
                 init();
-            } else { 
-                document.getElementById('loginError').innerText = "ACESSO NEGADO OU FINANCEIRO PENDENTE."; 
-            }
+            } else { alert("Acesso Negado ou Financeiro Pendente."); }
         }
 
         async function init() {
@@ -98,39 +96,36 @@
                 _s.from('regioes').select('*').order('id'),
                 _s.from('variacoes').select('*')
             ]);
-
             gradeVariacoes = variacoes.data || [];
-
-            if (modelos.data) {
-                document.getElementById('produto_id').innerHTML = '<option value="">Selecione o Modelo</option>' + 
-                    modelos.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            }
-
-            if (regioes.data) {
-                document.getElementById('regiao_id').innerHTML = regioes.data.map(x => 
-                    `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
-            }
+            document.getElementById('produto_id').innerHTML = '<option value="">Escolha o Modelo</option>' + modelos.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('regiao_id').innerHTML = regioes.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
         }
 
         function carregarMemorias() {
             const modId = document.getElementById('produto_id').value;
-            const filtradas = gradeVariacoes.filter(x => x.produto_id == modId);
-            const caps = [...new Set(filtradas.map(x => x.capacidade))].sort((a,b) => parseInt(a) - parseInt(b));
-
             const selCap = document.getElementById('capacidade');
-            selCap.innerHTML = '<option value="">Escolha</option>' + caps.map(x => `<option value="${x}">${x}</option>`).join('');
-            selCap.disabled = false;
-            document.getElementById('cor').disabled = true;
+            const selCor = document.getElementById('cor');
+            selCap.innerHTML = '<option value="">Escolha</option>';
+            selCor.innerHTML = '<option value="">Escolha a Memória</option>';
+            selCor.disabled = true;
+            if(modId) {
+                const filtradas = gradeVariacoes.filter(x => x.produto_id == modId);
+                const caps = [...new Set(filtradas.map(x => x.capacidade))].sort((a,b) => parseInt(a) - parseInt(b));
+                selCap.innerHTML += caps.map(x => `<option value="${x}">${x}</option>`).join('');
+                selCap.disabled = false;
+            }
         }
 
         function carregarCores() {
             const modId = document.getElementById('produto_id').value;
             const cap = document.getElementById('capacidade').value;
-            const filtradas = gradeVariacoes.filter(x => x.produto_id == modId && x.capacidade == cap);
-
             const selCor = document.getElementById('cor');
-            selCor.innerHTML = filtradas.map(x => `<option value="${x.cor}">${x.cor}</option>`).join('');
-            selCor.disabled = false;
+            selCor.innerHTML = '<option value="">Escolha</option>';
+            if(cap) {
+                const filtradas = gradeVariacoes.filter(x => x.produto_id == modId && x.capacidade == cap);
+                selCor.innerHTML += filtradas.map(x => `<option value="${x.cor}">${x.cor}</option>`).join('');
+                selCor.disabled = false;
+            }
         }
 
         document.getElementById('priceForm').onsubmit = async (e) => {
@@ -139,15 +134,19 @@
             const modId = document.getElementById('produto_id').value;
             const cap = document.getElementById('capacidade').value;
             const cor = document.getElementById('cor').value;
+            const qtd = document.getElementById('quantidade').value;
             
+            status.innerText = "⏳ PUBLICANDO...";
+
             const { data: v } = await _s.from('variacoes').select('id').eq('produto_id', modId).eq('capacidade', cap).eq('cor', cor).maybeSingle();
-            const preco = parseFloat(document.getElementById('preco').value.replace(/\./g, '').replace(',', '.'));
+            const precoLimpo = parseFloat(document.getElementById('preco').value.replace(/\./g, '').replace(',', '.'));
 
             const { error } = await _s.from('ofertas').insert([{
                 fornecedor_id: loja.id,
                 variacao_id: v.id,
                 regiao_id: document.getElementById('regiao_id').value,
-                preco: preco
+                preco: precoLimpo,
+                quantidade: parseInt(qtd)
             }]);
 
             if (!error) { 
@@ -155,10 +154,7 @@
                 status.style.color = "#32d74b"; 
                 document.getElementById('preco').value = ""; 
                 setTimeout(() => status.innerText = "", 3000);
-            } else { 
-                status.innerText = "ERRO AO PUBLICAR!"; 
-                status.style.color = "#ff3b30"; 
-            }
+            } else { status.innerText = "ERRO AO PUBLICAR!"; status.style.color = "#ff3b30"; }
         };
     </script>
 </body>
