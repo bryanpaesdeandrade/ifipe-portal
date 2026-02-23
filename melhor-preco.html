@@ -23,13 +23,13 @@
         .hidden { display: none !important; }
     </style>
 </head>
-<body id="appBody" class="hidden">
+<body id="mainContent" class="hidden">
 
     <div class="ticker-bar">
         <span class="mr-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">USDT/BRL BINANCE:</span>
         <span class="ticker-val">R$ <span id="usdtVal">0,0000</span></span>
         <span id="trendIcon" class="trend-icon"><i class="fa-solid fa-minus trend-stable"></i></span>
-        <button onclick="sair()" class="ml-auto text-[10px] text-gray-500 font-black uppercase underline">Sair</button>
+        <button onclick="logout()" class="ml-auto text-[10px] text-gray-500 font-black uppercase underline">Sair do Buscador</button>
     </div>
 
     <div class="max-w-6xl mx-auto p-6">
@@ -53,25 +53,35 @@
         let lastPrice = 0;
         let ofertasCache = [];
 
-        // VALIDAÇÃO DE LOGIN ÚNICO
+        // SISTEMA DE SEGURANÇA: LOGIN ÚNICO
         async function validarAcesso() {
             const token = localStorage.getItem('iFipe_Token');
             const email = localStorage.getItem('iFipe_User');
 
-            if (!token || !email) { window.location.href = 'acesso-cliente.html'; return; }
+            if (!token || !email) {
+                window.location.href = 'acesso-cliente.html';
+                return;
+            }
 
-            const { data } = await _supabase.from('clientes_buscador').select('last_session_id').eq('email', email).maybeSingle();
+            const { data } = await _supabase
+                .from('clientes_buscador')
+                .select('last_session_id')
+                .eq('email', email)
+                .maybeSingle();
 
             if (!data || data.last_session_id !== token) {
-                alert("Sessão expirada ou acesso em outro dispositivo!");
-                sair();
+                alert("Sessão expirada. Sua conta foi acessada em outro dispositivo.");
+                logout();
             } else {
-                document.getElementById('appBody').classList.remove('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
                 init();
             }
         }
 
-        function sair() { localStorage.clear(); window.location.href = 'acesso-cliente.html'; }
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'acesso-cliente.html';
+        }
 
         async function carregarIndicador() {
             try {
@@ -89,23 +99,30 @@
                 }
                 valEl.innerText = currentPrice.toFixed(4).replace('.', ',');
                 lastPrice = currentPrice;
-            } catch (e) { console.error("Erro Binance"); }
+            } catch (e) { console.error("Erro Binance API"); }
         }
 
         async function init() {
             carregarIndicador();
             setInterval(carregarIndicador, 5000);
             
-            const { data: m } = await _supabase.from('produtos_mestre').select('nome').order('id');
+            const { data: modelos } = await _supabase.from('produtos_mestre').select('nome').order('id');
             const select = document.getElementById('filtroModelo');
-            if (m) m.forEach(item => select.innerHTML += `<option value="${item.nome}">${item.nome}</option>`);
+            if (modelos) modelos.forEach(m => select.innerHTML += `<option value="${m.nome}">${m.nome}</option>`);
             
             buscarOfertas();
         }
 
         async function buscarOfertas() {
-            const { data } = await _supabase.from('ofertas').select(`preco, regioes(bandeira, nome), fornecedores(nome, whatsapp), variacoes(capacidade, cor, produtos_mestre(nome))`).order('preco', { ascending: true });
-            if (data) { ofertasCache = data; renderizar(data); }
+            const { data } = await _supabase
+                .from('ofertas')
+                .select(`preco, regioes(bandeira, nome), fornecedores(nome, whatsapp), variacoes(capacidade, cor, produtos_mestre(nome))`)
+                .order('preco', { ascending: true });
+            
+            if (data) {
+                ofertasCache = data;
+                renderizar(data);
+            }
         }
 
         function filtrar() {
@@ -115,23 +132,32 @@
 
         function renderizar(lista) {
             const container = document.getElementById('vitrine');
-            if (!lista.length) { container.innerHTML = '<p class="col-span-full text-center text-gray-500 uppercase font-black">Nenhuma oferta ativa.</p>'; return; }
+            if (!lista.length) {
+                container.innerHTML = '<p class="col-span-full text-center text-gray-500 uppercase font-black py-20 tracking-widest">Nenhuma oferta publicada no momento.</p>';
+                return;
+            }
             
             container.innerHTML = lista.map((o, index) => {
                 const fone = o.fornecedores?.whatsapp ? o.fornecedores.whatsapp.replace(/\D/g, '') : '';
+                const linkWA = `https://wa.me/${fone}?text=Vi no iFipe o ${o.variacoes.produtos_mestre.nome} por R$ ${o.preco.toLocaleString('pt-BR')}`;
+                
                 return `
                 <div class="price-card">
                     ${index === 0 ? '<div class="top-deal">Menor Preço</div>' : ''}
                     <div class="flex justify-between items-center mb-6">
-                        <span class="bg-[#38383a] px-3 py-1 rounded text-[9px] font-black uppercase tracking-widest">${o.regioes.bandeira} ${o.fornecedores.nome}</span>
+                        <span class="bg-[#38383a] px-3 py-1 rounded text-[9px] font-black uppercase tracking-widest">
+                            ${o.regioes?.bandeira || ''} ${o.fornecedores?.nome || 'Lojista'}
+                        </span>
                     </div>
                     <h2 class="text-xl font-bold italic">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-gray-500 text-[10px] mb-8 font-black uppercase">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
+                    <p class="text-gray-500 text-[10px] mb-8 font-black uppercase tracking-tighter">
+                        ${o.variacoes.capacidade} • ${o.variacoes.cor}
+                    </p>
                     <div class="mb-6">
                         <span class="block text-[9px] text-gray-600 font-black uppercase mb-1">À Vista iFipe</span>
                         <span class="price-value">R$ ${o.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                     </div>
-                    <a href="https://wa.me/${fone}?text=Vi no iFipe: ${o.variacoes.produtos_mestre.nome}" target="_blank" class="btn-whatsapp">WhatsApp</a>
+                    <a href="${linkWA}" target="_blank" class="btn-whatsapp">WhatsApp do Lojista</a>
                 </div>`;
             }).join('');
         }
