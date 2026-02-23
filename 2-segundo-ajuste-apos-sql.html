@@ -71,8 +71,8 @@
                         <div>
                             <label>Condição do Aparelho</label>
                             <select id="condicao" class="apple-input" required>
-                                <option value="Novo">Novo (Lacrado / Sem Uso)</option>
-                                <option value="Seminovo">Seminovo (Usado / Vitrine)</option>
+                                <option value="Novo">Novo</option>
+                                <option value="Seminovo">Seminovo</option>
                             </select>
                         </div>
                     </div>
@@ -129,10 +129,16 @@
 
     <div id="modalPerfil" class="hidden fixed inset-0 modal-bg z-50 flex justify-center items-center p-4">
         <div class="bg-[#1c1c1e] p-8 rounded-3xl border border-[#38383a] w-full max-w-sm">
-            <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-black italic">Dados da Loja</h2><button onclick="fecharPerfil()" class="text-gray-500 text-xl font-bold">&times;</button></div>
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nome (Login)</label><input type="text" id="editNome" class="apple-input">
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">WhatsApp</label><input type="text" id="editWhats" class="apple-input">
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nova Senha</label><input type="password" id="editSenha" class="apple-input" placeholder="••••••••">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-black italic">Dados da Loja</h2>
+                <button onclick="fecharPerfil()" class="text-gray-500 text-xl font-bold">&times;</button>
+            </div>
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nome (Login)</label>
+            <input type="text" id="editNome" class="apple-input">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">WhatsApp</label>
+            <input type="text" id="editWhats" class="apple-input">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nova Senha</label>
+            <input type="password" id="editSenha" class="apple-input" placeholder="••••••••">
             <button onclick="salvarPerfil()" class="apple-button bg-blue-600 text-white mt-4">Salvar Alterações</button>
             <p id="msgPerfil" class="text-[10px] font-black uppercase text-center mt-4 tracking-widest"></p>
         </div>
@@ -186,7 +192,6 @@
             ]);
             gradeVariacoes = v.data || [];
             
-            // Agrupando por categoria para ficar bonito no select
             let optHTML = '<option value="">Selecione o Aparelho</option>';
             const grupos = [...new Set(m.data.map(x => x.grupos.nome))];
             grupos.forEach(g => {
@@ -200,7 +205,6 @@
             atualizarLista();
         }
 
-        // --- LÓGICA DE CASCATA INTELIGENTE ---
         function aoMudarProduto() {
             const modId = document.getElementById('produto_id').value;
             const bTam = document.getElementById('boxTamanho'); const sTam = document.getElementById('tamanho');
@@ -221,7 +225,7 @@
                 bTam.classList.remove('hidden');
                 sTam.innerHTML += tamanhos.map(x => `<option value="${x}">${x}</option>`).join('');
                 sTam.disabled = false;
-            } else if (capacidades.length > 0) { // Ex: iPhones
+            } else if (capacidades.length > 0) { 
                 bCap.classList.remove('hidden');
                 capacidades.sort((a,b) => parseInt(a) - parseInt(b));
                 sCap.innerHTML += capacidades.map(x => `<option value="${x}">${x}</option>`).join('');
@@ -243,12 +247,12 @@
             const vars = gradeVariacoes.filter(x => x.produto_id == modId && x.tamanho === tam);
             const capacidades = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
 
-            if(capacidades.length > 0) { // Ex: MacBook
+            if(capacidades.length > 0) { 
                 bCap.classList.remove('hidden');
                 capacidades.sort((a,b) => parseInt(a) - parseInt(b));
                 sCap.innerHTML += capacidades.map(x => `<option value="${x}">${x}</option>`).join('');
                 sCap.disabled = false;
-            } else { // Ex: Apple Watch
+            } else { 
                 bCap.classList.add('hidden');
                 const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
                 sCor.innerHTML += cores.map(x => `<option value="${x}">${x}</option>`).join('');
@@ -283,7 +287,6 @@
             const cap = document.getElementById('capacidade').value;
             const cor = document.getElementById('cor').value;
             
-            // Acha o ID exato da variação baseada no que foi selecionado (ou ignorado se for null)
             const v = gradeVariacoes.find(x => 
                 x.produto_id == modId && x.cor === cor &&
                 (x.capacidade === cap || (!x.capacidade && !cap)) &&
@@ -301,7 +304,6 @@
             atualizarLista();
         };
 
-        // --- TABELA DE CONTROLE ---
         async function atualizarLista() {
             const { data } = await _s.from('ofertas').select('*, regioes(nome, bandeira), variacoes(capacidade, tamanho, cor, produtos_mestre(nome))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
             const container = document.getElementById('listaAtivos');
