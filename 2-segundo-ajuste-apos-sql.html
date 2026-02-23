@@ -9,11 +9,11 @@
     <style>
         body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 28px; padding: 3rem; width: 95%; max-width: 550px; box-shadow: 0 25px 50px rgba(0,0,0,0.7); }
-        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 14px; padding: 18px; width: 100%; color: white; outline: none; margin-bottom: 1.5rem; transition: 0.2s; font-size: 16px; }
+        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 14px; padding: 18px; width: 100%; color: white; outline: none; margin-bottom: 1rem; transition: 0.2s; font-size: 16px; }
         .apple-input:focus { border-color: #0071e3; background: #323235; }
         .apple-button { background: #ffffff; color: #000000; font-weight: 900; border-radius: 50px; padding: 20px; width: 100%; cursor: pointer; transition: 0.3s; margin-top: 1.5rem; text-transform: uppercase; letter-spacing: 1.5px; border: none; font-size: 14px; }
         .apple-button:hover { background: #0071e3; color: white; transform: translateY(-2px); }
-        label { display: block; text-transform: uppercase; font-size: 11px; color: #86868b; margin-bottom: 8px; font-weight: 900; letter-spacing: 0.15em; margin-top: 1.5rem; }
+        label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.15em; margin-top: 1rem; }
         .hidden { display: none !important; }
         .status-msg { margin-top: 25px; text-align: center; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }
     </style>
@@ -21,10 +21,10 @@
 <body>
 
     <div id="loginSection" class="apple-card text-center">
-        <h1 class="text-5xl font-black italic mb-2 tracking-tighter italic">iFipe</h1>
+        <h1 class="text-5xl font-black italic mb-2 tracking-tighter">iFipe</h1>
         <p class="text-[10px] font-bold uppercase text-gray-400 mb-12 tracking-[0.4em]">Gestão do Anunciante Oficial</p>
         <div class="text-left">
-            <label>Sua Loja (Nome ou ID)</label>
+            <label>Sua Loja (Nome)</label>
             <input type="text" id="loginId" class="apple-input" placeholder="Ex: JOGADOR">
             <label>Senha de Acesso</label>
             <input type="password" id="loginPass" class="apple-input" placeholder="••••••••">
@@ -44,19 +44,27 @@
 
         <form id="priceForm">
             <label>Modelo do iPhone</label>
-            <select id="produto_id" class="apple-input" required>
-                <option value="">Carregando modelos...</option>
+            <select id="produto_id" class="apple-input" onchange="carregarVariacoes()" required>
+                <option value="">Selecione o Modelo</option>
             </select>
 
-            <label>Capacidade e Cor (Filtrados por Modelo)</label>
-            <select id="variacao_id" class="apple-input" required disabled>
-                <option value="">Escolha o modelo primeiro</option>
-            </select>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label>Capacidade</label>
+                    <select id="capacidade" class="apple-input" required disabled>
+                        <option value="">Aguardando...</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Cor</label>
+                    <select id="cor" class="apple-input" required disabled>
+                        <option value="">Aguardando...</option>
+                    </select>
+                </div>
+            </div>
 
             <label>Origem / Região</label>
-            <select id="regiao_id" class="apple-input" required>
-                <option value="">Carregando regiões...</option>
-            </select>
+            <select id="regiao_id" class="apple-input" required></select>
 
             <label>Valor de Venda (R$)</label>
             <input type="text" id="preco" class="apple-input" placeholder="Ex: 7.990,00" required>
@@ -67,84 +75,76 @@
     </div>
 
     <script>
-        const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let fornecedorLogado = null;
-        let todasVariacoes = []; // Cache para filtro inteligente
+        const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+        let lojaLogada = null;
+        let baseVariacoes = [];
 
         async function fazerLogin() {
-            const login = document.getElementById('loginId').value;
+            const user = document.getElementById('loginId').value;
             const pass = document.getElementById('loginPass').value;
-            const isNumeric = !isNaN(login) && login.trim() !== "";
-            
-            const { data } = await _supabase.from('fornecedores').select('*').or(`id.eq.${isNumeric ? login : -1},nome.eq.${login}`).eq('senha', pass).maybeSingle();
+            const { data } = await _s.from('fornecedores').select('*').eq('nome', user).eq('senha', pass).maybeSingle();
             
             if (data) {
-                if (!data.ativo) {
-                    document.getElementById('loginError').innerText = "ACESSO SUSPENSO: FINANCEIRO PENDENTE.";
-                    return;
-                }
-                fornecedorLogado = data;
+                if (!data.ativo) { alert("ACESSO SUSPENSO: FINANCEIRO PENDENTE."); return; }
+                lojaLogada = data;
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('formSection').classList.remove('hidden');
                 document.getElementById('welcomeMsg').innerText = "Conectado: " + data.nome;
-                carregarBases();
-            } else { 
-                document.getElementById('loginError').innerText = "Acesso Negado: Verifique seus dados."; 
-            }
+                init();
+            } else { alert("Acesso Negado."); }
         }
 
-        async function carregarBases() {
-            const { data: m } = await _supabase.from('produtos_mestre').select('id, nome').order('id');
-            const { data: r } = await _supabase.from('regioes').select('id, nome, bandeira').order('id');
-            const { data: v } = await _supabase.from('variacoes').select('*'); // GRADE COMPLETA
-            
-            todasVariacoes = v; 
+        async function init() {
+            const { data: m } = await _s.from('produtos_mestre').select('*').order('id');
+            const { data: r } = await _s.from('regioes').select('*').order('id');
+            const { data: v } = await _s.from('variacoes').select('*');
+            baseVariacoes = v;
 
-            const pS = document.getElementById('produto_id');
-            const rS = document.getElementById('regiao_id');
-            const vS = document.getElementById('variacao_id');
+            document.getElementById('produto_id').innerHTML = '<option value="">Escolha o Modelo</option>' + m.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('regiao_id').innerHTML = r.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+        }
 
-            pS.innerHTML = '<option value="">Escolha o Modelo</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
-            rS.innerHTML = r.map(i => `<option value="${i.id}">${i.bandeira} ${i.nome}</option>`).join('');
+        function carregarVariacoes() {
+            const modId = document.getElementById('produto_id').value;
+            const filtradas = baseVariacoes.filter(x => x.produto_id == modId);
             
-            // FILTRO INTELIGENTE: SÓ MOSTRA O QUE PERTENCE AO MODELO
-            pS.onchange = (e) => {
-                const modeloId = e.target.value;
-                const filtradas = todasVariacoes.filter(item => item.produto_id == modeloId);
-                
-                if (filtradas.length > 0) {
-                    vS.innerHTML = '<option value="">Selecione Capacidade/Cor</option>' + 
-                                  filtradas.map(item => `<option value="${item.id}">${item.capacidade} • ${item.cor}</option>`).join('');
-                    vS.disabled = false;
-                } else {
-                    vS.innerHTML = '<option value="">Opção indisponível para este modelo</option>';
-                    vS.disabled = true;
-                }
-            };
+            const caps = [...new Set(filtradas.map(x => x.capacidade))];
+            const cores = [...new Set(filtradas.map(x => x.cor))];
+
+            const selCap = document.getElementById('capacidade');
+            const selCor = document.getElementById('cor');
+
+            selCap.innerHTML = caps.map(x => `<option value="${x}">${x}</option>`).join('');
+            selCor.innerHTML = cores.map(x => `<option value="${x}">${x}</option>`).join('');
+            
+            selCap.disabled = selCor.disabled = false;
         }
 
         document.getElementById('priceForm').onsubmit = async (e) => {
             e.preventDefault();
             const status = document.getElementById('status');
-            const precoLimpo = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.'); 
+            const modId = document.getElementById('produto_id').value;
+            const cap = document.getElementById('capacidade').value;
+            const cor = document.getElementById('cor').value;
             
-            status.innerText = "Publicando...";
-            status.style.color = "#86868b";
+            // Busca o ID exato da variação baseado na escolha separada
+            const { data: varId } = await _s.from('variacoes').select('id').eq('produto_id', modId).eq('capacidade', cap).eq('cor', cor).maybeSingle();
 
-            const { error } = await _supabase.from('ofertas').insert([{
-                fornecedor_id: fornecedorLogado.id,
-                variacao_id: document.getElementById('variacao_id').value,
+            const precoLimpo = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
+            const { error } = await _s.from('ofertas').insert([{
+                fornecedor_id: lojaLogada.id,
+                variacao_id: varId.id,
                 regiao_id: document.getElementById('regiao_id').value,
                 preco: parseFloat(precoLimpo)
             }]);
 
-            if (error) { 
-                status.innerText = "Erro ao publicar!"; 
-                status.style.color = "#ff3b30"; 
-            } else { 
+            if (!error) { 
                 status.innerText = "Publicado com Sucesso! 🚀"; 
                 status.style.color = "#32d74b"; 
                 document.getElementById('preco').value = ""; 
+            } else { 
+                status.innerText = "Erro ao publicar!"; 
+                status.style.color = "#ff3b30"; 
             }
         };
     </script>
