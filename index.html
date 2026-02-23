@@ -9,25 +9,56 @@
     <style>
         body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; }
         .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 18px; }
-        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 10px; padding: 12px; width: 100%; color: white; outline: none; }
+        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 10px; padding: 12px; width: 100%; color: white; outline: none; appearance: none; }
         .apple-input:focus { border-color: #0071e3; }
         .apple-button { background: #ffffff; color: #000000; font-weight: 600; border-radius: 20px; padding: 12px 24px; transition: all 0.3s; cursor: pointer; width: 100%; }
         .apple-button:hover { background: #f5f5f7; transform: scale(1.01); }
+        select { cursor: pointer; }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
-    <h1 class="text-3xl font-bold mb-8 tracking-tight">iFipe</h1>
-    <div class="apple-card p-8 w-full max-w-md">
-        <h2 class="text-xl font-semibold mb-6 text-center text-gray-200">Atualizar Preço</h2>
-        <form id="priceForm" class="space-y-4">
-            <input type="number" id="fornecedor_id" class="apple-input" placeholder="ID do Fornecedor (Ex: 1)" required>
-            <input type="number" id="variacao_id" class="apple-input" placeholder="ID da Variação (Ex: 158)" required>
-            <input type="number" id="regiao_id" class="apple-input" placeholder="ID da Região (Ex: 1)" required>
-            <input type="number" step="0.01" id="preco" class="apple-input" placeholder="Preço (R$ 7699.77)" required>
-            <button type="submit" class="apple-button mt-4">Publicar Oferta</button>
+    <h1 class="text-3xl font-bold mb-8 tracking-tight italic">iFipe</h1>
+    <div class="apple-card p-8 w-full max-w-md shadow-2xl">
+        <h2 class="text-xl font-semibold mb-6 text-center text-gray-200">Publicar Novo Preço</h2>
+        <form id="priceForm" class="space-y-5">
+            
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Seu Estabelecimento</label>
+                <select id="fornecedor_id" class="apple-input" required>
+                    <option value="1">Fornecedor 001 (Fábrica de Marcas)</option>
+                    <option value="2">Fornecedor 002</option>
+                    <option value="3">Fornecedor 003</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Modelo e Capacidade</label>
+                <select id="variacao_id" class="apple-input" required>
+                    <option value="158">iPhone 16 Pro Max 256GB - Deserto</option>
+                    <option value="159">iPhone 16 Pro Max 512GB - Deserto</option>
+                    <option value="165">iPhone 17 Pro Max 2TB - Azul</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Região de Origem</label>
+                <select id="regiao_id" class="apple-input" required>
+                    <option value="1">🇺🇸 Estados Unidos (eSIM)</option>
+                    <option value="2">🇧🇷 Brasil (Anatel)</option>
+                    <option value="3">🇨🇳 China (Dual Sim Físico)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Preço de Venda (R$)</label>
+                <input type="number" step="0.01" id="preco" class="apple-input" placeholder="7699.77" required>
+            </div>
+
+            <button type="submit" class="apple-button mt-2">Publicar Oferta</button>
         </form>
         <p id="status" class="mt-4 text-center text-sm font-medium"></p>
     </div>
+
     <script>
         const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
@@ -36,7 +67,8 @@
         document.getElementById('priceForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const status = document.getElementById('status');
-            status.innerText = "Enviando para o iFipe...";
+            status.innerText = "Conectando ao banco...";
+            status.style.color = "white";
             
             const payload = {
                 fornecedor_id: parseInt(document.getElementById('fornecedor_id').value),
@@ -49,12 +81,13 @@
             const { error } = await _supabase.from('ofertas').insert([payload]);
 
             if (error) {
-                status.innerText = "Erro ao publicar: " + error.message;
+                status.innerText = "Erro: Verifique os dados.";
                 status.style.color = "#ff453a";
+                console.log(error);
             } else {
-                status.innerText = "Preço publicado com sucesso! 🚀";
+                status.innerText = "Preço atualizado no iFipe! 🚀";
                 status.style.color = "#32d74b";
-                e.target.reset();
+                document.getElementById('preco').value = "";
             }
         });
     </script>
