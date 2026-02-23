@@ -10,10 +10,9 @@
         body { background-color: #000; color: #fff; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 28px; padding: 3rem; width: 95%; max-width: 550px; }
         .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 14px; padding: 18px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 16px; }
-        .apple-input:focus { border-color: #0071e3; }
         .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 20px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 14px; transition: 0.3s; }
         .apple-button:hover { background: #0071e3; color: #fff; }
-        label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.15em; margin-top: 1rem; }
+        label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 900; margin-top: 1rem; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -24,6 +23,7 @@
         <input type="text" id="loginId" class="apple-input" placeholder="Nome da Loja">
         <input type="password" id="loginPass" class="apple-input" placeholder="Senha">
         <button onclick="fazerLogin()" class="apple-button">Acessar Painel</button>
+        <p id="loginError" class="text-red-500 text-[10px] mt-4 uppercase font-bold"></p>
     </div>
 
     <div id="formSection" class="apple-card hidden">
@@ -35,26 +35,28 @@
         <form id="priceForm">
             <label>Modelo do iPhone</label>
             <select id="produto_id" class="apple-input" onchange="resetarEFiltarMemoria()" required>
-                <option value="">Selecione o Modelo</option>
+                <option value="">Carregando modelos...</option>
             </select>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label>Memória</label>
                     <select id="capacidade" class="apple-input" required disabled onchange="resetarEFiltarCores()">
-                        <option value="">Escolha o Modelo</option>
+                        <option value="">Aguardando...</option>
                     </select>
                 </div>
                 <div>
                     <label>Cor</label>
                     <select id="cor" class="apple-input" required disabled>
-                        <option value="">Escolha a Memória</option>
+                        <option value="">Aguardando...</option>
                     </select>
                 </div>
             </div>
 
             <label>Região / Origem</label>
-            <select id="regiao_id" class="apple-input" required></select>
+            <select id="regiao_id" class="apple-input" required>
+                <option value="">Carregando regiões...</option>
+            </select>
 
             <label>Valor de Venda (R$)</label>
             <input type="text" id="preco" class="apple-input" placeholder="Ex: 7.500,00" required>
@@ -72,39 +74,63 @@
         async function fazerLogin() {
             const user = document.getElementById('loginId').value;
             const pass = document.getElementById('loginPass').value;
-            const { data } = await _s.from('fornecedores').select('*').eq('nome', user).eq('senha', pass).maybeSingle();
+            const errDiv = document.getElementById('loginError');
             
+            // Forçamos a busca exata para evitar erro de cache
+            const { data, error } = await _s.from('fornecedores')
+                .select('*')
+                .eq('nome', user)
+                .eq('senha', pass)
+                .maybeSingle();
+
+            if (error) {
+                errDiv.innerText = "Erro de conexão com o banco.";
+                console.error(error);
+                return;
+            }
+
             if (data && data.ativo) {
                 loja = data;
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('formSection').classList.remove('hidden');
                 init();
-            } else { alert("Acesso Negado ou Financeiro Pendente."); }
+            } else { 
+                errDiv.innerText = "Acesso Negado. Verifique Nome e Senha."; 
+            }
         }
 
         async function init() {
-            const { data: m } = await _s.from('produtos_mestre').select('*').order('id');
-            const { data: r } = await _s.from('regioes').select('*').order('id');
-            const { data: v } = await _s.from('variacoes').select('*');
-            gradeVariacoes = v;
+            // Carregamento simultâneo para garantir que as regiões apareçam
+            const [modelos, regioes, variacoes] = await Promise.all([
+                _s.from('produtos_mestre').select('*').order('id'),
+                _s.from('regioes').select('*').order('id'),
+                _s.from('variacoes').select('*')
+            ]);
 
-            document.getElementById('produto_id').innerHTML = '<option value="">Selecione o Modelo</option>' + m.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('regiao_id').innerHTML = r.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            gradeVariacoes = variacoes.data || [];
+
+            if (modelos.data) {
+                document.getElementById('produto_id').innerHTML = '<option value="">Selecione o Modelo</option>' + 
+                    modelos.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            }
+
+            if (regioes.data) {
+                document.getElementById('regiao_id').innerHTML = regioes.data.map(x => 
+                    `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            }
         }
 
         function resetarEFiltarMemoria() {
             const modId = document.getElementById('produto_id').value;
             const selCap = document.getElementById('capacidade');
             const selCor = document.getElementById('cor');
-
-            selCap.innerHTML = '<option value="">Escolha a Memória</option>';
-            selCor.innerHTML = '<option value="">Escolha a Memória</option>';
+            selCap.innerHTML = '<option value="">Escolha</option>';
+            selCor.innerHTML = '<option value="">Aguardando...</option>';
             selCor.disabled = true;
 
             if(modId) {
                 const filtradas = gradeVariacoes.filter(x => x.produto_id == modId);
-                // Ordenação lógica das memórias
-                const caps = [...new Set(filtradas.map(x => x.capacidade))].sort((a, b) => parseInt(a) - parseInt(b));
+                const caps = [...new Set(filtradas.map(x => x.capacidade))];
                 selCap.innerHTML += caps.map(x => `<option value="${x}">${x}</option>`).join('');
                 selCap.disabled = false;
             }
@@ -114,3 +140,41 @@
             const modId = document.getElementById('produto_id').value;
             const cap = document.getElementById('capacidade').value;
             const selCor = document.getElementById('cor');
+            selCor.innerHTML = '<option value="">Escolha</option>';
+
+            if(cap) {
+                const filtradas = gradeVariacoes.filter(x => x.produto_id == modId && x.capacidade == cap);
+                selCor.innerHTML += filtradas.map(x => `<option value="${x.cor}">${x.cor}</option>`).join('');
+                selCor.disabled = false;
+            }
+        }
+
+        document.getElementById('priceForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const status = document.getElementById('status');
+            const modId = document.getElementById('produto_id').value;
+            const cap = document.getElementById('capacidade').value;
+            const cor = document.getElementById('cor').value;
+            
+            const { data: v } = await _s.from('variacoes').select('id').eq('produto_id', modId).eq('capacidade', cap).eq('cor', cor).maybeSingle();
+            const preco = parseFloat(document.getElementById('preco').value.replace(/\./g, '').replace(',', '.'));
+
+            const { error } = await _s.from('ofertas').insert([{
+                fornecedor_id: loja.id,
+                variacao_id: v.id,
+                regiao_id: document.getElementById('regiao_id').value,
+                preco: preco
+            }]);
+
+            if (!error) { 
+                status.innerText = "🚀 PUBLICADO COM SUCESSO!"; 
+                status.style.color = "#32d74b"; 
+                document.getElementById('preco').value = ""; 
+            } else { 
+                status.innerText = "ERRO AO PUBLICAR!"; 
+                status.style.color = "#ff3b30"; 
+            }
+        };
+    </script>
+</body>
+</html>
