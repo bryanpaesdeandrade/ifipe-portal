@@ -10,7 +10,7 @@
         body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 28px; padding: 2.5rem; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
         input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 14px; padding: 15px; color: white; width: 100%; margin-bottom: 12px; outline: none; font-size: 14px; transition: 0.3s; }
-        input:focus { border-color: #0071e3; background: #3a3a3c; box-shadow: 0 0 0 4px rgba(0,113,227,0.1); }
+        input:focus { border-color: #0071e3; background: #3a3a3c; }
         button { background: #ffffff; color: #000000; font-weight: 800; padding: 16px; border-radius: 50px; width: 100%; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; border: none; margin-top: 10px; }
         button:hover { background: #0071e3; color: white; transform: scale(1.02); }
         .hidden { display: none; }
@@ -42,7 +42,7 @@
         </div>
 
         <div id="cadastroForm" class="hidden">
-            <p class="text-[10px] font-bold uppercase text-gray-500 mb-8 tracking-[0.3em]">Crie sua conta gratuita</p>
+            <p class="text-[10px] font-bold uppercase text-gray-500 mb-8 tracking-[0.3em]">Crie sua conta VIP</p>
             
             <input type="text" id="cadNome" placeholder="Nome Completo">
             <input type="text" id="cadCPF" placeholder="Seu CPF (Somente números)">
@@ -63,4 +63,59 @@
         }
 
         async function fazerLogin() {
-            const email = document.getElementById('email').value
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+
+            // Busca o cliente no banco
+            const { data, error } = await _supabase
+                .from('clientes_buscador')
+                .select('*')
+                .eq('email', email)
+                .eq('senha', senha)
+                .maybeSingle();
+
+            if (data) {
+                // Gera um token de sessão único (Trava de Segurança)
+                const novoToken = Math.random().toString(36).substring(2, 15);
+                
+                // Atualiza o banco derrubando sessões antigas
+                await _supabase
+                    .from('clientes_buscador')
+                    .update({ last_session_id: novoToken })
+                    .eq('id', data.id);
+
+                localStorage.setItem('iFipe_Token', novoToken);
+                localStorage.setItem('iFipe_User', data.email);
+
+                // Redireciona para o Layout do Site
+                window.location.href = '4-layout-do-site.html';
+            } else {
+                alert("Dados incorretos. Verifique e-mail e senha.");
+            }
+        }
+
+        async function fazerCadastro() {
+            const nome = document.getElementById('cadNome').value;
+            const cpf = document.getElementById('cadCPF').value;
+            const email = document.getElementById('cadEmail').value;
+            const senha = document.getElementById('cadSenha').value;
+
+            if(!nome || !cpf || !email || !senha) {
+                alert("Preencha todos os campos!");
+                return;
+            }
+
+            const { error } = await _supabase
+                .from('clientes_buscador')
+                .insert([{ nome, cpf, email, senha }]);
+
+            if (error) {
+                alert("Erro ao cadastrar: " + error.message);
+            } else {
+                alert("Cadastro realizado! Agora faça seu login.");
+                toggleForms();
+            }
+        }
+    </script>
+</body>
+</html>
