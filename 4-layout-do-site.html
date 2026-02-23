@@ -13,12 +13,11 @@
         .ticker-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:12px; position:sticky; top:0; z-index:100; display:flex; justify-content:center; align-items:center; gap:12px; }
         .ticker-val { color:#32d74b; font-family:monospace; font-size:18px; font-weight:900; }
 
-        /* PATROCINADORES */
-        .sponsor-box { background:#1c1c1e; border:1px solid #38383a; border-radius:12px; padding:10px 20px; font-size:10px; font-weight:bold; text-transform:uppercase; color:#86868b; transition:0.3s; cursor:pointer; }
-        .sponsor-box:hover { border-color:#0071e3; color:#fff; }
+        /* BARRA DO USUÁRIO */
+        .user-bar { background:#0b0b0c; border-bottom:1px solid #1c1c1e; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; }
 
         /* FILTROS PREMIUM */
-        .filter-section { background:#000; padding:10px 20px 30px; border-bottom:1px solid #1c1c1e; }
+        .filter-section { background:#000; padding:30px 20px; border-bottom:1px solid #1c1c1e; }
         .filter { background:#1c1c1e; border:1px solid #38383a; border-radius:14px; padding:14px; color:#fff; width:100%; font-size:11px; font-weight:900; text-transform:uppercase; outline:none; transition:0.3s; }
         .filter:focus { border-color:#0071e3; }
 
@@ -30,6 +29,11 @@
         .btn-wa { background:#fff; color:#000; padding:18px; border-radius:50px; font-weight:900; text-align:center; display:block; text-decoration:none; text-transform:uppercase; font-size:12px; transition:0.3s; margin-top:20px; }
         .btn-wa:hover { background:#0071e3; color:#fff; }
 
+        /* MODAL DE PERFIL */
+        .modal-bg { background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); }
+        .apple-input { background:#2c2c2e; border:1px solid #38383a; border-radius:12px; padding:15px; width:100%; color:white; outline:none; margin-bottom:1rem; font-size:14px; }
+        .btn-save { background:#0071e3; color:#fff; font-weight:900; border-radius:50px; padding:15px; width:100%; text-transform:uppercase; font-size:12px; transition:0.3s; }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -40,19 +44,22 @@
         <span class="ticker-val" id="usdt_val">CONECTANDO...</span>
     </div>
 
-    <div class="max-w-6xl mx-auto px-6">
-        <header class="mt-16 mb-10 text-center">
-            <h1 class="text-7xl font-black italic tracking-tighter leading-none">iFipe</h1>
-        </header>
-
-        <div class="text-center mb-12">
-            <p class="text-[9px] text-gray-600 uppercase font-black tracking-widest mb-4">Patrocinadores Oficiais</p>
-            <div class="flex justify-center flex-wrap gap-4">
-                <div class="sponsor-box">Sua Marca Aqui</div>
-                <div class="sponsor-box">Fábrica de Marcas</div>
-                <div class="sponsor-box">Loja Parceira</div>
+    <div class="user-bar">
+        <div class="max-w-6xl mx-auto w-full flex justify-between items-center">
+            <div class="text-[11px] font-black uppercase tracking-widest text-gray-500">
+                Olá, <span id="nomeUsuario" class="text-white">...</span>
+            </div>
+            <div class="flex gap-6">
+                <button onclick="abrirPerfil()" class="text-[10px] text-gray-400 hover:text-white font-black uppercase tracking-widest transition">Minha Conta</button>
+                <button onclick="sairBuscador()" class="text-[10px] text-red-500 hover:text-red-400 font-black uppercase tracking-widest transition">Sair</button>
             </div>
         </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-6">
+        <header class="mt-12 mb-8 text-center">
+            <h1 class="text-7xl font-black italic tracking-tighter leading-none">iFipe</h1>
+        </header>
     </div>
 
     <div class="filter-section">
@@ -68,10 +75,29 @@
         <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
     </div>
 
+    <div id="modalPerfil" class="hidden fixed inset-0 modal-bg z-50 flex justify-center items-center p-4">
+        <div class="bg-[#1c1c1e] p-8 rounded-3xl border border-[#38383a] w-full max-w-sm">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-black italic">Meus Dados</h2>
+                <button onclick="fecharPerfil()" class="text-gray-500 text-xl font-bold">&times;</button>
+            </div>
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nome</label>
+            <input type="text" id="editNome" class="apple-input">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">WhatsApp</label>
+            <input type="text" id="editWhats" class="apple-input">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nova Senha</label>
+            <input type="password" id="editSenha" class="apple-input" placeholder="••••••••">
+            
+            <button onclick="salvarPerfil()" class="btn-save mt-4">Salvar Alterações</button>
+            <p id="msgPerfil" class="text-[10px] font-black uppercase text-center mt-4 tracking-widest"></p>
+        </div>
+    </div>
+
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let cacheOfertas = [];
         let gradeVariacoes = [];
+        let usuarioLogado = null;
 
         function iniciarCambio() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
@@ -82,10 +108,60 @@
         }
 
         async function validarSessao() {
-            if(!localStorage.getItem('iFipe_Token')) { location.href='3-pagina-login.html'; return; }
+            const token = localStorage.getItem('iFipe_Token');
+            if(!token) { location.href='3-pagina-login.html'; return; }
+            
+            // Busca os dados do cliente logado
+            const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).maybeSingle();
+            if(!data || !data.aprovado) { sairBuscador(); return; }
+            
+            usuarioLogado = data;
+            document.getElementById('nomeUsuario').innerText = data.nome.split(' ')[0];
             document.getElementById('main').classList.remove('hidden');
+            
             iniciarCambio();
             init();
+        }
+
+        function sairBuscador() {
+            localStorage.removeItem('iFipe_Token');
+            window.location.href = '3-pagina-login.html';
+        }
+
+        function abrirPerfil() {
+            document.getElementById('modalPerfil').classList.remove('hidden');
+            document.getElementById('editNome').value = usuarioLogado.nome;
+            document.getElementById('editWhats').value = usuarioLogado.whatsapp || '';
+            document.getElementById('editSenha').value = usuarioLogado.senha;
+            document.getElementById('msgPerfil').innerText = '';
+        }
+
+        function fecharPerfil() {
+            document.getElementById('modalPerfil').classList.add('hidden');
+        }
+
+        async function salvarPerfil() {
+            const novoNome = document.getElementById('editNome').value;
+            const novoWhats = document.getElementById('editWhats').value.replace(/\D/g, '');
+            const novaSenha = document.getElementById('editSenha').value;
+            
+            const msg = document.getElementById('msgPerfil');
+            if(!novoNome || !novaSenha) {
+                msg.innerText = "NOME E SENHA SÃO OBRIGATÓRIOS."; msg.style.color = "#ff3b30"; return;
+            }
+
+            const { error } = await _s.from('clientes_buscador').update({
+                nome: novoNome, whatsapp: novoWhats, senha: novaSenha
+            }).eq('id', usuarioLogado.id);
+
+            if(!error) {
+                msg.innerText = "DADOS ATUALIZADOS COM SUCESSO!"; msg.style.color = "#32d74b";
+                document.getElementById('nomeUsuario').innerText = novoNome.split(' ')[0];
+                usuarioLogado.nome = novoNome; usuarioLogado.whatsapp = novoWhats; usuarioLogado.senha = novaSenha;
+                setTimeout(fecharPerfil, 1500);
+            } else {
+                msg.innerText = "ERRO AO ATUALIZAR DADOS."; msg.style.color = "#ff3b30";
+            }
         }
 
         async function init() {
