@@ -21,8 +21,8 @@
 
     <div class="apple-card">
         <div id="loginHeader" class="text-center mb-10">
-            <h1 class="text-5xl font-black italic italic">iFipe</h1>
-            <p class="text-[10px] font-bold uppercase text-gray-400 mt-2 tracking-[0.4em]">Acesso Exclusivo ao Ranking</p>
+            <h1 class="text-5xl font-black italic">iFipe</h1>
+            <p class="text-[10px] font-bold uppercase text-gray-400 mt-2 tracking-[0.4em]">Acesso ao Ranking</p>
         </div>
 
         <div id="loginForm">
@@ -36,13 +36,13 @@
 
         <div id="registerForm" class="hidden">
             <label>Nome Completo</label>
-            <input type="text" id="regNome" class="apple-input" placeholder="Como você se chama?">
+            <input type="text" id="regNome" class="apple-input" placeholder="Seu Nome">
             <label>CPF (Apenas números)</label>
-            <input type="text" id="regCpf" class="apple-input" placeholder="000.000.000-00" onblur="validarCpfInput(this)">
+            <input type="text" id="regCpf" class="apple-input" placeholder="000.000.000-00">
             <label>E-mail Oficial</label>
             <input type="email" id="regEmail" class="apple-input" placeholder="seu@email.com">
             <label>WhatsApp</label>
-            <input type="text" id="regWhats" class="apple-input" placeholder="55 (__) _____-____">
+            <input type="text" id="regWhats" class="apple-input" placeholder="DDD + Número">
             <label>Crie uma Senha</label>
             <input type="password" id="regPass" class="apple-input" placeholder="••••••••">
             <button onclick="solicitarCadastro()" class="apple-button">Enviar Solicitação</button>
@@ -60,29 +60,6 @@
             document.getElementById('msg').innerText = "";
         }
 
-        // FUNÇÃO CIRÚRGICA DE VALIDAÇÃO DE CPF
-        function isCPF(cpf) {
-            cpf = cpf.replace(/\D/g, '');
-            if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
-            let soma = 0, resto;
-            for (let i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i-1, i)) * (11 - i);
-            resto = (soma * 10) % 11;
-            if (resto === 10 || resto === 11) resto = 0;
-            if (resto !== parseInt(cpf.substring(9, 10))) return false;
-            soma = 0;
-            for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i-1, i)) * (12 - i);
-            resto = (soma * 10) % 11;
-            if (resto === 10 || resto === 11) resto = 0;
-            return resto === parseInt(cpf.substring(10, 11));
-        }
-
-        function validarCpfInput(el) {
-            if(!isCPF(el.value)) {
-                alert("CPF INVÁLIDO! Por favor, insira um documento real.");
-                el.value = ""; el.focus();
-            }
-        }
-
         async function solicitarCadastro() {
             const nome = document.getElementById('regNome').value;
             const cpf = document.getElementById('regCpf').value.replace(/\D/g, '');
@@ -90,8 +67,6 @@
             const whats = document.getElementById('regWhats').value;
             const pass = document.getElementById('regPass').value;
             const msg = document.getElementById('msg');
-
-            if(!nome || !isCPF(cpf) || !email || !pass) { alert("Preencha todos os campos corretamente."); return; }
 
             const { error } = await _s.from('clientes_buscador').insert([
                 { nome, cpf, email, whatsapp: whats, senha: pass, aprovado: false }
@@ -102,7 +77,7 @@
                 msg.style.color = "#32d74b";
                 setTimeout(toggleForm, 3000);
             } else {
-                msg.innerText = "ERRO: CPF OU E-MAIL JÁ CADASTRADO.";
+                msg.innerText = "ERRO: VERIFIQUE OS DADOS OU CPF JÁ CADASTRADO.";
                 msg.style.color = "#ff3b30";
             }
         }
@@ -112,7 +87,7 @@
             const pass = document.getElementById('logPass').value;
             const msg = document.getElementById('msg');
 
-            const { data, error } = await _s.from('clientes_buscador')
+            const { data } = await _s.from('clientes_buscador')
                 .select('*')
                 .eq('email', email)
                 .eq('senha', pass)
@@ -124,8 +99,14 @@
                     msg.style.color = "#ffcc00";
                     return;
                 }
+                // AJUSTE CIRÚRGICO: SALVA E SÓ DEPOIS MUDA A PÁGINA
                 localStorage.setItem('iFipe_Token', data.id);
-                location.href = '4-layout-do-site.html';
+                msg.innerText = "LOGANDO...";
+                msg.style.color = "#32d74b";
+                
+                setTimeout(() => {
+                    window.location.replace('4-layout-do-site.html');
+                }, 800);
             } else {
                 msg.innerText = "E-MAIL OU SENHA INCORRETOS.";
                 msg.style.color = "#ff3b30";
