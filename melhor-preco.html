@@ -11,8 +11,14 @@
         body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; margin: 0; }
         .ticker-bar { background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 15px; position: sticky; top: 0; z-index: 50; display: flex; justify-content: center; align-items: center; }
         .ticker-label { font-size: 12px; font-weight: 900; color: #86868b; text-transform: uppercase; letter-spacing: 2px; margin-right: 15px; }
-        .ticker-val { color: #32d74b; font-family: 'Courier New', monospace; font-size: 22px; font-weight: 900; }
-        .trend-icon { font-size: 18px; margin-left: 10px; transition: 0.3s; color: #0071e3; }
+        .ticker-val { color: #32d74b; font-family: 'Courier New', monospace; font-size: 24px; font-weight: 900; }
+        
+        /* CORES DOS INDICADORES */
+        .trend-icon { font-size: 22px; margin-left: 15px; transition: 0.3s; }
+        .trend-up { color: #0071e3; transform: rotate(180deg); } /* Azul para cima */
+        .trend-down { color: #ff3b30; } /* Vermelho para baixo */
+        .trend-stable { color: #32d74b; } /* Verde estável */
+
         .price-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 1.8rem; transition: 0.3s; position: relative; }
         .price-card:hover { border-color: #0071e3; transform: translateY(-5px); }
         .top-deal { position: absolute; top: 0; right: 0; background: #32d74b; color: black; font-size: 9px; font-weight: 900; padding: 6px 16px; border-bottom-left-radius: 14px; text-transform: uppercase; }
@@ -23,9 +29,9 @@
 </head>
 <body>
     <div class="ticker-bar">
-        <span class="ticker-label"><i class="fa-brands fa-bitcoin mr-2"></i> USDT/BRL Binance:</span>
+        <span class="ticker-label"><i class="fa-solid fa-dollar-sign mr-2"></i> USDT/BRL Binance:</span>
         <span class="ticker-val">R$ <span id="usdtVal">0,0000</span></span>
-        <i id="trendIcon" class="fa-solid fa-minus trend-icon"></i>
+        <span id="trendIcon" class="trend-icon"><i class="fa-solid fa-minus trend-stable"></i></span>
     </div>
 
     <div class="max-w-6xl mx-auto p-6">
@@ -51,20 +57,24 @@
                 const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
                 const data = await res.json();
                 const currentPrice = parseFloat(data.price);
-                const displayPrice = currentPrice.toFixed(4).replace('.', ',');
                 
                 const valEl = document.getElementById('usdtVal');
-                const iconEl = document.getElementById('trendIcon');
+                const iconContainer = document.getElementById('trendIcon');
 
                 if (lastPrice > 0) {
-                    if (currentPrice > lastPrice) {
-                        iconEl.className = 'fa-solid fa-arrow-up trend-icon'; // Seta Azul para cima
-                    } else if (currentPrice < lastPrice) {
-                        iconEl.className = 'fa-solid fa-arrow-down trend-icon'; // Seta Azul para baixo
+                    const diff = currentPrice - lastPrice;
+                    
+                    // Lógica de Variação (Margem de 3 pontos)
+                    if (diff > 0.0003) {
+                        iconContainer.innerHTML = '<i class="fa-solid fa-caret-down trend-up"></i>'; // Azul pra cima (invertido)
+                    } else if (diff < -0.0003) {
+                        iconContainer.innerHTML = '<i class="fa-solid fa-caret-down trend-down"></i>'; // Vermelho pra baixo
+                    } else {
+                        iconContainer.innerHTML = '<i class="fa-solid fa-minus trend-stable"></i>'; // Verde estável
                     }
                 }
 
-                valEl.innerText = displayPrice;
+                valEl.innerText = currentPrice.toFixed(4).replace('.', ',');
                 lastPrice = currentPrice;
             } catch (e) { console.error("Erro na Binance API"); }
         }
