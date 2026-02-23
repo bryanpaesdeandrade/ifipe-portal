@@ -6,34 +6,44 @@
     <title>iFipe - Melhor Preço</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; }
-        .price-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 20px; padding: 1.5rem; transition: 0.3s; position: relative; overflow: hidden; }
-        .price-card:hover { border-color: #32d74b; transform: scale(1.02); }
-        .top-deal { position: absolute; top: 0; right: 0; background: #32d74b; color: black; font-size: 9px; font-weight: 900; padding: 4px 12px; border-bottom-left-radius: 12px; text-transform: uppercase; }
-        .price-value { color: #32d74b; font-size: 28px; font-weight: 800; letter-spacing: -1.5px; }
-        .filter-select { background: #1c1c1e; border: 1px solid #38383a; border-radius: 12px; padding: 10px 15px; color: white; cursor: pointer; }
+        body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; margin: 0; }
+        .ticker-bar { background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 12px; font-size: 10px; font-weight: 800; color: #86868b; display: flex; justify-content: center; gap: 25px; }
+        .ticker-val { color: #32d74b; }
+        .price-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 1.8rem; transition: 0.3s; position: relative; }
+        .price-card:hover { border-color: #0071e3; transform: scale(1.02); }
+        .top-deal { position: absolute; top: 0; right: 0; background: #32d74b; color: black; font-size: 9px; font-weight: 900; padding: 6px 16px; border-bottom-left-radius: 14px; text-transform: uppercase; }
+        .price-value { color: #32d74b; font-size: 32px; font-weight: 800; letter-spacing: -1.5px; }
+        .filter-select { background: #1c1c1e; border: 1px solid #38383a; border-radius: 14px; padding: 12px 20px; color: white; font-size: 10px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+        .btn-whatsapp { background: #25d366; color: white; font-size: 11px; font-weight: 900; padding: 14px; border-radius: 50px; text-transform: uppercase; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+        .btn-whatsapp:hover { background: #128c7e; transform: scale(1.03); }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-6xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+<body>
+    <div class="ticker-bar uppercase tracking-widest">
+        <span><i class="fa-solid fa-chart-line mr-2"></i>USD/BRL (Yahoo): <span id="usdVal" class="ticker-val">R$ 5,12</span></span>
+        <span><i class="fa-brands fa-bitcoin mr-2"></i>USDT/BRL (Binance): <span id="usdtVal" class="ticker-val">R$ 5,14</span></span>
+    </div>
+
+    <div class="max-w-6xl mx-auto p-6">
+        <header class="flex flex-col md:flex-row justify-between items-center my-14 gap-8">
             <div>
-                <h1 class="text-4xl font-black italic tracking-tighter">iFipe</h1>
-                <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">O Ranking do Menor Preço</p>
+                <h1 class="text-6xl font-black italic tracking-tighter">iFipe</h1>
+                <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-3">O Ranking Oficial do Menor Preço</p>
             </div>
             
-            <div class="flex flex-wrap gap-3">
-                <select id="filtroModelo" onchange="filtrar()" class="filter-select text-xs font-bold uppercase">
+            <div class="flex flex-wrap gap-4">
+                <select id="filtroModelo" onchange="filtrar()" class="filter-select">
                     <option value="">Todos os iPhones</option>
                 </select>
-                <select id="filtroRegiao" onchange="filtrar()" class="filter-select text-xs font-bold uppercase">
+                <select id="filtroRegiao" onchange="filtrar()" class="filter-select">
                     <option value="">Todas as Regiões</option>
                 </select>
             </div>
         </header>
 
-        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             </div>
     </div>
 
@@ -43,29 +53,20 @@
         let ofertasCache = [];
 
         async function init() {
-            // Carregar Selects
-            const { data: modelos } = await _supabase.from('produtos_mestre').select('nome').order('id');
-            const { data: regioes } = await _supabase.from('regioes').select('nome');
-            
-            modelos.forEach(m => document.getElementById('filtroModelo').innerHTML += `<option value="${m.nome}">${m.nome}</option>`);
-            regioes.forEach(r => document.getElementById('filtroRegiao').innerHTML += `<option value="${r.nome}">${r.nome}</option>`);
-
+            const { data: m } = await _supabase.from('produtos_mestre').select('nome').order('id');
+            const { data: r } = await _supabase.from('regioes').select('nome');
+            m.forEach(i => document.getElementById('filtroModelo').innerHTML += `<option value="${i.nome}">${i.nome}</option>`);
+            r.forEach(i => document.getElementById('filtroRegiao').innerHTML += `<option value="${i.nome}">${i.nome}</option>`);
             await buscarOfertas();
         }
 
         async function buscarOfertas() {
-            const { data, error } = await _supabase
-                .from('ofertas')
-                .select(`
-                    preco,
-                    regioes (nome, bandeira),
-                    fornecedores (nome),
-                    variacoes (
-                        capacidade, cor,
-                        produtos_mestre (nome)
-                    )
-                `)
-                .order('preco', { ascending: true }); // GARANTE O MELHOR PREÇO NO TOPO
+            const { data, error } = await _supabase.from('ofertas').select(`
+                preco,
+                regioes (nome, bandeira),
+                fornecedores (nome, whatsapp),
+                variacoes (capacidade, cor, produtos_mestre (nome))
+            `).order('preco', { ascending: true });
 
             if (!error) {
                 ofertasCache = data;
@@ -76,46 +77,42 @@
         function filtrar() {
             const mod = document.getElementById('filtroModelo').value;
             const reg = document.getElementById('filtroRegiao').value;
-
-            let filtradas = ofertasCache;
-            if (mod) filtradas = filtradas.filter(o => o.variacoes.produtos_mestre.nome === mod);
-            if (reg) filtradas = filtradas.filter(o => o.regioes.nome === reg);
-
-            renderizar(filtradas);
+            let res = ofertasCache;
+            if (mod) res = res.filter(o => o.variacoes.produtos_mestre.nome === mod);
+            if (reg) res = res.filter(o => o.regioes.nome === reg);
+            renderizar(res);
         }
 
         function renderizar(lista) {
             const container = document.getElementById('vitrine');
-            if (lista.length === 0) {
-                container.innerHTML = '<p class="col-span-full text-center text-gray-600 font-bold py-20 uppercase text-xs">Nenhum preço encontrado para esta busca.</p>';
-                return;
-            }
+            container.innerHTML = lista.map((o, index) => {
+                // LÓGICA DO WHATSAPP: Remove tudo que não é número e monta wa.me
+                const foneLimpo = o.fornecedores.whatsapp ? o.fornecedores.whatsapp.replace(/\D/g, '') : '5566999999999';
+                const mensagem = encodeURIComponent(`Olá! Vi o ${o.variacoes.produtos_mestre.nome} (${o.variacoes.capacidade}) por R$ ${o.preco.toLocaleString('pt-BR')} no iFipe. Ainda está disponível?`);
+                const linkWA = `https://wa.me/${foneLimpo}?text=${mensagem}`;
 
-            container.innerHTML = lista.map((o, index) => `
+                return `
                 <div class="price-card">
-                    ${index === 0 ? '<div class="top-deal">Melhor Preço</div>' : ''}
-                    
-                    <div class="flex justify-between items-center mb-6">
-                        <span class="text-[10px] font-black bg-white text-black px-2 py-1 rounded italic">${o.regioes.bandeira} ${o.regioes.nome}</span>
-                        <span class="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">${o.fornecedores.nome}</span>
+                    ${index === 0 ? '<div class="top-deal">Menor Preço Encontrado</div>' : ''}
+                    <div class="flex justify-between items-center mb-8">
+                        <span class="text-[9px] font-black bg-blue-600 text-white px-3 py-1 rounded-md italic uppercase tracking-widest">${o.regioes.bandeira} ${o.regioes.nome}</span>
+                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">${o.fornecedores.nome}</span>
                     </div>
-
-                    <h2 class="text-xl font-bold tracking-tight">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-gray-500 text-xs font-medium mb-8">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
-
-                    <div class="flex justify-between items-end">
+                    <h2 class="text-2xl font-bold tracking-tight">${o.variacoes.produtos_mestre.nome}</h2>
+                    <p class="text-gray-500 text-[11px] mb-10 uppercase font-bold tracking-tighter">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
+                    <div class="flex flex-col gap-6">
                         <div>
-                            <span class="block text-[10px] text-gray-600 font-black uppercase">Preço iFipe</span>
+                            <span class="block text-[10px] text-gray-600 font-black uppercase mb-1">Preço iFipe à Vista</span>
                             <span class="price-value">R$ ${o.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                         </div>
-                        <button class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black px-4 py-2 rounded-full uppercase transition">
-                            Tenho Interesse
-                        </button>
+                        <a href="${linkWA}" target="_blank" class="btn-whatsapp">
+                            <i class="fa-brands fa-whatsapp text-lg"></i>
+                            Comprar pelo WhatsApp
+                        </a>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
-
         init();
     </script>
 </body>
