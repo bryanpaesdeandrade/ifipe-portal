@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Painel do Anunciante</title>
+    <title>iFipe - Painel do Atacadista</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -13,11 +13,12 @@
         .user-bar { background:#0b0b0c; border-bottom:1px solid #1c1c1e; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; }
         
         /* CARDS E INPUTS */
-        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; width: 100%; max-width: 650px; margin: 0 auto 2rem; }
+        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 28px; padding: 3rem; width: 100%; max-width: 650px; margin: 0 auto 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
         .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 14px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 14px; font-weight: 500;}
-        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 16px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 13px; transition: 0.3s; }
+        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 18px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 13px; transition: 0.3s; }
         .apple-button:hover { background: #0071e3; color: #fff; }
         label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.1em; margin-top: 1rem; }
+        .link-toggle { color: #0071e3; cursor: pointer; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; }
         
         /* TABELAS E MINIS */
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
@@ -35,12 +36,22 @@
 <body>
 
     <div id="loginSection" class="flex items-center justify-center min-h-screen px-4">
-        <div class="apple-card text-center !m-0">
+        <div class="apple-card text-center !m-0" style="max-width: 400px;">
             <h1 class="text-5xl font-black italic mb-2">iFipe</h1>
-            <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel do Lojista</p>
-            <input type="text" id="loginId" class="apple-input" placeholder="Nome Exato da Loja">
-            <input type="password" id="loginPass" class="apple-input" placeholder="Senha">
-            <button onclick="fazerLogin()" class="apple-button">Acessar Painel</button>
+            <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel do Atacadista</p>
+            
+            <div id="loginFields">
+                <label>Nome da Loja Atacadista</label>
+                <input type="text" id="loginId" class="apple-input" placeholder="Nome Exato da Loja">
+                <label>Senha</label>
+                <input type="password" id="loginPass" class="apple-input" placeholder="••••••••">
+                <button onclick="fazerLogin()" class="apple-button">Entrar no iFipe</button>
+                
+                <div class="mt-8 space-y-4">
+                    <p class="text-gray-500 text-[11px] font-bold">Novo Atacadista? <span class="link-toggle block mt-1" onclick="alert('Entre em contato com o suporte Master para solicitar seu credenciamento.')">Solicitar Cadastro</span></p>
+                    <p class="text-gray-500 text-[11px] font-bold"><span class="link-toggle" onclick="alert('Contate o administrador para redefinir sua senha.')">Esqueci minha senha</span></p>
+                </div>
+            </div>
             <p id="loginMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase"></p>
         </div>
     </div>
@@ -50,7 +61,7 @@
         <div class="user-bar mb-8">
             <div class="max-w-7xl mx-auto w-full flex justify-between items-center">
                 <div class="text-[11px] font-black uppercase tracking-widest text-gray-500">
-                    Loja: <span id="nomeLojaLogada" class="text-white">...</span>
+                    Atacadista: <span id="nomeLojaLogada" class="text-white">...</span>
                 </div>
                 <div class="flex gap-6">
                     <button onclick="abrirPerfil()" class="text-[10px] text-gray-400 hover:text-white font-black uppercase tracking-widest transition">Minha Conta</button>
@@ -69,7 +80,7 @@
                             <select id="produto_id" class="apple-input" onchange="aoMudarProduto()" required><option value="">Selecione o Aparelho</option></select>
                         </div>
                         <div>
-                            <label>Condição do Aparelho</label>
+                            <label>Condição</label>
                             <select id="condicao" class="apple-input" required>
                                 <option value="Novo">Novo</option>
                                 <option value="Seminovo">Seminovo</option>
@@ -80,15 +91,15 @@
                     <div class="grid grid-cols-3 gap-4">
                         <div id="boxTamanho" class="hidden">
                             <label>Tamanho/Tela</label>
-                            <select id="tamanho" class="apple-input" onchange="aoMudarTamanho()" disabled><option value="">Aguardando...</option></select>
+                            <select id="tamanho" class="apple-input" onchange="aoMudarTamanho()" disabled><option value="">Escolha</option></select>
                         </div>
                         <div id="boxCapacidade" class="hidden">
                             <label>Memória / RAM</label>
-                            <select id="capacidade" class="apple-input" onchange="aoMudarCapacidade()" disabled><option value="">Aguardando...</option></select>
+                            <select id="capacidade" class="apple-input" onchange="aoMudarCapacidade()" disabled><option value="">Escolha</option></select>
                         </div>
                         <div>
                             <label>Cor</label>
-                            <select id="cor" class="apple-input" required disabled><option value="">Aguardando...</option></select>
+                            <select id="cor" class="apple-input" required disabled><option value="">Escolha</option></select>
                         </div>
                     </div>
 
@@ -133,9 +144,9 @@
                 <h2 class="text-2xl font-black italic">Dados da Loja</h2>
                 <button onclick="fecharPerfil()" class="text-gray-500 text-xl font-bold">&times;</button>
             </div>
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nome (Login)</label>
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nome Atacadista (Login)</label>
             <input type="text" id="editNome" class="apple-input">
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">WhatsApp</label>
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">WhatsApp de Vendas</label>
             <input type="text" id="editWhats" class="apple-input">
             <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nova Senha</label>
             <input type="password" id="editSenha" class="apple-input" placeholder="••••••••">
@@ -216,7 +227,6 @@
             bTam.classList.add('hidden'); bCap.classList.add('hidden');
 
             if(!modId) return;
-
             const vars = gradeVariacoes.filter(x => x.produto_id == modId);
             const tamanhos = [...new Set(vars.map(x => x.tamanho).filter(Boolean))];
             const capacidades = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
@@ -238,12 +248,10 @@
             const tam = document.getElementById('tamanho').value;
             const bCap = document.getElementById('boxCapacidade'); const sCap = document.getElementById('capacidade');
             const sCor = document.getElementById('cor');
-
             sCap.innerHTML = '<option value="">Escolha</option>'; sCor.innerHTML = '<option value="">Escolha</option>';
             sCap.disabled = true; sCor.disabled = true;
 
             if(!tam) return;
-
             const vars = gradeVariacoes.filter(x => x.produto_id == modId && x.tamanho === tam);
             const capacidades = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
 
@@ -265,16 +273,13 @@
             const tam = document.getElementById('tamanho').value;
             const cap = document.getElementById('capacidade').value;
             const sCor = document.getElementById('cor');
-
             sCor.innerHTML = '<option value="">Escolha</option>'; sCor.disabled = true;
 
             if(!cap) return;
-
             let vars = gradeVariacoes.filter(x => x.produto_id == modId && x.capacidade === cap);
-            if(document.getElementById('boxTamanho').classList.contains('hidden') === false && tam) {
+            if(!document.getElementById('boxTamanho').classList.contains('hidden') && tam) {
                 vars = vars.filter(x => x.tamanho === tam);
             }
-
             const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
             sCor.innerHTML += cores.map(x => `<option value="${x}">${x}</option>`).join('');
             sCor.disabled = false;
