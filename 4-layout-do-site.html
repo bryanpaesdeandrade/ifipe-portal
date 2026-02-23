@@ -10,9 +10,10 @@
         body { background:#000; color:#fff; font-family:-apple-system, sans-serif; margin:0; }
         .filter-bar { background:#1c1c1e; border-bottom:1px solid #38383a; padding:20px; position:sticky; top:0; z-index:50; }
         .filter { background:#2c2c2e; border:1px solid #38383a; border-radius:12px; padding:12px; color:#fff; width:100%; font-size:11px; font-weight:900; text-transform:uppercase; outline:none; }
-        .card { background:#1c1c1e; border:1px solid #38383a; border-radius:24px; padding:2rem; transition:0.3s; }
+        .card { background:#1c1c1e; border:1px solid #38383a; border-radius:24px; padding:2rem; transition:0.3s; position:relative; }
         .card:hover { border-color:#0071e3; transform:translateY(-5px); }
         .price { color:#32d74b; font-size:32px; font-weight:800; letter-spacing:-1px; }
+        .stock-badge { background:rgba(50, 215, 75, 0.1); color:#32d74b; padding:4px 10px; border-radius:8px; font-size:10px; font-weight:900; text-transform:uppercase; }
         .btn-wa { background:#25d366; color:#fff; padding:14px; border-radius:50px; font-weight:900; text-align:center; display:block; text-decoration:none; text-transform:uppercase; font-size:11px; }
         .hidden { display: none !important; }
     </style>
@@ -30,10 +31,9 @@
 
     <div class="max-w-6xl mx-auto p-6">
         <header class="my-10 text-center">
-            <h1 class="text-6xl font-black italic italic tracking-tighter">iFipe</h1>
-            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.4em] mt-2 text-blue-500">Buscador Oficial de iPhones</p>
+            <h1 class="text-6xl font-black italic tracking-tighter italic">iFipe</h1>
+            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.4em] mt-2">Ranking de Preços Realtime</p>
         </header>
-
         <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
     </div>
 
@@ -54,21 +54,14 @@
                 _s.from('regioes').select('*').order('id'),
                 _s.from('variacoes').select('*, produtos_mestre(nome)')
             ]);
-
             gradeVariacoes = v.data || [];
-            
             document.getElementById('fMod').innerHTML = '<option value="">Modelo</option>' + m.data.map(x=>`<option value="${x.nome}">${x.nome}</option>`).join('');
             document.getElementById('fReg').innerHTML = '<option value="">Região</option>' + r.data.map(x=>`<option value="${x.nome}">${x.bandeira} ${x.nome}</option>`).join('');
-            
             buscarOfertas();
         }
 
         async function buscarOfertas() {
-            const { data } = await _s.from('ofertas')
-                .select('preco, regioes(nome, bandeira), fornecedores(nome, whatsapp, ativo), variacoes(capacidade, cor, produtos_mestre(nome))')
-                .eq('fornecedores.ativo', true)
-                .order('preco', {ascending:true});
-            
+            const { data } = await _s.from('ofertas').select('preco, quantidade, regioes(nome, bandeira), fornecedores(nome, whatsapp, ativo), variacoes(capacidade, cor, produtos_mestre(nome))').eq('fornecedores.ativo', true).order('preco', {ascending:true});
             cacheOfertas = data || [];
             renderizar(cacheOfertas);
         }
@@ -77,14 +70,56 @@
             const modNome = document.getElementById('fMod').value;
             const selCap = document.getElementById('fCap');
             const selCor = document.getElementById('fCor');
-
             if(!modNome) { selCap.disabled = selCor.disabled = true; filtrar(); return; }
-
             const filtradas = gradeVariacoes.filter(x => x.produtos_mestre.nome === modNome);
             const caps = [...new Set(filtradas.map(x=>x.capacidade))].sort((a,b) => parseInt(a) - parseInt(b));
-
             selCap.innerHTML = '<option value="">Memória</option>' + caps.map(x=>`<option value="${x}">${x}</option>`).join('');
             selCap.disabled = false;
             selCor.disabled = true;
             selCor.innerHTML = '<option value="">Cor</option>';
             filtrar();
+        }
+
+        function atualizarCores() {
+            const modNome = document.getElementById('fMod').value;
+            const cap = document.getElementById('fCap').value;
+            const selCor = document.getElementById('fCor');
+            if(!cap) { selCor.disabled = true; filtrar(); return; }
+            const filtradas = gradeVariacoes.filter(x => x.produtos_mestre.nome === modNome && x.capacidade === cap);
+            selCor.innerHTML = '<option value="">Cor</option>' + filtradas.map(x=>`<option value="${x.cor}">${x.cor}</option>`).join('');
+            selCor.disabled = false;
+            filtrar();
+        }
+
+        function filtrar() {
+            const mod = document.getElementById('fMod').value;
+            const cap = document.getElementById('fCap').value;
+            const cor = document.getElementById('fCor').value;
+            const reg = document.getElementById('fReg').value;
+            let res = cacheOfertas;
+            if(mod) res = res.filter(x => x.variacoes.produtos_mestre.nome === mod);
+            if(cap) res = res.filter(x => x.variacoes.capacidade === cap);
+            if(cor) res = res.filter(x => x.variacoes.cor === cor);
+            if(reg) res = res.filter(x => x.regioes.nome === reg);
+            renderizar(res);
+        }
+
+        function renderizar(lista) {
+            const vitrine = document.getElementById('vitrine');
+            vitrine.innerHTML = lista.map(o => `
+                <div class="card">
+                    <div class="flex justify-between items-start mb-6">
+                        <span class="bg-[#38383a] px-3 py-1 rounded text-[10px] font-black uppercase">${o.regioes.bandeira} ${o.fornecedores.nome}</span>
+                        <span class="stock-badge">${o.quantidade} em estoque</span>
+                    </div>
+                    <h2 class="text-2xl font-bold italic italic">${o.variacoes.produtos_mestre.nome}</h2>
+                    <p class="text-gray-500 text-[11px] mb-8 font-black uppercase tracking-widest">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
+                    <div class="price mb-8">R$ ${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                    <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}" target="_blank" class="btn-wa">Negociar agora</a>
+                </div>
+            `).join('');
+        }
+        validarSessao();
+    </script>
+</body>
+</html>
