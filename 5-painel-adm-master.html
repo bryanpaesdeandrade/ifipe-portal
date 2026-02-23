@@ -16,10 +16,12 @@
         .status-badge { padding:4px 10px; border-radius:20px; font-size:10px; font-weight:900; text-transform:uppercase; }
         .bg-green { background:#32d74b; color:#000; }
         .bg-red { background:#ff3b30; color:#fff; }
+        .bg-yellow { background:#ffcc00; color:#000; }
         table { width:100%; border-collapse:collapse; margin-top:1rem; }
         th { font-size:10px; color:#86868b; text-transform:uppercase; padding:10px; border-bottom:1px solid #38383a; text-align:left; }
         td { padding:15px 10px; border-bottom:1px solid #2c2c2e; font-size:13px; }
-        .btn-action { padding:6px 12px; border-radius:8px; font-size:10px; font-weight:bold; cursor:pointer; text-transform:uppercase; border:none; }
+        .btn-action { padding:6px 12px; border-radius:8px; font-size:10px; font-weight:bold; cursor:pointer; text-transform:uppercase; border:none; margin-right:4px; transition:0.2s; }
+        .btn-action:hover { opacity:0.8; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -34,7 +36,7 @@
         <p id="loginMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase"></p>
     </div>
 
-    <div id="dashSection" class="hidden max-w-6xl mx-auto">
+    <div id="dashSection" class="hidden max-w-7xl mx-auto">
         <header class="mb-10 flex justify-between items-center bg-[#1c1c1e] p-6 rounded-3xl border border-[#38383a]">
             <div>
                 <h1 class="text-3xl font-black italic">iFipe <span class="text-blue-500">MASTER</span></h1>
@@ -42,7 +44,7 @@
             </div>
             <div class="flex gap-4">
                 <button onclick="carregarTudo()" class="bg-blue-600 text-white px-6 py-2 rounded-full font-black text-[10px] uppercase">Atualizar Dados</button>
-                <button onclick="sair()" class="bg-red-500 text-white px-6 py-2 rounded-full font-black text-[10px] uppercase">Sair</button>
+                <button onclick="sair()" class="bg-red text-white px-6 py-2 rounded-full font-black text-[10px] uppercase">Sair</button>
             </div>
         </header>
 
@@ -55,10 +57,12 @@
                 <input type="text" id="eqCargo" class="apple-input m-0" placeholder="Cargo (Ex: Atendente)">
             </div>
             <button onclick="addEquipe()" class="apple-button w-auto px-8 mb-6">Cadastrar Funcionário</button>
-            <table>
-                <thead><tr><th>Nome</th><th>E-mail</th><th>Senha</th><th>Cargo</th><th>Status</th><th>Ação</th></tr></thead>
-                <tbody id="listaEquipe"></tbody>
-            </table>
+            <div class="overflow-x-auto">
+                <table>
+                    <thead><tr><th>Nome</th><th>E-mail</th><th>Senha</th><th>Cargo</th><th>Status</th><th>Ações</th></tr></thead>
+                    <tbody id="listaEquipe"></tbody>
+                </table>
+            </div>
         </div>
 
         <div id="secLojistas" class="admin-card hidden">
@@ -69,11 +73,12 @@
                 <input type="text" id="lojSenha" class="apple-input m-0" placeholder="Criar Senha">
             </div>
             <button onclick="addLojista()" class="apple-button w-auto px-8 mb-8 bg-blue-500 text-white">Cadastrar Lojista Pronto</button>
-            
-            <table>
-                <thead><tr><th>Loja</th><th>WhatsApp</th><th>Senha</th><th>Status Financeiro</th><th>Ação</th></tr></thead>
-                <tbody id="listaLojistas"></tbody>
-            </table>
+            <div class="overflow-x-auto">
+                <table>
+                    <thead><tr><th>Loja</th><th>WhatsApp</th><th>Senha</th><th>Status</th><th>Ações</th></tr></thead>
+                    <tbody id="listaLojistas"></tbody>
+                </table>
+            </div>
         </div>
 
         <div id="secClientes" class="admin-card hidden">
@@ -86,11 +91,12 @@
                 <input type="text" id="cliSenha" class="apple-input m-0" placeholder="Criar Senha">
             </div>
             <button onclick="addCliente()" class="apple-button w-auto px-8 mb-8 bg-blue-500 text-white">Cadastrar Cliente Pronto</button>
-            
-            <table>
-                <thead><tr><th>Nome</th><th>CPF</th><th>E-mail</th><th>Senha</th><th>Status</th><th>Ação</th></tr></thead>
-                <tbody id="listaClientes"></tbody>
-            </table>
+            <div class="overflow-x-auto">
+                <table>
+                    <thead><tr><th>Nome</th><th>CPF</th><th>E-mail</th><th>Senha</th><th>Status</th><th>Ações</th></tr></thead>
+                    <tbody id="listaClientes"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -144,8 +150,11 @@
                 <tr>
                     <td class="font-bold">${e.nome}</td><td>${e.email}</td><td class="font-mono text-blue-400">${e.senha}</td>
                     <td class="font-bold text-gray-400">${e.cargo}</td>
-                    <td><span class="status-badge ${e.ativo ? 'bg-green' : 'bg-red'}">${e.ativo ? 'Ativo' : 'Bloqueado'}</span></td>
-                    <td><button onclick="toggleUser('admin_users', ${e.id}, ${e.ativo})" class="btn-action ${e.ativo ? 'bg-red' : 'bg-green'} text-black">${e.ativo ? 'Bloquear' : 'Ativar'}</button></td>
+                    <td><span class="status-badge ${e.ativo ? 'bg-green' : 'bg-yellow'}">${e.ativo ? 'Ativo' : 'Bloqueado'}</span></td>
+                    <td style="min-width: 150px;">
+                        ${e.email !== 'admin@ifipe.com' ? `<button onclick="toggleUser('admin_users', ${e.id}, ${e.ativo})" class="btn-action ${e.ativo ? 'bg-yellow' : 'bg-green'}">${e.ativo ? 'Bloquear' : 'Ativar'}</button>
+                        <button onclick="deletarEquipe(${e.id})" class="btn-action bg-red">Excluir</button>` : '<span class="text-[10px] text-gray-600 font-bold uppercase">Acesso Mestre</span>'}
+                    </td>
                 </tr>`).join('');
         }
 
@@ -153,8 +162,11 @@
             document.getElementById('listaLojistas').innerHTML = data.map(l => `
                 <tr>
                     <td class="font-bold text-blue-500">${l.nome}</td><td>${l.whatsapp}</td><td class="font-mono text-blue-400">${l.senha}</td>
-                    <td><span class="status-badge ${l.ativo ? 'bg-green' : 'bg-red'}">${l.ativo ? 'Liberado' : 'Bloqueado'}</span></td>
-                    <td><button onclick="toggleUser('fornecedores', ${l.id}, ${l.ativo})" class="btn-action ${l.ativo ? 'bg-red' : 'bg-green'} text-black">${l.ativo ? 'Bloquear' : 'Liberar'}</button></td>
+                    <td><span class="status-badge ${l.ativo ? 'bg-green' : 'bg-yellow'}">${l.ativo ? 'Liberado' : 'Bloqueado'}</span></td>
+                    <td style="min-width: 150px;">
+                        <button onclick="toggleUser('fornecedores', ${l.id}, ${l.ativo})" class="btn-action ${l.ativo ? 'bg-yellow' : 'bg-green'}">${l.ativo ? 'Bloquear' : 'Liberar'}</button>
+                        <button onclick="deletarLojista(${l.id})" class="btn-action bg-red">Excluir</button>
+                    </td>
                 </tr>`).join('');
         }
 
@@ -162,61 +174,66 @@
             document.getElementById('listaClientes').innerHTML = data.map(c => `
                 <tr>
                     <td class="font-bold">${c.nome}</td><td class="font-mono text-gray-500">${c.cpf}</td><td>${c.email}</td><td class="font-mono text-blue-400">${c.senha}</td>
-                    <td><span class="status-badge ${c.aprovado ? 'bg-green' : 'bg-red'}">${c.aprovado ? 'Liberado' : 'Pendente/Bloqueado'}</span></td>
-                    <td><button onclick="toggleCliente(${c.id}, ${c.aprovado})" class="btn-action ${c.aprovado ? 'bg-red' : 'bg-green'} text-black">${c.aprovado ? 'Bloquear' : 'Aprovar'}</button></td>
+                    <td><span class="status-badge ${c.aprovado ? 'bg-green' : 'bg-yellow'}">${c.aprovado ? 'Liberado' : 'Pendente'}</span></td>
+                    <td style="min-width: 150px;">
+                        <button onclick="toggleCliente(${c.id}, ${c.aprovado})" class="btn-action ${c.aprovado ? 'bg-yellow' : 'bg-green'}">${c.aprovado ? 'Bloquear' : 'Aprovar'}</button>
+                        <button onclick="deletarCliente(${c.id})" class="btn-action bg-red">Excluir</button>
+                    </td>
                 </tr>`).join('');
         }
 
+        // --- FUNÇÕES DE EXCLUSÃO ---
+        async function deletarEquipe(id) {
+            if(confirm("Tem certeza que deseja EXCLUIR DEFINITIVAMENTE este funcionário?")) {
+                await _s.from('admin_users').delete().eq('id', id);
+                carregarTudo();
+            }
+        }
+
+        async function deletarLojista(id) {
+            if(confirm("ATENÇÃO: Excluir a loja apagará TAMBÉM todas as ofertas dela do ranking. Confirmar exclusão?")) {
+                await _s.from('ofertas').delete().eq('fornecedor_id', id); // Limpa as ofertas primeiro
+                await _s.from('fornecedores').delete().eq('id', id);       // Depois apaga o lojista
+                carregarTudo();
+            }
+        }
+
+        async function deletarCliente(id) {
+            if(confirm("Tem certeza que deseja EXCLUIR DEFINITIVAMENTE este cliente?")) {
+                await _s.from('clientes_buscador').delete().eq('id', id);
+                carregarTudo();
+            }
+        }
+
+        // --- FUNÇÕES DE CADASTRO E TOGGLE (MANTIDAS INTACTAS) ---
         async function addEquipe() {
-            const nome = document.getElementById('eqNome').value;
-            const email = document.getElementById('eqEmail').value;
-            const senha = document.getElementById('eqSenha').value;
-            const cargo = document.getElementById('eqCargo').value;
+            const nome = document.getElementById('eqNome').value; const email = document.getElementById('eqEmail').value; const senha = document.getElementById('eqSenha').value; const cargo = document.getElementById('eqCargo').value;
             if(nome && email && senha && cargo) {
                 await _s.from('admin_users').insert([{nome, email, senha, cargo}]);
-                document.getElementById('eqNome').value = ""; document.getElementById('eqEmail').value = ""; document.getElementById('eqSenha').value = ""; document.getElementById('eqCargo').value = "";
-                carregarTudo();
+                document.getElementById('eqNome').value = ""; document.getElementById('eqEmail').value = ""; document.getElementById('eqSenha').value = ""; document.getElementById('eqCargo').value = ""; carregarTudo();
             } else { alert("Preencha todos os campos da equipe."); }
         }
 
         async function addLojista() {
-            const nome = document.getElementById('lojNome').value;
-            const whatsapp = document.getElementById('lojWhats').value.replace(/\D/g, '');
-            const senha = document.getElementById('lojSenha').value;
+            const nome = document.getElementById('lojNome').value; const whatsapp = document.getElementById('lojWhats').value.replace(/\D/g, ''); const senha = document.getElementById('lojSenha').value;
             if(nome && whatsapp && senha) {
                 await _s.from('fornecedores').insert([{nome, whatsapp, senha, ativo: true}]);
-                document.getElementById('lojNome').value = ""; document.getElementById('lojWhats').value = ""; document.getElementById('lojSenha').value = "";
-                carregarTudo();
+                document.getElementById('lojNome').value = ""; document.getElementById('lojWhats').value = ""; document.getElementById('lojSenha').value = ""; carregarTudo();
             } else { alert("Preencha todos os campos do lojista."); }
         }
 
         async function addCliente() {
-            const nome = document.getElementById('cliNome').value;
-            const cpf = document.getElementById('cliCpf').value.replace(/\D/g, '');
-            const email = document.getElementById('cliEmail').value;
-            const whatsapp = document.getElementById('cliWhats').value.replace(/\D/g, '');
-            const senha = document.getElementById('cliSenha').value;
-            
+            const nome = document.getElementById('cliNome').value; const cpf = document.getElementById('cliCpf').value.replace(/\D/g, ''); const email = document.getElementById('cliEmail').value; const whatsapp = document.getElementById('cliWhats').value.replace(/\D/g, ''); const senha = document.getElementById('cliSenha').value;
             if(nome && cpf && email && senha) {
                 const { error } = await _s.from('clientes_buscador').insert([{nome, cpf, email, whatsapp, senha, aprovado: true}]);
-                if (error) {
-                    alert("Erro! Verifique se o CPF é real e se CPF/E-mail já não estão cadastrados.");
-                } else {
-                    document.getElementById('cliNome').value = ""; document.getElementById('cliCpf').value = ""; document.getElementById('cliEmail').value = ""; document.getElementById('cliWhats').value = ""; document.getElementById('cliSenha').value = "";
-                    carregarTudo();
+                if (error) { alert("Erro! Verifique se o CPF é real e se CPF/E-mail já não estão cadastrados."); } else {
+                    document.getElementById('cliNome').value = ""; document.getElementById('cliCpf').value = ""; document.getElementById('cliEmail').value = ""; document.getElementById('cliWhats').value = ""; document.getElementById('cliSenha').value = ""; carregarTudo();
                 }
             } else { alert("Preencha os campos obrigatórios do cliente."); }
         }
 
-        async function toggleUser(tabela, id, status) {
-            await _s.from(tabela).update({ ativo: !status }).eq('id', id);
-            carregarTudo();
-        }
-
-        async function toggleCliente(id, status) {
-            await _s.from('clientes_buscador').update({ aprovado: !status }).eq('id', id);
-            carregarTudo();
-        }
+        async function toggleUser(tabela, id, status) { await _s.from(tabela).update({ ativo: !status }).eq('id', id); carregarTudo(); }
+        async function toggleCliente(id, status) { await _s.from('clientes_buscador').update({ aprovado: !status }).eq('id', id); carregarTudo(); }
     </script>
 </body>
 </html>
