@@ -47,16 +47,12 @@
         </header>
 
         <div id="secEquipe" class="admin-card hidden">
-            <h2 class="text-xl font-black italic mb-4 text-blue-500">Gestão de Equipe (Acessos)</h2>
+            <h2 class="text-xl font-black italic mb-4 text-blue-500">Sua Equipe (Controle de Funcionários)</h2>
             <div class="grid grid-cols-4 gap-4 mb-6">
                 <input type="text" id="eqNome" class="apple-input m-0" placeholder="Nome">
                 <input type="email" id="eqEmail" class="apple-input m-0" placeholder="E-mail">
-                <input type="text" id="eqSenha" class="apple-input m-0" placeholder="Senha">
-                <select id="eqCargo" class="apple-input m-0">
-                    <option value="FINANCEIRO">Financeiro</option>
-                    <option value="SUPORTE">Suporte</option>
-                    <option value="MASTER">Master (Sócio)</option>
-                </select>
+                <input type="text" id="eqSenha" class="apple-input m-0" placeholder="Senha de Acesso">
+                <input type="text" id="eqCargo" class="apple-input m-0" placeholder="Cargo (Ex: Atendente)">
             </div>
             <button onclick="addEquipe()" class="apple-button w-auto px-8 mb-6">Cadastrar Funcionário</button>
             <table>
@@ -66,7 +62,14 @@
         </div>
 
         <div id="secLojistas" class="admin-card hidden">
-            <h2 class="text-xl font-black italic mb-4">Lojistas Anunciantes (Financeiro)</h2>
+            <h2 class="text-xl font-black italic mb-4">Gestão de Lojistas Anunciantes</h2>
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <input type="text" id="lojNome" class="apple-input m-0" placeholder="Nome da Loja">
+                <input type="text" id="lojWhats" class="apple-input m-0" placeholder="WhatsApp (Apenas Números)">
+                <input type="text" id="lojSenha" class="apple-input m-0" placeholder="Criar Senha">
+            </div>
+            <button onclick="addLojista()" class="apple-button w-auto px-8 mb-8 bg-blue-500 text-white">Cadastrar Lojista Pronto</button>
+            
             <table>
                 <thead><tr><th>Loja</th><th>WhatsApp</th><th>Senha</th><th>Status Financeiro</th><th>Ação</th></tr></thead>
                 <tbody id="listaLojistas"></tbody>
@@ -74,7 +77,16 @@
         </div>
 
         <div id="secClientes" class="admin-card hidden">
-            <h2 class="text-xl font-black italic mb-4">Clientes do Buscador (Aprovações)</h2>
+            <h2 class="text-xl font-black italic mb-4">Gestão de Clientes VIP (Buscador)</h2>
+            <div class="grid grid-cols-5 gap-4 mb-4">
+                <input type="text" id="cliNome" class="apple-input m-0" placeholder="Nome">
+                <input type="text" id="cliCpf" class="apple-input m-0" placeholder="CPF Válido">
+                <input type="email" id="cliEmail" class="apple-input m-0" placeholder="E-mail">
+                <input type="text" id="cliWhats" class="apple-input m-0" placeholder="WhatsApp">
+                <input type="text" id="cliSenha" class="apple-input m-0" placeholder="Criar Senha">
+            </div>
+            <button onclick="addCliente()" class="apple-button w-auto px-8 mb-8 bg-blue-500 text-white">Cadastrar Cliente Pronto</button>
+            
             <table>
                 <thead><tr><th>Nome</th><th>CPF</th><th>E-mail</th><th>Senha</th><th>Status</th><th>Ação</th></tr></thead>
                 <tbody id="listaClientes"></tbody>
@@ -95,18 +107,13 @@
                 adminLogado = data;
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('dashSection').classList.remove('hidden');
-                document.getElementById('userLogged').innerText = `${data.nome} | Permissão: ${data.cargo}`;
+                document.getElementById('userLogged').innerText = `${data.nome} | Função: ${data.cargo}`;
                 
-                // CONTROLE DE NÍVEIS DE ACESSO
-                if(data.cargo === 'MASTER') {
+                document.getElementById('secLojistas').classList.remove('hidden');
+                document.getElementById('secClientes').classList.remove('hidden');
+                
+                if(data.email === 'admin@ifipe.com') {
                     document.getElementById('secEquipe').classList.remove('hidden');
-                    document.getElementById('secLojistas').classList.remove('hidden');
-                    document.getElementById('secClientes').classList.remove('hidden');
-                } else if(data.cargo === 'FINANCEIRO') {
-                    document.getElementById('secLojistas').classList.remove('hidden');
-                    document.getElementById('secClientes').classList.remove('hidden');
-                } else if(data.cargo === 'SUPORTE') {
-                    document.getElementById('secClientes').classList.remove('hidden');
                 }
                 carregarTudo();
             } else { document.getElementById('loginMsg').innerText = "ACESSO NEGADO OU INATIVO."; }
@@ -122,19 +129,14 @@
 
         async function carregarTudo() {
             if(!adminLogado) return;
-            
-            if(adminLogado.cargo === 'MASTER') {
+            if(adminLogado.email === 'admin@ifipe.com') {
                 const {data} = await _s.from('admin_users').select('*').order('id');
                 renderEquipe(data || []);
             }
-            if(adminLogado.cargo === 'MASTER' || adminLogado.cargo === 'FINANCEIRO') {
-                const {data} = await _s.from('fornecedores').select('*').order('nome');
-                renderLojistas(data || []);
-            }
-            if(adminLogado.cargo === 'MASTER' || adminLogado.cargo === 'FINANCEIRO' || adminLogado.cargo === 'SUPORTE') {
-                const {data} = await _s.from('clientes_buscador').select('*').order('criado_em', {ascending:false});
-                renderClientes(data || []);
-            }
+            const {data: loj} = await _s.from('fornecedores').select('*').order('nome');
+            renderLojistas(loj || []);
+            const {data: cli} = await _s.from('clientes_buscador').select('*').order('criado_em', {ascending:false});
+            renderClientes(cli || []);
         }
 
         function renderEquipe(data) {
@@ -170,11 +172,40 @@
             const email = document.getElementById('eqEmail').value;
             const senha = document.getElementById('eqSenha').value;
             const cargo = document.getElementById('eqCargo').value;
-            if(nome && email && senha) {
+            if(nome && email && senha && cargo) {
                 await _s.from('admin_users').insert([{nome, email, senha, cargo}]);
-                document.getElementById('eqNome').value = ""; document.getElementById('eqEmail').value = ""; document.getElementById('eqSenha').value = "";
+                document.getElementById('eqNome').value = ""; document.getElementById('eqEmail').value = ""; document.getElementById('eqSenha').value = ""; document.getElementById('eqCargo').value = "";
                 carregarTudo();
-            }
+            } else { alert("Preencha todos os campos da equipe."); }
+        }
+
+        async function addLojista() {
+            const nome = document.getElementById('lojNome').value;
+            const whatsapp = document.getElementById('lojWhats').value.replace(/\D/g, '');
+            const senha = document.getElementById('lojSenha').value;
+            if(nome && whatsapp && senha) {
+                await _s.from('fornecedores').insert([{nome, whatsapp, senha, ativo: true}]);
+                document.getElementById('lojNome').value = ""; document.getElementById('lojWhats').value = ""; document.getElementById('lojSenha').value = "";
+                carregarTudo();
+            } else { alert("Preencha todos os campos do lojista."); }
+        }
+
+        async function addCliente() {
+            const nome = document.getElementById('cliNome').value;
+            const cpf = document.getElementById('cliCpf').value.replace(/\D/g, '');
+            const email = document.getElementById('cliEmail').value;
+            const whatsapp = document.getElementById('cliWhats').value.replace(/\D/g, '');
+            const senha = document.getElementById('cliSenha').value;
+            
+            if(nome && cpf && email && senha) {
+                const { error } = await _s.from('clientes_buscador').insert([{nome, cpf, email, whatsapp, senha, aprovado: true}]);
+                if (error) {
+                    alert("Erro! Verifique se o CPF é real e se CPF/E-mail já não estão cadastrados.");
+                } else {
+                    document.getElementById('cliNome').value = ""; document.getElementById('cliCpf').value = ""; document.getElementById('cliEmail').value = ""; document.getElementById('cliWhats').value = ""; document.getElementById('cliSenha').value = "";
+                    carregarTudo();
+                }
+            } else { alert("Preencha os campos obrigatórios do cliente."); }
         }
 
         async function toggleUser(tabela, id, status) {
