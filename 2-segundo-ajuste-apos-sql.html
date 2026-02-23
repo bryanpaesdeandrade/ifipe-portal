@@ -7,74 +7,127 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #000; color: #fff; font-family: -apple-system, sans-serif; padding: 20px; }
+        body { background-color: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; }
+        
+        /* BARRA DO USUÁRIO */
+        .user-bar { background:#0b0b0c; border-bottom:1px solid #1c1c1e; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; }
+        
+        /* CARDS E INPUTS */
         .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; width: 100%; max-width: 600px; margin: 0 auto 2rem; }
         .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 14px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 15px; }
         .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 16px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 13px; transition: 0.3s; }
         .apple-button:hover { background: #0071e3; color: #fff; }
         label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.1em; margin-top: 1rem; }
         
+        /* TABELAS E MINIS */
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
         th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 10px; text-align: left; border-bottom: 1px solid #38383a; }
         td { padding: 12px 10px; border-bottom: 1px solid #2c2c2e; font-size: 12px; }
-        .mini-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 6px; padding: 5px; width: 60px; color: #fff; text-align: center; }
-        .btn-save { color: #32d74b; font-weight: bold; cursor: pointer; margin-right: 10px; }
-        .btn-del { color: #ff3b30; font-weight: bold; cursor: pointer; }
+        .mini-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 6px; padding: 5px; width: 60px; color: #fff; text-align: center; font-weight: bold; }
+        .btn-save { color: #32d74b; font-weight: bold; cursor: pointer; margin-right: 10px; text-transform: uppercase; font-size: 10px; }
+        .btn-del { color: #ff3b30; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
+        
+        /* MODAL DE PERFIL */
+        .modal-bg { background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); }
+        .btn-modal-save { background:#0071e3; color:#fff; font-weight:900; border-radius:50px; padding:15px; width:100%; text-transform:uppercase; font-size:12px; transition:0.3s; margin-top: 1rem; }
+        
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div id="loginSection" class="apple-card text-center">
-        <h1 class="text-4xl font-black italic mb-8 italic">iFipe</h1>
-        <input type="text" id="loginId" class="apple-input" placeholder="Nome da Loja">
-        <input type="password" id="loginPass" class="apple-input" placeholder="Senha">
-        <button onclick="fazerLogin()" class="apple-button">Acessar Painel</button>
+    <div id="loginSection" class="flex items-center justify-center min-h-screen px-4">
+        <div class="apple-card text-center !m-0">
+            <h1 class="text-5xl font-black italic mb-2">iFipe</h1>
+            <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel do Lojista</p>
+            <input type="text" id="loginId" class="apple-input" placeholder="Nome Exato da Loja">
+            <input type="password" id="loginPass" class="apple-input" placeholder="Senha">
+            <button onclick="fazerLogin()" class="apple-button">Acessar Painel</button>
+            <p id="loginMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase"></p>
+        </div>
     </div>
 
     <div id="formSection" class="hidden">
-        <div class="apple-card">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-black italic">Novo Anúncio</h2>
-                <button onclick="location.reload()" class="text-[10px] text-gray-500 underline uppercase">Sair</button>
+        
+        <div class="user-bar mb-8">
+            <div class="max-w-6xl mx-auto w-full flex justify-between items-center">
+                <div class="text-[11px] font-black uppercase tracking-widest text-gray-500">
+                    Olá, <span id="nomeLojaLogada" class="text-white">...</span>
+                </div>
+                <div class="flex gap-6">
+                    <button onclick="abrirPerfil()" class="text-[10px] text-gray-400 hover:text-white font-black uppercase tracking-widest transition">Minha Conta</button>
+                    <button onclick="sairPainel()" class="text-[10px] text-red-500 hover:text-red-400 font-black uppercase tracking-widest transition">Sair</button>
+                </div>
             </div>
-
-            <form id="priceForm">
-                <label>Modelo do iPhone</label>
-                <select id="produto_id" class="apple-input" onchange="carregarMemorias()" required><option value="">Selecione</option></select>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label>Memória</label><select id="capacidade" class="apple-input" required disabled onchange="carregarCores()"><option value="">Aguardando...</option></select></div>
-                    <div><label>Cor</label><select id="cor" class="apple-input" required disabled><option value="">Aguardando...</option></select></div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label>Região</label><select id="regiao_id" class="apple-input" required></select></div>
-                    <div><label>Estoque Inicial</label><input type="number" id="quantidade" class="apple-input" value="1" min="1" required></div>
-                </div>
-
-                <label>Preço de Venda (R$)</label>
-                <input type="text" id="preco" class="apple-input" placeholder="7.500,00" required>
-
-                <button type="submit" class="apple-button">Publicar Agora</button>
-            </form>
-            <p id="status" class="mt-4 text-center text-[10px] font-black uppercase tracking-widest"></p>
         </div>
 
-        <div class="apple-card max-w-4xl">
-            <h2 class="text-xl font-black italic mb-4">Meus Anúncios Ativos</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Produto</th>
-                        <th>Região</th>
-                        <th>Qtd</th>
-                        <th>Preço (R$)</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="listaAtivos"></tbody>
-            </table>
+        <div class="px-4">
+            <div class="apple-card">
+                <h2 class="text-2xl font-black italic mb-6">Nova Oferta</h2>
+                <form id="priceForm">
+                    <label>Modelo do iPhone</label>
+                    <select id="produto_id" class="apple-input" onchange="carregarMemorias()" required><option value="">Selecione</option></select>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label>Memória</label><select id="capacidade" class="apple-input" required disabled onchange="carregarCores()"><option value="">Aguardando...</option></select></div>
+                        <div><label>Cor</label><select id="cor" class="apple-input" required disabled><option value="">Aguardando...</option></select></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label>Região de Origem</label><select id="regiao_id" class="apple-input" required></select></div>
+                        <div><label>Estoque Atual</label><input type="number" id="quantidade" class="apple-input" value="1" min="1" required></div>
+                    </div>
+
+                    <label>Preço de Venda (R$)</label>
+                    <input type="text" id="preco" class="apple-input" placeholder="Ex: 7.500,00" required>
+
+                    <button type="submit" class="apple-button mt-4 bg-blue-600 text-white border-0 hover:bg-blue-500">Publicar no Ranking</button>
+                </form>
+                <p id="status" class="mt-4 text-center text-[10px] font-black uppercase tracking-widest"></p>
+            </div>
+
+            <div class="apple-card max-w-4xl">
+                <h2 class="text-2xl font-black italic mb-6">Meus Anúncios Ativos</h2>
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Produto (Modelo/Cor)</th>
+                                <th>Região</th>
+                                <th>Estoque</th>
+                                <th>Preço (R$)</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaAtivos"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalPerfil" class="hidden fixed inset-0 modal-bg z-50 flex justify-center items-center p-4">
+        <div class="bg-[#1c1c1e] p-8 rounded-3xl border border-[#38383a] w-full max-w-sm">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-black italic">Dados da Loja</h2>
+                <button onclick="fecharPerfil()" class="text-gray-500 text-xl font-bold hover:text-white">&times;</button>
+            </div>
+            
+            <p class="text-[10px] font-bold text-gray-500 mb-6 leading-relaxed">
+                Atenção: Se você alterar o "Nome da Loja", ele será o seu novo login de acesso.
+            </p>
+
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nome da Loja (Login)</label>
+            <input type="text" id="editNome" class="apple-input">
+            
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">WhatsApp de Vendas</label>
+            <input type="text" id="editWhats" class="apple-input">
+            
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nova Senha</label>
+            <input type="password" id="editSenha" class="apple-input" placeholder="••••••••">
+            
+            <button onclick="salvarPerfil()" class="btn-modal-save">Salvar Alterações</button>
+            <p id="msgPerfil" class="text-[10px] font-black uppercase text-center mt-4 tracking-widest"></p>
         </div>
     </div>
 
@@ -83,18 +136,83 @@
         let loja = null;
         let gradeVariacoes = [];
 
+        // VERIFICA SESSÃO AO ABRIR A PÁGINA
+        window.onload = async () => {
+            const token = localStorage.getItem('iFipe_Lojista_Token');
+            if(token) {
+                const { data } = await _s.from('fornecedores').select('*').eq('id', token).maybeSingle();
+                if(data && data.ativo) {
+                    loja = data;
+                    liberarAcesso();
+                } else {
+                    sairPainel();
+                }
+            }
+        };
+
         async function fazerLogin() {
             const user = document.getElementById('loginId').value;
             const pass = document.getElementById('loginPass').value;
+            const msg = document.getElementById('loginMsg');
+            
             const { data } = await _s.from('fornecedores').select('*').eq('nome', user).eq('senha', pass).maybeSingle();
             if (data && data.ativo) {
                 loja = data;
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('formSection').classList.remove('hidden');
-                init();
-            } else { alert("Acesso Negado."); }
+                localStorage.setItem('iFipe_Lojista_Token', data.id);
+                liberarAcesso();
+            } else { 
+                msg.innerText = "ACESSO NEGADO OU FINANCEIRO BLOQUEADO."; 
+            }
         }
 
+        function liberarAcesso() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('formSection').classList.remove('hidden');
+            document.getElementById('nomeLojaLogada').innerText = loja.nome;
+            init();
+        }
+
+        function sairPainel() {
+            localStorage.removeItem('iFipe_Lojista_Token');
+            location.reload();
+        }
+
+        // FUNÇÕES DO PERFIL (MEUS DADOS)
+        function abrirPerfil() {
+            document.getElementById('modalPerfil').classList.remove('hidden');
+            document.getElementById('editNome').value = loja.nome;
+            document.getElementById('editWhats').value = loja.whatsapp;
+            document.getElementById('editSenha').value = loja.senha;
+            document.getElementById('msgPerfil').innerText = '';
+        }
+
+        function fecharPerfil() { document.getElementById('modalPerfil').classList.add('hidden'); }
+
+        async function salvarPerfil() {
+            const novoNome = document.getElementById('editNome').value;
+            const novoWhats = document.getElementById('editWhats').value.replace(/\D/g, '');
+            const novaSenha = document.getElementById('editSenha').value;
+            const msg = document.getElementById('msgPerfil');
+
+            if(!novoNome || !novoWhats || !novaSenha) {
+                msg.innerText = "PREENCHA TODOS OS CAMPOS."; msg.style.color = "#ff3b30"; return;
+            }
+
+            const { error } = await _s.from('fornecedores').update({
+                nome: novoNome, whatsapp: novoWhats, senha: novaSenha
+            }).eq('id', loja.id);
+
+            if(!error) {
+                msg.innerText = "DADOS ATUALIZADOS COM SUCESSO!"; msg.style.color = "#32d74b";
+                loja.nome = novoNome; loja.whatsapp = novoWhats; loja.senha = novaSenha;
+                document.getElementById('nomeLojaLogada').innerText = loja.nome;
+                setTimeout(fecharPerfil, 1500);
+            } else {
+                msg.innerText = "ERRO AO ATUALIZAR. TENTE NOVAMENTE."; msg.style.color = "#ff3b30";
+            }
+        }
+
+        // CARREGAMENTO DOS DADOS E OFERTAS
         async function init() {
             const [modelos, regioes, variacoes] = await Promise.all([
                 _s.from('produtos_mestre').select('*').order('id'),
@@ -112,13 +230,13 @@
             const container = document.getElementById('listaAtivos');
             container.innerHTML = data.map(o => `
                 <tr>
-                    <td><b>${o.variacoes.produtos_mestre.nome}</b><br><span class="text-gray-500">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td>
-                    <td>${o.regioes.bandeira}</td>
-                    <td><input type="number" id="q-${o.id}" class="mini-input" value="${o.quantidade}"></td>
-                    <td><input type="text" id="p-${o.id}" class="mini-input w-20" value="${o.preco}"></td>
+                    <td><b class="text-[14px]">${o.variacoes.produtos_mestre.nome}</b><br><span class="text-gray-500 font-bold uppercase tracking-widest text-[10px]">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td>
+                    <td class="text-xs uppercase font-bold">${o.regioes.bandeira} ${o.regioes.nome}</td>
+                    <td><input type="number" id="q-${o.id}" class="mini-input" value="${o.quantidade}" min="0"></td>
+                    <td><input type="text" id="p-${o.id}" class="mini-input w-24" value="${o.preco}"></td>
                     <td>
-                        <span class="btn-save" onclick="salvarEdicao(${o.id})">OK</span>
-                        <span class="btn-del" onclick="deletarOferta(${o.id})">X</span>
+                        <span class="btn-save" onclick="salvarEdicao(${o.id})">Atualizar</span>
+                        <span class="btn-del" onclick="deletarOferta(${o.id})">Excluir</span>
                     </td>
                 </tr>
             `).join('');
@@ -128,12 +246,12 @@
             const nQtd = document.getElementById(`q-${id}`).value;
             const nPreco = document.getElementById(`p-${id}`).value.replace(',', '.');
             const { error } = await _s.from('ofertas').update({ quantidade: nQtd, preco: nPreco }).eq('id', id);
-            if(!error) alert("Atualizado!");
+            if(!error) alert("Estoque e Preço atualizados!");
             atualizarLista();
         }
 
         async function deletarOferta(id) {
-            if(confirm("Remover anúncio?")) {
+            if(confirm("Deseja realmente remover este anúncio?")) {
                 await _s.from('ofertas').delete().eq('id', id);
                 atualizarLista();
             }
