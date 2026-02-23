@@ -9,35 +9,34 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; margin: 0; }
-        .ticker-bar { background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 15px; position: sticky; top: 0; z-index: 50; display: flex; justify-content: center; align-items: center; }
-        .ticker-val { color: #32d74b; font-family: 'Courier New', monospace; font-size: 24px; font-weight: 900; }
-        .filter-select { background: #1c1c1e; border: 1px solid #38383a; border-radius: 12px; padding: 15px; font-size: 11px; font-weight: 900; text-transform: uppercase; outline: none; color: white; cursor: pointer; }
-        .filter-select:focus { border-color: #0071e3; }
+        .ticker-bar { background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 15px; position: sticky; top: 0; z-index: 50; display: flex; justify-content: center; align-items: center; gap: 20px; }
+        .ticker-val { color: #32d74b; font-family: 'Courier New', monospace; font-size: 20px; font-weight: 900; }
+        .filter-select { background: #1c1c1e; border: 1px solid #38383a; border-radius: 12px; padding: 12px; font-size: 11px; font-weight: 900; text-transform: uppercase; outline: none; color: white; cursor: pointer; width: 100%; }
         .price-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; transition: 0.3s; position: relative; }
         .price-card:hover { border-color: #0071e3; transform: translateY(-5px); }
         .top-deal { position: absolute; top: 0; right: 0; background: #32d74b; color: black; font-size: 10px; font-weight: 900; padding: 8px 20px; border-bottom-left-radius: 16px; text-transform: uppercase; }
         .price-value { color: #32d74b; font-size: 34px; font-weight: 800; letter-spacing: -1.5px; }
-        .btn-whatsapp { background: #25d366; color: white; font-size: 12px; font-weight: 900; padding: 16px; border-radius: 50px; width: 100%; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; text-transform: uppercase; }
+        .btn-whatsapp { background: #25d366; color: white; font-size: 12px; font-weight: 900; padding: 16px; border-radius: 50px; width: 100%; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; text-transform: uppercase; border: none; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body id="mainContent" class="hidden">
 
     <div class="ticker-bar">
-        <span class="mr-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">DÓLAR USDT/BRL:</span>
+        <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">DÓLAR USDT/BRL:</span>
         <span class="ticker-val">R$ <span id="usdtVal">0,0000</span></span>
         <button onclick="logout()" class="ml-auto text-[10px] text-gray-500 font-black uppercase underline">Sair</button>
     </div>
 
     <div class="max-w-6xl mx-auto p-6">
-        <header class="my-14 text-center">
+        <header class="my-10 text-center">
             <h1 class="text-6xl font-black italic tracking-tighter italic">iFipe</h1>
             <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.4em] mt-3">Realtime Precision Ranking</p>
         </header>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-            <select id="fModelo" onchange="atualizarFiltrosEFiltrar()" class="filter-select"><option value="">Modelo</option></select>
-            <select id="fCap" onchange="filtrar()" class="filter-select"><option value="">Memória</option></select>
+            <select id="fModelo" onchange="filtrar()" class="filter-select"><option value="">Modelo</option></select>
+            <select id="fCap" onchange="filtrar()" class="filter-select"><option value="">Capacidade</option></select>
             <select id="fCor" onchange="filtrar()" class="filter-select"><option value="">Cor</option></select>
             <select id="fReg" onchange="filtrar()" class="filter-select"><option value="">Região</option></select>
         </div>
@@ -53,7 +52,6 @@
             const token = localStorage.getItem('iFipe_Token');
             const email = localStorage.getItem('iFipe_User');
             if (!token || !email) { window.location.href = '3-pagina-login.html'; return; }
-            
             document.getElementById('mainContent').classList.remove('hidden');
             init();
         }
@@ -62,51 +60,30 @@
 
         async function init() {
             carregarDolar();
-            setInterval(carregarDolar, 15000);
+            setInterval(carregarDolar, 20000);
             
-            // Carrega a base de modelos inicial
+            // Carrega bases para os filtros
             const { data: m } = await _s.from('produtos_mestre').select('nome').order('id');
-            const selectMod = document.getElementById('fModelo');
-            if (m) m.forEach(item => selectMod.innerHTML += `<option value="${item.nome}">${item.nome}</option>`);
-            
+            const { data: v } = await _s.from('variacoes').select('capacidade, cor');
+            const { data: r } = await _s.from('regioes').select('nome, bandeira');
+
+            if (m) document.getElementById('fModelo').innerHTML += [...new Set(m.map(x=>x.nome))].map(x=>`<option value="${x}">${x}</option>`).join('');
+            if (v) {
+                document.getElementById('fCap').innerHTML += [...new Set(v.map(x=>x.capacidade))].map(x=>`<option value="${x}">${x}</option>`).join('');
+                document.getElementById('fCor').innerHTML += [...new Set(v.map(x=>x.cor))].map(x=>`<option value="${x}">${x}</option>`).join('');
+            }
+            if (r) document.getElementById('fReg').innerHTML += r.map(x=>`<option value="${x.nome}">${x.bandeira} ${x.nome}</option>`).join('');
+
             buscarOfertas();
         }
 
         async function buscarOfertas() {
-            // Busca apenas de lojistas ATIVOS (Gestão de Inadimplência)
             const { data } = await _s.from('ofertas')
                 .select('preco, regioes(nome, bandeira), fornecedores(nome, whatsapp, ativo), variacoes(capacidade, cor, produtos_mestre(nome))')
                 .eq('fornecedores.ativo', true)
                 .order('preco', { ascending: true });
             
-            if (data) { 
-                cacheOfertas = data; 
-                renderizar(data); 
-            }
-        }
-
-        function atualizarFiltrosEFiltrar() {
-            const mod = document.getElementById('fModelo').value;
-            
-            // Filtra o cache para o modelo escolhido para saber o que existe de fato
-            const f = mod ? cacheOfertas.filter(x => x.variacoes.produtos_mestre.nome === mod) : cacheOfertas;
-
-            // Extrai capacidades, cores e regiões únicas DESSE modelo
-            const caps = [...new Set(f.map(x => x.variacoes.capacidade))];
-            const cores = [...new Set(f.map(x => x.variacoes.cor))];
-            const regs = [...new Set(f.map(x => x.regioes.nome))];
-
-            // Atualiza os selects (A Regra: se não tem no banco para esse modelo, some da lista)
-            atualizarDropdown('fCap', caps, "Memória");
-            atualizarDropdown('fCor', cores, "Cor");
-            atualizarDropdown('fReg', regs, "Região");
-
-            filtrar();
-        }
-
-        function atualizarDropdown(id, lista, label) {
-            const el = document.getElementById(id);
-            el.innerHTML = `<option value="">${label}</option>` + lista.map(x => `<option value="${x}">${x}</option>`).join('');
+            if (data) { cacheOfertas = data; renderizar(data); }
         }
 
         function filtrar() {
@@ -115,17 +92,21 @@
             const cor = document.getElementById('fCor').value;
             const reg = document.getElementById('fReg').value;
 
-            let resultado = cacheOfertas;
-            if(mod) resultado = resultado.filter(x => x.variacoes.produtos_mestre.nome === mod);
-            if(cap) resultado = resultado.filter(x => x.variacoes.capacidade === cap);
-            if(cor) resultado = resultado.filter(x => x.variacoes.cor === cor);
-            if(reg) resultado = resultado.filter(x => x.regioes.nome === reg);
+            let f = cacheOfertas;
+            if(mod) f = f.filter(x => x.variacoes.produtos_mestre.nome === mod);
+            if(cap) f = f.filter(x => x.variacoes.capacidade === cap);
+            if(cor) f = f.filter(x => x.variacoes.cor === cor);
+            if(reg) f = f.filter(x => x.regioes.nome === reg);
             
-            renderizar(resultado);
+            renderizar(f);
         }
 
         function renderizar(lista) {
             const container = document.getElementById('vitrine');
+            if (lista.length === 0) {
+                container.innerHTML = '<p class="col-span-full text-center text-gray-500 py-20 font-bold uppercase tracking-widest">Nenhuma oferta encontrada.</p>';
+                return;
+            }
             container.innerHTML = lista.map((o, index) => `
                 <div class="price-card">
                     ${index === 0 ? '<div class="top-deal">Menor Preço</div>' : ''}
@@ -133,7 +114,6 @@
                         <span class="bg-[#38383a] px-3 py-1 rounded text-[10px] font-black uppercase">
                             ${o.regioes.bandeira} ${o.fornecedores.nome}
                         </span>
-                        <span class="text-[10px] text-gray-500 font-bold uppercase">${o.regioes.nome}</span>
                     </div>
                     <h2 class="text-2xl font-bold italic">${o.variacoes.produtos_mestre.nome}</h2>
                     <p class="text-gray-500 text-[11px] mb-8 font-black uppercase tracking-widest">
