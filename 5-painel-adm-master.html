@@ -3,123 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Admin Master Control</title>
+    <title>iFipe - Admin Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #0b0b0c; color: #ffffff; font-family: -apple-system, sans-serif; }
-        .admin-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 20px; padding: 1.5rem; }
-        .tab-btn { padding: 12px 24px; border-radius: 12px; font-size: 11px; font-weight: 900; text-transform: uppercase; transition: 0.3s; border: none; cursor: pointer; }
-        .tab-active { background: #0071e3; color: white; }
-        .tab-inactive { background: #2c2c2e; color: #86868b; }
-        th { text-align: left; font-size: 10px; color: #86868b; text-transform: uppercase; padding: 15px; border-bottom: 1px solid #38383a; }
-        td { padding: 15px; font-size: 14px; border-bottom: 1px solid #1c1c1e; }
-        .status-on { color: #32d74b; font-weight: bold; background: rgba(50, 215, 75, 0.1); padding: 4px 8px; border-radius: 6px; }
-        .btn-danger { background: #ff3b30; color: white; padding: 8px 12px; border-radius: 10px; font-size: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; border: none; }
+        body { background:#0b0b0c; color:#fff; font-family:sans-serif; padding:2rem; }
+        .admin-card { background:#1c1c1e; border:1px solid #38383a; border-radius:20px; padding:1.5rem; }
+        th { text-align:left; font-size:10px; color:#86868b; text-transform:uppercase; padding:12px; border-bottom:1px solid #38383a; }
+        td { padding:12px; font-size:13px; border-bottom:1px solid #1c1c1e; }
+        .btn-green { background:#32d74b; color:#000; padding:8px 15px; border-radius:10px; font-size:10px; font-weight:900; cursor:pointer; }
+        .btn-red { background:#ff3b30; color:#fff; padding:8px 15px; border-radius:10px; font-size:10px; font-weight:900; cursor:pointer; }
+        .data-cell { font-family: monospace; font-weight: bold; color: #0071e3; }
     </style>
 </head>
-<body class="p-6 md:p-12">
-
-    <header class="max-w-6xl mx-auto flex justify-between items-center mb-12">
+<body>
+    <header class="max-w-7xl mx-auto flex justify-between items-center mb-10">
         <div>
-            <h1 class="text-4xl font-black italic tracking-tighter italic">iFipe <span class="text-blue-500 text-2xl">MASTER</span></h1>
-            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.3em] mt-2">Central de Comando e Segurança</p>
+            <h1 class="text-4xl font-black italic tracking-tighter">iFipe <span class="text-blue-500 text-2xl">MASTER</span></h1>
+            <p class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.3em]">Gestão de Usuários e Segurança</p>
         </div>
-        <button onclick="location.reload()" class="bg-white text-black px-8 py-3 rounded-full font-black text-[10px] uppercase hover:bg-blue-500 hover:text-white transition">Atualizar Dados</button>
+        <button onclick="carregar()" class="bg-white text-black px-6 py-2 rounded-full font-black text-xs uppercase hover:bg-blue-500 hover:text-white transition">Sincronizar</button>
     </header>
 
-    <div class="max-w-6xl mx-auto">
-        <div class="flex flex-wrap gap-4 mb-10">
-            <button id="btnClientes" onclick="switchTab('clientes')" class="tab-btn tab-active">Usuários VIP</button>
-            <button id="btnOfertas" onclick="switchTab('ofertas')" class="tab-btn tab-inactive">Ranking de Ofertas</button>
-            <button id="btnLojistas" onclick="switchTab('lojistas')" class="tab-btn tab-inactive">Anunciantes</button>
-        </div>
-
-        <div id="secClientes" class="admin-card overflow-x-auto">
-            <table class="w-full">
-                <thead><tr><th>Nome do Cliente</th><th>E-mail</th><th>Sessão</th><th>Ações</th></tr></thead>
-                <tbody id="listaClientes"></tbody>
-            </table>
-        </div>
-
-        <div id="secOfertas" class="admin-card hidden overflow-x-auto">
-            <table class="w-full">
-                <thead><tr><th>iPhone</th><th>Loja</th><th>Preço</th><th>Data</th><th>Ação</th></tr></thead>
-                <tbody id="listaOfertas"></tbody>
-            </table>
-        </div>
-
-        <div id="secLojistas" class="admin-card hidden overflow-x-auto">
-            <table class="w-full">
-                <thead><tr><th>ID</th><th>Nome da Loja</th><th>WhatsApp</th><th>Status</th></tr></thead>
-                <tbody id="listaLojistas"></tbody>
-            </table>
-        </div>
+    <div class="max-w-7xl mx-auto admin-card overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th>E-mail</th>
+                    <th>Senha</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="lista"></tbody>
+        </table>
     </div>
 
     <script>
-        const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+        const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
-        function switchTab(tab) {
-            document.querySelectorAll('.admin-card').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(el => { el.classList.remove('tab-active'); el.classList.add('tab-inactive'); });
-            
-            if(tab === 'clientes') { document.getElementById('secClientes').classList.remove('hidden'); document.getElementById('btnClientes').className = 'tab-btn tab-active'; loadClientes(); }
-            if(tab === 'ofertas') { document.getElementById('secOfertas').classList.remove('hidden'); document.getElementById('btnOfertas').className = 'tab-btn tab-active'; loadOfertas(); }
-            if(tab === 'lojistas') { document.getElementById('secLojistas').classList.remove('hidden'); document.getElementById('btnLojistas').className = 'tab-btn tab-active'; loadLojistas(); }
-        }
-
-        async function loadClientes() {
-            const { data } = await _supabase.from('clientes_buscador').select('*').order('criado_em', {ascending: false});
-            document.getElementById('listaClientes').innerHTML = data.map(c => `
-                <tr>
-                    <td class="font-bold">${c.nome}</td>
-                    <td class="text-gray-400">${c.email}</td>
-                    <td><span class="${c.last_session_id ? 'status-on' : 'text-gray-600'}">${c.last_session_id ? 'CONECTADO' : 'OFFLINE'}</span></td>
-                    <td><button onclick="derrubarSessao(${c.id})" class="btn-danger">Derrubar</button></td>
-                </tr>
-            `).join('');
-        }
-
-        async function loadOfertas() {
-            const { data } = await _supabase.from('ofertas').select(`id, preco, criado_em, fornecedores(nome), variacoes(produtos_mestre(nome))`).order('criado_em', {ascending: false});
-            document.getElementById('listaOfertas').innerHTML = data.map(o => `
-                <tr>
-                    <td class="font-bold">${o.variacoes.produtos_mestre.nome}</td>
-                    <td>${o.fornecedores.nome}</td>
-                    <td class="text-green-500 font-bold">R$ ${o.preco}</td>
-                    <td class="text-[10px] text-gray-500">${new Date(o.criado_em).toLocaleDateString()}</td>
-                    <td><button onclick="excluirOferta(${o.id})" class="btn-danger">Excluir</button></td>
-                </tr>
-            `).join('');
-        }
-
-        async function loadLojistas() {
-            const { data } = await _supabase.from('fornecedores').select('*').order('id');
-            document.getElementById('listaLojistas').innerHTML = data.map(l => `
-                <tr>
-                    <td>#${l.id}</td>
-                    <td class="font-bold">${l.nome}</td>
-                    <td>${l.whatsapp}</td>
-                    <td class="status-on">ATIVO</td>
-                </tr>
-            `).join('');
-        }
-
-        async function derrubarSessao(id) {
-            await _supabase.from('clientes_buscador').update({ last_session_id: null }).eq('id', id);
-            alert("Sessão encerrada!");
-            loadClientes();
-        }
-
-        async function excluirOferta(id) {
-            if(confirm("Deseja realmente apagar este preço do ranking?")) {
-                await _supabase.from('ofertas').delete().eq('id', id);
-                loadOfertas();
+        async function carregar() {
+            const { data } = await _s.from('clientes_buscador').select('*').order('criado_em', { ascending: false });
+            if (data) {
+                document.getElementById('lista').innerHTML = data.map(c => `
+                    <tr>
+                        <td class="font-black">${c.nome}</td>
+                        <td class="data-cell">${c.cpf}</td>
+                        <td class="text-gray-400 text-xs">${c.email}</td>
+                        <td class="data-cell text-yellow-500">${c.senha}</td>
+                        <td class="${c.aprovado ? 'text-green-500' : 'text-red-500'} font-bold text-[10px]">${c.aprovado ? 'ATIVO' : 'BLOQUEADO'}</td>
+                        <td class="flex gap-2">
+                            ${!c.aprovado ? `<button onclick="status(${c.id}, true)" class="btn-green">APROVAR</button>` : `<button onclick="status(${c.id}, false)" class="btn-red">BLOQUEAR</button>`}
+                            <button onclick="derrubar(${c.id})" class="bg-gray-700 p-2 rounded text-[9px] font-bold">DERRUBAR</button>
+                        </td>
+                    </tr>
+                `).join('');
             }
         }
 
-        loadClientes(); // Inicia na aba de clientes
+        async function status(id, val) {
+            await _s.from('clientes_buscador').update({ aprovado: val }).eq('id', id);
+            carregar();
+        }
+
+        async function derrubar(id) {
+            await _s.from('clientes_buscador').update({ last_session_id: null }).eq('id', id);
+            alert("Usuário desconectado!");
+            carregar();
+        }
+        carregar();
     </script>
 </body>
 </html>
