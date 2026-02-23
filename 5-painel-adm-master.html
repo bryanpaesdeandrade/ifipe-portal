@@ -16,28 +16,29 @@
         table { width:100%; border-collapse:collapse; margin-top:1rem; }
         th { font-size:10px; color:#86868b; text-transform:uppercase; padding:10px; border-bottom:1px solid #38383a; text-align:left; }
         td { padding:15px 10px; border-bottom:1px solid #2c2c2e; font-size:13px; }
-        .btn-action { padding:6px 12px; border-radius:8px; font-size:10px; font-weight:bold; cursor:pointer; text-transform:uppercase; border:none; }
+        .btn-action { padding:6px 12px; border-radius:8px; font-size:10px; font-weight:bold; cursor:pointer; text-transform:uppercase; border:none; transition: 0.2s; }
+        .btn-action:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
 
     <header class="mb-10 flex justify-between items-center">
         <div>
-            <h1 class="text-4xl font-black italic italic">iFipe <span class="text-blue-500">MASTER</span></h1>
-            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Controle Central de Operações</p>
+            <h1 class="text-4xl font-black italic">iFipe <span class="text-blue-500">MASTER</span></h1>
+            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Gestão de Acessos e Inadimplência</p>
         </div>
-        <button onclick="carregarTudo()" class="bg-white text-black px-6 py-2 rounded-full font-black text-[10px] uppercase">Atualizar Dados</button>
+        <button onclick="carregarTudo()" class="bg-white text-black px-6 py-2 rounded-full font-black text-[10px] uppercase">Atualizar Listas</button>
     </header>
 
     <div class="admin-card">
-        <h2 class="text-xl font-black italic mb-4">Aprovação de Clientes (Buscador VIP)</h2>
+        <h2 class="text-xl font-black italic mb-4">Clientes do Buscador (VIP)</h2>
         <table>
             <thead>
                 <tr>
                     <th>Nome</th>
                     <th>E-mail</th>
                     <th>Senha</th>
-                    <th>Status</th>
+                    <th>Financeiro</th>
                     <th>Ação</th>
                 </tr>
             </thead>
@@ -46,13 +47,14 @@
     </div>
 
     <div class="admin-card">
-        <h2 class="text-xl font-black italic mb-4">Gestão de Lojistas (Painel de Ofertas)</h2>
+        <h2 class="text-xl font-black italic mb-4">Lojistas Anunciantes (Painel)</h2>
         <table>
             <thead>
                 <tr>
-                    <th>Loja</th>
+                    <th>Nome da Loja</th>
+                    <th>WhatsApp</th>
                     <th>Senha</th>
-                    <th>Status Financeiro</th>
+                    <th>Financeiro</th>
                     <th>Ação</th>
                 </tr>
             </thead>
@@ -65,7 +67,7 @@
 
         async function carregarTudo() {
             const [clientes, lojistas] = await Promise.all([
-                _s.from('clientes_buscador').select('*').order('criado_em', {ascending:false}),
+                _s.from('clientes_buscador').select('*').order('nome'),
                 _s.from('fornecedores').select('*').order('nome')
             ]);
             renderClientes(clientes.data || []);
@@ -78,9 +80,11 @@
                     <td class="font-bold">${c.nome}</td>
                     <td>${c.email}</td>
                     <td class="font-mono text-blue-400 font-bold">${c.senha}</td>
-                    <td><span class="status-badge ${c.aprovado ? 'bg-green' : 'bg-yellow'}">${c.aprovado ? 'Ativo' : 'Pendente'}</span></td>
+                    <td><span class="status-badge ${c.aprovado ? 'bg-green' : 'bg-red'}">${c.aprovado ? 'Pago/Liberado' : 'Bloqueado'}</span></td>
                     <td>
-                        ${!c.aprovado ? `<button onclick="aprovarCliente(${c.id})" class="btn-action bg-blue-600 text-white">Aprovar</button>` : `<button onclick="removerCliente(${c.id})" class="btn-action bg-red text-white">Remover</button>`}
+                        <button onclick="toggleCliente(${c.id}, ${c.aprovado})" class="btn-action ${c.aprovado ? 'bg-red' : 'bg-green'} text-black">
+                            ${c.aprovado ? 'Bloquear' : 'Liberar'}
+                        </button>
                     </td>
                 </tr>
             `).join('');
@@ -90,8 +94,9 @@
             document.getElementById('listaLojistas').innerHTML = data.map(l => `
                 <tr>
                     <td class="font-bold text-blue-500">${l.nome}</td>
+                    <td>${l.whatsapp}</td>
                     <td class="font-mono text-blue-400 font-bold">${l.senha}</td>
-                    <td><span class="status-badge ${l.ativo ? 'bg-green' : 'bg-red'}">${l.ativo ? 'Liberado' : 'Bloqueado'}</span></td>
+                    <td><span class="status-badge ${l.ativo ? 'bg-green' : 'bg-red'}">${l.ativo ? 'Pago/Liberado' : 'Bloqueado'}</span></td>
                     <td>
                         <button onclick="toggleLojista(${l.id}, ${l.ativo})" class="btn-action ${l.ativo ? 'bg-red' : 'bg-green'} text-black">
                             ${l.ativo ? 'Bloquear' : 'Liberar'}
@@ -101,20 +106,13 @@
             `).join('');
         }
 
-        async function aprovarCliente(id) {
-            await _s.from('clientes_buscador').update({ aprovado: true }).eq('id', id);
+        async function toggleCliente(id, status) {
+            await _s.from('clientes_buscador').update({ aprovado: !status }).eq('id', id);
             carregarTudo();
         }
 
-        async function removerCliente(id) {
-            if(confirm("Deseja remover este cliente?")) {
-                await _s.from('clientes_buscador').delete().eq('id', id);
-                carregarTudo();
-            }
-        }
-
-        async function toggleLojista(id, statusAtual) {
-            await _s.from('fornecedores').update({ ativo: !statusAtual }).eq('id', id);
+        async function toggleLojista(id, status) {
+            await _s.from('fornecedores').update({ ativo: !status }).eq('id', id);
             carregarTudo();
         }
 
