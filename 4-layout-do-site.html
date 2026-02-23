@@ -3,21 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Ranking</title>
+    <title>iFipe - Encontre o melhor preço</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin:0; }
         
+        /* TICKER BINANCE */
         .ticker-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:12px; position:sticky; top:0; z-index:100; display:flex; justify-content:center; align-items:center; gap:12px; }
         .ticker-val { color:#32d74b; font-family:monospace; font-size:18px; font-weight:900; }
 
+        /* BARRA DO USUÁRIO */
         .user-bar { background:#0b0b0c; border-bottom:1px solid #1c1c1e; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; }
 
+        /* FILTROS */
         .filter-section { background:#000; padding:30px 20px; border-bottom:1px solid #1c1c1e; }
         .filter { background:#1c1c1e; border:1px solid #38383a; border-radius:14px; padding:14px; color:#fff; width:100%; font-size:11px; font-weight:900; text-transform:uppercase; outline:none; transition:0.3s; }
         .filter:focus { border-color:#0071e3; }
 
+        /* CARDS DA VITRINE */
         .card { background:#1c1c1e; border:1px solid #38383a; border-radius:28px; padding:28px; transition:0.3s; position:relative; overflow:hidden; }
         .card:hover { border-color:#0071e3; transform:translateY(-5px); }
         .price { color:#32d74b; font-size:38px; font-weight:900; letter-spacing:-2px; line-height:1; }
@@ -29,6 +33,7 @@
         .btn-wa { background:#fff; color:#000; padding:18px; border-radius:50px; font-weight:900; text-align:center; display:block; text-decoration:none; text-transform:uppercase; font-size:12px; transition:0.3s; margin-top:20px; }
         .btn-wa:hover { background:#0071e3; color:#fff; }
 
+        /* MODAIS */
         .modal-bg { background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); }
         .apple-input { background:#2c2c2e; border:1px solid #38383a; border-radius:12px; padding:15px; width:100%; color:white; outline:none; margin-bottom:1rem; font-size:14px; }
         .btn-save { background:#0071e3; color:#fff; font-weight:900; border-radius:50px; padding:15px; width:100%; text-transform:uppercase; font-size:12px; transition:0.3s; }
@@ -40,7 +45,7 @@
     
     <div class="ticker-bar">
         <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">USDT/BRL BINANCE:</span>
-        <span class="ticker-val" id="usdt_val">CONECTANDO...</span>
+        <span class="ticker-val" id="usdt_val">CARREGANDO...</span>
     </div>
 
     <div class="user-bar">
@@ -49,7 +54,7 @@
                 Olá, <span id="nomeUsuario" class="text-white">...</span>
             </div>
             <div class="flex gap-6">
-                <button onclick="abrirPerfil()" class="text-[10px] text-gray-400 hover:text-white font-black uppercase tracking-widest transition">Minha Conta</button>
+                <button onclick="abrirPerfil()" class="text-[10px] text-gray-400 hover:text-white font-black uppercase tracking-widest transition">Meus Dados</button>
                 <button onclick="sairBuscador()" class="text-[10px] text-red-500 hover:text-red-400 font-black uppercase tracking-widest transition">Sair</button>
             </div>
         </div>
@@ -58,6 +63,7 @@
     <div class="max-w-7xl mx-auto px-6">
         <header class="mt-12 mb-8 text-center">
             <h1 class="text-7xl font-black italic tracking-tighter leading-none">iFipe</h1>
+            <p class="text-[10px] text-blue-500 font-black uppercase tracking-[0.4em] mt-2">Encontre o melhor preço</p>
         </header>
     </div>
 
@@ -67,7 +73,7 @@
             <select id="fCond" class="filter" onchange="filtrar()"><option value="">Condição (Todas)</option><option value="Novo">Novos</option><option value="Seminovo">Seminovos</option></select>
             <select id="fDet" class="filter" onchange="atualizarCores()" disabled><option value="">Memória/Tamanho</option></select>
             <select id="fCor" class="filter" onchange="filtrar()" disabled><option value="">Cor</option></select>
-            <select id="fReg" class="filter" onchange="filtrar()"><option value="">Região</option></select>
+            <select id="fReg" class="filter" onchange="filtrar()"><option value="">Região de Origem</option></select>
         </div>
     </div>
 
@@ -81,9 +87,12 @@
                 <h2 class="text-2xl font-black italic">Meus Dados</h2>
                 <button onclick="fecharPerfil()" class="text-gray-500 text-xl font-bold">&times;</button>
             </div>
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nome</label><input type="text" id="editNome" class="apple-input">
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">WhatsApp</label><input type="text" id="editWhats" class="apple-input">
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nova Senha</label><input type="password" id="editSenha" class="apple-input" placeholder="••••••••">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nome Completo</label>
+            <input type="text" id="editNome" class="apple-input">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">WhatsApp</label>
+            <input type="text" id="editWhats" class="apple-input">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nova Senha</label>
+            <input type="password" id="editSenha" class="apple-input" placeholder="••••••••">
             <button onclick="salvarPerfil()" class="btn-save mt-4">Salvar Alterações</button>
             <p id="msgPerfil" class="text-[10px] font-black uppercase text-center mt-4 tracking-widest"></p>
         </div>
@@ -95,11 +104,16 @@
         let gradeVariacoes = [];
         let usuarioLogado = null;
 
+        // BINANCE TICKER
         function iniciarCambio() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            socket.onmessage = (event) => { document.getElementById('usdt_val').innerText = `R$ ${parseFloat(data.c).toFixed(4).replace('.',',')}`; };
+            socket.onmessage = (event) => { 
+                const data = JSON.parse(event.data);
+                document.getElementById('usdt_val').innerText = `R$ ${parseFloat(data.c).toFixed(4).replace('.',',')}`; 
+            };
         }
 
+        // VALIDAÇÃO DE SESSÃO
         async function validarSessao() {
             const token = localStorage.getItem('iFipe_Token');
             if(!token) { location.href='3-pagina-login.html'; return; }
@@ -117,12 +131,13 @@
         function fecharPerfil() { document.getElementById('modalPerfil').classList.add('hidden'); }
 
         async function salvarPerfil() {
-            const novoNome = document.getElementById('editNome').value; const novoWhats = document.getElementById('editWhats').value.replace(/\D/g, ''); const novaSenha = document.getElementById('editSenha').value; const msg = document.getElementById('msgPerfil');
-            if(!novoNome || !novaSenha) { msg.innerText = "NOME E SENHA SÃO OBRIGATÓRIOS."; msg.style.color = "#ff3b30"; return; }
-            const { error } = await _s.from('clientes_buscador').update({ nome: novoNome, whatsapp: novoWhats, senha: novaSenha }).eq('id', usuarioLogado.id);
-            if(!error) { msg.innerText = "DADOS ATUALIZADOS!"; msg.style.color = "#32d74b"; document.getElementById('nomeUsuario').innerText = novoNome.split(' ')[0]; usuarioLogado.nome = novoNome; usuarioLogado.whatsapp = novoWhats; usuarioLogado.senha = novaSenha; setTimeout(fecharPerfil, 1500); } else { msg.innerText = "ERRO AO ATUALIZAR."; msg.style.color = "#ff3b30"; }
+            const nNome = document.getElementById('editNome').value; const nWhats = document.getElementById('editWhats').value.replace(/\D/g, ''); const nSenha = document.getElementById('editSenha').value; const msg = document.getElementById('msgPerfil');
+            if(!nNome || !nSenha) { msg.innerText = "NOME E SENHA SÃO OBRIGATÓRIOS."; msg.style.color = "#ff3b30"; return; }
+            const { error } = await _s.from('clientes_buscador').update({ nome: nNome, whatsapp: nWhats, senha: nSenha }).eq('id', usuarioLogado.id);
+            if(!error) { msg.innerText = "DADOS ATUALIZADOS!"; msg.style.color = "#32d74b"; document.getElementById('nomeUsuario').innerText = nNome.split(' ')[0]; usuarioLogado.nome = nNome; usuarioLogado.whatsapp = nWhats; usuarioLogado.senha = nSenha; setTimeout(fecharPerfil, 1500); }
         }
 
+        // CARREGAMENTO INICIAL
         async function init() {
             const [m, r, v] = await Promise.all([
                 _s.from('produtos_mestre').select('id, nome, grupos(nome)').order('id'),
@@ -149,6 +164,7 @@
             cacheOfertas = data || []; renderizar(cacheOfertas);
         }
 
+        // LÓGICA DE FILTROS CASCATA
         function atualizarDetalhes() {
             const modNome = document.getElementById('fMod').value;
             const selDet = document.getElementById('fDet'); const selCor = document.getElementById('fCor');
@@ -188,9 +204,10 @@
             renderizar(res);
         }
 
+        // RENDERIZAÇÃO FINAL
         function renderizar(lista) {
             const vitrine = document.getElementById('vitrine');
-            if(lista.length === 0) { vitrine.innerHTML = '<p class="text-center col-span-full text-gray-500 font-bold text-xs uppercase tracking-widest">Nenhum aparelho disponível com esses filtros.</p>'; return; }
+            if(lista.length === 0) { vitrine.innerHTML = '<p class="text-center col-span-full text-gray-500 font-bold text-xs uppercase tracking-widest mt-10">Nenhum aparelho disponível com esses filtros.</p>'; return; }
             
             vitrine.innerHTML = lista.map(o => {
                 const attrs = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' • ');
@@ -205,7 +222,7 @@
                             <span class="stock-badge">${o.quantidade} em estoque</span>
                         </div>
                     </div>
-                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2">${o.fornecedores.nome}</p>
+                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2">Atacadista: ${o.fornecedores.nome}</p>
                     <h2 class="text-3xl font-black italic leading-none mb-1">${o.variacoes.produtos_mestre.nome}</h2>
                     <p class="text-gray-500 text-[11px] font-bold uppercase mb-8">${attrs}</p>
                     <div class="price">R$ ${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
