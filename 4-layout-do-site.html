@@ -3,20 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Ranking Realtime</title>
+    <title>iFipe - Ranking de Elite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background:#000; color:#fff; font-family:-apple-system, sans-serif; margin:0; }
-        .ticker-bar { background:#1c1c1e; border-bottom:1px solid #38383a; padding:10px 20px; position:sticky; top:0; z-index:100; display:flex; justify-content:center; align-items:center; gap:10px; }
+        body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin:0; }
+        
+        /* TICKER BINANCE REALTIME */
+        .ticker-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:12px; position:sticky; top:0; z-index:100; display:flex; justify-content:center; align-items:center; gap:12px; }
         .ticker-val { color:#32d74b; font-family:monospace; font-size:18px; font-weight:900; }
-        .filter-bar { background:#000; padding:20px; border-bottom:1px solid #1c1c1e; }
-        .filter { background:#1c1c1e; border:1px solid #38383a; border-radius:12px; padding:12px; color:#fff; width:100%; font-size:11px; font-weight:900; text-transform:uppercase; outline:none; }
-        .card { background:#1c1c1e; border:1px solid #38383a; border-radius:24px; padding:2rem; transition:0.2s; }
-        .card:hover { border-color:#0071e3; }
-        .price { color:#32d74b; font-size:32px; font-weight:800; letter-spacing:-1px; }
-        .stock-badge { background:rgba(50, 215, 75, 0.1); color:#32d74b; padding:4px 10px; border-radius:8px; font-size:10px; font-weight:900; }
-        .btn-wa { background:#25d366; color:#fff; padding:14px; border-radius:50px; font-weight:900; text-align:center; display:block; text-decoration:none; text-transform:uppercase; font-size:11px; }
+
+        /* FILTROS PREMIUM */
+        .filter-section { background:#000; padding:30px 20px; border-bottom:1px solid #1c1c1e; }
+        .filter { background:#1c1c1e; border:1px solid #38383a; border-radius:14px; padding:14px; color:#fff; width:100%; font-size:11px; font-weight:900; text-transform:uppercase; outline:none; transition:0.3s; }
+        .filter:focus { border-color:#0071e3; }
+
+        /* CARDS ESTILO APPLE */
+        .card { background:#1c1c1e; border:1px solid #38383a; border-radius:28px; padding:28px; transition:0.3s; position:relative; overflow:hidden; }
+        .card:hover { border-color:#0071e3; transform:translateY(-5px); }
+        .price { color:#32d74b; font-size:38px; font-weight:900; letter-spacing:-2px; line-height:1; }
+        .stock-badge { background:rgba(50, 215, 75, 0.1); color:#32d74b; padding:5px 12px; border-radius:10px; font-size:10px; font-weight:900; text-transform:uppercase; }
+        .btn-wa { background:#fff; color:#000; padding:18px; border-radius:50px; font-weight:900; text-align:center; display:block; text-decoration:none; text-transform:uppercase; font-size:12px; transition:0.3s; margin-top:20px; }
+        .btn-wa:hover { background:#0071e3; color:#fff; }
+
+        /* SLOT DE PUBLICIDADE */
+        .ads-banner { background:linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%); border:1px dashed #38383a; border-radius:24px; padding:60px; text-align:center; margin-top:40px; }
+        .ads-label { color:#86868b; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.2em; }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -24,10 +37,10 @@
     
     <div class="ticker-bar">
         <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">USDT/BRL BINANCE:</span>
-        <span class="ticker-val" id="usdt_val">Carregando...</span>
+        <span class="ticker-val" id="usdt_val">CONECTANDO...</span>
     </div>
 
-    <div class="filter-bar">
+    <div class="filter-section">
         <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
             <select id="fMod" class="filter" onchange="atualizarMemorias()"><option value="">Modelo</option></select>
             <select id="fCap" class="filter" onchange="atualizarCores()" disabled><option value="">Memória</option></select>
@@ -37,11 +50,17 @@
     </div>
 
     <div class="max-w-6xl mx-auto p-6">
-        <header class="my-10 text-center">
-            <h1 class="text-6xl font-black italic tracking-tighter italic">iFipe</h1>
-            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.4em] mt-2">Ranking de Preços Realtime</p>
+        <header class="my-16 text-center">
+            <h1 class="text-7xl font-black italic tracking-tighter italic leading-none">iFipe</h1>
+            <p class="text-blue-500 text-[10px] font-bold uppercase tracking-[0.5em] mt-4">O Padrão Ouro do Mercado Apple</p>
         </header>
-        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+
+        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
+
+        <div class="ads-banner">
+            <span class="ads-label">Espaço para Publicidade Parceira</span>
+            <p class="text-gray-400 mt-2 font-medium">Anuncie aqui sua loja ou serviço</p>
+        </div>
     </div>
 
     <script>
@@ -49,13 +68,12 @@
         let cacheOfertas = [];
         let gradeVariacoes = [];
 
-        // CÂMBIO ONLINE MILÉSIMO DE SEGUNDO (BINANCE API)
+        // CÂMBIO BINANCE EM TEMPO REAL
         function iniciarCambio() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                const preco = parseFloat(data.c).toFixed(4).replace('.', ',');
-                document.getElementById('usdt_val').innerText = `R$ ${preco}`;
+                document.getElementById('usdt_val').innerText = `R$ ${parseFloat(data.c).toFixed(4).replace('.',',')}`;
             };
         }
 
@@ -73,17 +91,13 @@
                 _s.from('variacoes').select('*, produtos_mestre(nome)')
             ]);
             gradeVariacoes = v.data || [];
-            document.getElementById('fMod').innerHTML = '<option value="">Modelo</option>' + m.data.map(x=>`<option value="${x.nome}">${x.nome}</option>`).join('');
-            document.getElementById('fReg').innerHTML = '<option value="">Região</option>' + r.data.map(x=>`<option value="${x.nome}">${x.bandeira} ${x.nome}</option>`).join('');
+            document.getElementById('fMod').innerHTML = '<option value="">Escolha o Modelo</option>' + m.data.map(x=>`<option value="${x.nome}">${x.nome}</option>`).join('');
+            document.getElementById('fReg').innerHTML = '<option value="">Região de Origem</option>' + r.data.map(x=>`<option value="${x.nome}">${x.bandeira} ${x.nome}</option>`).join('');
             buscarOfertas();
         }
 
         async function buscarOfertas() {
-            const { data } = await _s.from('ofertas')
-                .select('preco, quantidade, regioes(nome, bandeira), fornecedores(nome, whatsapp, ativo), variacoes(capacidade, cor, produtos_mestre(nome))')
-                .eq('fornecedores.ativo', true)
-                .gt('quantidade', 0)
-                .order('preco', {ascending:true});
+            const { data } = await _s.from('ofertas').select('preco, quantidade, regioes(nome, bandeira), fornecedores(nome, whatsapp, ativo), variacoes(capacidade, cor, produtos_mestre(nome))').eq('fornecedores.ativo', true).gt('quantidade', 0).order('preco', {ascending:true});
             cacheOfertas = data || [];
             renderizar(cacheOfertas);
         }
@@ -95,7 +109,7 @@
             if(!modNome) { selCap.disabled = selCor.disabled = true; filtrar(); return; }
             const filtradas = gradeVariacoes.filter(x => x.produtos_mestre.nome === modNome);
             const caps = [...new Set(filtradas.map(x=>x.capacidade))].sort((a,b) => parseInt(a) - parseInt(b));
-            selCap.innerHTML = '<option value="">Memória</option>' + caps.map(x=>`<option value="${x}">${x}</option>`).join('');
+            selCap.innerHTML = '<option value="">Capacidade</option>' + caps.map(x=>`<option value="${x}">${x}</option>`).join('');
             selCap.disabled = false;
             selCor.disabled = true;
             selCor.innerHTML = '<option value="">Cor</option>';
@@ -128,16 +142,21 @@
 
         function renderizar(lista) {
             const vitrine = document.getElementById('vitrine');
+            if(lista.length === 0) {
+                vitrine.innerHTML = '<p class="text-center col-span-full text-gray-500 font-bold text-xs uppercase tracking-widest">Nenhum iPhone disponível com esses filtros.</p>';
+                return;
+            }
             vitrine.innerHTML = lista.map(o => `
                 <div class="card">
-                    <div class="flex justify-between items-start mb-6">
-                        <span class="bg-[#38383a] px-3 py-1 rounded text-[10px] font-black uppercase">${o.regioes.bandeira} ${o.fornecedores.nome}</span>
+                    <div class="flex justify-between items-start mb-8">
+                        <span class="text-[10px] font-black uppercase text-gray-500 tracking-tighter">${o.regioes.bandeira} ${o.regioes.nome}</span>
                         <span class="stock-badge">${o.quantidade} em estoque</span>
                     </div>
-                    <h2 class="text-2xl font-bold italic italic">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-gray-500 text-[11px] mb-8 font-black uppercase tracking-widest">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
-                    <div class="price mb-8">R$ ${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
-                    <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}" target="_blank" class="btn-wa">Negociar agora</a>
+                    <p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2">${o.fornecedores.nome}</p>
+                    <h2 class="text-3xl font-black italic italic leading-none mb-1">${o.variacoes.produtos_mestre.nome}</h2>
+                    <p class="text-gray-500 text-[11px] font-bold uppercase mb-8">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
+                    <div class="price">R$ ${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                    <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}" target="_blank" class="btn-wa">Negociar Direto</a>
                 </div>
             `).join('');
         }
