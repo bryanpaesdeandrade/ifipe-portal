@@ -2,75 +2,103 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>iFipe - Lojista</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iFipe - Painel Lojista</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background:#000; color:#fff; font-family:sans-serif; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; }
-        .card { background:#1c1c1e; padding:2rem; border-radius:20px; width:100%; max-width:400px; border:1px solid #38383a; }
-        input, select { background:#2c2c2e; border:1px solid #38383a; padding:12px; width:100%; color:#fff; margin-bottom:15px; border-radius:10px; outline:none; }
-        button { background:#fff; color:#000; width:100%; padding:15px; border-radius:50px; font-weight:bold; cursor:pointer; text-transform:uppercase; }
-        .hidden { display: none; }
+        body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2.5rem; width: 100%; max-width: 500px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 16px; width: 100%; color: white; outline: none; margin-bottom: 1.2rem; transition: 0.2s; font-size: 16px; }
+        .apple-input:focus { border-color: #0071e3; }
+        .apple-button { background: #ffffff; color: #000000; font-weight: 800; border-radius: 50px; padding: 18px; width: 100%; cursor: pointer; transition: 0.3s; margin-top: 1rem; text-transform: uppercase; letter-spacing: 1px; border: none; }
+        .apple-button:hover { background: #0071e3; color: white; transform: scale(1.02); }
+        label { display: block; text-transform: uppercase; font-size: 11px; color: #86868b; margin-bottom: 8px; font-weight: 900; letter-spacing: 0.1em; margin-top: 1.2rem; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <div id="login" class="card text-center">
-        <h2 class="text-2xl font-bold mb-6 italic">iFipe Lojista</h2>
-        <input type="text" id="user" placeholder="Usuário (Ex: JOGADOR)">
-        <input type="password" id="pass" placeholder="Senha">
-        <button onclick="fazerLogin()">Acessar Painel</button>
+
+    <div id="loginSection" class="apple-card text-center">
+        <h1 class="text-4xl font-black italic mb-2 tracking-tighter">iFipe</h1>
+        <p class="text-[10px] font-bold uppercase text-gray-500 mb-10 tracking-[0.3em]">Gestão Lojista Oficial</p>
+        <div class="text-left">
+            <label>Identificação</label>
+            <input type="text" id="loginId" class="apple-input" placeholder="Ex: JOGADOR">
+            <label>Senha</label>
+            <input type="password" id="loginPass" class="apple-input" placeholder="••••••••">
+        </div>
+        <button onclick="fazerLogin()" class="apple-button">Acessar Painel</button>
+        <p id="loginError" class="text-red-500 text-[10px] mt-4 font-bold uppercase tracking-widest"></p>
     </div>
 
-    <div id="painel" class="card hidden">
-        <div class="flex justify-between mb-4">
-            <span id="msg" class="text-blue-500 font-bold uppercase text-xs"></span>
-            <button onclick="location.reload()" class="w-auto p-0 bg-transparent text-gray-500 underline text-[10px]">SAIR</button>
+    <div id="formSection" class="apple-card hidden">
+        <div class="flex justify-between items-center mb-8">
+            <span id="welcomeMsg" class="font-black text-blue-500 uppercase italic text-xs tracking-widest"></span>
+            <button onclick="location.reload()" class="text-[10px] text-gray-500 underline font-black uppercase">Sair</button>
         </div>
-        <select id="prod" onchange="loadVar()"><option>Carregando modelos...</option></select>
-        <select id="var" disabled><option>Escolha o modelo primeiro</option></select>
-        <select id="reg"></select>
-        <input type="number" id="valor" placeholder="Preço R$">
-        <button onclick="postar()">Publicar no Ranking</button>
+        <form id="priceForm">
+            <label>Modelo do Aparelho</label>
+            <select id="produto_id" class="apple-input" required></select>
+            <label>Grade Disponível</label>
+            <select id="variacao_id" class="apple-input" required disabled><option value="">Escolha o modelo</option></select>
+            <label>Origem / Região</label>
+            <select id="regiao_id" class="apple-input" required></select>
+            <label>Valor à Vista (R$)</label>
+            <input type="text" id="preco" class="apple-input" placeholder="Ex: 7999,00" required>
+            <button type="submit" class="apple-button">Publicar no Ranking</button>
+        </form>
+        <p id="status" class="mt-6 text-center text-[10px] font-black uppercase tracking-widest"></p>
     </div>
 
     <script>
-        const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let loja = null; let todasVar = [];
+        const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+        let fornecedorLogado = null;
 
-        async function fazerLogin(){
-            const u = document.getElementById('user').value; 
-            const p = document.getElementById('pass').value;
-            const isNum = !isNaN(u) && u.trim() !== "";
-            const {data} = await _s.from('fornecedores').select('*').or(`id.eq.${isNum?u:-1},nome.eq.${u}`).eq('senha',p).maybeSingle();
-            if(data){ 
-                loja=data; 
-                document.getElementById('login').classList.add('hidden'); 
-                document.getElementById('painel').classList.remove('hidden'); 
-                document.getElementById('msg').innerText="Loja: "+data.nome; 
-                init(); 
-            } else alert("Dados incorretos!");
+        async function fazerLogin() {
+            const login = document.getElementById('loginId').value;
+            const pass = document.getElementById('loginPass').value;
+            const isNumeric = !isNaN(login) && login.trim() !== "";
+            const { data } = await _supabase.from('fornecedores').select('*').or(`id.eq.${isNumeric ? login : -1},nome.eq.${login}`).eq('senha', pass).maybeSingle();
+            if (data) {
+                fornecedorLogado = data;
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('formSection').classList.remove('hidden');
+                document.getElementById('welcomeMsg').innerText = "Loja: " + data.nome;
+                carregarBases();
+            } else { document.getElementById('loginError').innerText = "Dados incorretos."; }
         }
 
-        async function init(){
-            const {data:m} = await _s.from('produtos_mestre').select('*').order('id');
-            const {data:r} = await _s.from('regioes').select('*');
-            const {data:v} = await _s.from('variacoes').select('*');
-            todasVar = v;
-            document.getElementById('prod').innerHTML = '<option>Selecione o iPhone</option>'+m.map(x=>`<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('reg').innerHTML = r.map(x=>`<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+        async function carregarBases() {
+            const { data: m } = await _supabase.from('produtos_mestre').select('id, nome').order('id');
+            const { data: r } = await _supabase.from('regioes').select('id, nome, bandeira').order('id');
+            const { data: v } = await _supabase.from('variacoes').select('*');
+            const pS = document.getElementById('produto_id');
+            const rS = document.getElementById('regiao_id');
+            const vS = document.getElementById('variacao_id');
+            pS.innerHTML = '<option value="">Selecione o iPhone</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
+            rS.innerHTML = r.map(i => `<option value="${i.id}">${i.bandeira} ${i.nome}</option>`).join('');
+            pS.onchange = (e) => {
+                const filtradas = v.filter(item => item.produto_id == e.target.value);
+                vS.innerHTML = filtradas.map(item => `<option value="${item.id}">${item.capacidade} • ${item.cor}</option>`).join('');
+                vS.disabled = filtradas.length === 0;
+            };
         }
 
-        function loadVar(){
-            const id = document.getElementById('prod').value;
-            const f = todasVar.filter(x=>x.produto_id==id);
-            document.getElementById('var').innerHTML = f.map(x=>`<option value="${x.id}">${x.capacidade} - ${x.cor}</option>`).join('');
-            document.getElementById('var').disabled = false;
-        }
-
-        async function postar(){
-            const {error} = await _s.from('ofertas').insert([{fornecedor_id:loja.id, variacao_id:document.getElementById('var').value, regiao_id:document.getElementById('reg').value, preco:document.getElementById('valor').value}]);
-            if(!error) alert("Preço publicado!"); else alert("Erro ao salvar.");
-        }
+        document.getElementById('priceForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const status = document.getElementById('status');
+            const precoLimpo = document.getElementById('preco').value.replace(',', '.'); // ACEITA VÍRGULA E TRANSFORMA EM PONTO
+            status.innerText = "Publicando...";
+            const { error } = await _supabase.from('ofertas').insert([{
+                fornecedor_id: fornecedorLogado.id,
+                variacao_id: document.getElementById('variacao_id').value,
+                regiao_id: document.getElementById('regiao_id').value,
+                preco: parseFloat(precoLimpo)
+            }]);
+            if (error) { status.innerText = "Erro ao publicar!"; status.style.color = "#ff3b30"; }
+            else { status.innerText = "Publicado com sucesso! 🚀"; status.style.color = "#32d74b"; e.target.reset(); }
+        };
     </script>
 </body>
 </html>
