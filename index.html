@@ -23,10 +23,10 @@
     <div id="loginSection" class="apple-card">
         <h2 class="text-center mb-6 font-semibold uppercase text-xs tracking-widest">Acesso Lojista</h2>
         <label>Identificação (Nome ou ID)</label>
-        <input type="text" id="loginId" class="apple-input w-full" placeholder="Ex: JOGADOR ou 1">
+        <input type="text" id="loginId" class="apple-input w-full" placeholder="Ex: JOGADOR">
         <label>Senha</label>
         <input type="password" id="loginPass" class="apple-input w-full" placeholder="Sua senha">
-        <button onclick="fazerLogin()" class="apple-button w-full uppercase">Entrar no Sistema</button>
+        <button onclick="fazerLogin()" class="apple-button w-full uppercase font-black">Entrar</button>
         <p id="loginError" class="text-red-500 text-[10px] mt-4 text-center font-bold"></p>
     </div>
 
@@ -41,18 +41,18 @@
                 <option value="">Escolha o modelo</option>
             </select>
 
-            <label>Variação (Capacidade e Cor)</label>
+            <label>Capacidade e Cor</label>
             <select id="variacao_id" class="apple-input w-full" required disabled>
-                <option value="">Selecione o modelo primeiro</option>
+                <option value="">Aguardando modelo...</option>
             </select>
 
             <label>Região de Origem</label>
             <select id="regiao_id" class="apple-input w-full" required></select>
 
-            <label>Preço à Vista (R$)</label>
-            <input type="number" id="preco" class="apple-input w-full" placeholder="Ex: 7499.00" step="0.01" min="1" required>
+            <label>Preço de Venda (R$)</label>
+            <input type="number" id="preco" class="apple-input w-full" placeholder="Ex: 7490.00" step="0.01" min="1" required>
 
-            <button type="submit" class="apple-button w-full uppercase">Publicar Oferta Agora</button>
+            <button type="submit" class="apple-button w-full uppercase font-black">Publicar Oferta</button>
         </form>
         <p id="status" class="mt-6 text-center text-[11px] font-bold"></p>
     </div>
@@ -64,10 +64,8 @@
         async function fazerLogin() {
             const login = document.getElementById('loginId').value;
             const pass = document.getElementById('loginPass').value;
-            const errorEl = document.getElementById('loginError');
-
-            // Busca inteligente: aceita Nome (Texto) ou ID (Número)
             const isNumeric = !isNaN(login) && login.trim() !== "";
+
             const { data, error } = await _supabase
                 .from('fornecedores')
                 .select('*')
@@ -82,33 +80,30 @@
                 document.getElementById('welcomeMsg').innerText = "Loja: " + data.nome;
                 carregarBases();
             } else {
-                errorEl.innerText = "Acesso negado. Verifique Nome/ID e Senha.";
+                document.getElementById('loginError').innerText = "Acesso Negado: Dados Incorretos.";
             }
         }
 
         async function carregarBases() {
             const { data: m } = await _supabase.from('produtos_mestre').select('id, nome').order('id');
             const { data: r } = await _supabase.from('regioes').select('id, nome, bandeira').order('id');
+            const { data: v } = await _supabase.from('variacoes').select('*');
             
             document.getElementById('produto_id').innerHTML = '<option value="">Escolha o modelo</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
             document.getElementById('regiao_id').innerHTML = r.map(i => `<option value="${i.id}">${i.bandeira} ${i.nome}</option>`).join('');
             
-            // Variáveis globais para as variações
-            const { data: allVariacoes } = await _supabase.from('variacoes').select('*');
-            
             document.getElementById('produto_id').onchange = (e) => {
                 const vSelect = document.getElementById('variacao_id');
-                const filtradas = allVariacoes.filter(v => v.produto_id == e.target.value);
-                vSelect.innerHTML = filtradas.map(v => `<option value="${v.id}">${v.capacidade} • ${v.cor}</option>`).join('');
-                vSelect.disabled = filtradas.length === 0;
+                const filtradas = v.filter(item => item.produto_id == e.target.value);
+                vSelect.innerHTML = filtradas.map(item => `<option value="${item.id}">${item.capacidade} • ${item.cor}</option>`).join('');
+                vSelect.disabled = false;
             };
         }
 
         document.getElementById('priceForm').onsubmit = async (e) => {
             e.preventDefault();
             const status = document.getElementById('status');
-            status.innerText = "Enviando...";
-            status.style.color = "white";
+            status.innerText = "Publicando...";
 
             const { error } = await _supabase.from('ofertas').insert([{
                 fornecedor_id: fornecedorLogado.id,
@@ -118,10 +113,10 @@
             }]);
 
             if (error) {
-                status.innerText = "Erro ao publicar: " + error.message;
+                status.innerText = "Erro ao publicar!";
                 status.style.color = "red";
             } else {
-                status.innerText = "OFERTA PUBLICADA COM SUCESSO! 🚀";
+                status.innerText = "PUBLICADO COM SUCESSO! 🚀";
                 status.style.color = "#32d74b";
                 e.target.reset();
             }
