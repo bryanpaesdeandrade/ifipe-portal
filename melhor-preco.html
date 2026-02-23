@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Melhor Preço</title>
+    <title>iFipe - Ranking de Preços</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,105 +15,119 @@
         .price-card:hover { border-color: #0071e3; transform: scale(1.02); }
         .top-deal { position: absolute; top: 0; right: 0; background: #32d74b; color: black; font-size: 9px; font-weight: 900; padding: 6px 16px; border-bottom-left-radius: 14px; text-transform: uppercase; }
         .price-value { color: #32d74b; font-size: 32px; font-weight: 800; letter-spacing: -1.5px; }
-        .filter-select { background: #1c1c1e; border: 1px solid #38383a; border-radius: 14px; padding: 12px 20px; color: white; font-size: 10px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+        .vendor-tag { font-size: 10px; font-weight: 900; color: #ffffff; background: #38383a; padding: 4px 12px; border-radius: 8px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+        .trend-up { color: #ff3b30; font-size: 10px; font-weight: bold; }
+        .trend-down { color: #32d74b; font-size: 10px; font-weight: bold; }
         .btn-whatsapp { background: #25d366; color: white; font-size: 11px; font-weight: 900; padding: 14px; border-radius: 50px; text-transform: uppercase; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
-        .btn-whatsapp:hover { background: #128c7e; transform: scale(1.03); }
     </style>
 </head>
 <body>
     <div class="ticker-bar uppercase tracking-widest">
-        <span><i class="fa-solid fa-chart-line mr-2"></i>USD/BRL (Yahoo): <span id="usdVal" class="ticker-val">R$ 5,12</span></span>
-        <span><i class="fa-brands fa-bitcoin mr-2"></i>USDT/BRL (Binance): <span id="usdtVal" class="ticker-val">R$ 5,14</span></span>
+        <span>USD/BRL: <span id="usdVal" class="ticker-val">...</span></span>
+        <span>USDT/BRL: <span id="usdtVal" class="ticker-val">...</span></span>
     </div>
 
     <div class="max-w-6xl mx-auto p-6">
-        <header class="flex flex-col md:flex-row justify-between items-center my-14 gap-8">
+        <header class="flex flex-col md:flex-row justify-between items-center my-10 gap-8">
             <div>
                 <h1 class="text-6xl font-black italic tracking-tighter">iFipe</h1>
-                <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-3">O Ranking Oficial do Menor Preço</p>
+                <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.3em] mt-3">Histórico e Ranking de Preços</p>
             </div>
-            
-            <div class="flex flex-wrap gap-4">
-                <select id="filtroModelo" onchange="filtrar()" class="filter-select">
-                    <option value="">Todos os iPhones</option>
-                </select>
-                <select id="filtroRegiao" onchange="filtrar()" class="filter-select">
-                    <option value="">Todas as Regiões</option>
-                </select>
+            <div class="flex gap-4">
+                <select id="filtroModelo" onchange="filtrar()" class="bg-[#1c1c1e] border border-[#38383a] rounded-xl p-3 text-[10px] font-bold uppercase"></select>
             </div>
         </header>
 
-        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            </div>
+        <div id="topBuscados" class="mb-12">
+            <h3 class="text-[10px] font-black uppercase text-blue-500 mb-4 tracking-widest italic">Mais Procurados dos últimos 7 dias</h3>
+            <div id="destaqueGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+        </div>
+
+        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
     </div>
 
     <script>
         const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
-        let ofertasCache = [];
-
-        async function init() {
-            const { data: m } = await _supabase.from('produtos_mestre').select('nome').order('id');
-            const { data: r } = await _supabase.from('regioes').select('nome');
-            m.forEach(i => document.getElementById('filtroModelo').innerHTML += `<option value="${i.nome}">${i.nome}</option>`);
-            r.forEach(i => document.getElementById('filtroRegiao').innerHTML += `<option value="${i.nome}">${i.nome}</option>`);
-            await buscarOfertas();
+        async function carregarCambio() {
+            try {
+                const resUSD = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const dUSD = await resUSD.json();
+                document.getElementById('usdVal').innerText = `R$ ${dUSD.rates.BRL.toFixed(2)}`;
+                const resUSDT = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
+                const dUSDT = await resUSDT.json();
+                document.getElementById('usdtVal').innerText = `R$ ${parseFloat(dUSDT.price).toFixed(2)}`;
+            } catch (e) {}
         }
 
-        async function buscarOfertas() {
-            const { data, error } = await _supabase.from('ofertas').select(`
+        async function registrarBusca(produtoId) {
+            await _supabase.rpc('increment_busca', { row_id: produtoId });
+        }
+
+        async function buscarDados() {
+            const { data: ofertas } = await _supabase.from('ofertas').select(`
                 preco,
-                regioes (nome, bandeira),
+                variacao_id,
+                regioes (bandeira, nome),
                 fornecedores (nome, whatsapp),
-                variacoes (capacidade, cor, produtos_mestre (nome))
+                variacoes (id, capacidade, cor, produto_id, produtos_mestre (id, nome, total_buscas))
             `).order('preco', { ascending: true });
 
-            if (!error) {
-                ofertasCache = data;
-                renderizar(data);
-            }
+            const { data: historico } = await _supabase.from('historico_precos').select('*');
+
+            // Renderizar Top Buscados
+            const tops = [...new Set(ofertas.map(o => o.variacoes.produtos_mestre))].sort((a,b) => b.total_buscas - a.total_buscas).slice(0, 4);
+            document.getElementById('destaqueGrid').innerHTML = tops.map(t => `
+                <div class="bg-[#1c1c1e] p-4 rounded-2xl border border-[#38383a]">
+                    <p class="text-[8px] font-black text-gray-500 uppercase">${t.total_buscas} buscas</p>
+                    <p class="font-bold text-xs">${t.nome}</p>
+                </div>
+            `).join('');
+
+            renderizar(ofertas, historico);
         }
 
-        function filtrar() {
-            const mod = document.getElementById('filtroModelo').value;
-            const reg = document.getElementById('filtroRegiao').value;
-            let res = ofertasCache;
-            if (mod) res = res.filter(o => o.variacoes.produtos_mestre.nome === mod);
-            if (reg) res = res.filter(o => o.regioes.nome === reg);
-            renderizar(res);
-        }
-
-        function renderizar(lista) {
+        function renderizar(lista, hist) {
             const container = document.getElementById('vitrine');
             container.innerHTML = lista.map((o, index) => {
-                // LÓGICA DO WHATSAPP: Remove tudo que não é número e monta wa.me
-                const foneLimpo = o.fornecedores.whatsapp ? o.fornecedores.whatsapp.replace(/\D/g, '') : '5566999999999';
-                const mensagem = encodeURIComponent(`Olá! Vi o ${o.variacoes.produtos_mestre.nome} (${o.variacoes.capacidade}) por R$ ${o.preco.toLocaleString('pt-BR')} no iFipe. Ainda está disponível?`);
-                const linkWA = `https://wa.me/${foneLimpo}?text=${mensagem}`;
+                // Lógica de Tendência
+                const precosAntigos = hist.filter(h => h.variacao_id === o.variacao_id);
+                let tendencia = '<span class="text-gray-600">--</span>';
+                if(precosAntigos.length > 1) {
+                    const penultimo = precosAntigos[precosAntigos.length - 2].preco;
+                    if (o.preco < penultimo) tendencia = '<span class="trend-down">⬇ Baixou</span>';
+                    else if (o.preco > penultimo) tendencia = '<span class="trend-up">⬆ Subiu</span>';
+                }
+
+                const fone = o.fornecedores.whatsapp ? o.fornecedores.whatsapp.replace(/\D/g, '') : '';
+                const linkWA = `https://wa.me/${fone}?text=Tenho interesse no ${o.variacoes.produtos_mestre.nome}`;
 
                 return `
                 <div class="price-card">
-                    ${index === 0 ? '<div class="top-deal">Menor Preço Encontrado</div>' : ''}
-                    <div class="flex justify-between items-center mb-8">
-                        <span class="text-[9px] font-black bg-blue-600 text-white px-3 py-1 rounded-md italic uppercase tracking-widest">${o.regioes.bandeira} ${o.regioes.nome}</span>
-                        <span class="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">${o.fornecedores.nome}</span>
+                    ${index === 0 ? '<div class="top-deal">Melhor Preço</div>' : ''}
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="vendor-tag">${o.regioes.bandeira} ${o.fornecedores.nome}</div>
+                        ${tendencia}
                     </div>
-                    <h2 class="text-2xl font-bold tracking-tight">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-gray-500 text-[11px] mb-10 uppercase font-bold tracking-tighter">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
-                    <div class="flex flex-col gap-6">
-                        <div>
-                            <span class="block text-[10px] text-gray-600 font-black uppercase mb-1">Preço iFipe à Vista</span>
-                            <span class="price-value">R$ ${o.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                        <a href="${linkWA}" target="_blank" class="btn-whatsapp">
-                            <i class="fa-brands fa-whatsapp text-lg"></i>
-                            Comprar pelo WhatsApp
-                        </a>
-                    </div>
+                    <h2 class="text-xl font-bold">${o.variacoes.produtos_mestre.nome}</h2>
+                    <p class="text-gray-500 text-[10px] mb-8 font-bold uppercase">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
+                    <span class="block text-[10px] text-gray-600 font-black uppercase mb-1">À Vista</span>
+                    <span class="price-value">R$ ${o.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <a href="${linkWA}" target="_blank" onclick="registrarBusca(${o.variacoes.produtos_mestre.id})" class="btn-whatsapp mt-6">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Comprar
+                    </a>
                 </div>
-            `}).join('');
+                `;
+            }).join('');
         }
+
         init();
+        async function init() {
+            carregarCambio();
+            const { data } = await _supabase.from('produtos_mestre').select('nome');
+            document.getElementById('filtroModelo').innerHTML = '<option value="">Todos iPhones</option>' + data.map(m => `<option value="${m.nome}">${m.nome}</option>`);
+            buscarDados();
+        }
     </script>
 </body>
 </html>
