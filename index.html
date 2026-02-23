@@ -5,63 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>iFipe - Painel do Lojista</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #000000; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; }
         .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 18px; }
-        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 10px; padding: 12px; width: 100%; color: white; }
-        .apple-button { background: #ffffff; color: #000000; font-weight: 600; border-radius: 20px; padding: 12px 24px; transition: all 0.3s; }
-        .apple-button:hover { background: #e5e5e5; transform: scale(1.02); }
+        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 10px; padding: 12px; width: 100%; color: white; outline: none; }
+        .apple-input:focus { border-color: #0071e3; }
+        .apple-button { background: #ffffff; color: #000000; font-weight: 600; border-radius: 20px; padding: 12px 24px; transition: all 0.3s; cursor: pointer; width: 100%; }
+        .apple-button:hover { background: #f5f5f7; transform: scale(1.01); }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-6">
-    
-    <h1 class="text-4xl font-bold mb-8 tracking-tight">iFipe</h1>
-
-    <div class="apple-card p-8 w-full max-w-md shadow-2xl">
-        <h2 class="text-xl font-semibold mb-6 text-center">Atualizar Preço</h2>
-        
-        <form class="space-y-4">
-            <div>
-                <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Modelo do iPhone</label>
-                <select class="apple-input">
-                    <option>iPhone 17 Pro Max</option>
-                    <option>iPhone 16 Pro Max</option>
-                    <option>iPhone 15 Pro Max</option>
-                </select>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Memória</label>
-                    <select class="apple-input">
-                        <option>256GB</option>
-                        <option>512GB</option>
-                        <option>1TB</option>
-                        <option>2TB</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Região</label>
-                    <select class="apple-input">
-                        <option>🇺🇸 EUA</option>
-                        <option>🇧🇷 Brasil</option>
-                        <option>🇨🇳 China</option>
-                    </select>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-xs font-medium text-gray-400 mb-1 uppercase">Preço de Venda (R$)</label>
-                <input type="text" class="apple-input" placeholder="Ex: 7.699,77">
-            </div>
-
-            <button type="button" class="apple-button w-full mt-4">
-                Publicar Oferta
-            </button>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+    <h1 class="text-3xl font-bold mb-8 tracking-tight">iFipe</h1>
+    <div class="apple-card p-8 w-full max-w-md">
+        <h2 class="text-xl font-semibold mb-6 text-center text-gray-200">Atualizar Preço</h2>
+        <form id="priceForm" class="space-y-4">
+            <input type="number" id="fornecedor_id" class="apple-input" placeholder="ID do Fornecedor (Ex: 1)" required>
+            <input type="number" id="variacao_id" class="apple-input" placeholder="ID da Variação (Ex: 158)" required>
+            <input type="number" id="regiao_id" class="apple-input" placeholder="ID da Região (Ex: 1)" required>
+            <input type="number" step="0.01" id="preco" class="apple-input" placeholder="Preço (R$ 7699.77)" required>
+            <button type="submit" class="apple-button mt-4">Publicar Oferta</button>
         </form>
+        <p id="status" class="mt-4 text-center text-sm font-medium"></p>
     </div>
+    <script>
+        const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    <p class="mt-8 text-gray-500 text-sm">Acesso exclusivo para lojistas parceiros.</p>
+        document.getElementById('priceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const status = document.getElementById('status');
+            status.innerText = "Enviando para o iFipe...";
+            
+            const payload = {
+                fornecedor_id: parseInt(document.getElementById('fornecedor_id').value),
+                variacao_id: parseInt(document.getElementById('variacao_id').value),
+                regiao_id: parseInt(document.getElementById('regiao_id').value),
+                preco: parseFloat(document.getElementById('preco').value),
+                condicao: 'Novo'
+            };
 
+            const { error } = await _supabase.from('ofertas').insert([payload]);
+
+            if (error) {
+                status.innerText = "Erro ao publicar: " + error.message;
+                status.style.color = "#ff453a";
+            } else {
+                status.innerText = "Preço publicado com sucesso! 🚀";
+                status.style.color = "#32d74b";
+                e.target.reset();
+            }
+        });
+    </script>
 </body>
 </html>
