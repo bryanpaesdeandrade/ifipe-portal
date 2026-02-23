@@ -21,7 +21,7 @@
 <body>
 
     <div id="loginSection" class="apple-card text-center">
-        <h1 class="text-5xl font-black italic mb-2 tracking-tighter">iFipe</h1>
+        <h1 class="text-5xl font-black italic mb-2 tracking-tighter italic">iFipe</h1>
         <p class="text-[10px] font-bold uppercase text-gray-400 mb-12 tracking-[0.4em]">Gestão do Anunciante Oficial</p>
         <div class="text-left">
             <label>Sua Loja (Nome)</label>
@@ -44,14 +44,14 @@
 
         <form id="priceForm">
             <label>Modelo do iPhone</label>
-            <select id="produto_id" class="apple-input" onchange="carregarVariacoes()" required>
+            <select id="produto_id" class="apple-input" onchange="carregarMemorias()" required>
                 <option value="">Selecione o Modelo</option>
             </select>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label>Capacidade</label>
-                    <select id="capacidade" class="apple-input" required disabled>
+                    <label>Memória</label>
+                    <select id="capacidade" class="apple-input" required disabled onchange="carregarCores()">
                         <option value="">Aguardando...</option>
                     </select>
                 </div>
@@ -104,20 +104,26 @@
             document.getElementById('regiao_id').innerHTML = r.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
         }
 
-        function carregarVariacoes() {
+        function carregarMemorias() {
             const modId = document.getElementById('produto_id').value;
             const filtradas = baseVariacoes.filter(x => x.produto_id == modId);
-            
             const caps = [...new Set(filtradas.map(x => x.capacidade))];
-            const cores = [...new Set(filtradas.map(x => x.cor))];
 
             const selCap = document.getElementById('capacidade');
-            const selCor = document.getElementById('cor');
+            selCap.innerHTML = '<option value="">Escolha</option>' + caps.map(x => `<option value="${x}">${x}</option>`).join('');
+            selCap.disabled = false;
+            document.getElementById('cor').disabled = true;
+            document.getElementById('cor').innerHTML = '<option value="">Aguardando...</option>';
+        }
 
-            selCap.innerHTML = caps.map(x => `<option value="${x}">${x}</option>`).join('');
-            selCor.innerHTML = cores.map(x => `<option value="${x}">${x}</option>`).join('');
-            
-            selCap.disabled = selCor.disabled = false;
+        function carregarCores() {
+            const modId = document.getElementById('produto_id').value;
+            const cap = document.getElementById('capacidade').value;
+            const filtradas = baseVariacoes.filter(x => x.produto_id == modId && x.capacidade == cap);
+
+            const selCor = document.getElementById('cor');
+            selCor.innerHTML = filtradas.map(x => `<option value="${x.cor}">${x.cor}</option>`).join('');
+            selCor.disabled = false;
         }
 
         document.getElementById('priceForm').onsubmit = async (e) => {
@@ -127,7 +133,6 @@
             const cap = document.getElementById('capacidade').value;
             const cor = document.getElementById('cor').value;
             
-            // Busca o ID exato da variação baseado na escolha separada
             const { data: varId } = await _s.from('variacoes').select('id').eq('produto_id', modId).eq('capacidade', cap).eq('cor', cor).maybeSingle();
 
             const precoLimpo = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
@@ -139,11 +144,11 @@
             }]);
 
             if (!error) { 
-                status.innerText = "Publicado com Sucesso! 🚀"; 
+                status.innerText = "🚀 PUBLICADO COM SUCESSO!"; 
                 status.style.color = "#32d74b"; 
                 document.getElementById('preco').value = ""; 
             } else { 
-                status.innerText = "Erro ao publicar!"; 
+                status.innerText = "ERRO AO PUBLICAR!"; 
                 status.style.color = "#ff3b30"; 
             }
         };
