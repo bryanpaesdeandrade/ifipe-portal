@@ -9,27 +9,26 @@
     <style>
         body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin:0; }
         
-        /* TICKER BINANCE REALTIME */
         .ticker-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:12px; position:sticky; top:0; z-index:100; display:flex; justify-content:center; align-items:center; gap:12px; }
         .ticker-val { color:#32d74b; font-family:monospace; font-size:18px; font-weight:900; }
 
-        /* BARRA DO USUÁRIO */
         .user-bar { background:#0b0b0c; border-bottom:1px solid #1c1c1e; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; }
 
-        /* FILTROS PREMIUM */
         .filter-section { background:#000; padding:30px 20px; border-bottom:1px solid #1c1c1e; }
         .filter { background:#1c1c1e; border:1px solid #38383a; border-radius:14px; padding:14px; color:#fff; width:100%; font-size:11px; font-weight:900; text-transform:uppercase; outline:none; transition:0.3s; }
         .filter:focus { border-color:#0071e3; }
 
-        /* CARDS ESTILO APPLE */
         .card { background:#1c1c1e; border:1px solid #38383a; border-radius:28px; padding:28px; transition:0.3s; position:relative; overflow:hidden; }
         .card:hover { border-color:#0071e3; transform:translateY(-5px); }
         .price { color:#32d74b; font-size:38px; font-weight:900; letter-spacing:-2px; line-height:1; }
         .stock-badge { background:rgba(50, 215, 75, 0.1); color:#32d74b; padding:5px 12px; border-radius:10px; font-size:10px; font-weight:900; text-transform:uppercase; }
+        
+        .badge-novo { background:#32d74b; color:#000; padding:3px 8px; border-radius:6px; font-size:9px; font-weight:900; text-transform:uppercase; }
+        .badge-semi { background:#ffcc00; color:#000; padding:3px 8px; border-radius:6px; font-size:9px; font-weight:900; text-transform:uppercase; }
+
         .btn-wa { background:#fff; color:#000; padding:18px; border-radius:50px; font-weight:900; text-align:center; display:block; text-decoration:none; text-transform:uppercase; font-size:12px; transition:0.3s; margin-top:20px; }
         .btn-wa:hover { background:#0071e3; color:#fff; }
 
-        /* MODAL DE PERFIL */
         .modal-bg { background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); }
         .apple-input { background:#2c2c2e; border:1px solid #38383a; border-radius:12px; padding:15px; width:100%; color:white; outline:none; margin-bottom:1rem; font-size:14px; }
         .btn-save { background:#0071e3; color:#fff; font-weight:900; border-radius:50px; padding:15px; width:100%; text-transform:uppercase; font-size:12px; transition:0.3s; }
@@ -45,7 +44,7 @@
     </div>
 
     <div class="user-bar">
-        <div class="max-w-6xl mx-auto w-full flex justify-between items-center">
+        <div class="max-w-7xl mx-auto w-full flex justify-between items-center">
             <div class="text-[11px] font-black uppercase tracking-widest text-gray-500">
                 Olá, <span id="nomeUsuario" class="text-white">...</span>
             </div>
@@ -56,22 +55,23 @@
         </div>
     </div>
 
-    <div class="max-w-6xl mx-auto px-6">
+    <div class="max-w-7xl mx-auto px-6">
         <header class="mt-12 mb-8 text-center">
             <h1 class="text-7xl font-black italic tracking-tighter leading-none">iFipe</h1>
         </header>
     </div>
 
     <div class="filter-section">
-        <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
-            <select id="fMod" class="filter" onchange="atualizarMemorias()"><option value="">Modelo</option></select>
-            <select id="fCap" class="filter" onchange="atualizarCores()" disabled><option value="">Memória</option></select>
+        <div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-4">
+            <select id="fMod" class="filter" onchange="atualizarDetalhes()"><option value="">Aparelho</option></select>
+            <select id="fCond" class="filter" onchange="filtrar()"><option value="">Condição (Todas)</option><option value="Novo">Novos</option><option value="Seminovo">Seminovos</option></select>
+            <select id="fDet" class="filter" onchange="atualizarCores()" disabled><option value="">Memória/Tamanho</option></select>
             <select id="fCor" class="filter" onchange="filtrar()" disabled><option value="">Cor</option></select>
             <select id="fReg" class="filter" onchange="filtrar()"><option value="">Região</option></select>
         </div>
     </div>
 
-    <div class="max-w-6xl mx-auto p-6">
+    <div class="max-w-7xl mx-auto p-6">
         <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
     </div>
 
@@ -81,13 +81,9 @@
                 <h2 class="text-2xl font-black italic">Meus Dados</h2>
                 <button onclick="fecharPerfil()" class="text-gray-500 text-xl font-bold">&times;</button>
             </div>
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nome</label>
-            <input type="text" id="editNome" class="apple-input">
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">WhatsApp</label>
-            <input type="text" id="editWhats" class="apple-input">
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nova Senha</label>
-            <input type="password" id="editSenha" class="apple-input" placeholder="••••••••">
-            
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nome</label><input type="text" id="editNome" class="apple-input">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">WhatsApp</label><input type="text" id="editWhats" class="apple-input">
+            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nova Senha</label><input type="password" id="editSenha" class="apple-input" placeholder="••••••••">
             <button onclick="salvarPerfil()" class="btn-save mt-4">Salvar Alterações</button>
             <p id="msgPerfil" class="text-[10px] font-black uppercase text-center mt-4 tracking-widest"></p>
         </div>
@@ -101,120 +97,92 @@
 
         function iniciarCambio() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                document.getElementById('usdt_val').innerText = `R$ ${parseFloat(data.c).toFixed(4).replace('.',',')}`;
-            };
+            socket.onmessage = (event) => { document.getElementById('usdt_val').innerText = `R$ ${parseFloat(data.c).toFixed(4).replace('.',',')}`; };
         }
 
         async function validarSessao() {
             const token = localStorage.getItem('iFipe_Token');
             if(!token) { location.href='3-pagina-login.html'; return; }
-            
-            // Busca os dados do cliente logado
             const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).maybeSingle();
             if(!data || !data.aprovado) { sairBuscador(); return; }
             
             usuarioLogado = data;
             document.getElementById('nomeUsuario').innerText = data.nome.split(' ')[0];
             document.getElementById('main').classList.remove('hidden');
-            
-            iniciarCambio();
-            init();
+            iniciarCambio(); init();
         }
 
-        function sairBuscador() {
-            localStorage.removeItem('iFipe_Token');
-            window.location.href = '3-pagina-login.html';
-        }
-
-        function abrirPerfil() {
-            document.getElementById('modalPerfil').classList.remove('hidden');
-            document.getElementById('editNome').value = usuarioLogado.nome;
-            document.getElementById('editWhats').value = usuarioLogado.whatsapp || '';
-            document.getElementById('editSenha').value = usuarioLogado.senha;
-            document.getElementById('msgPerfil').innerText = '';
-        }
-
-        function fecharPerfil() {
-            document.getElementById('modalPerfil').classList.add('hidden');
-        }
+        function sairBuscador() { localStorage.removeItem('iFipe_Token'); window.location.href = '3-pagina-login.html'; }
+        function abrirPerfil() { document.getElementById('modalPerfil').classList.remove('hidden'); document.getElementById('editNome').value = usuarioLogado.nome; document.getElementById('editWhats').value = usuarioLogado.whatsapp || ''; document.getElementById('editSenha').value = usuarioLogado.senha; document.getElementById('msgPerfil').innerText = ''; }
+        function fecharPerfil() { document.getElementById('modalPerfil').classList.add('hidden'); }
 
         async function salvarPerfil() {
-            const novoNome = document.getElementById('editNome').value;
-            const novoWhats = document.getElementById('editWhats').value.replace(/\D/g, '');
-            const novaSenha = document.getElementById('editSenha').value;
-            
-            const msg = document.getElementById('msgPerfil');
-            if(!novoNome || !novaSenha) {
-                msg.innerText = "NOME E SENHA SÃO OBRIGATÓRIOS."; msg.style.color = "#ff3b30"; return;
-            }
-
-            const { error } = await _s.from('clientes_buscador').update({
-                nome: novoNome, whatsapp: novoWhats, senha: novaSenha
-            }).eq('id', usuarioLogado.id);
-
-            if(!error) {
-                msg.innerText = "DADOS ATUALIZADOS COM SUCESSO!"; msg.style.color = "#32d74b";
-                document.getElementById('nomeUsuario').innerText = novoNome.split(' ')[0];
-                usuarioLogado.nome = novoNome; usuarioLogado.whatsapp = novoWhats; usuarioLogado.senha = novaSenha;
-                setTimeout(fecharPerfil, 1500);
-            } else {
-                msg.innerText = "ERRO AO ATUALIZAR DADOS."; msg.style.color = "#ff3b30";
-            }
+            const novoNome = document.getElementById('editNome').value; const novoWhats = document.getElementById('editWhats').value.replace(/\D/g, ''); const novaSenha = document.getElementById('editSenha').value; const msg = document.getElementById('msgPerfil');
+            if(!novoNome || !novaSenha) { msg.innerText = "NOME E SENHA SÃO OBRIGATÓRIOS."; msg.style.color = "#ff3b30"; return; }
+            const { error } = await _s.from('clientes_buscador').update({ nome: novoNome, whatsapp: novoWhats, senha: novaSenha }).eq('id', usuarioLogado.id);
+            if(!error) { msg.innerText = "DADOS ATUALIZADOS!"; msg.style.color = "#32d74b"; document.getElementById('nomeUsuario').innerText = novoNome.split(' ')[0]; usuarioLogado.nome = novoNome; usuarioLogado.whatsapp = novoWhats; usuarioLogado.senha = novaSenha; setTimeout(fecharPerfil, 1500); } else { msg.innerText = "ERRO AO ATUALIZAR."; msg.style.color = "#ff3b30"; }
         }
 
         async function init() {
             const [m, r, v] = await Promise.all([
-                _s.from('produtos_mestre').select('*').order('id'),
+                _s.from('produtos_mestre').select('id, nome, grupos(nome)').order('id'),
                 _s.from('regioes').select('*').order('id'),
                 _s.from('variacoes').select('*, produtos_mestre(nome)')
             ]);
             gradeVariacoes = v.data || [];
-            document.getElementById('fMod').innerHTML = '<option value="">Escolha o Modelo</option>' + m.data.map(x=>`<option value="${x.nome}">${x.nome}</option>`).join('');
+
+            let optHTML = '<option value="">Todos Aparelhos</option>';
+            const grupos = [...new Set(m.data.map(x => x.grupos.nome))];
+            grupos.forEach(g => {
+                optHTML += `<optgroup label="${g}">`;
+                optHTML += m.data.filter(x => x.grupos.nome === g).map(x => `<option value="${x.nome}">${x.nome}</option>`).join('');
+                optHTML += `</optgroup>`;
+            });
+
+            document.getElementById('fMod').innerHTML = optHTML;
             document.getElementById('fReg').innerHTML = '<option value="">Região de Origem</option>' + r.data.map(x=>`<option value="${x.nome}">${x.bandeira} ${x.nome}</option>`).join('');
             buscarOfertas();
         }
 
         async function buscarOfertas() {
-            const { data } = await _s.from('ofertas').select('preco, quantidade, regioes(nome, bandeira), fornecedores(nome, whatsapp, ativo), variacoes(capacidade, cor, produtos_mestre(nome))').eq('fornecedores.ativo', true).gt('quantidade', 0).order('preco', {ascending:true});
-            cacheOfertas = data || [];
-            renderizar(cacheOfertas);
+            const { data } = await _s.from('ofertas').select('preco, quantidade, condicao, regioes(nome, bandeira), fornecedores(nome, whatsapp, ativo), variacoes(capacidade, tamanho, cor, produtos_mestre(nome))').eq('fornecedores.ativo', true).gt('quantidade', 0).order('preco', {ascending:true});
+            cacheOfertas = data || []; renderizar(cacheOfertas);
         }
 
-        function atualizarMemorias() {
+        function atualizarDetalhes() {
             const modNome = document.getElementById('fMod').value;
-            const selCap = document.getElementById('fCap');
-            const selCor = document.getElementById('fCor');
-            if(!modNome) { selCap.disabled = selCor.disabled = true; filtrar(); return; }
+            const selDet = document.getElementById('fDet'); const selCor = document.getElementById('fCor');
+            if(!modNome) { selDet.disabled = selCor.disabled = true; selDet.innerHTML = '<option value="">Memória/Tamanho</option>'; selCor.innerHTML = '<option value="">Cor</option>'; filtrar(); return; }
+            
             const filtradas = gradeVariacoes.filter(x => x.produtos_mestre.nome === modNome);
-            const caps = [...new Set(filtradas.map(x=>x.capacidade))].sort((a,b) => parseInt(a) - parseInt(b));
-            selCap.innerHTML = '<option value="">Capacidade</option>' + caps.map(x=>`<option value="${x}">${x}</option>`).join('');
-            selCap.disabled = false;
-            selCor.disabled = true;
-            selCor.innerHTML = '<option value="">Cor</option>';
+            const tamanhos = [...new Set(filtradas.map(x=>x.tamanho).filter(Boolean))];
+            const capacidades = [...new Set(filtradas.map(x=>x.capacidade).filter(Boolean))].sort((a,b) => parseInt(a) - parseInt(b));
+            
+            selDet.innerHTML = '<option value="">Tamanho / Memória</option>';
+            if(tamanhos.length > 0) selDet.innerHTML += tamanhos.map(x=>`<option value="${x}">${x}</option>`).join('');
+            if(capacidades.length > 0) selDet.innerHTML += capacidades.map(x=>`<option value="${x}">${x}</option>`).join('');
+            
+            selDet.disabled = false; selCor.disabled = true; selCor.innerHTML = '<option value="">Cor</option>';
             filtrar();
         }
 
         function atualizarCores() {
-            const modNome = document.getElementById('fMod').value;
-            const cap = document.getElementById('fCap').value;
-            const selCor = document.getElementById('fCor');
-            if(!cap) { selCor.disabled = true; filtrar(); return; }
-            const filtradas = gradeVariacoes.filter(x => x.produtos_mestre.nome === modNome && x.capacidade === cap);
-            selCor.innerHTML = '<option value="">Cor</option>' + filtradas.map(x=>`<option value="${x.cor}">${x.cor}</option>`).join('');
+            const modNome = document.getElementById('fMod').value; const detalhe = document.getElementById('fDet').value; const selCor = document.getElementById('fCor');
+            if(!detalhe) { selCor.disabled = true; filtrar(); return; }
+            
+            const filtradas = gradeVariacoes.filter(x => x.produtos_mestre.nome === modNome && (x.capacidade === detalhe || x.tamanho === detalhe));
+            const cores = [...new Set(filtradas.map(x=>x.cor).filter(Boolean))];
+            selCor.innerHTML = '<option value="">Cor</option>' + cores.map(x=>`<option value="${x}">${x}</option>`).join('');
             selCor.disabled = false;
             filtrar();
         }
 
         function filtrar() {
-            const mod = document.getElementById('fMod').value;
-            const cap = document.getElementById('fCap').value;
-            const cor = document.getElementById('fCor').value;
-            const reg = document.getElementById('fReg').value;
+            const mod = document.getElementById('fMod').value; const cond = document.getElementById('fCond').value; const det = document.getElementById('fDet').value; const cor = document.getElementById('fCor').value; const reg = document.getElementById('fReg').value;
             let res = cacheOfertas;
             if(mod) res = res.filter(x => x.variacoes.produtos_mestre.nome === mod);
-            if(cap) res = res.filter(x => x.variacoes.capacidade === cap);
+            if(cond) res = res.filter(x => x.condicao === cond);
+            if(det) res = res.filter(x => x.variacoes.capacidade === det || x.variacoes.tamanho === det);
             if(cor) res = res.filter(x => x.variacoes.cor === cor);
             if(reg) res = res.filter(x => x.regioes.nome === reg);
             renderizar(res);
@@ -222,23 +190,28 @@
 
         function renderizar(lista) {
             const vitrine = document.getElementById('vitrine');
-            if(lista.length === 0) {
-                vitrine.innerHTML = '<p class="text-center col-span-full text-gray-500 font-bold text-xs uppercase tracking-widest">Nenhum iPhone disponível com esses filtros.</p>';
-                return;
-            }
-            vitrine.innerHTML = lista.map(o => `
+            if(lista.length === 0) { vitrine.innerHTML = '<p class="text-center col-span-full text-gray-500 font-bold text-xs uppercase tracking-widest">Nenhum aparelho disponível com esses filtros.</p>'; return; }
+            
+            vitrine.innerHTML = lista.map(o => {
+                const attrs = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' • ');
+                const badgeCondicao = o.condicao === 'Novo' ? '<span class="badge-novo">Novo (Lacrado)</span>' : '<span class="badge-semi">Seminovo</span>';
+                
+                return `
                 <div class="card">
-                    <div class="flex justify-between items-start mb-8">
+                    <div class="flex justify-between items-start mb-6">
                         <span class="text-[10px] font-black uppercase text-gray-500 tracking-tighter">${o.regioes.bandeira} ${o.regioes.nome}</span>
-                        <span class="stock-badge">${o.quantidade} em estoque</span>
+                        <div class="flex flex-col items-end gap-2">
+                            ${badgeCondicao}
+                            <span class="stock-badge">${o.quantidade} em estoque</span>
+                        </div>
                     </div>
                     <p class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2">${o.fornecedores.nome}</p>
                     <h2 class="text-3xl font-black italic leading-none mb-1">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-gray-500 text-[11px] font-bold uppercase mb-8">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
+                    <p class="text-gray-500 text-[11px] font-bold uppercase mb-8">${attrs}</p>
                     <div class="price">R$ ${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
                     <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}" target="_blank" class="btn-wa">Negociar Direto</a>
                 </div>
-            `).join('');
+            `}).join('');
         }
         validarSessao();
     </script>
