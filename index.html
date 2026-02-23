@@ -21,13 +21,13 @@
 
     <div id="loginSection" class="apple-card text-center">
         <h1 class="text-4xl font-black italic mb-2 tracking-tighter">iFipe</h1>
-        <p class="text-[10px] font-bold uppercase text-gray-500 mb-10 tracking-[0.3em]">Acesso Lojista Oficial</p>
+        <p class="text-[10px] font-bold uppercase text-gray-500 mb-10 tracking-[0.3em]">Gestão Lojista Oficial</p>
         
         <div class="text-left">
             <label>Identificação (Nome ou ID)</label>
             <input type="text" id="loginId" class="apple-input" placeholder="Ex: JOGADOR">
             
-            <label>Sua Senha</label>
+            <label>Senha de Acesso</label>
             <input type="password" id="loginPass" class="apple-input" placeholder="••••••••">
         </div>
         
@@ -42,9 +42,9 @@
         </div>
 
         <form id="priceForm">
-            <label>Modelo do iPhone</label>
+            <label>Selecione o iPhone</label>
             <select id="produto_id" class="apple-input" required>
-                <option value="">Selecione o aparelho</option>
+                <option value="">Carregando modelos...</option>
             </select>
 
             <label>Variação Disponível</label>
@@ -55,25 +55,27 @@
             <label>Região / Origem</label>
             <select id="regiao_id" class="apple-input" required></select>
 
-            <label>Preço à Vista (R$)</label>
-            <input type="number" id="preco" class="apple-input" placeholder="Ex: 7490.00" step="0.01" min="1" required>
+            <label>Preço de Venda (R$)</label>
+            <input type="number" id="preco" class="apple-input" placeholder="Ex: 7500.00" step="0.01" min="1" required>
 
-            <button type="submit" class="apple-button">Publicar no Ranking</button>
+            <button type="submit" class="apple-button">Publicar Preço</button>
         </form>
         <p id="status" class="mt-6 text-center text-[10px] font-black uppercase tracking-widest"></p>
     </div>
 
     <script>
+        // Conexão direta com o Supabase
         const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let fornecedorLogado = null;
 
+        // Função de Login que aceita Texto ou ID
         async function fazerLogin() {
             const login = document.getElementById('loginId').value;
             const pass = document.getElementById('loginPass').value;
             const errorEl = document.getElementById('loginError');
 
-            // Busca inteligente por ID ou Nome Texto
             const isNumeric = !isNaN(login) && login.trim() !== "";
+            
             const { data, error } = await _supabase
                 .from('fornecedores')
                 .select('*')
@@ -88,29 +90,31 @@
                 document.getElementById('welcomeMsg').innerText = "Loja: " + data.nome;
                 carregarBases();
             } else {
-                errorEl.innerText = "Acesso negado. Verifique os dados.";
+                errorEl.innerText = "Dados incorretos. Verifique Nome/ID e Senha.";
             }
         }
 
+        // Carrega dados sincronizados do SQL Master
         async function carregarBases() {
             const { data: m } = await _supabase.from('produtos_mestre').select('id, nome').order('id');
             const { data: r } = await _supabase.from('regioes').select('id, nome, bandeira').order('id');
             const { data: v } = await _supabase.from('variacoes').select('*');
             
-            const pSelect = document.getElementById('produto_id');
-            const rSelect = document.getElementById('regiao_id');
-            const vSelect = document.getElementById('variacao_id');
+            const pS = document.getElementById('produto_id');
+            const rS = document.getElementById('regiao_id');
+            const vS = document.getElementById('variacao_id');
 
-            pSelect.innerHTML = '<option value="">Selecione o aparelho</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
-            rSelect.innerHTML = r.map(i => `<option value="${i.id}">${i.bandeira} ${i.nome}</option>`).join('');
+            pS.innerHTML = '<option value="">Selecione o aparelho</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
+            rS.innerHTML = r.map(i => `<option value="${i.id}">${i.bandeira} ${i.nome}</option>`).join('');
             
-            pSelect.onchange = (e) => {
+            pS.onchange = (e) => {
                 const filtradas = v.filter(item => item.produto_id == e.target.value);
-                vSelect.innerHTML = filtradas.map(item => `<option value="${item.id}">${item.capacidade} • ${item.cor}</option>`).join('');
-                vSelect.disabled = filtradas.length === 0;
+                vS.innerHTML = filtradas.map(item => `<option value="${item.id}">${item.capacidade} • ${item.cor}</option>`).join('');
+                vS.disabled = filtradas.length === 0;
             };
         }
 
+        // Publica a oferta vinculada ao lojista
         document.getElementById('priceForm').onsubmit = async (e) => {
             e.preventDefault();
             const status = document.getElementById('status');
@@ -128,7 +132,7 @@
                 status.innerText = "Erro ao publicar!";
                 status.style.color = "#ff3b30";
             } else {
-                status.innerText = "Sucesso: Oferta ativa! 🚀";
+                status.innerText = "Sucesso: Preço Publicado! 🚀";
                 status.style.color = "#32d74b";
                 e.target.reset();
             }
