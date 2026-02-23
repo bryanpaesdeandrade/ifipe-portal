@@ -46,9 +46,9 @@
             <label>Modelo do iPhone</label>
             <select id="produto_id" class="apple-input" required></select>
 
-            <label>Capacidade e Cor (Filtrados)</label>
+            <label>Capacidade e Cor (Filtrados por Modelo)</label>
             <select id="variacao_id" class="apple-input" required disabled>
-                <option value="">Escolha o modelo primeiro</option>
+                <option value="">Selecione o modelo primeiro</option>
             </select>
 
             <label>Origem / Região</label>
@@ -71,10 +71,11 @@
             const pass = document.getElementById('loginPass').value;
             const isNumeric = !isNaN(login) && login.trim() !== "";
             
-            // BUSCA O FORNECEDOR E VERIFICA SE ESTÁ ATIVO
+            // BUSCA O FORNECEDOR E VERIFICA SE ESTÁ ATIVO NO PAINEL MASTER
             const { data, error } = await _supabase.from('fornecedores').select('*').or(`id.eq.${isNumeric ? login : -1},nome.eq.${login}`).eq('senha', pass).maybeSingle();
             
             if (data) {
+                // TRAVA FINANCEIRA: SÓ ENTRA SE ESTIVER COM STATUS "ATIVO"
                 if (!data.ativo) {
                     document.getElementById('loginError').innerText = "ACESSO SUSPENSO: FINANCEIRO PENDENTE.";
                     return;
@@ -101,7 +102,7 @@
             pS.innerHTML = '<option value="">Escolha o Modelo</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
             rS.innerHTML = r.map(i => `<option value="${i.id}">${i.bandeira} ${i.nome}</option>`).join('');
             
-            // INTELIGÊNCIA DE FILTRO CASADO: SÓ MOSTRA O QUE EXISTE NO SQL
+            // INTELIGÊNCIA DE FILTRO CASADO: SÓ MOSTRA O QUE REALMENTE EXISTE PARA O MODELO ESCOLHIDO
             pS.onchange = (e) => {
                 const filtradas = v.filter(item => item.produto_id == e.target.value);
                 if (filtradas.length > 0) {
@@ -123,7 +124,7 @@
             status.innerText = "Sincronizando com o Ranking...";
             status.style.color = "#86868b";
 
-            // PUBLICAÇÃO COM SEGURANÇA
+            // PUBLICAÇÃO VINCULADA AO LOJISTA LOGADO
             const { error } = await _supabase.from('ofertas').insert([{
                 fornecedor_id: fornecedorLogado.id,
                 variacao_id: document.getElementById('variacao_id').value,
@@ -137,7 +138,7 @@
             } else { 
                 status.innerText = "Preço Publicado com Sucesso! 🚀"; 
                 status.style.color = "#32d74b"; 
-                document.getElementById('preco').value = ""; // Limpa apenas o preço para nova inserção
+                document.getElementById('preco').value = ""; // Limpa apenas o campo de preço
             }
         };
     </script>
