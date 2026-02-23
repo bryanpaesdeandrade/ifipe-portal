@@ -7,51 +7,40 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 28px; padding: 3rem; width: 95%; max-width: 550px; box-shadow: 0 25px 50px rgba(0,0,0,0.7); }
-        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 14px; padding: 18px; width: 100%; color: white; outline: none; margin-bottom: 1rem; transition: 0.2s; font-size: 16px; }
-        .apple-input:focus { border-color: #0071e3; background: #323235; }
-        .apple-button { background: #ffffff; color: #000000; font-weight: 900; border-radius: 50px; padding: 20px; width: 100%; cursor: pointer; transition: 0.3s; margin-top: 1.5rem; text-transform: uppercase; letter-spacing: 1.5px; border: none; font-size: 14px; }
-        .apple-button:hover { background: #0071e3; color: white; transform: translateY(-2px); }
-        label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.15em; margin-top: 1rem; }
+        body { background-color: #000; color: #fff; font-family: -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 28px; padding: 3rem; width: 95%; max-width: 550px; }
+        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 14px; padding: 18px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 16px; }
+        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 20px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 14px; transition: 0.3s; }
+        .apple-button:hover { background: #0071e3; color: #fff; }
+        label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 900; margin-top: 1rem; }
         .hidden { display: none !important; }
-        .status-msg { margin-top: 25px; text-align: center; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
     <div id="loginSection" class="apple-card text-center">
-        <h1 class="text-5xl font-black italic mb-2 tracking-tighter italic">iFipe</h1>
-        <p class="text-[10px] font-bold uppercase text-gray-400 mb-12 tracking-[0.4em]">Gestão do Anunciante Oficial</p>
-        <div class="text-left">
-            <label>Sua Loja (Nome)</label>
-            <input type="text" id="loginId" class="apple-input" placeholder="Ex: JOGADOR">
-            <label>Senha de Acesso</label>
-            <input type="password" id="loginPass" class="apple-input" placeholder="••••••••">
-        </div>
+        <h1 class="text-5xl font-black italic mb-8">iFipe</h1>
+        <input type="text" id="loginId" class="apple-input" placeholder="Nome da Loja">
+        <input type="password" id="loginPass" class="apple-input" placeholder="Senha">
         <button onclick="fazerLogin()" class="apple-button">Acessar Painel</button>
-        <p id="loginError" class="text-red-500 text-[10px] mt-6 font-bold uppercase tracking-widest"></p>
     </div>
 
     <div id="formSection" class="apple-card hidden">
-        <div class="flex justify-between items-center mb-10">
-            <div>
-                <h2 class="text-xl font-black italic">Painel do Anunciante</h2>
-                <span id="welcomeMsg" class="text-blue-500 font-bold uppercase text-[9px] tracking-widest"></span>
-            </div>
-            <button onclick="location.reload()" class="text-[10px] text-gray-500 underline font-black uppercase hover:text-white transition">Sair</button>
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-xl font-black italic">Novo Anúncio</h2>
+            <button onclick="location.reload()" class="text-[10px] text-gray-500 underline uppercase">Sair</button>
         </div>
 
         <form id="priceForm">
             <label>Modelo do iPhone</label>
-            <select id="produto_id" class="apple-input" onchange="carregarMemorias()" required>
+            <select id="produto_id" class="apple-input" onchange="resetarEFiltarMemoria()" required>
                 <option value="">Selecione o Modelo</option>
             </select>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label>Memória</label>
-                    <select id="capacidade" class="apple-input" required disabled onchange="carregarCores()">
+                    <select id="capacidade" class="apple-input" required disabled onchange="resetarEFiltarCores()">
                         <option value="">Aguardando...</option>
                     </select>
                 </div>
@@ -63,67 +52,75 @@
                 </div>
             </div>
 
-            <label>Origem / Região</label>
+            <label>Região / Origem</label>
             <select id="regiao_id" class="apple-input" required></select>
 
             <label>Valor de Venda (R$)</label>
-            <input type="text" id="preco" class="apple-input" placeholder="Ex: 7.990,00" required>
+            <input type="text" id="preco" class="apple-input" placeholder="Ex: 7.500,00" required>
 
             <button type="submit" class="apple-button">Publicar no Ranking</button>
         </form>
-        <p id="status" class="status-msg"></p>
+        <p id="status" class="mt-6 text-center text-[11px] font-black uppercase tracking-widest"></p>
     </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let lojaLogada = null;
-        let baseVariacoes = [];
+        let loja = null;
+        let gradeVariacoes = [];
 
         async function fazerLogin() {
             const user = document.getElementById('loginId').value;
             const pass = document.getElementById('loginPass').value;
             const { data } = await _s.from('fornecedores').select('*').eq('nome', user).eq('senha', pass).maybeSingle();
             
-            if (data) {
-                if (!data.ativo) { alert("ACESSO SUSPENSO: FINANCEIRO PENDENTE."); return; }
-                lojaLogada = data;
+            if (data && data.ativo) {
+                loja = data;
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('formSection').classList.remove('hidden');
-                document.getElementById('welcomeMsg').innerText = "Conectado: " + data.nome;
                 init();
-            } else { alert("Acesso Negado."); }
+            } else { alert("Acesso Negado ou Financeiro Pendente."); }
         }
 
         async function init() {
             const { data: m } = await _s.from('produtos_mestre').select('*').order('id');
             const { data: r } = await _s.from('regioes').select('*').order('id');
             const { data: v } = await _s.from('variacoes').select('*');
-            baseVariacoes = v;
+            gradeVariacoes = v;
 
             document.getElementById('produto_id').innerHTML = '<option value="">Escolha o Modelo</option>' + m.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('regiao_id').innerHTML = r.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
         }
 
-        function carregarMemorias() {
+        function resetarEFiltarMemoria() {
             const modId = document.getElementById('produto_id').value;
-            const filtradas = baseVariacoes.filter(x => x.produto_id == modId);
-            const caps = [...new Set(filtradas.map(x => x.capacidade))];
-
             const selCap = document.getElementById('capacidade');
-            selCap.innerHTML = '<option value="">Escolha</option>' + caps.map(x => `<option value="${x}">${x}</option>`).join('');
-            selCap.disabled = false;
-            document.getElementById('cor').disabled = true;
-            document.getElementById('cor').innerHTML = '<option value="">Aguardando...</option>';
+            const selCor = document.getElementById('cor');
+
+            // Limpa tudo para não misturar
+            selCap.innerHTML = '<option value="">Escolha</option>';
+            selCor.innerHTML = '<option value="">Aguardando...</option>';
+            selCor.disabled = true;
+
+            if(modId) {
+                const filtradas = gradeVariacoes.filter(x => x.produto_id == modId);
+                const caps = [...new Set(filtradas.map(x => x.capacidade))];
+                selCap.innerHTML += caps.map(x => `<option value="${x}">${x}</option>`).join('');
+                selCap.disabled = false;
+            }
         }
 
-        function carregarCores() {
+        function resetarEFiltarCores() {
             const modId = document.getElementById('produto_id').value;
             const cap = document.getElementById('capacidade').value;
-            const filtradas = baseVariacoes.filter(x => x.produto_id == modId && x.capacidade == cap);
-
             const selCor = document.getElementById('cor');
-            selCor.innerHTML = filtradas.map(x => `<option value="${x.cor}">${x.cor}</option>`).join('');
-            selCor.disabled = false;
+
+            selCor.innerHTML = '<option value="">Escolha</option>';
+
+            if(cap) {
+                const filtradas = gradeVariacoes.filter(x => x.produto_id == modId && x.capacidade == cap);
+                selCor.innerHTML += filtradas.map(x => `<option value="${x.cor}">${x.cor}</option>`).join('');
+                selCor.disabled = false;
+            }
         }
 
         document.getElementById('priceForm').onsubmit = async (e) => {
@@ -133,24 +130,21 @@
             const cap = document.getElementById('capacidade').value;
             const cor = document.getElementById('cor').value;
             
-            const { data: varId } = await _s.from('variacoes').select('id').eq('produto_id', modId).eq('capacidade', cap).eq('cor', cor).maybeSingle();
+            const { data: v } = await _s.from('variacoes').select('id').eq('produto_id', modId).eq('capacidade', cap).eq('cor', cor).maybeSingle();
+            const preco = parseFloat(document.getElementById('preco').value.replace(/\./g, '').replace(',', '.'));
 
-            const precoLimpo = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
             const { error } = await _s.from('ofertas').insert([{
-                fornecedor_id: lojaLogada.id,
-                variacao_id: varId.id,
+                fornecedor_id: loja.id,
+                variacao_id: v.id,
                 regiao_id: document.getElementById('regiao_id').value,
-                preco: parseFloat(precoLimpo)
+                preco: preco
             }]);
 
             if (!error) { 
                 status.innerText = "🚀 PUBLICADO COM SUCESSO!"; 
                 status.style.color = "#32d74b"; 
                 document.getElementById('preco').value = ""; 
-            } else { 
-                status.innerText = "ERRO AO PUBLICAR!"; 
-                status.style.color = "#ff3b30"; 
-            }
+            } else { status.innerText = "ERRO AO PUBLICAR!"; status.style.color = "#ff3b30"; }
         };
     </script>
 </body>
