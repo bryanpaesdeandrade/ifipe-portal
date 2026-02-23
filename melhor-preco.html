@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iFipe - Melhor Preço</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; }
+        .price-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 20px; padding: 1.5rem; transition: 0.3s; position: relative; overflow: hidden; }
+        .price-card:hover { border-color: #32d74b; transform: scale(1.02); }
+        .top-deal { position: absolute; top: 0; right: 0; background: #32d74b; color: black; font-size: 9px; font-weight: 900; padding: 4px 12px; border-bottom-left-radius: 12px; text-transform: uppercase; }
+        .price-value { color: #32d74b; font-size: 28px; font-weight: 800; letter-spacing: -1.5px; }
+        .filter-select { background: #1c1c1e; border: 1px solid #38383a; border-radius: 12px; padding: 10px 15px; color: white; cursor: pointer; }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+            <div>
+                <h1 class="text-4xl font-black italic tracking-tighter">iFipe</h1>
+                <p class="text-gray-500 text-xs font-bold uppercase tracking-widest">O Ranking do Menor Preço</p>
+            </div>
+            
+            <div class="flex flex-wrap gap-3">
+                <select id="filtroModelo" onchange="filtrar()" class="filter-select text-xs font-bold uppercase">
+                    <option value="">Todos os iPhones</option>
+                </select>
+                <select id="filtroRegiao" onchange="filtrar()" class="filter-select text-xs font-bold uppercase">
+                    <option value="">Todas as Regiões</option>
+                </select>
+            </div>
+        </header>
+
+        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+    </div>
+
+    <script>
+        const _supabase = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+
+        let ofertasCache = [];
+
+        async function init() {
+            // Carregar Selects
+            const { data: modelos } = await _supabase.from('produtos_mestre').select('nome').order('id');
+            const { data: regioes } = await _supabase.from('regioes').select('nome');
+            
+            modelos.forEach(m => document.getElementById('filtroModelo').innerHTML += `<option value="${m.nome}">${m.nome}</option>`);
+            regioes.forEach(r => document.getElementById('filtroRegiao').innerHTML += `<option value="${r.nome}">${r.nome}</option>`);
+
+            await buscarOfertas();
+        }
+
+        async function buscarOfertas() {
+            const { data, error } = await _supabase
+                .from('ofertas')
+                .select(`
+                    preco,
+                    regioes (nome, bandeira),
+                    fornecedores (nome),
+                    variacoes (
+                        capacidade, cor,
+                        produtos_mestre (nome)
+                    )
+                `)
+                .order('preco', { ascending: true }); // GARANTE O MELHOR PREÇO NO TOPO
+
+            if (!error) {
+                ofertasCache = data;
+                renderizar(data);
+            }
+        }
+
+        function filtrar() {
+            const mod = document.getElementById('filtroModelo').value;
+            const reg = document.getElementById('filtroRegiao').value;
+
+            let filtradas = ofertasCache;
+            if (mod) filtradas = filtradas.filter(o => o.variacoes.produtos_mestre.nome === mod);
+            if (reg) filtradas = filtradas.filter(o => o.regioes.nome === reg);
+
+            renderizar(filtradas);
+        }
+
+        function renderizar(lista) {
+            const container = document.getElementById('vitrine');
+            if (lista.length === 0) {
+                container.innerHTML = '<p class="col-span-full text-center text-gray-600 font-bold py-20 uppercase text-xs">Nenhum preço encontrado para esta busca.</p>';
+                return;
+            }
+
+            container.innerHTML = lista.map((o, index) => `
+                <div class="price-card">
+                    ${index === 0 ? '<div class="top-deal">Melhor Preço</div>' : ''}
+                    
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="text-[10px] font-black bg-white text-black px-2 py-1 rounded italic">${o.regioes.bandeira} ${o.regioes.nome}</span>
+                        <span class="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">${o.fornecedores.nome}</span>
+                    </div>
+
+                    <h2 class="text-xl font-bold tracking-tight">${o.variacoes.produtos_mestre.nome}</h2>
+                    <p class="text-gray-500 text-xs font-medium mb-8">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
+
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <span class="block text-[10px] text-gray-600 font-black uppercase">Preço iFipe</span>
+                            <span class="price-value">R$ ${o.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <button class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black px-4 py-2 rounded-full uppercase transition">
+                            Tenho Interesse
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        init();
+    </script>
+</body>
+</html>
