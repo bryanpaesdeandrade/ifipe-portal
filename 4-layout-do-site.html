@@ -3,138 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Ranking Realtime</title>
+    <title>iFipe - Busca Realtime</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; margin: 0; }
-        .ticker-bar { background: #1c1c1e; border-bottom: 1px solid #38383a; padding: 15px; position: sticky; top: 0; z-index: 50; display: flex; justify-content: center; align-items: center; gap: 20px; }
-        .ticker-val { color: #32d74b; font-family: 'Courier New', monospace; font-size: 20px; font-weight: 900; }
-        .filter-select { background: #1c1c1e; border: 1px solid #38383a; border-radius: 12px; padding: 12px; font-size: 11px; font-weight: 900; text-transform: uppercase; outline: none; color: white; cursor: pointer; width: 100%; }
-        .price-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; transition: 0.3s; position: relative; }
-        .price-card:hover { border-color: #0071e3; transform: translateY(-5px); }
-        .top-deal { position: absolute; top: 0; right: 0; background: #32d74b; color: black; font-size: 10px; font-weight: 900; padding: 8px 20px; border-bottom-left-radius: 16px; text-transform: uppercase; }
-        .price-value { color: #32d74b; font-size: 34px; font-weight: 800; letter-spacing: -1.5px; }
-        .btn-whatsapp { background: #25d366; color: white; font-size: 12px; font-weight: 900; padding: 16px; border-radius: 50px; width: 100%; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; text-transform: uppercase; border: none; }
+        body { background:#000; color:#fff; font-family:-apple-system, sans-serif; margin:0; }
+        .ticker-bar { background:#1c1c1e; border-bottom:1px solid #38383a; padding:12px; position:sticky; top:0; z-index:50; display:flex; justify-content:center; align-items:center; gap:15px; }
+        .ticker-val { color:#32d74b; font-family:monospace; font-size:20px; font-weight:900; }
+        .filter { background:#1c1c1e; border:1px solid #38383a; border-radius:12px; padding:12px; font-size:11px; font-weight:900; text-transform:uppercase; color:#fff; outline:none; width:100%; cursor:pointer; }
+        .card { background:#1c1c1e; border:1px solid #38383a; border-radius:24px; padding:2rem; transition:0.3s; position:relative; }
+        .card:hover { border-color:#0071e3; transform:translateY(-5px); }
+        .price { color:#32d74b; font-size:32px; font-weight:800; letter-spacing:-1px; }
+        .btn-wa { background:#25d366; color:#fff; padding:14px; border-radius:50px; font-weight:900; text-align:center; display:block; text-decoration:none; text-transform:uppercase; font-size:11px; }
         .hidden { display: none !important; }
     </style>
 </head>
-<body id="mainContent" class="hidden">
-
+<body id="main" class="hidden">
     <div class="ticker-bar">
-        <span class="text-[10px] font-black text-gray-500 uppercase tracking-widest">DÓLAR USDT/BRL:</span>
-        <span class="ticker-val">R$ <span id="usdtVal">0,0000</span></span>
-        <button onclick="logout()" class="ml-auto text-[10px] text-gray-500 font-black uppercase underline">Sair</button>
+        <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">USDT/BRL:</span>
+        <span class="ticker-val">R$ <span id="usdt">0,0000</span></span>
+        <button onclick="localStorage.clear(); location.reload();" class="ml-auto text-[10px] text-gray-500 underline">SAIR</button>
     </div>
 
     <div class="max-w-6xl mx-auto p-6">
         <header class="my-10 text-center">
-            <h1 class="text-6xl font-black italic tracking-tighter italic">iFipe</h1>
-            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.4em] mt-3">Realtime Precision Ranking</p>
+            <h1 class="text-6xl font-black italic tracking-tighter">iFipe</h1>
+            <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.4em] mt-2">Realtime Precision Ranking</p>
         </header>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-            <select id="fModelo" onchange="filtrar()" class="filter-select"><option value="">Modelo</option></select>
-            <select id="fCap" onchange="filtrar()" class="filter-select"><option value="">Capacidade</option></select>
-            <select id="fCor" onchange="filtrar()" class="filter-select"><option value="">Cor</option></select>
-            <select id="fReg" onchange="filtrar()" class="filter-select"><option value="">Região</option></select>
+            <select id="fMod" class="filter" onchange="atualizarFiltros()"><option value="">Modelo</option></select>
+            <select id="fCap" class="filter" onchange="filtrar()"><option value="">Capacidade</option></select>
+            <select id="fCor" class="filter" onchange="filtrar()"><option value="">Cor</option></select>
+            <select id="fReg" class="filter" onchange="filtrar()"><option value="">Região</option></select>
         </div>
 
-        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
+        <div id="vitrine" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
     </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let cacheOfertas = [];
+        let cache = []; let gradeVariacoes = [];
 
-        async function validarAcesso() {
-            const token = localStorage.getItem('iFipe_Token');
-            const email = localStorage.getItem('iFipe_User');
-            if (!token || !email) { window.location.href = '3-pagina-login.html'; return; }
-            document.getElementById('mainContent').classList.remove('hidden');
+        async function validar() {
+            if(!localStorage.getItem('iFipe_Token')) { location.href='3-pagina-login.html'; return; }
+            document.getElementById('main').classList.remove('hidden');
             init();
         }
 
-        function logout() { localStorage.clear(); window.location.href = '3-pagina-login.html'; }
-
         async function init() {
-            carregarDolar();
-            setInterval(carregarDolar, 20000);
+            carregarCâmbio(); setInterval(carregarCâmbio, 30000);
             
-            // Carrega bases para os filtros
             const { data: m } = await _s.from('produtos_mestre').select('nome').order('id');
-            const { data: v } = await _s.from('variacoes').select('capacidade, cor');
-            const { data: r } = await _s.from('regioes').select('nome, bandeira');
-
-            if (m) document.getElementById('fModelo').innerHTML += [...new Set(m.map(x=>x.nome))].map(x=>`<option value="${x}">${x}</option>`).join('');
-            if (v) {
-                document.getElementById('fCap').innerHTML += [...new Set(v.map(x=>x.capacidade))].map(x=>`<option value="${x}">${x}</option>`).join('');
-                document.getElementById('fCor').innerHTML += [...new Set(v.map(x=>x.cor))].map(x=>`<option value="${x}">${x}</option>`).join('');
-            }
-            if (r) document.getElementById('fReg').innerHTML += r.map(x=>`<option value="${x.nome}">${x.bandeira} ${x.nome}</option>`).join('');
-
+            const { data: v } = await _s.from('variacoes').select('*, produtos_mestre(nome)');
+            gradeVariacoes = v;
+            
+            document.getElementById('fMod').innerHTML += [...new Set(m.map(x=>x.nome))].map(x=>`<option value="${x}">${x}</option>`).join('');
             buscarOfertas();
         }
 
         async function buscarOfertas() {
-            const { data } = await _s.from('ofertas')
-                .select('preco, regioes(nome, bandeira), fornecedores(nome, whatsapp, ativo), variacoes(capacidade, cor, produtos_mestre(nome))')
-                .eq('fornecedores.ativo', true)
-                .order('preco', { ascending: true });
+            const { data } = await _s.from('ofertas').select('preco, regioes(nome, bandeira), fornecedores(nome, whatsapp, ativo), variacoes(capacidade, cor, produtos_mestre(nome))').eq('fornecedores.ativo', true).order('preco', {ascending:true});
+            cache = data; renderizar(data);
+        }
+
+        function atualizarFiltros() {
+            const mod = document.getElementById('fMod').value;
+            const f = gradeVariacoes.filter(x => x.produtos_mestre.nome === mod);
             
-            if (data) { cacheOfertas = data; renderizar(data); }
+            // FILTRO CRUZADO: Só mostra Memória e Cor que esse modelo possui no banco
+            document.getElementById('fCap').innerHTML = '<option value="">Capacidade</option>' + [...new Set(f.map(x=>x.capacidade))].map(x=>`<option value="${x}">${x}</option>`).join('');
+            document.getElementById('fCor').innerHTML = '<option value="">Cor</option>' + [...new Set(f.map(x=>x.cor))].map(x=>`<option value="${x}">${x}</option>`).join('');
+            filtrar();
         }
 
         function filtrar() {
-            const mod = document.getElementById('fModelo').value;
+            const mod = document.getElementById('fMod').value;
             const cap = document.getElementById('fCap').value;
             const cor = document.getElementById('fCor').value;
             const reg = document.getElementById('fReg').value;
 
-            let f = cacheOfertas;
-            if(mod) f = f.filter(x => x.variacoes.produtos_mestre.nome === mod);
-            if(cap) f = f.filter(x => x.variacoes.capacidade === cap);
-            if(cor) f = f.filter(x => x.variacoes.cor === cor);
-            if(reg) f = f.filter(x => x.regioes.nome === reg);
-            
-            renderizar(f);
+            let res = cache;
+            if(mod) res = res.filter(x => x.variacoes.produtos_mestre.nome === mod);
+            if(cap) res = res.filter(x => x.variacoes.capacidade === cap);
+            if(cor) res = res.filter(x => x.variacoes.cor === cor);
+            if(reg) res = res.filter(x => x.regioes.nome === reg);
+            renderizar(res);
         }
 
-        function renderizar(lista) {
-            const container = document.getElementById('vitrine');
-            if (lista.length === 0) {
-                container.innerHTML = '<p class="col-span-full text-center text-gray-500 py-20 font-bold uppercase tracking-widest">Nenhuma oferta encontrada.</p>';
-                return;
-            }
-            container.innerHTML = lista.map((o, index) => `
-                <div class="price-card">
-                    ${index === 0 ? '<div class="top-deal">Menor Preço</div>' : ''}
-                    <div class="mb-6 flex justify-between items-center">
-                        <span class="bg-[#38383a] px-3 py-1 rounded text-[10px] font-black uppercase">
-                            ${o.regioes.bandeira} ${o.fornecedores.nome}
-                        </span>
-                    </div>
+        function renderizar(l) {
+            document.getElementById('vitrine').innerHTML = l.map(o => `
+                <div class="card">
+                    <div class="mb-4"><span class="bg-[#38383a] px-3 py-1 rounded text-[10px] font-black uppercase">${o.regioes.bandeira} ${o.fornecedores.nome}</span></div>
                     <h2 class="text-2xl font-bold italic">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-gray-500 text-[11px] mb-8 font-black uppercase tracking-widest">
-                        ${o.variacoes.capacidade} • ${o.variacoes.cor}
-                    </p>
-                    <div class="mb-8"><span class="price-value">R$ ${o.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span></div>
-                    <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}" target="_blank" class="btn-whatsapp">
-                        <i class="fa-brands fa-whatsapp"></i> Negociar agora
-                    </a>
+                    <p class="text-gray-500 text-[11px] mb-6 font-black uppercase tracking-widest">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
+                    <div class="price mb-6">R$ ${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                    <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}" target="_blank" class="btn-wa">Negociar agora</a>
                 </div>`).join('');
         }
 
-        async function carregarDolar() {
-            try {
-                const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
-                const data = await res.json();
-                document.getElementById('usdtVal').innerText = parseFloat(data.price).toFixed(4).replace('.', ',');
-            } catch (e) { console.log("Erro Câmbio"); }
+        async function carregarCâmbio() {
+            const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTBRL');
+            const data = await res.json();
+            document.getElementById('usdt').innerText = parseFloat(data.price).toFixed(4).replace('.', ',');
         }
-
-        validarAcesso();
+        validar();
     </script>
 </body>
 </html>
