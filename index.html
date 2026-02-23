@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Painel Lojista Profissional</title>
+    <title>iFipe - Painel Lojista</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -15,36 +15,31 @@
         label { display: block; text-transform: uppercase; font-size: 10px; color: #9ca3af; margin-bottom: 4px; letter-spacing: 0.05em; }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-4 text-sm">
-    <h1 class="text-3xl font-bold mb-8 italic tracking-tighter">iFipe</h1>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+    <h1 class="text-3xl font-bold mb-8 italic">iFipe</h1>
     <div class="apple-card shadow-2xl">
         <form id="priceForm">
             <label>Seu Estabelecimento</label>
-            <select id="fornecedor_id" class="apple-input" required><option value="">Buscando lojistas...</option></select>
+            <select id="fornecedor_id" class="apple-input" required><option value="">Carregando...</option></select>
 
             <label>Modelo do Aparelho</label>
             <select id="produto_id" class="apple-input" required><option value="">Selecione o iPhone</option></select>
 
-            <div class="grid grid-cols-2 gap-3">
-                <div>
-                    <label>Memória</label>
-                    <select id="memoria" class="apple-input" required disabled><option value="">-</option></select>
-                </div>
-                <div>
-                    <label>Cor</label>
-                    <select id="cor" class="apple-input" required disabled><option value="">-</option></select>
-                </div>
-            </div>
+            <label>Memória</label>
+            <select id="memoria" class="apple-input" required disabled><option value="">Aguardando modelo...</option></select>
+
+            <label>Cor</label>
+            <select id="cor" class="apple-input" required disabled><option value="">Aguardando modelo...</option></select>
 
             <label>Região de Origem</label>
-            <select id="regiao_id" class="apple-input" required><option value="">Buscando regiões...</option></select>
+            <select id="regiao_id" class="apple-input" required><option value="">Carregando...</option></select>
 
             <label>Preço de Venda (R$)</label>
             <input type="number" step="0.01" id="preco" class="apple-input" placeholder="Ex: 7699.77" required>
 
             <button type="submit" class="apple-button">Publicar no iFipe</button>
         </form>
-        <p id="status" class="mt-4 text-center text-[11px] font-medium"></p>
+        <p id="status" class="mt-4 text-center text-xs font-medium"></p>
     </div>
 
     <script>
@@ -63,32 +58,32 @@
             if (r) document.getElementById('regiao_id').innerHTML = r.map(i => `<option value="${i.id}">${i.bandeira || ''} ${i.nome}</option>`).join('');
         }
 
-        // ELIMINATÓRIA AUTOMÁTICA: Busca variações reais cadastradas no seu banco
         document.getElementById('produto_id').addEventListener('change', async (e) => {
-            const status = document.getElementById('status');
+            const memSelect = document.getElementById('memoria');
+            const corSelect = document.getElementById('cor');
+            
+            memSelect.innerHTML = '<option>Buscando...</option>';
+            corSelect.innerHTML = '<option>Buscando...</option>';
+
             const { data: v } = await _supabase.from('variacoes').select('capacidade, cor').eq('produto_id', e.target.value);
             
             if (v && v.length > 0) {
                 const mems = [...new Set(v.map(x => x.capacidade))];
                 const cors = [...new Set(v.map(x => x.cor))];
                 
-                document.getElementById('memoria').innerHTML = mems.map(m => `<option value="${m}">${m}</option>`).join('');
-                document.getElementById('cor').innerHTML = cors.map(c => `<option value="${c}">${c}</option>`).join('');
-                document.getElementById('memoria').disabled = false;
-                document.getElementById('cor').disabled = false;
-            } else {
-                document.getElementById('memoria').innerHTML = '<option>Sem estoque</option>';
-                document.getElementById('cor').innerHTML = '<option>-</option>';
+                memSelect.innerHTML = mems.map(m => `<option value="${m}">${m}</option>`).join('');
+                corSelect.innerHTML = cors.map(c => `<option value="${c}">${c}</option>`).join('');
+                memSelect.disabled = false;
+                corSelect.disabled = false;
             }
         });
 
         document.getElementById('priceForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const status = document.getElementById('status');
-            status.innerText = "Sincronizando com iFipe...";
-            
-            // Busca o ID da variação exata para não dar erro de banco
-            const { data: varId } = await _supabase.from('variacoes')
+            status.innerText = "Publicando...";
+
+            const { data: varObj } = await _supabase.from('variacoes')
                 .select('id')
                 .eq('produto_id', document.getElementById('produto_id').value)
                 .eq('capacidade', document.getElementById('memoria').value)
@@ -97,7 +92,7 @@
 
             const { error } = await _supabase.from('ofertas').insert([{
                 fornecedor_id: parseInt(document.getElementById('fornecedor_id').value),
-                variacao_id: varId.id,
+                variacao_id: varObj.id,
                 regiao_id: parseInt(document.getElementById('regiao_id').value),
                 preco: parseFloat(document.getElementById('preco').value),
                 condicao: 'Novo'
