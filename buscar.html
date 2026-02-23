@@ -3,144 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Buscador VIP</title>
+    <title>iFipe - Encontre o melhor preço</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; }
-        .nav-bar { background:rgba(28,28,30,0.8); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:15px 30px; position:sticky; top:0; z-index:100; }
-        .filter-bar { background:#1c1c1e; padding:20px; border-radius:20px; margin-top:20px; border:1px solid #38383a; }
-        .apple-input { background:#2c2c2e; border:1px solid #38383a; border-radius:12px; padding:12px; width:100%; color:white; outline:none; font-size:13px; }
+        body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; overflow-x: hidden; }
         
-        /* CARD COMPACTO ELITE */
-        .product-card { background:#1c1c1e; border:1px solid #38383a; border-radius:24px; padding:20px; transition:0.3s; position:relative; overflow:hidden; }
-        .product-card:hover { border-color:#0071e3; transform:translateY(-5px); }
-        .tag-status { font-size:9px; font-weight:900; text-transform:uppercase; padding:4px 10px; border-radius:50px; letter-spacing:0.1em; display:inline-block; margin-bottom: 4px; }
+        /* TICKER BINANCE RESPONSIVO */
+        .ticker-bar { background:rgba(28, 28, 30, 0.9); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:12px 20px; position:sticky; top:0; z-index:100; display:flex; flex-wrap: wrap; justify-content:center; align-items:center; gap:15px; }
+        @media (min-width: 1024px) { .ticker-bar { justify-content: flex-start; padding: 12px 40px; } }
+        .ticker-val { color:#32d74b; font-family:monospace; font-size: 14px; font-weight:900; }
+        .ticker-link { color:#ffcc00; font-size:10px; font-weight:900; text-transform:uppercase; text-decoration:none; letter-spacing:0.1em; transition:0.3s; }
+
+        /* CONTAINER PRINCIPAL */
+        .main-wrapper { width: 100%; max-width: 1400px; margin: 0 auto; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; }
+        @media (min-width: 1024px) { .main-wrapper { padding: 50px 40px; } }
+
+        /* LOGO iFipe */
+        .apple-logo { font-size: 4.5rem; font-weight: 900; font-style: italic; letter-spacing: -0.05em; line-height: 1; margin-bottom: 40px; text-align: center; }
+        @media (min-width: 1024px) { .apple-logo { font-size: 9rem; margin-bottom: 60px; } }
+
+        /* LINHA RESPONSIVA (COLUNA NO MOBILE / LINHA NO DESKTOP) */
+        .responsive-row { display: flex; flex-direction: column; align-items: center; gap: 30px; width: 100%; }
+        @media (min-width: 1024px) { .responsive-row { flex-direction: row; justify-content: center; align-items: flex-start; gap: 40px; } }
+
+        /* BANNERS LATERAIS - AJUSTE DE TAMANHO E PROPORÇÃO */
+        .banner-link { display: block; width: 100%; max-width: 280px; transition: 0.3s; border-radius: 24px; border: 1px solid #38383a; overflow: hidden; height: auto; }
+        @media (min-width: 1024px) { .banner-link { max-width: 300px; } }
+        .banner-link:hover { transform: translateY(-5px); border-color: #0071e3; }
+        .banner-img { width: 100%; height: auto; display: block; object-fit: contain; }
+
+        /* LOGIN BOX CENTRAL */
+        .login-box { width: 100%; max-width: 350px; background: #1c1c1e; border: 1px solid #38383a; border-radius: 28px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        @media (min-width: 1024px) { .login-box { max-width: 450px; padding: 3rem; } }
         
-        /* TAGS DE ESTADO */
-        .tag-menor { background:#ff3b30; color:#fff; }
-        .tag-subiu { background:#ff3b30; color:#fff; }
-        .tag-caiu { background:#32d74b; color:#000; }
-        .tag-poucas { background:#ffcc00; color:#000; }
-        .tag-muitas { background:#0071e3; color:#fff; }
-
-        .price-text { font-size:32px; font-weight:900; color:#fff; letter-spacing:-0.05em; }
-        .buy-button { background:#0071e3; color:#fff; font-weight:900; border-radius:50px; padding:14px; width:100%; cursor:pointer; text-transform:uppercase; font-size:12px; transition:0.3s; margin-top:20px; display:block; text-align:center; text-decoration:none; }
-        .buy-button:hover { background:#32d74b; color:#fff; }
-
-        .ticker-link { color:#ffcc00; font-size:11px; font-weight:900; text-transform:uppercase; text-decoration:none; letter-spacing:0.1em; }
-        label { display:block; text-transform:uppercase; font-size:9px; color:#86868b; margin-bottom:5px; font-weight:900; letter-spacing:0.1em; }
+        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 14px; padding: 16px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 14px; }
+        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 18px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 13px; transition: 0.3s; letter-spacing: 0.05em; }
+        .apple-button:hover { background: #0071e3; color: #fff; }
+        
+        .link-nav { color: #0071e3; cursor: pointer; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; text-decoration: none; display: block; margin-top: 18px; }
+        label { display: block; text-transform: uppercase; font-size: 9px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.1em; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <nav class="nav-bar flex flex-wrap justify-between items-center gap-4">
-        <div class="flex items-center gap-4">
-            <h1 class="text-2xl font-black italic">iFipe</h1>
-            <a href="https://wa.me/+15616760652" target="_blank" class="ticker-link hidden md:block">COMPRAR USDT COM ORÁCULO</a>
+    <div class="ticker-bar">
+        <a href="https://wa.me/+15616760652" target="_blank" class="ticker-link">COMPRAR USDT COM ORÁCULO</a>
+        <div class="flex items-center gap-2">
+            <span class="text-[9px] text-gray-500 font-black uppercase tracking-widest">USDT/BRL BINANCE:</span>
+            <span class="ticker-val" id="usdt_val">$ --</span>
         </div>
-        <div class="flex items-center gap-6">
-            <div id="ticker" class="text-[14px] font-black text-[#32d74b] monospace">$ --</div>
-            <button onclick="logout()" class="text-[10px] text-red-500 font-black uppercase tracking-widest">Sair</button>
-        </div>
-    </nav>
+    </div>
 
-    <main class="max-w-7xl mx-auto px-4 pb-20">
-        <div class="filter-bar grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div><label>Aparelho</label><select id="f_produto" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
-            <div><label>Condição</label><select id="f_condicao" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select></div>
-            <div><label>Memória</label><select id="f_capacidade" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-            <div><label>Cor</label><select id="f_cor" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-            <div><label>Região</label><select id="f_regiao" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-        </div>
+    <div class="main-wrapper">
+        <h1 class="apple-logo">iFipe</h1>
 
-        <div id="rankingGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+        <div class="responsive-row">
+            
+            <a href="https://fabricademarcas.mercos.com/" target="_blank" class="banner-link">
+                <img src="https://zmgosywpwidypxyhxkry.supabase.co/storage/v1/object/public/assets/IMG_2549.PNG" class="banner-img" alt="Fábrica de Marcas">
+            </a>
+
+            <div class="login-box">
+                <div class="text-center mb-8">
+                    <h2 class="text-xl md:text-2xl font-black italic">Encontre o melhor preço</h2>
+                    <p class="text-[9px] text-blue-500 font-black uppercase tracking-[0.3em] mt-3">BUSCADOR APPLE ONLINE</p>
+                </div>
+
+                <div id="loginForm">
+                    <label>E-mail de Acesso</label>
+                    <input type="email" id="logEmail" class="apple-input" placeholder="seu@email.com">
+                    <label>Senha</label>
+                    <input type="password" id="logPass" class="apple-input" placeholder="••••••••">
+                    <button onclick="realizarLogin()" class="apple-button">ENTRAR NO iFIPE</button>
+                    <div class="text-center mt-6">
+                        <span class="link-nav" onclick="toggleForm()">FAZER MEU CADASTRO</span>
+                        <span class="link-nav text-gray-500" onclick="alert('Contate o administrador para redefinir sua senha.')">ESQUECI MINHA SENHA</span>
+                    </div>
+                </div>
+
+                <div id="registerForm" class="hidden">
+                    <label>Nome Completo</label><input type="text" id="regNome" class="apple-input">
+                    <label>CPF</label><input type="text" id="regCpf" class="apple-input">
+                    <label>E-mail Oficial</label><input type="email" id="regEmail" class="apple-input">
+                    <label>WhatsApp</label><input type="text" id="regWhats" class="apple-input">
+                    <label>Criar Senha</label><input type="password" id="regPass" class="apple-input">
+                    <button onclick="solicitarCadastro()" class="apple-button">ENVIAR SOLICITAÇÃO</button>
+                    <span class="link-nav text-center mt-4" onclick="toggleForm()">VOLTAR AO LOGIN</span>
+                </div>
+                <p id="msg" class="mt-4 text-center text-[9px] font-black uppercase tracking-widest"></p>
             </div>
-    </main>
+
+            <a href="https://linktr.ee/vipbrecossistema" target="_blank" class="banner-link">
+                <img src="https://zmgosywpwidypxyhxkry.supabase.co/storage/v1/object/public/assets/eco.png" class="banner-img" alt="Ecossistema Apple">
+            </a>
+
+        </div>
+    </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let ofertasAtuais = [];
-        let historicoPrecos = {};
 
-        function initTicker() {
+        function iniciarCambio() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            socket.onmessage = (e) => {
-                const d = JSON.parse(e.data);
-                document.getElementById('ticker').innerText = `$ ${parseFloat(d.c).toFixed(4).replace('.',',')}`;
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                document.getElementById('usdt_val').innerText = `$ ${parseFloat(data.c).toFixed(4).replace('.',',')}`;
             };
         }
+        iniciarCambio();
 
-        async function init() {
-            initTicker();
-            const [p, v, r] = await Promise.all([
-                _s.from('produtos_mestre').select('id, nome').order('nome'),
-                _s.from('variacoes').select('capacidade, cor'),
-                _s.from('regioes').select('id, nome, bandeira')
-            ]);
-            
-            document.getElementById('f_produto').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('f_capacidade').innerHTML += [...new Set(v.data.map(x => x.capacidade))].filter(Boolean).map(x => `<option value="${x}">${x}</option>`).join('');
-            document.getElementById('f_cor').innerHTML += [...new Set(v.data.map(x => x.cor))].filter(Boolean).map(x => `<option value="${x}">${x}</option>`).join('');
-            document.getElementById('f_regiao').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
-            
-            carregarDados();
-            setInterval(carregarDados, 5000); 
+        window.onload = () => { if(localStorage.getItem('iFipe_Token')) window.location.replace('buscar.html'); };
+        function toggleForm() { document.getElementById('loginForm').classList.toggle('hidden'); document.getElementById('registerForm').classList.toggle('hidden'); document.getElementById('msg').innerText = ""; }
+
+        async function realizarLogin() {
+            const e = document.getElementById('logEmail').value, p = document.getElementById('logPass').value, m = document.getElementById('msg');
+            const { data } = await _s.from('clientes_buscador').select('*').eq('email', e).eq('senha', p).maybeSingle();
+            if(data) {
+                if(!data.aprovado) { m.innerText = "ACESSO PENDENTE."; m.style.color = "#ffcc00"; return; }
+                localStorage.setItem('iFipe_Token', data.id);
+                window.location.replace('buscar.html');
+            } else { m.innerText = "DADOS INCORRETOS."; m.style.color = "#ff3b30"; }
         }
 
-        async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(nome, whatsapp), variacoes(capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)').order('preco', {ascending: true});
-            ofertasAtuais = data;
-            renderizarRanking();
+        async function solicitarCadastro() {
+            const n=document.getElementById('regNome').value, c=document.getElementById('regCpf').value.replace(/\D/g,''), e=document.getElementById('regEmail').value, w=document.getElementById('regWhats').value, p=document.getElementById('regPass').value, m=document.getElementById('msg');
+            if(!n||!c||!e||!p){m.innerText="PREENCHA TUDO.";m.style.color="#ff3b30";return;}
+            const { error } = await _s.from('clientes_buscador').insert([{ nome: n, cpf: c, email: e, whatsapp: w, senha: p, aprovado: false }]);
+            if(!error) { m.innerText = "SOLICITAÇÃO ENVIADA!"; m.style.color = "#32d74b"; setTimeout(toggleForm, 3000); }
         }
-
-        function renderizarRanking() {
-            const grid = document.getElementById('rankingGrid');
-            const fP = document.getElementById('f_produto').value;
-            const fC = document.getElementById('f_condicao').value;
-            const fCap = document.getElementById('f_capacidade').value;
-            const fCor = document.getElementById('f_cor').value;
-            const fR = document.getElementById('f_regiao').value;
-
-            let filtrados = ofertasAtuais.filter(o => 
-                (!fP || o.variacoes.produtos_mestre.id == fP) &&
-                (!fC || o.condicao == fC) &&
-                (!fCap || o.variacoes.capacidade == fCap) &&
-                (!fCor || o.variacoes.cor == fCor) &&
-                (!fR || o.regiao_id == fR)
-            );
-
-            grid.innerHTML = filtrados.map((o, index) => {
-                const isMenorPreco = index === 0;
-                const tagEstoque = o.quantidade < 5 ? `<span class="tag-status tag-poucas">POUCAS UNIDADES (${o.quantidade})</span>` : (o.quantidade > 10 ? `<span class="tag-status tag-muitas">MUITAS UNIDADES (${o.quantidade})</span>` : `<span class="tag-status bg-gray-700">ESTOQUE: ${o.quantidade}</span>`);
-                const tagPreco = historicoPrecos[o.id] ? (o.preco > historicoPrecos[o.id] ? '<span class="tag-status tag-subiu">SUBIU</span>' : (o.preco < historicoPrecos[o.id] ? '<span class="tag-status tag-caiu">CAIU</span>' : '')) : '';
-                
-                historicoPrecos[o.id] = o.preco;
-
-                return `
-                <div class="product-card">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="flex flex-col gap-1">
-                            ${isMenorPreco ? '<span class="tag-status tag-menor">MENOR PREÇO</span>' : ''}
-                            ${tagEstoque}
-                            ${tagPreco}
-                        </div>
-                        <span class="text-[18px]">${o.regioes.bandeira}</span>
-                    </div>
-                    
-                    <h2 class="text-xl font-black">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-4">${o.variacoes.capacidade || ''} | ${o.variacoes.cor || ''} | ${o.condicao.toUpperCase()}</p>
-                    
-                    <p class="text-[10px] text-blue-500 font-bold uppercase mb-1">ATACADISTA: ${o.fornecedores.nome}</p>
-                    <div class="price-text">R$ ${o.preco.toLocaleString('pt-BR')}</div>
-                    
-                    <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}" target="_blank" class="buy-button">COMPRAR AGORA</a>
-                </div>`;
-            }).join('');
-        }
-
-        function logout() { localStorage.removeItem('iFipe_Token'); window.location.replace('index.html'); }
-        window.onload = init;
     </script>
 </body>
 </html>
