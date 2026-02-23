@@ -3,39 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Painel Lojista</title>
+    <title>iFipe - Portal do Lojista</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #000000; color: #ffffff; font-family: -apple-system, sans-serif; }
-        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 420px; }
-        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 14px; width: 100%; color: white; outline: none; margin-bottom: 1rem; }
-        .apple-button { background: #ffffff; color: #000000; font-weight: 600; border-radius: 24px; padding: 16px; width: 100%; cursor: pointer; transition: 0.2s; }
-        label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; letter-spacing: 0.05em; margin-top: 1rem; }
+        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 14px; width: 100%; color: white; outline: none; margin-bottom: 1rem; transition: 0.2s; }
+        .apple-input:focus { border-color: #0071e3; }
+        .apple-button { background: #ffffff; color: #000000; font-weight: 600; border-radius: 24px; padding: 16px; width: 100%; cursor: pointer; transition: 0.3s; }
+        .apple-button:hover { background: #f5f5f7; transform: scale(1.02); }
+        label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 600; letter-spacing: 0.05em; margin-top: 1rem; }
         .hidden { display: none; }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen p-4 text-sm">
-    <h1 class="text-3xl font-bold mb-10 italic">iFipe</h1>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+    <h1 class="text-3xl font-bold mb-10 italic tracking-tighter text-white">iFipe</h1>
 
     <div id="loginSection" class="apple-card">
-        <h2 class="text-center mb-6 font-semibold">Identificação</h2>
-        <label>ID Fornecedor</label>
-        <input type="number" id="loginId" class="apple-input" placeholder="Seu ID">
+        <h2 class="text-xl font-semibold mb-6 text-center">Identificação</h2>
+        <label>ID do Fornecedor</label>
+        <input type="number" id="loginId" class="apple-input" placeholder="Digite seu ID">
         <label>Senha</label>
-        <input type="password" id="loginPass" class="apple-input" placeholder="123mudar">
-        <button onclick="fazerLogin()" class="apple-button">Entrar no Painel</button>
-        <p id="loginError" class="text-red-500 text-xs mt-4 text-center"></p>
+        <input type="password" id="loginPass" class="apple-input" placeholder="Sua senha">
+        <button onclick="fazerLogin()" class="apple-button">Acessar Painel</button>
+        <p id="loginError" class="text-red-500 text-xs mt-4 text-center font-medium"></p>
     </div>
 
     <div id="formSection" class="apple-card hidden">
-        <div class="flex justify-between mb-8">
-            <h2 id="welcomeMsg" class="font-bold text-blue-500 uppercase tracking-tighter"></h2>
-            <button onclick="location.reload()" class="text-[10px] text-gray-500 underline">SAIR</button>
+        <div class="flex justify-between items-center mb-8">
+            <span id="welcomeMsg" class="font-bold text-blue-500 text-sm"></span>
+            <button onclick="location.reload()" class="text-[10px] text-gray-500 underline uppercase font-bold">Sair</button>
         </div>
         <form id="priceForm">
             <label>Modelo do iPhone</label>
-            <select id="produto_id" class="apple-input" required><option value="">Selecione</option></select>
+            <select id="produto_id" class="apple-input" required><option value="">Escolha o Modelo</option></select>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -51,12 +53,12 @@
             <label>Região de Origem</label>
             <select id="regiao_id" class="apple-input" required></select>
 
-            <label>Preço de Venda (R$)</label>
-            <input type="text" id="preco" class="apple-input" placeholder="Ex: 7.699,77" required>
+            <label>Preço Final (R$)</label>
+            <input type="text" id="preco" class="apple-input" placeholder="Ex: 10.999,71" required>
 
-            <button type="submit" class="apple-button mt-4">Publicar Oferta</button>
+            <button type="submit" class="apple-button mt-4">Publicar no iFipe</button>
         </form>
-        <p id="status" class="mt-4 text-center text-xs font-bold"></p>
+        <p id="status" class="mt-6 text-center text-xs font-bold"></p>
     </div>
 
     <script>
@@ -65,50 +67,59 @@
 
         async function fazerLogin() {
             const id = document.getElementById('loginId').value;
-            if (document.getElementById('loginPass').value === '123mudar') {
-                const { data } = await _supabase.from('fornecedores').select('nome').eq('id', id).single();
+            const pass = document.getElementById('loginPass').value;
+            if (pass === '123mudar') {
+                const { data, error } = await _supabase.from('fornecedores').select('nome').eq('id', parseInt(id)).single();
                 if (data) {
                     fornecedorLogado = id;
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('formSection').classList.remove('hidden');
-                    document.getElementById('welcomeMsg').innerText = "Loja: " + data.nome;
-                    carregarModelos();
-                } else { document.getElementById('loginError').innerText = "Fornecedor não cadastrado."; }
-            } else { document.getElementById('loginError').innerText = "Senha inválida."; }
+                    document.getElementById('welcomeMsg').innerText = "LOJA: " + data.nome;
+                    carregarListas();
+                } else { document.getElementById('loginError').innerText = "ID não cadastrado."; }
+            } else { document.getElementById('loginError').innerText = "Senha incorreta."; }
         }
 
-        async function carregarModelos() {
-            const { data: m } = await _supabase.from('produtos_mestre').select('id, nome').order('nome');
-            document.getElementById('produto_id').innerHTML = '<option value="">Selecione o modelo</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
-            const { data: r } = await _supabase.from('regioes').select('id, nome, bandeira');
+        async function carregarListas() {
+            const { data: m } = await _supabase.from('produtos_mestre').select('id, nome').order('id');
+            document.getElementById('produto_id').innerHTML = '<option value="">Selecione</option>' + m.map(i => `<option value="${i.id}">${i.nome}</option>`).join('');
+            const { data: r } = await _supabase.from('regioes').select('id, nome, bandeira').order('id');
             document.getElementById('regiao_id').innerHTML = r.map(i => `<option value="${i.id}">${i.bandeira} ${i.nome}</option>`).join('');
         }
 
         document.getElementById('produto_id').addEventListener('change', async (e) => {
             const { data: v } = await _supabase.from('variacoes').select('capacidade, cor').eq('produto_id', e.target.value);
             if (v && v.length > 0) {
-                let mems = [...new Set(v.map(x => x.capacidade))];
-                let cors = [...new Set(v.map(x => x.cor))];
-                document.getElementById('memoria').innerHTML = mems.map(m => `<option value="${m}">${m}</option>`).join('');
-                document.getElementById('cor').innerHTML = cors.map(c => `<option value="${c}">${c}</option>`).join('');
-                document.getElementById('memoria').disabled = false; document.getElementById('cor').disabled = false;
+                document.getElementById('memoria').innerHTML = [...new Set(v.map(x => x.capacidade))].map(m => `<option value="${m}">${m}</option>`).join('');
+                document.getElementById('cor').innerHTML = [...new Set(v.map(x => x.cor))].map(c => `<option value="${c}">${c}</option>`).join('');
+                document.getElementById('memoria').disabled = false;
+                document.getElementById('cor').disabled = false;
             }
         });
 
         document.getElementById('priceForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const status = document.getElementById('status');
-            const { data: vId } = await _supabase.from('variacoes').select('id').eq('produto_id', document.getElementById('produto_id').value).eq('capacidade', document.getElementById('memoria').value).eq('cor', document.getElementById('cor').value).single();
+            status.innerText = "Publicando...";
+            status.style.color = "white";
+
+            const { data: vId } = await _supabase.from('variacoes').select('id')
+                .eq('produto_id', document.getElementById('produto_id').value)
+                .eq('capacidade', document.getElementById('memoria').value)
+                .eq('cor', document.getElementById('cor').value).single();
+
             const valorLimpo = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
+
             const { error } = await _supabase.from('ofertas').insert([{
-                fornecedor_id: fornecedorLogado,
+                fornecedor_id: parseInt(fornecedorLogado),
                 variacao_id: vId.id,
-                regiao_id: document.getElementById('regiao_id').value,
+                regiao_id: parseInt(document.getElementById('regiao_id').value),
                 preco: parseFloat(valorLimpo),
                 condicao: 'Novo'
             }]);
-            if (error) { status.innerText = "Erro ao publicar. Verifique o banco."; status.style.color = "red"; }
-            else { status.innerText = "Publicado com sucesso! 🚀"; status.style.color = "#32d74b"; e.target.reset(); }
+
+            if (error) { status.innerText = "Erro ao publicar: " + error.message; status.style.color = "#ff453a"; }
+            else { status.innerText = "Sucesso! Oferta ativa no iFipe. 🚀"; status.style.color = "#32d74b"; e.target.reset(); }
         });
     </script>
 </body>
