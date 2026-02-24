@@ -3,155 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Painel do Atacadista</title>
+    <title>iFipe - Painel do Anunciante</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; }
-        
-        /* BARRA DO USUÁRIO */
-        .user-bar { background:#0b0b0c; border-bottom:1px solid #1c1c1e; padding:15px 20px; display:flex; justify-content:space-between; align-items:center; }
-        
-        /* CARDS E INPUTS */
-        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 28px; padding: 3rem; width: 100%; max-width: 650px; margin: 0 auto 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 14px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 14px; font-weight: 500;}
-        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 18px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 13px; transition: 0.3s; }
+        body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; }
+        .user-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:15px 20px; position:sticky; top:0; z-index:100; }
+        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 14px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 14px; }
+        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 16px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 13px; transition: 0.3s; }
         .apple-button:hover { background: #0071e3; color: #fff; }
-        label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.1em; margin-top: 1rem; }
-        .link-toggle { color: #0071e3; cursor: pointer; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; }
         
-        /* TABELAS E MINIS */
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 10px; text-align: left; border-bottom: 1px solid #38383a; }
-        td { padding: 12px 10px; border-bottom: 1px solid #2c2c2e; font-size: 12px; }
-        .mini-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 6px; padding: 5px; width: 60px; color: #fff; text-align: center; font-weight: bold; font-size: 12px;}
-        .btn-save { color: #32d74b; font-weight: bold; cursor: pointer; margin-right: 10px; text-transform: uppercase; font-size: 10px; }
-        .btn-del { color: #ff3b30; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 10px; }
+        th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 12px; text-align: left; border-bottom: 1px solid #38383a; letter-spacing: 0.1em; }
+        td { padding: 14px 12px; border-bottom: 1px solid #2c2c2e; font-size: 13px; }
         
-        /* MODAL */
-        .modal-bg { background:rgba(0,0,0,0.85); backdrop-filter:blur(10px); }
+        .mini-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 8px; padding: 6px; width: 80px; color: #fff; text-align: center; font-weight: bold; }
+        .btn-del { color: #ff3b30; font-weight: bold; cursor: pointer; font-size: 11px; text-transform: uppercase; }
+        
+        label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.1em; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
     <div id="loginSection" class="flex items-center justify-center min-h-screen px-4">
-        <div class="apple-card text-center !m-0" style="max-width: 400px;">
+        <div class="apple-card max-w-[400px] text-center">
             <h1 class="text-5xl font-black italic mb-2">iFipe</h1>
-            <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel do Atacadista</p>
+            <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel do Anunciante</p>
             
-            <div id="loginFields">
-                <label>Nome da Loja Atacadista</label>
-                <input type="text" id="loginId" class="apple-input" placeholder="Nome Exato da Loja">
+            <form onsubmit="fazerLogin(event)">
+                <label>Nome da Loja</label>
+                <input type="text" id="loginId" class="apple-input" placeholder="Sua Loja" required>
                 <label>Senha</label>
-                <input type="password" id="loginPass" class="apple-input" placeholder="••••••••">
-                <button onclick="fazerLogin()" class="apple-button">Entrar no iFipe</button>
-                
-                <div class="mt-8 space-y-4">
-                    <p class="text-gray-500 text-[11px] font-bold">Novo Atacadista? <span class="link-toggle block mt-1" onclick="alert('Entre em contato com o suporte Master para solicitar seu credenciamento.')">Solicitar Cadastro</span></p>
-                    <p class="text-gray-500 text-[11px] font-bold"><span class="link-toggle" onclick="alert('Contate o administrador para redefinir sua senha.')">Esqueci minha senha</span></p>
-                </div>
-            </div>
+                <input type="password" id="loginPass" class="apple-input" placeholder="••••••••" required>
+                <button type="submit" class="apple-button w-full">Acessar Painel</button>
+            </form>
             <p id="loginMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase"></p>
         </div>
     </div>
 
     <div id="formSection" class="hidden">
-        
-        <div class="user-bar mb-8">
-            <div class="max-w-7xl mx-auto w-full flex justify-between items-center">
-                <div class="text-[11px] font-black uppercase tracking-widest text-gray-500">
-                    Atacadista: <span id="nomeLojaLogada" class="text-white">...</span>
+        <div class="user-bar">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="text-[11px] font-black uppercase tracking-widest">
+                    Loja: <span id="nomeLoja" class="text-blue-500">...</span>
                 </div>
-                <div class="flex gap-6">
-                    <button onclick="abrirPerfil()" class="text-[10px] text-gray-400 hover:text-white font-black uppercase tracking-widest transition">Minha Conta</button>
-                    <button onclick="sairPainel()" class="text-[10px] text-red-500 hover:text-red-400 font-black uppercase tracking-widest transition">Sair</button>
-                </div>
+                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase tracking-widest">Sair</button>
             </div>
         </div>
 
-        <div class="px-4">
-            <div class="apple-card">
-                <h2 class="text-2xl font-black italic mb-6">Nova Oferta (Ecossistema Apple)</h2>
-                <form id="priceForm">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label>Produto Apple</label>
-                            <select id="produto_id" class="apple-input" onchange="aoMudarProduto()" required><option value="">Selecione o Aparelho</option></select>
+        <div class="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-1">
+                <div class="apple-card">
+                    <h2 class="text-xl font-black italic mb-6">Novo Anúncio</h2>
+                    <form id="priceForm">
+                        <label>Aparelho</label>
+                        <select id="produto_id" class="apple-input" onchange="aoMudarProduto()" required></select>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label>Condição</label>
+                                <select id="condicao" class="apple-input">
+                                    <option value="Novo">Novo</option>
+                                    <option value="Seminovo">Seminovo</option>
+                                </select>
+                            </div>
+                            <div><label>Estoque</label><input type="number" id="quantidade" class="apple-input" value="1" min="1" required></div>
                         </div>
-                        <div>
-                            <label>Condição</label>
-                            <select id="condicao" class="apple-input" required>
-                                <option value="Novo">Novo</option>
-                                <option value="Seminovo">Seminovo</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <div class="grid grid-cols-3 gap-4">
-                        <div id="boxTamanho" class="hidden">
-                            <label>Tamanho/Tela</label>
-                            <select id="tamanho" class="apple-input" onchange="aoMudarTamanho()" disabled><option value="">Escolha</option></select>
-                        </div>
-                        <div id="boxCapacidade" class="hidden">
-                            <label>Memória / RAM</label>
-                            <select id="capacidade" class="apple-input" onchange="aoMudarCapacidade()" disabled><option value="">Escolha</option></select>
-                        </div>
-                        <div>
-                            <label>Cor</label>
-                            <select id="cor" class="apple-input" required disabled><option value="">Escolha</option></select>
-                        </div>
-                    </div>
+                        <div id="gradeOpcoes" class="mb-4"></div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><label>Região de Origem</label><select id="regiao_id" class="apple-input" required></select></div>
-                        <div><label>Estoque Atual</label><input type="number" id="quantidade" class="apple-input" value="1" min="1" required></div>
-                    </div>
+                        <label>Região / Origem</label>
+                        <select id="regiao_id" class="apple-input" required></select>
 
-                    <label>Preço de Venda (R$)</label>
-                    <input type="text" id="preco" class="apple-input" placeholder="Ex: 7.500,00" required>
-
-                    <button type="submit" class="apple-button mt-4 bg-blue-600 text-white border-0 hover:bg-blue-500">Publicar no Ranking</button>
-                </form>
-                <p id="status" class="mt-4 text-center text-[10px] font-black uppercase tracking-widest"></p>
-            </div>
-
-            <div class="apple-card max-w-5xl">
-                <h2 class="text-2xl font-black italic mb-6">Meus Anúncios Ativos</h2>
-                <div class="overflow-x-auto">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Produto</th>
-                                <th>Detalhes (Tam | Mem | Cor)</th>
-                                <th>Condição</th>
-                                <th>Origem</th>
-                                <th>Estoque</th>
-                                <th>Preço (R$)</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="listaAtivos"></tbody>
-                    </table>
+                        <label>Preço Unitário (R$)</label>
+                        <input type="text" id="preco" class="apple-input" placeholder="Ex: 5400,00" required>
+                        
+                        <button type="submit" class="apple-button w-full bg-blue-600 text-white hover:bg-blue-500 border-0 mt-4">Publicar Oferta</button>
+                        <p id="formMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase text-center"></p>
+                    </form>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div id="modalPerfil" class="hidden fixed inset-0 modal-bg z-50 flex justify-center items-center p-4">
-        <div class="bg-[#1c1c1e] p-8 rounded-3xl border border-[#38383a] w-full max-w-sm">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-black italic">Dados da Loja</h2>
-                <button onclick="fecharPerfil()" class="text-gray-500 text-xl font-bold">&times;</button>
+            <div class="lg:col-span-2">
+                <div class="apple-card">
+                    <h2 class="text-xl font-black italic mb-6">Meus Anúncios no Ranking</h2>
+                    <div class="overflow-x-auto">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Condição</th>
+                                    <th>Estoque</th>
+                                    <th>Preço (R$)</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaAtivos"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nome Atacadista (Login)</label>
-            <input type="text" id="editNome" class="apple-input">
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">WhatsApp de Vendas</label>
-            <input type="text" id="editWhats" class="apple-input">
-            <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-2">Nova Senha</label>
-            <input type="password" id="editSenha" class="apple-input" placeholder="••••••••">
-            <button onclick="salvarPerfil()" class="apple-button bg-blue-600 text-white mt-4">Salvar Alterações</button>
-            <p id="msgPerfil" class="text-[10px] font-black uppercase text-center mt-4 tracking-widest"></p>
         </div>
     </div>
 
@@ -161,184 +114,139 @@
         let gradeVariacoes = [];
 
         window.onload = async () => {
-            const token = localStorage.getItem('iFipe_Lojista_Token');
-            if(token) {
+            const token = localStorage.getItem('iFipe_Anunciante');
+            if (token) {
                 const { data } = await _s.from('fornecedores').select('*').eq('id', token).maybeSingle();
-                if(data && data.ativo) { loja = data; liberarAcesso(); } else { sairPainel(); }
+                if(data && data.ativo) { loja = data; liberarAcesso(); } 
+                else { localStorage.removeItem('iFipe_Anunciante'); }
             }
         };
 
-        async function fazerLogin() {
-            const user = document.getElementById('loginId').value;
-            const pass = document.getElementById('loginPass').value;
-            const msg = document.getElementById('loginMsg');
-            const { data } = await _s.from('fornecedores').select('*').eq('nome', user).eq('senha', pass).maybeSingle();
-            if (data && data.ativo) {
-                loja = data; localStorage.setItem('iFipe_Lojista_Token', data.id); liberarAcesso();
-            } else { msg.innerText = "ACESSO NEGADO OU BLOQUEADO."; }
+        async function fazerLogin(event) {
+            event.preventDefault();
+            const u = document.getElementById('loginId').value, p = document.getElementById('loginPass').value, msg = document.getElementById('loginMsg');
+            msg.innerText = "VERIFICANDO...";
+            
+            const { data } = await _s.from('fornecedores').select('*').eq('nome', u).eq('senha', p).maybeSingle();
+            
+            if(data && data.ativo) { 
+                loja = data; 
+                localStorage.setItem('iFipe_Anunciante', data.id); 
+                liberarAcesso(); 
+            } else { msg.innerText = "LOJA NÃO ENCONTRADA OU INATIVA."; }
         }
 
         function liberarAcesso() {
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('formSection').classList.remove('hidden');
-            document.getElementById('nomeLojaLogada').innerText = loja.nome;
+            document.getElementById('nomeLoja').innerText = loja.nome;
             init();
         }
 
-        function sairPainel() { localStorage.removeItem('iFipe_Lojista_Token'); location.reload(); }
-        function abrirPerfil() { document.getElementById('modalPerfil').classList.remove('hidden'); document.getElementById('editNome').value = loja.nome; document.getElementById('editWhats').value = loja.whatsapp; document.getElementById('editSenha').value = loja.senha; document.getElementById('msgPerfil').innerText = ''; }
-        function fecharPerfil() { document.getElementById('modalPerfil').classList.add('hidden'); }
-
-        async function salvarPerfil() {
-            const nNome = document.getElementById('editNome').value; const nWhats = document.getElementById('editWhats').value.replace(/\D/g, ''); const nSenha = document.getElementById('editSenha').value;
-            const { error } = await _s.from('fornecedores').update({ nome: nNome, whatsapp: nWhats, senha: nSenha }).eq('id', loja.id);
-            if(!error) { loja.nome = nNome; loja.whatsapp = nWhats; loja.senha = nSenha; document.getElementById('nomeLojaLogada').innerText = loja.nome; setTimeout(fecharPerfil, 1000); }
-        }
+        function sairPainel() { localStorage.removeItem('iFipe_Anunciante'); window.location.reload(); }
 
         async function init() {
-            const [m, r, v] = await Promise.all([
-                _s.from('produtos_mestre').select('id, nome, grupos(nome)').order('id'),
-                _s.from('regioes').select('*').order('id'),
+            const [p, r, v] = await Promise.all([
+                _s.from('produtos_mestre').select('id, nome').order('nome'),
+                _s.from('regioes').select('*').order('nome'),
                 _s.from('variacoes').select('*')
             ]);
-            gradeVariacoes = v.data || [];
-            
-            let optHTML = '<option value="">Selecione o Aparelho</option>';
-            const grupos = [...new Set(m.data.map(x => x.grupos.nome))];
-            grupos.forEach(g => {
-                optHTML += `<optgroup label="${g}">`;
-                optHTML += m.data.filter(x => x.grupos.nome === g).map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-                optHTML += `</optgroup>`;
-            });
-            
-            document.getElementById('produto_id').innerHTML = optHTML;
-            document.getElementById('regiao_id').innerHTML = r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            gradeVariacoes = v.data;
+            document.getElementById('produto_id').innerHTML = '<option value="">Selecione o Aparelho...</option>' + p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('regiao_id').innerHTML = '<option value="">Selecione a Região...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             atualizarLista();
         }
 
         function aoMudarProduto() {
-            const modId = document.getElementById('produto_id').value;
-            const bTam = document.getElementById('boxTamanho'); const sTam = document.getElementById('tamanho');
-            const bCap = document.getElementById('boxCapacidade'); const sCap = document.getElementById('capacidade');
-            const sCor = document.getElementById('cor');
+            const pid = document.getElementById('produto_id').value;
+            const container = document.getElementById('gradeOpcoes');
+            container.innerHTML = "";
+            if(!pid) return;
 
-            sTam.innerHTML = '<option value="">Escolha</option>'; sCap.innerHTML = '<option value="">Escolha</option>'; sCor.innerHTML = '<option value="">Escolha</option>';
-            sTam.disabled = true; sCap.disabled = true; sCor.disabled = true;
-            bTam.classList.add('hidden'); bCap.classList.add('hidden');
-
-            if(!modId) return;
-            const vars = gradeVariacoes.filter(x => x.produto_id == modId);
-            const tamanhos = [...new Set(vars.map(x => x.tamanho).filter(Boolean))];
-            const capacidades = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
-
-            if (tamanhos.length > 0) {
-                bTam.classList.remove('hidden');
-                sTam.innerHTML += tamanhos.map(x => `<option value="${x}">${x}</option>`).join('');
-                sTam.disabled = false;
-            } else if (capacidades.length > 0) { 
-                bCap.classList.remove('hidden');
-                capacidades.sort((a,b) => parseInt(a) - parseInt(b));
-                sCap.innerHTML += capacidades.map(x => `<option value="${x}">${x}</option>`).join('');
-                sCap.disabled = false;
-            }
-        }
-
-        function aoMudarTamanho() {
-            const modId = document.getElementById('produto_id').value;
-            const tam = document.getElementById('tamanho').value;
-            const bCap = document.getElementById('boxCapacidade'); const sCap = document.getElementById('capacidade');
-            const sCor = document.getElementById('cor');
-            sCap.innerHTML = '<option value="">Escolha</option>'; sCor.innerHTML = '<option value="">Escolha</option>';
-            sCap.disabled = true; sCor.disabled = true;
-
-            if(!tam) return;
-            const vars = gradeVariacoes.filter(x => x.produto_id == modId && x.tamanho === tam);
-            const capacidades = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
-
-            if(capacidades.length > 0) { 
-                bCap.classList.remove('hidden');
-                capacidades.sort((a,b) => parseInt(a) - parseInt(b));
-                sCap.innerHTML += capacidades.map(x => `<option value="${x}">${x}</option>`).join('');
-                sCap.disabled = false;
-            } else { 
-                bCap.classList.add('hidden');
-                const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
-                sCor.innerHTML += cores.map(x => `<option value="${x}">${x}</option>`).join('');
-                sCor.disabled = false;
-            }
-        }
-
-        function aoMudarCapacidade() {
-            const modId = document.getElementById('produto_id').value;
-            const tam = document.getElementById('tamanho').value;
-            const cap = document.getElementById('capacidade').value;
-            const sCor = document.getElementById('cor');
-            sCor.innerHTML = '<option value="">Escolha</option>'; sCor.disabled = true;
-
-            if(!cap) return;
-            let vars = gradeVariacoes.filter(x => x.produto_id == modId && x.capacidade === cap);
-            if(!document.getElementById('boxTamanho').classList.contains('hidden') && tam) {
-                vars = vars.filter(x => x.tamanho === tam);
-            }
+            const vars = gradeVariacoes.filter(x => x.produto_id == pid);
+            const tams = [...new Set(vars.map(x => x.tamanho).filter(Boolean))]; // MacBooks e Watches
+            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; // Armazenamento
             const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
-            sCor.innerHTML += cores.map(x => `<option value="${x}">${x}</option>`).join('');
-            sCor.disabled = false;
+
+            let html = '<div class="grid grid-cols-1 gap-4 mt-4">';
+            if(tams.length) html += `<div><label>Tamanho / RAM</label><select id="f_tam" class="apple-input" required><option value="">Selecione...</option>${tams.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
+            if(caps.length) html += `<div><label>Armazenamento</label><select id="f_cap" class="apple-input" required><option value="">Selecione...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
+            if(cores.length) html += `<div><label>Cor</label><select id="f_cor" class="apple-input" required><option value="">Selecione...</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         document.getElementById('priceForm').onsubmit = async (e) => {
             e.preventDefault();
-            const modId = document.getElementById('produto_id').value;
-            const tam = document.getElementById('tamanho').value;
-            const cap = document.getElementById('capacidade').value;
-            const cor = document.getElementById('cor').value;
+            const msg = document.getElementById('formMsg');
+            msg.innerText = "";
+
+            const pid = document.getElementById('produto_id').value;
+            const tam = document.getElementById('f_tam')?.value || null;
+            const cap = document.getElementById('f_cap')?.value || null;
+            const cor = document.getElementById('f_cor')?.value || null;
             
+            // Busca a variação exata no banco de dados
             const v = gradeVariacoes.find(x => 
-                x.produto_id == modId && x.cor === cor &&
-                (x.capacidade === cap || (!x.capacidade && !cap)) &&
-                (x.tamanho === tam || (!x.tamanho && !tam))
+                x.produto_id == pid && 
+                (x.tamanho === tam || (!x.tamanho && !tam)) &&
+                (x.capacidade === cap || (!x.capacidade && !cap)) && 
+                (x.cor === cor || (!x.cor && !cor))
             );
 
-            const precoLimpo = parseFloat(document.getElementById('preco').value.replace(/\./g, '').replace(',', '.'));
-            
-            await _s.from('ofertas').insert([{
-                fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value,
-                preco: precoLimpo, quantidade: document.getElementById('quantidade').value, condicao: document.getElementById('condicao').value
+            if(!v) { msg.innerText = "ESSA COMBINAÇÃO NÃO EXISTE NO CATÁLOGO."; return; }
+
+            const precoStr = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
+            const precoLimpo = parseFloat(precoStr);
+
+            if(isNaN(precoLimpo)) { msg.innerText = "PREÇO INVÁLIDO."; return; }
+
+            const { error } = await _s.from('ofertas').insert([{
+                fornecedor_id: loja.id,
+                variacao_id: v.id,
+                regiao_id: document.getElementById('regiao_id').value,
+                preco: precoLimpo,
+                quantidade: document.getElementById('quantidade').value,
+                condicao: document.getElementById('condicao').value
             }]);
             
-            document.getElementById('preco').value = "";
-            atualizarLista();
+            if(!error) {
+                document.getElementById('preco').value = "";
+                document.getElementById('quantidade').value = "1";
+                atualizarLista();
+            } else {
+                msg.innerText = "ERRO AO SALVAR OFERTA.";
+            }
         };
 
         async function atualizarLista() {
-            const { data } = await _s.from('ofertas').select('*, regioes(nome, bandeira), variacoes(capacidade, tamanho, cor, produtos_mestre(nome))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
-            const container = document.getElementById('listaAtivos');
-            container.innerHTML = data.map(o => {
-                const attrs = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' | ');
-                const badge = o.condicao === 'Novo' ? '<span class="text-green-500 font-black">NOVO</span>' : '<span class="text-yellow-500 font-black">SEMINOVO</span>';
+            // Agora puxamos o tamanho também do banco de dados
+            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, tamanho, cor, produtos_mestre(nome))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
+            document.getElementById('listaAtivos').innerHTML = data.map(o => {
+                const detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' | ');
                 return `
                 <tr>
-                    <td><b class="text-[14px]">${o.variacoes.produtos_mestre.nome}</b></td>
-                    <td class="text-gray-400 font-bold uppercase text-[10px]">${attrs}</td>
-                    <td class="text-[10px]">${badge}</td>
-                    <td class="text-[10px] uppercase font-bold">${o.regioes.bandeira}</td>
-                    <td><input type="number" id="q-${o.id}" class="mini-input" value="${o.quantidade}" min="0"></td>
-                    <td><input type="text" id="p-${o.id}" class="mini-input w-24" value="${o.preco}"></td>
-                    <td>
-                        <span class="btn-save" onclick="salvarEdicao(${o.id})">OK</span>
-                        <span class="btn-del" onclick="deletarOferta(${o.id})">X</span>
-                    </td>
+                    <td><span class="block font-bold">${o.variacoes.produtos_mestre.nome}</span><span class="text-[10px] text-gray-400">${detalhes}</span></td>
+                    <td><span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600">${o.condicao}</span></td>
+                    <td><input type="number" id="q-${o.id}" class="mini-input" value="${o.quantidade}" onchange="salvarEdicao(${o.id})"></td>
+                    <td><input type="text" id="p-${o.id}" class="mini-input w-24" value="${o.preco.toLocaleString('pt-BR')}" onchange="salvarEdicao(${o.id})"></td>
+                    <td><span class="btn-del" onclick="deletar(${o.id})">Excluir</span></td>
                 </tr>
             `}).join('');
         }
 
         async function salvarEdicao(id) {
-            const nQtd = document.getElementById(`q-${id}`).value; const nPreco = document.getElementById(`p-${id}`).value.replace(',', '.');
-            const { error } = await _s.from('ofertas').update({ quantidade: nQtd, preco: nPreco }).eq('id', id);
-            if(!error) { alert("Atualizado!"); atualizarLista(); }
+            const q = document.getElementById(`q-${id}`).value;
+            const p = document.getElementById(`p-${id}`).value.replace(/\./g, '').replace(',', '.');
+            await _s.from('ofertas').update({ quantidade: q, preco: p }).eq('id', id);
         }
 
-        async function deletarOferta(id) { if(confirm("Remover anúncio?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
+        async function deletar(id) { 
+            if(confirm("Remover anúncio definitivamente?")) { 
+                await _s.from('ofertas').delete().eq('id', id); 
+                atualizarLista(); 
+            } 
+        }
     </script>
 </body>
 </html>
-
