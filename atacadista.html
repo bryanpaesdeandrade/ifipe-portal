@@ -28,7 +28,7 @@
         label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.1em; }
         .hidden { display: none !important; }
         
-        /* Layout Grade de Bateria - Corrigido para feedback visual imediato */
+        /* Layout Grade de Bateria */
         .battery-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 8px; margin-bottom: 15px;}
         .battery-pill { padding: 12px 10px; border-radius: 10px; background: #2c2c2e; border: 1px solid #38383a; cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; text-align: center; transition: 0.2s; color: #86868b; display: flex; align-items: center; justify-content: center; line-height: 1.2;}
         .battery-pill.active { background: #32d74b !important; color: #000 !important; border-color: #32d74b !important; box-shadow: 0 0 15px rgba(50, 215, 75, 0.3); }
@@ -116,8 +116,13 @@
 
     <div id="formSection" class="hidden">
         <div class="user-bar">
-            <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <div class="text-[11px] font-black uppercase tracking-widest">Loja: <span id="nomeLoja" class="text-blue-500">...</span></div>
+            <div class="max-w-7xl mx-auto flex justify-between items-center gap-4">
+                <div class="text-[11px] font-black uppercase tracking-widest whitespace-nowrap">Loja: <span id="nomeLoja" class="text-blue-500">...</span></div>
+                
+                <div class="text-[9px] md:text-[11px] font-black text-[#32d74b] bg-[#1c1c1e] px-3 py-1.5 rounded-full border border-[#38383a] flex items-center gap-2 whitespace-nowrap">
+                    <span class="animate-pulse">🟢</span> <span id="onlineCount">--</span> PESSOAS ONLINE
+                </div>
+
                 <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase hover:text-white transition-colors">Sair</button>
             </div>
         </div>
@@ -182,7 +187,7 @@
 
                             <label>Preço Unitário (R$)</label>
                             <input type="text" id="preco" class="apple-input" placeholder="Ex: 5400,00" required>
-                            <button type="submit" class="apple-button w-full bg-blue-600 text-white border-0 mt-2">Publicar Oferta</button>
+                            <button type="submit" class="apple-button w-full bg-blue-600 text-white border-0 mt-4">Publicar</button>
                             <p id="formMsg" class="mt-4 text-[10px] font-bold text-red-500 text-center uppercase tracking-widest"></p>
                         </form>
                     </div>
@@ -190,7 +195,7 @@
 
                 <div class="lg:col-span-2">
                     <div class="apple-card">
-                        <h2 class="text-xl font-black italic mb-6">Meus Anúncios</h2>
+                        <h2 class="text-xl font-black italic mb-6">Meus Anúncios Ativos</h2>
                         <div class="overflow-x-auto">
                             <table>
                                 <thead><tr><th>Produto</th><th>Condição</th><th>Estoque</th><th>Preço</th><th>Ações</th></tr></thead>
@@ -209,7 +214,32 @@
         let gradeVariacoes = [];
         let anunciosDaLoja = [];
 
+        // SIMULADOR CARDÍACO DE PESSOAS ONLINE (Inteligência CRO)
+        function iniciarSimuladorOnline() {
+            const el = document.getElementById('onlineCount');
+            if(!el) return;
+            
+            let atual = Math.floor(Math.random() * (45 - 25 + 1)) + 25; 
+            el.innerText = atual;
+            
+            function atualizarContador() {
+                let variacao = Math.floor(Math.random() * 18) - 6; 
+                atual += variacao;
+                
+                if(atual < 20) atual = 20 + Math.floor(Math.random() * 5); 
+                if(atual > 120) atual = 120 - Math.floor(Math.random() * 10); 
+                
+                el.innerText = atual;
+                
+                let tempoProximoTick = Math.floor(Math.random() * (8000 - 2000 + 1)) + 2000;
+                setTimeout(atualizarContador, tempoProximoTick);
+            }
+            
+            setTimeout(atualizarContador, 3000);
+        }
+
         window.onload = async () => {
+            iniciarSimuladorOnline();
             const token = localStorage.getItem('iFipe_Anunciante');
             if (token) {
                 const { data } = await _s.from('fornecedores').select('*').eq('id', token).maybeSingle();
@@ -224,7 +254,7 @@
             const p = document.getElementById('loginPass').value.trim();
             const { data } = await _s.from('fornecedores').select('*').ilike('nome', u).eq('senha', p).maybeSingle();
             if(data && data.ativo) { loja = data; localStorage.setItem('iFipe_Anunciante', data.id); liberarAcesso(); }
-            else { document.getElementById('loginMsg').innerText = "ERRO NO LOGIN."; }
+            else { document.getElementById('loginMsg').innerText = "ERRO NO LOGIN. TENTE NOVAMENTE."; }
         }
 
         function liberarAcesso() {
@@ -236,7 +266,42 @@
 
         function sairPainel() { localStorage.removeItem('iFipe_Anunciante'); window.location.reload(); }
 
+        // MUDANÇA NO TÍTULO DOS PRODUTOS MAIS PROCURADOS
+        async function carregarTop3() {
+            const { data } = await _s.from('ofertas').select('variacoes(produtos_mestre(nome))');
+            if(!data || data.length === 0) return;
+            
+            let contagem = {};
+            data.forEach(o => {
+                let nome = o.variacoes?.produtos_mestre?.nome;
+                if(nome) contagem[nome] = (contagem[nome] || 0) + 1;
+            });
+            
+            let ordenado = Object.entries(contagem).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            if(ordenado.length === 0) return;
+            
+            const medalhas = ['🥇 1º LUGAR', '🥈 2º LUGAR', '🥉 3º LUGAR'];
+            const cores = ['#ffcc00', '#c0c0c0', '#cd7f32'];
+            
+            let html = '<h2 class="text-[11px] text-gray-400 font-black uppercase tracking-[0.2em] mb-4">🔥 Produtos Mais Procurados</h2>';
+            html += '<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">';
+            ordenado.forEach((item, index) => {
+                html += `
+                <div class="apple-card flex items-center justify-between" style="padding: 1.5rem; border-color: ${cores[index]}40; background: linear-gradient(145deg, #1c1c1e 0%, #2c2c2e 100%);">
+                    <div>
+                        <p style="color: ${cores[index]}" class="text-[9px] font-black uppercase tracking-widest mb-1">${medalhas[index]}</p>
+                        <h4 class="text-[14px] font-black text-white leading-tight">${item[0]}</h4>
+                    </div>
+                    <div class="text-[20px]">🔥</div>
+                </div>`;
+            });
+            html += '</div>';
+            
+            document.getElementById('top3Container').innerHTML = html;
+        }
+
         async function init() {
+            carregarTop3();
             const [p, r, v] = await Promise.all([
                 _s.from('produtos_mestre').select('id, nome').order('nome'),
                 _s.from('regioes').select('*').order('nome'),
@@ -263,7 +328,6 @@
             container.innerHTML = html + '</div>';
         }
 
-        // MOTOR DE BATERIA BLINDADO (Com data-val)
         function setBat(elemento) {
             const val = elemento.getAttribute('data-val');
             document.getElementById('saude_bateria').value = val;
@@ -341,6 +405,7 @@
             if(!error) {
                 event.target.reset(); document.getElementById('condicao').value = "Novo"; checarCondicao(); 
                 atualizarLista();
+                carregarTop3();
                 msg.innerText = "ANÚNCIO PUBLICADO COM SUCESSO!";
                 msg.style.color = "#32d74b";
                 setTimeout(() => { msg.innerText = ""; }, 3000);
@@ -354,8 +419,6 @@
             const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, tamanho, cor, produtos_mestre(nome))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
             anunciosDaLoja = data || [];
             
-            renderizarTop3(); // Chama a inteligência de mercado
-
             document.getElementById('listaAtivos').innerHTML = anunciosDaLoja.map(o => {
                 const det = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' | ');
                 const tagB = o.saude_bateria ? `<br><span class="text-green-500 font-bold text-[9px]">🔋 ${o.saude_bateria}</span>` : '';
@@ -372,40 +435,7 @@
             const p = document.getElementById(`p-${id}`).value.replace(/\./g, '').replace(',', '.');
             await _s.from('ofertas').update({ quantidade: q, preco: p }).eq('id', id);
             atualizarLista();
-        }
-
-        function renderizarTop3() {
-            if(anunciosDaLoja.length === 0) {
-                document.getElementById('top3Container').innerHTML = '';
-                return;
-            }
-            
-            let contagem = {};
-            anunciosDaLoja.forEach(o => {
-                let nome = o.variacoes?.produtos_mestre?.nome;
-                if(nome && o.quantidade > 0) contagem[nome] = (contagem[nome] || 0) + 1; // Conta os aparelhos ativos
-            });
-            
-            let ordenado = Object.entries(contagem).sort((a, b) => b[1] - a[1]).slice(0, 3);
-            if(ordenado.length === 0) return;
-
-            const medalhas = ['🥇 1º LUGAR', '🥈 2º LUGAR', '🥉 3º LUGAR'];
-            const cores = ['#ffcc00', '#c0c0c0', '#cd7f32'];
-            
-            let html = '<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">';
-            ordenado.forEach((item, index) => {
-                html += `
-                <div class="apple-card flex items-center justify-between" style="padding: 1.5rem; border-color: ${cores[index]}40; background: linear-gradient(145deg, #1c1c1e 0%, #2c2c2e 100%);">
-                    <div>
-                        <p style="color: ${cores[index]}" class="text-[9px] font-black uppercase tracking-widest mb-1">${medalhas[index]}</p>
-                        <h4 class="text-[14px] font-black text-white leading-tight">${item[0]}</h4>
-                    </div>
-                    <div class="text-[20px]">🔥</div>
-                </div>`;
-            });
-            html += '</div>';
-            
-            document.getElementById('top3Container').innerHTML = html;
+            carregarTop3();
         }
 
         function abrirModalEdicao(id) {
@@ -457,10 +487,10 @@
                 aceita_usdt: document.getElementById('edit_usdt').checked, emite_nota: document.getElementById('edit_nota').checked
             }).eq('id', document.getElementById('edit_id').value);
             
-            fecharModalEdicao(); atualizarLista();
+            fecharModalEdicao(); atualizarLista(); carregarTop3();
         }
 
-        async function deletar(id) { if(confirm("Excluir definitivamente?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
+        async function deletar(id) { if(confirm("Excluir definitivamente?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); carregarTop3(); } }
     </script>
 </body>
 </html>
