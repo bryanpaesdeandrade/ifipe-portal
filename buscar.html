@@ -118,14 +118,12 @@
         }
 
         async function carregarDados() {
-            // Nota: Puxo os dados sem ordenar no SQL agora, a ordenação visual será no renderizarRanking
             const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)');
             ofertasAtuais = data || [];
             
             const agora = Date.now();
             let salvouAlteracao = false;
             
-            // TRAVA DE TEMPO (15 MINUTOS = 900000ms)
             ofertasAtuais.forEach(o => {
                 if (!historicoPrecos[o.id]) {
                     historicoPrecos[o.id] = { preco: o.preco, status: '', timestamp: 0 };
@@ -169,27 +167,34 @@
                 (!fL || o.fornecedores.id == fL) 
             );
 
-            // 2. ORDENAÇÃO DE DUPLA CAMADA (HIERARQUIA: NOVO > SEMINOVO -> PREÇO CRESCENTE)
+            // 2. ORDENAÇÃO DE TRIPLA CAMADA
             filtrados.sort((a, b) => {
-                // Se um for 'Novo' e outro 'Seminovo', o 'Novo' vem antes (-1)
+                // CAMADA 1: CONDIÇÃO (Novo SEMPRE ganha de Seminovo)
                 if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
                 if (a.condicao !== 'Novo' && b.condicao === 'Novo') return 1;
                 
-                // Se ambos tiverem a mesma condição (ex: dois 'Novos'), empurra o mais barato para cima
+                // CAMADA 2: GERAÇÃO DO APARELHO (ID Maior = Mais Novo/Premium. Fica no Topo)
+                // Ex: iPhone 17 Pro Max (ID 27) ganha do iPhone 11 (ID 1)
+                if (b.variacoes.produtos_mestre.id !== a.variacoes.produtos_mestre.id) {
+                    return b.variacoes.produtos_mestre.id - a.variacoes.produtos_mestre.id; 
+                }
+
+                // CAMADA 3: PREÇO (Se for a mesma condição e o mesmo aparelho, o mais barato ganha)
                 return a.preco - b.preco;
             });
 
-            const menoresPrecosPorProduto = {};
+            // Encontra o menor preço apenas para aplicar a tag (agora categorizado por modelo e condição)
+            const menoresPrecosPorCategoria = {};
             filtrados.forEach(o => {
-                const pid = o.variacoes.produtos_mestre.id;
-                // Acha o menor preço por produto, ignorando a condição. Se quiser que o menor seja só do 'Novo', adicione o.condicao === 'Novo'
-                if (!menoresPrecosPorProduto[pid] || o.preco < menoresPrecosPorProduto[pid]) {
-                    menoresPrecosPorProduto[pid] = o.preco;
+                const chave = `${o.variacoes.produtos_mestre.id}_${o.condicao}`; 
+                if (!menoresPrecosPorCategoria[chave] || o.preco < menoresPrecosPorCategoria[chave]) {
+                    menoresPrecosPorCategoria[chave] = o.preco;
                 }
             });
 
             grid.innerHTML = filtrados.map(o => {
-                const isMenorPreco = o.preco === menoresPrecosPorProduto[o.variacoes.produtos_mestre.id];
+                const chaveCard = `${o.variacoes.produtos_mestre.id}_${o.condicao}`;
+                const isMenorPreco = o.preco === menoresPrecosPorCategoria[chaveCard];
                 
                 let tagEstoque = '';
                 if (o.quantidade < 5) {
