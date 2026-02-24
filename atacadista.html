@@ -58,7 +58,7 @@
             <div class="lg:col-span-1">
                 <div class="apple-card">
                     <h2 class="text-xl font-black italic mb-6">Novo Anúncio</h2>
-                    <form id="priceForm">
+                    <form id="priceForm" onsubmit="salvarOferta(event)">
                         <label>Aparelho</label>
                         <select id="produto_id" class="apple-input" onchange="aoMudarProduto()" required></select>
                         
@@ -123,17 +123,23 @@
         };
 
         async function fazerLogin(event) {
-            event.preventDefault();
-            const u = document.getElementById('loginId').value, p = document.getElementById('loginPass').value, msg = document.getElementById('loginMsg');
+            event.preventDefault(); // Trava de loop
+            const u = document.getElementById('loginId').value.trim();
+            const p = document.getElementById('loginPass').value.trim();
+            const msg = document.getElementById('loginMsg');
             msg.innerText = "VERIFICANDO...";
+            msg.style.color = "#fff";
             
-            const { data } = await _s.from('fornecedores').select('*').eq('nome', u).eq('senha', p).maybeSingle();
+            const { data } = await _s.from('fornecedores').select('*').ilike('nome', u).eq('senha', p).maybeSingle();
             
             if(data && data.ativo) { 
                 loja = data; 
                 localStorage.setItem('iFipe_Anunciante', data.id); 
                 liberarAcesso(); 
-            } else { msg.innerText = "LOJA NÃO ENCONTRADA OU INATIVA."; }
+            } else { 
+                msg.innerText = "LOJA NÃO ENCONTRADA OU INATIVA."; 
+                msg.style.color = "#ff3b30";
+            }
         }
 
         function liberarAcesso() {
@@ -176,10 +182,11 @@
             container.innerHTML = html;
         }
 
-        document.getElementById('priceForm').onsubmit = async (e) => {
-            e.preventDefault();
+        async function salvarOferta(event) {
+            event.preventDefault(); // Trava de envio do form
             const msg = document.getElementById('formMsg');
-            msg.innerText = "";
+            msg.innerText = "SALVANDO...";
+            msg.style.color = "#fff";
 
             const pid = document.getElementById('produto_id').value;
             const tam = document.getElementById('f_tam')?.value || null;
@@ -194,12 +201,20 @@
                 (x.cor === cor || (!x.cor && !cor))
             );
 
-            if(!v) { msg.innerText = "ESSA COMBINAÇÃO NÃO EXISTE NO CATÁLOGO."; return; }
+            if(!v) { 
+                msg.innerText = "ESSA COMBINAÇÃO NÃO EXISTE NO CATÁLOGO."; 
+                msg.style.color = "#ff3b30";
+                return; 
+            }
 
             const precoStr = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
             const precoLimpo = parseFloat(precoStr);
 
-            if(isNaN(precoLimpo)) { msg.innerText = "PREÇO INVÁLIDO."; return; }
+            if(isNaN(precoLimpo)) { 
+                msg.innerText = "PREÇO INVÁLIDO."; 
+                msg.style.color = "#ff3b30";
+                return; 
+            }
 
             const { error } = await _s.from('ofertas').insert([{
                 fornecedor_id: loja.id,
@@ -213,14 +228,15 @@
             if(!error) {
                 document.getElementById('preco').value = "";
                 document.getElementById('quantidade').value = "1";
+                msg.innerText = "";
                 atualizarLista();
             } else {
                 msg.innerText = "ERRO AO SALVAR OFERTA.";
+                msg.style.color = "#ff3b30";
             }
-        };
+        }
 
         async function atualizarLista() {
-            // Agora puxamos o tamanho também do banco de dados
             const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, tamanho, cor, produtos_mestre(nome))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
             document.getElementById('listaAtivos').innerHTML = data.map(o => {
                 const detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' | ');
