@@ -31,7 +31,7 @@
         /* Layout Grade de Bateria OTIMIZADO */
         .battery-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 8px; margin-bottom: 15px;}
         .battery-pill { padding: 10px; border-radius: 10px; background: #2c2c2e; border: 1px solid #38383a; cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; text-align: center; transition: 0.2s; color: #86868b; }
-        .battery-pill.active { background: #32d74b; color: #000; border-color: #32d74b; box-shadow: 0 0 15px rgba(50, 215, 75, 0.3); }
+        .battery-pill.active { background: #32d74b !important; color: #000 !important; border-color: #32d74b !important; box-shadow: 0 0 15px rgba(50, 215, 75, 0.3); }
         .pill-full { grid-column: span 2; }
     </style>
 </head>
@@ -62,14 +62,14 @@
                     <div><label>Estoque</label><input type="number" id="edit_quantidade" class="apple-input" min="1" required></div>
                 </div>
 
-                <div id="edit_boxBateria" class="hidden">
+                <div id="edit_boxBateria" class="hidden mb-4">
                     <label class="text-green-500">Saúde da Bateria</label>
                     <div class="battery-grid">
-                        <div class="battery-pill b-edit" onclick="setBatEdicao('ABAIXO DE 85%')">Abaixo 85%</div>
-                        <div class="battery-pill b-edit" onclick="setBatEdicao('ACIMA DE 85%')">Acima 85%</div>
-                        <div class="battery-pill b-edit" onclick="setBatEdicao('ACIMA DE 90%')">Acima 90%</div>
-                        <div class="battery-pill b-edit" onclick="setBatEdicao('ACIMA DE 95%')">Acima 95%</div>
-                        <div class="battery-pill b-edit pill-full" onclick="setBatEdicao('EM 100%')">Bateria em 100%</div>
+                        <div class="battery-pill b-edit" data-val="ABAIXO DE 85%" onclick="setBatEdicao(this)">Abaixo 85%</div>
+                        <div class="battery-pill b-edit" data-val="ACIMA DE 85%" onclick="setBatEdicao(this)">Acima 85%</div>
+                        <div class="battery-pill b-edit" data-val="ACIMA DE 90%" onclick="setBatEdicao(this)">Acima 90%</div>
+                        <div class="battery-pill b-edit" data-val="ACIMA DE 95%" onclick="setBatEdicao(this)">Acima 95%</div>
+                        <div class="battery-pill b-edit pill-full" data-val="EM 100%" onclick="setBatEdicao(this)">Bateria em 100%</div>
                     </div>
                     <input type="hidden" id="edit_saude_bateria">
                 </div>
@@ -146,21 +146,21 @@
                             <div><label>Estoque</label><input type="number" id="quantidade" class="apple-input" value="1" min="1" required></div>
                         </div>
 
-                        <div id="boxBateria" class="hidden">
+                        <div id="boxBateria" class="hidden mb-4">
                             <label class="text-green-500">Saúde da Bateria</label>
                             <div class="battery-grid">
-                                <div class="battery-pill b-new" onclick="setBat('ABAIXO DE 85%')">Abaixo 85%</div>
-                                <div class="battery-pill b-new" onclick="setBat('ACIMA DE 85%')">Acima 85%</div>
-                                <div class="battery-pill b-new" onclick="setBat('ACIMA DE 90%')">Acima 90%</div>
-                                <div class="battery-pill b-new" onclick="setBat('ACIMA DE 95%')">Acima 95%</div>
-                                <div class="battery-pill b-new pill-full" onclick="setBat('EM 100%')">Bateria em 100%</div>
+                                <div class="battery-pill b-new" data-val="ABAIXO DE 85%" onclick="setBat(this)">Abaixo 85%</div>
+                                <div class="battery-pill b-new" data-val="ACIMA DE 85%" onclick="setBat(this)">Acima 85%</div>
+                                <div class="battery-pill b-new" data-val="ACIMA DE 90%" onclick="setBat(this)">Acima 90%</div>
+                                <div class="battery-pill b-new" data-val="ACIMA DE 95%" onclick="setBat(this)">Acima 95%</div>
+                                <div class="battery-pill b-new pill-full" data-val="EM 100%" onclick="setBat(this)">Bateria em 100%</div>
                             </div>
                             <input type="hidden" id="saude_bateria">
                         </div>
 
                         <div id="boxGarantia" class="hidden"><label class="text-yellow-500">Garantia (Meses)</label><input type="number" id="garantia" class="apple-input" placeholder="Ex: 3"></div>
 
-                        <div id="gradeOpcoes"></div>
+                        <div id="gradeOpcoes" class="mb-4"></div>
 
                         <label>Região / Origem</label>
                         <select id="regiao_id" class="apple-input" required></select>
@@ -258,30 +258,32 @@
             container.innerHTML = html + '</div>';
         }
 
-        // MOTOR DE CLIQUE DA BATERIA BLINDADO
-        function setBat(val) {
+        // MOTOR DE CLIQUE DA BATERIA BLINDADO E CORRIGIDO
+        function setBat(elemento) {
+            const val = elemento.getAttribute('data-val');
             document.getElementById('saude_bateria').value = val;
-            const pills = document.querySelectorAll('.b-new');
-            pills.forEach(p => {
-                // A lógica verifica se o botão clicado corresponde ao valor passado
-                if(p.innerText.toUpperCase() === val || (val === 'EM 100%' && p.innerText.toUpperCase() === 'BATERIA EM 100%')) {
-                    p.classList.add('active');
-                } else {
-                    p.classList.remove('active');
-                }
-            });
+            
+            // Remove a classe de todos
+            document.querySelectorAll('.b-new').forEach(p => p.classList.remove('active'));
+            // Adiciona só no clicado
+            elemento.classList.add('active');
         }
 
-        function setBatEdicao(val) {
+        function setBatEdicao(elemento_ou_string) {
+            let val;
+            // Verifica se a chamada veio do clique do usuário ou da função automática do sistema
+            if(typeof elemento_ou_string === 'string') {
+                val = elemento_ou_string;
+                document.querySelectorAll('.b-edit').forEach(p => {
+                    if(p.getAttribute('data-val') === val) p.classList.add('active');
+                    else p.classList.remove('active');
+                });
+            } else {
+                val = elemento_ou_string.getAttribute('data-val');
+                document.querySelectorAll('.b-edit').forEach(p => p.classList.remove('active'));
+                elemento_ou_string.classList.add('active');
+            }
             document.getElementById('edit_saude_bateria').value = val;
-            const pills = document.querySelectorAll('.b-edit');
-            pills.forEach(p => {
-                if(p.innerText.toUpperCase() === val || (val === 'EM 100%' && p.innerText.toUpperCase() === 'BATERIA EM 100%')) {
-                    p.classList.add('active');
-                } else {
-                    p.classList.remove('active');
-                }
-            });
         }
 
         function checarCondicao() {
@@ -369,7 +371,7 @@
             
             const condicaoSelect = document.getElementById('edit_condicao');
             condicaoSelect.value = o.condicao;
-            if(condicaoSelect.selectedIndex === -1) condicaoSelect.value = 'Seminovo'; // Se for WityPro antigo, cai pra Seminovo
+            if(condicaoSelect.selectedIndex === -1) condicaoSelect.value = 'Seminovo';
 
             document.getElementById('edit_quantidade').value = o.quantidade;
             document.getElementById('edit_preco').value = o.preco.toLocaleString('pt-BR');
