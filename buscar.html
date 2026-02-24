@@ -65,7 +65,7 @@
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let ofertasAtuais = [];
-        let historicoPrecos = {};
+        let historicoPrecos = {}; // Agora vai guardar: { precoAntigo, timestamp }
         let gradeVariacoes = [];
 
         function initTicker() {
@@ -117,6 +117,26 @@
         async function carregarDados() {
             const { data } = await _s.from('ofertas').select('*, fornecedores(nome, whatsapp), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)').order('preco', {ascending: true});
             ofertasAtuais = data || [];
+            
+            const agora = Date.now();
+            
+            // LÓGICA DE MEMÓRIA DE 15 MINUTOS PARA PREÇOS
+            ofertasAtuais.forEach(o => {
+                if (!historicoPrecos[o.id]) {
+                    // Primeira vez que vê o produto, só salva o preço atual
+                    historicoPrecos[o.id] = { preco: o.preco, status: '', timestamp: 0 };
+                } else if (historicoPrecos[o.id].preco !== o.preco) {
+                    // Preço mudou! Grava se subiu ou caiu e inicia o cronômetro de 15 minutos (900.000 ms)
+                    historicoPrecos[o.id].status = o.preco > historicoPrecos[o.id].preco ? 'subiu' : 'caiu';
+                    historicoPrecos[o.id].preco = o.preco; // Atualiza pro novo preço base
+                    historicoPrecos[o.id].timestamp = agora + 900000; 
+                } else if (historicoPrecos[o.id].timestamp > 0 && agora > historicoPrecos[o.id].timestamp) {
+                    // Passaram os 15 minutos, apaga a tag
+                    historicoPrecos[o.id].status = '';
+                    historicoPrecos[o.id].timestamp = 0;
+                }
+            });
+
             renderizarRanking();
         }
 
@@ -137,20 +157,36 @@
                 (!fR || o.regiao_id == fR)
             );
 
-            grid.innerHTML = filtrados.map((o, index) => {
-                const isMenorPreco = index === 0;
+            // AGRUPAMENTO PARA ACHAR O MENOR PREÇO POR PRODUTO
+            const menoresPrecosPorProduto = {};
+            filtrados.forEach(o => {
+                const pid = o.variacoes.produtos_mestre.id;
+                if (!menoresPrecosPorProduto[pid] || o.preco < menoresPrecosPorProduto[pid]) {
+                    menoresPrecosPorProduto[pid] = o.preco;
+                }
+            });
+
+            grid.innerHTML = filtrados.map(o => {
+                // TAG INTELIGENTE DE MENOR PREÇO (Agora por modelo)
+                const isMenorPreco = o.preco === menoresPrecosPorProduto[o.variacoes.produtos_mestre.id];
                 
+                // NOVA REGRA DE ESTOQUE
                 let tagEstoque = '';
                 if (o.quantidade < 5) {
                     tagEstoque = `<span class="tag-status tag-poucas">POUCAS UNIDADES (${o.quantidade})</span>`;
-                } else if (o.quantidade > 10) {
-                    tagEstoque = `<span class="tag-status tag-muitas">ALTO ESTOQUE (${o.quantidade})</span>`;
-                } else {
+                } else if (o.quantidade >= 5 && o.quantidade <= 10) {
                     tagEstoque = `<span class="tag-status tag-disponivel">ESTOQUE DISPONÍVEL (${o.quantidade})</span>`;
+                } else {
+                    tagEstoque = `<span class="tag-status tag-muitas">ALTO ESTOQUE (${o.quantidade})</span>`;
                 }
 
-                const tagPreco = historicoPrecos[o.id] ? (o.preco > historicoPrecos[o.id] ? '<span class="tag-status tag-subiu">SUBIU</span>' : (o.preco < historicoPrecos[o.id] ? '<span class="tag-status tag-caiu">CAIU</span>' : '')) : '';
-                historicoPrecos[o.id] = o.preco;
+                // TAG DE PREÇO COM MEMÓRIA DE 15 MIN
+                let tagPreco = '';
+                if (historicoPrecos[o.id] && historicoPrecos[o.id].status === 'subiu') {
+                    tagPreco = '<span class="tag-status tag-subiu">SUBIU</span>';
+                } else if (historicoPrecos[o.id] && historicoPrecos[o.id].status === 'caiu') {
+                    tagPreco = '<span class="tag-status tag-caiu">CAIU</span>';
+                }
 
                 const detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao.toUpperCase()].filter(Boolean).join(' | ');
 
