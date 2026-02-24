@@ -105,9 +105,6 @@
     </div>
 
     <script>
-        // QUEIMA DE TOKENS FANTASMAS (Mata o loop pela raiz assim que abre a página)
-        localStorage.removeItem('iFipe_Token');
-
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
         function iniciarCambio() {
@@ -119,8 +116,17 @@
             };
         }
 
-        window.onload = () => {
+        window.onload = async () => {
             iniciarCambio();
+            const token = localStorage.getItem('iFipe_Token');
+            if (token) {
+                const { data } = await _s.from('clientes_buscador').select('aprovado').eq('id', token).maybeSingle();
+                if(data && data.aprovado) {
+                    window.location.replace('buscar.html');
+                } else {
+                    localStorage.removeItem('iFipe_Token');
+                }
+            }
         };
 
         function toggleForm() { 
@@ -130,7 +136,7 @@
         }
 
         async function realizarLogin(event) {
-            // TRAVA MÁXIMA: Impede o formulário de recarregar a página!
+            // ISSO AQUI IMPEDE O LOOP SE VOCÊ ERRAR A SENHA
             event.preventDefault(); 
             
             const e = document.getElementById('logEmail').value;
@@ -148,7 +154,6 @@
                     m.style.color = "#ffcc00"; 
                     return; 
                 }
-                // Se estiver tudo certo, cria o token e te leva para a próxima página.
                 localStorage.setItem('iFipe_Token', data.id);
                 window.location.href = 'buscar.html';
             } else { 
@@ -158,9 +163,7 @@
         }
 
         async function solicitarCadastro(event) {
-            // TRAVA MÁXIMA AQUI TAMBÉM
             event.preventDefault();
-
             const n = document.getElementById('regNome').value;
             const c = document.getElementById('regCpf').value.replace(/\D/g,'');
             const e = document.getElementById('regEmail').value;
