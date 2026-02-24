@@ -51,12 +51,13 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 pb-20">
-        <div class="filter-bar grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="filter-bar grid grid-cols-2 md:grid-cols-6 gap-3">
             <div><label>Aparelho</label><select id="f_produto" class="apple-input" onchange="atualizarFiltrosCascata()"><option value="">Todos</option></select></div>
             <div><label>Condição</label><select id="f_condicao" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select></div>
             <div><label>Memória/Tam</label><select id="f_capacidade" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
             <div><label>Cor</label><select id="f_cor" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
             <div><label>Região</label><select id="f_regiao" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+            <div><label>Lojista</label><select id="f_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
         </div>
 
         <div id="rankingGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8"></div>
@@ -78,16 +79,19 @@
 
         async function init() {
             initTicker();
-            const [p, v, r] = await Promise.all([
+            const [p, v, r, f] = await Promise.all([
                 _s.from('produtos_mestre').select('id, nome').order('nome'),
                 _s.from('variacoes').select('*'), 
-                _s.from('regioes').select('id, nome, bandeira')
+                _s.from('regioes').select('id, nome, bandeira'),
+                _s.from('fornecedores').select('id, nome').eq('ativo', true).order('nome') // Puxa os lojistas ativos
             ]);
             
             gradeVariacoes = v.data;
 
             document.getElementById('f_produto').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('f_regiao').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            // Popula o novo filtro de Lojista
+            document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             
             atualizarFiltrosCascata(); 
             carregarDados();
@@ -115,12 +119,13 @@
         }
 
         async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(nome, whatsapp), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)').order('preco', {ascending: true});
+            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)').order('preco', {ascending: true});
             ofertasAtuais = data || [];
             
             const agora = Date.now();
             let salvouAlteracao = false;
             
+            // TRAVA DE 15 MINUTOS (900.000 ms) À PROVA DE F5
             ofertasAtuais.forEach(o => {
                 if (!historicoPrecos[o.id]) {
                     historicoPrecos[o.id] = { preco: o.preco, status: '', timestamp: 0 };
@@ -128,9 +133,10 @@
                 } else if (historicoPrecos[o.id].preco !== o.preco) {
                     historicoPrecos[o.id].status = o.preco > historicoPrecos[o.id].preco ? 'subiu' : 'caiu';
                     historicoPrecos[o.id].preco = o.preco; 
-                    historicoPrecos[o.id].timestamp = agora + 900000; // 15 minutos
+                    historicoPrecos[o.id].timestamp = agora + 900000; // Começa a contar 15 minutos a partir de AGORA
                     salvouAlteracao = true;
                 } else if (historicoPrecos[o.id].timestamp > 0 && agora > historicoPrecos[o.id].timestamp) {
+                    // Se o tempo atual for maior que o timestamp gravado, o tempo acabou.
                     historicoPrecos[o.id].status = '';
                     historicoPrecos[o.id].timestamp = 0;
                     salvouAlteracao = true;
@@ -151,6 +157,7 @@
             const fCap = document.getElementById('f_capacidade').value;
             const fCor = document.getElementById('f_cor').value;
             const fR = document.getElementById('f_regiao').value;
+            const fL = document.getElementById('f_lojista').value; // Puxa o valor do filtro Lojista
 
             let filtrados = ofertasAtuais.filter(o => 
                 (o.quantidade > 0) &&
@@ -158,7 +165,8 @@
                 (!fC || o.condicao == fC) &&
                 (!fCap || o.variacoes.capacidade == fCap || o.variacoes.tamanho == fCap) &&
                 (!fCor || o.variacoes.cor == fCor) &&
-                (!fR || o.regiao_id == fR)
+                (!fR || o.regiao_id == fR) &&
+                (!fL || o.fornecedores.id == fL) // Aplica o filtro de Lojista
             );
 
             const menoresPrecosPorProduto = {};
@@ -190,18 +198,19 @@
 
                 const detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao.toUpperCase()].filter(Boolean).join(' | ');
 
-                // CONSTRUÇÃO ELEGANTE DAS TAGS DE OBSERVAÇÃO
+                // CONSTRUÇÃO DAS TAGS ALINHADAS E COM O EMOJI 💲
                 let tagsExtra = [];
                 if (o.cidade) tagsExtra.push(`📍 ${o.cidade}`);
                 if (o.aceita_coleta) tagsExtra.push('🏬 Coleta');
                 if (o.tem_boy) tagsExtra.push('🛵 Motoboy');
                 if (o.faz_envio) tagsExtra.push('📦 Envio');
                 if (o.emite_nota) tagsExtra.push('🧾 Nota');
-                if (o.aceita_usdt) tagsExtra.push('🪙 USDT');
+                if (o.aceita_usdt) tagsExtra.push('💲 USDT'); // Emoji alterado aqui
                 
                 let tagsHtml = '';
                 if (tagsExtra.length > 0) {
-                    tagsHtml = `<div class="text-[8px] text-gray-300 font-bold uppercase tracking-widest mt-2 mb-2 flex flex-wrap gap-x-2 gap-y-1">${tagsExtra.join('<span class="text-[#38383a]">|</span>')}</div>`;
+                    // gap-2 adiciona um espaçamento limpo entre as tags, flex-wrap garante que elas não fujam da caixa
+                    tagsHtml = `<div class="text-[9px] text-gray-300 font-bold uppercase tracking-widest mt-2 mb-2 flex flex-wrap gap-2 items-center">${tagsExtra.join('<span class="text-[#38383a]">|</span>')}</div>`;
                 }
 
                 return `
