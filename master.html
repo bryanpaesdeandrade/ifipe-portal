@@ -30,6 +30,9 @@
         
         label { display: block; text-transform: uppercase; font-size: 9px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.1em; }
         .hidden { display: none !important; }
+        
+        /* Checkbox Customizado */
+        .check-box { accent-color: #0071e3; width: 16px; height: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -146,11 +149,14 @@
                 <div class="apple-card overflow-x-auto">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
                         <h3 class="font-bold text-[14px] text-blue-500 uppercase tracking-widest m-0">Lojistas Atacadistas</h3>
-                        <button onclick="acaoEmMassa('fornecedores', 'ativo', false)" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">INATIVAR TODOS</button>
+                        <div class="flex gap-2 items-center">
+                            <button onclick="selecionarTodos('chk-lojista')" class="text-[9px] bg-gray-700 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-gray-600 transition-colors border-0">Todos</button>
+                            <button onclick="acaoEmLote('fornecedores', 'ativo', false, 'chk-lojista')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">INATIVAR SELECIONADOS</button>
+                        </div>
                     </div>
                     <input type="text" onkeyup="filtrarTabela('listaFornecedores', this.value)" class="apple-input py-2 text-[11px]" style="margin-bottom:0;" placeholder="🔍 Buscar Loja, Whats ou Cidade...">
                     <table>
-                        <thead><tr><th>Loja</th><th>WhatsApp</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
+                        <thead><tr><th>Sel</th><th>Loja</th><th>WhatsApp</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
                         <tbody id="listaFornecedores"></tbody>
                     </table>
                 </div>
@@ -158,14 +164,15 @@
                 <div class="apple-card overflow-x-auto">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
                         <h3 class="font-bold text-[14px] text-green-500 uppercase tracking-widest m-0">Clientes VIP</h3>
-                        <div class="flex gap-2">
-                            <button onclick="acaoEmMassa('clientes_buscador', 'aprovado', true)" class="text-[9px] bg-green-800 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-green-600 transition-colors border-0">APROVAR TODOS</button>
-                            <button onclick="acaoEmMassa('clientes_buscador', 'aprovado', false)" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">BLOQUEAR TODOS</button>
+                        <div class="flex gap-2 flex-wrap items-center">
+                            <button onclick="selecionarTodos('chk-cliente')" class="text-[9px] bg-gray-700 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-gray-600 transition-colors border-0">Todos</button>
+                            <button onclick="acaoEmLote('clientes_buscador', 'aprovado', true, 'chk-cliente')" class="text-[9px] bg-green-800 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-green-600 transition-colors border-0">APROVAR SELECIONADOS</button>
+                            <button onclick="acaoEmLote('clientes_buscador', 'aprovado', false, 'chk-cliente')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">BLOQUEAR SELECIONADOS</button>
                         </div>
                     </div>
                     <input type="text" onkeyup="filtrarTabela('listaClientes', this.value)" class="apple-input py-2 text-[11px]" style="margin-bottom:0;" placeholder="🔍 Buscar Nome, Email ou Status...">
                     <table>
-                        <thead><tr><th>Nome</th><th>Contatos</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
+                        <thead><tr><th>Sel</th><th>Nome</th><th>Contatos</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
                         <tbody id="listaClientes"></tbody>
                     </table>
                 </div>
@@ -230,6 +237,7 @@
             const filtro = termo.toLowerCase();
 
             for (let i = 0; i < linhas.length; i++) {
+                // Pular elementos ocultos ou checks para filtrar apenas pelo texto da linha
                 const textoLinha = linhas[i].innerText.toLowerCase();
                 if (textoLinha.includes(filtro)) {
                     linhas[i].style.display = '';
@@ -239,14 +247,49 @@
             }
         }
 
-        // MOTOR DE AÇÕES EM MASSA (BLINDADO)
-        async function acaoEmMassa(tabela, coluna, valor) {
+        // ==========================================
+        // MOTOR DE SELEÇÃO E AÇÃO EM LOTE
+        // ==========================================
+        let checkboxesEstado = {}; // Para alternar entre selecionar/desmarcar todos
+
+        function selecionarTodos(classeCheck) {
+            const checkboxes = document.querySelectorAll(`.${classeCheck}`);
+            
+            // Verifica o estado atual para esta classe e inverte
+            checkboxesEstado[classeCheck] = !checkboxesEstado[classeCheck];
+            const estado = checkboxesEstado[classeCheck];
+
+            checkboxes.forEach(chk => {
+                // Só seleciona os que estão visíveis na tela (respeita o filtro de busca)
+                const tr = chk.closest('tr');
+                if(tr && tr.style.display !== 'none') {
+                    chk.checked = estado;
+                }
+            });
+        }
+
+        async function acaoEmLote(tabela, coluna, valor, classeCheck) {
+            const checkboxes = document.querySelectorAll(`.${classeCheck}:checked`);
+            const idsSelecionados = Array.from(checkboxes).map(chk => parseInt(chk.value));
+
+            if(idsSelecionados.length === 0) {
+                alert("Nenhum item selecionado. Marque as caixinhas antes de executar a ação.");
+                return;
+            }
+
             const acaoStr = valor ? "APROVAR/ATIVAR" : "BLOQUEAR/INATIVAR";
-            if(confirm(`Você está prestes a ${acaoStr} TODOS os cadastros de ${tabela.replace('_',' ')}. Tem certeza absoluta?`)) {
-                // Ao omitir um 'eq', o Supabase negaria por segurança, então usamos 'neq' com um id impossível para pegar todos.
-                await _s.from(tabela).update({ [coluna]: valor }).neq('id', -1); 
-                carregarTabelas();
-                alert(`Comando de ${acaoStr} executado com sucesso em toda a tabela!`);
+            if(confirm(`Tem certeza que deseja ${acaoStr} os ${idsSelecionados.length} itens selecionados?`)) {
+                // Usando o comando "in" do Supabase para atualizar vários IDs de uma vez
+                const { error } = await _s.from(tabela).update({ [coluna]: valor }).in('id', idsSelecionados);
+                
+                if(error) {
+                    alert("Ocorreu um erro ao atualizar: " + error.message);
+                } else {
+                    alert(`Ação concluída com sucesso em ${idsSelecionados.length} itens.`);
+                    // Reseta o estado do botão "Todos" para aquela classe
+                    checkboxesEstado[classeCheck] = false;
+                    carregarTabelas();
+                }
             }
         }
 
@@ -359,10 +402,11 @@
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
         async function carregarTabelas() {
-            // Lojistas
+            // Lojistas (Com Checkbox)
             const { data: lojas } = await _s.from('fornecedores').select('*').order('id', {ascending: true});
             document.getElementById('listaFornecedores').innerHTML = lojas.map(l => `
                 <tr>
+                    <td class="text-center"><input type="checkbox" class="check-box chk-lojista" value="${l.id}"></td>
                     <td>
                         <span class="font-bold block">${l.nome} ${l.verificado ? '✔️' : ''}</span>
                         <span class="text-[10px] text-gray-500">ID: ${l.id} | ${l.cidade || 'Sem Cidade'} - ${l.estado || 'Sem UF'}</span>
@@ -383,10 +427,11 @@
                 </tr>
             `).join('');
 
-            // Clientes
+            // Clientes (Com Checkbox)
             const { data: clientes } = await _s.from('clientes_buscador').select('*').order('criado_em', {ascending: false});
             document.getElementById('listaClientes').innerHTML = clientes.map(c => `
                 <tr>
+                    <td class="text-center"><input type="checkbox" class="check-box chk-cliente" value="${c.id}"></td>
                     <td><span class="font-bold">${c.nome}</span></td>
                     <td><span class="text-[10px] text-gray-400 block">${c.email}</span><span class="text-[10px] text-gray-400 block">${c.whatsapp || ''}</span></td>
                     <td class="text-red-400 font-mono tracking-wider">${c.senha}</td>
@@ -401,7 +446,7 @@
                 </tr>
             `).join('');
 
-            // Admins
+            // Admins (Sem Checkbox, por segurança)
             const { data: admins } = await _s.from('admin_users').select('*').order('id', {ascending: true});
             document.getElementById('listaAdmins').innerHTML = admins.map(a => `
                 <tr>
