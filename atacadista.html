@@ -64,12 +64,17 @@
                         
                         <div class="grid grid-cols-2 gap-4">
                             <div><label>Condição</label>
-                                <select id="condicao" class="apple-input">
+                                <select id="condicao" class="apple-input" onchange="checarCondicao()">
                                     <option value="Novo">Novo</option>
                                     <option value="Seminovo">Seminovo</option>
                                 </select>
                             </div>
                             <div><label>Estoque</label><input type="number" id="quantidade" class="apple-input" value="1" min="1" required></div>
+                        </div>
+
+                        <div id="boxGarantia" class="hidden">
+                            <label class="text-yellow-500">Garantia (Meses)</label>
+                            <input type="number" id="garantia" class="apple-input" placeholder="Ex: 3" min="1">
                         </div>
 
                         <div id="gradeOpcoes" class="mb-4"></div>
@@ -195,6 +200,20 @@
             container.innerHTML = html;
         }
 
+        // Lógica para mostrar/esconder o campo de garantia
+        function checarCondicao() {
+            const cond = document.getElementById('condicao').value;
+            const box = document.getElementById('boxGarantia');
+            if(cond === 'Seminovo') {
+                box.classList.remove('hidden');
+                document.getElementById('garantia').required = true;
+            } else {
+                box.classList.add('hidden');
+                document.getElementById('garantia').required = false;
+                document.getElementById('garantia').value = ""; // Limpa se voltar pra Novo
+            }
+        }
+
         async function salvarOferta(event) {
             event.preventDefault(); 
             const msg = document.getElementById('formMsg');
@@ -228,13 +247,17 @@
                 return; 
             }
 
+            const cond = document.getElementById('condicao').value;
+            const gar = cond === 'Seminovo' ? document.getElementById('garantia').value + ' Meses' : null;
+
             const { error } = await _s.from('ofertas').insert([{
                 fornecedor_id: loja.id,
                 variacao_id: v.id,
                 regiao_id: document.getElementById('regiao_id').value,
                 preco: precoLimpo,
                 quantidade: document.getElementById('quantidade').value,
-                condicao: document.getElementById('condicao').value,
+                condicao: cond,
+                garantia: gar, // Salva a garantia no banco
                 cidade: document.getElementById('obs_cidade').value.trim(),
                 aceita_coleta: document.getElementById('obs_coleta').checked,
                 tem_boy: document.getElementById('obs_boy').checked,
@@ -252,6 +275,11 @@
                 document.getElementById('obs_usdt').checked = false;
                 document.getElementById('obs_nota').checked = false;
                 document.getElementById('obs_envio').checked = false;
+                
+                // Reseta a condição e esconde a garantia
+                document.getElementById('condicao').value = "Novo";
+                checarCondicao(); 
+
                 msg.innerText = "";
                 atualizarLista();
             } else {
@@ -274,10 +302,12 @@
                 if(o.faz_envio) obs.push('Envio');
                 const obsStr = obs.length > 0 ? `<span class="block mt-1 text-[9px] text-blue-400 font-bold uppercase">${obs.join(' | ')}</span>` : '';
 
+                const tagGarantia = o.condicao === 'Seminovo' && o.garantia ? `<br><span class="text-yellow-500">Garantia: ${o.garantia}</span>` : '';
+
                 return `
                 <tr>
                     <td><span class="block font-bold">${o.variacoes.produtos_mestre.nome}</span><span class="text-[10px] text-gray-400">${detalhes}</span>${obsStr}</td>
-                    <td><span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600">${o.condicao}</span></td>
+                    <td><span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600">${o.condicao}</span>${tagGarantia}</td>
                     <td><input type="number" id="q-${o.id}" class="mini-input" value="${o.quantidade}" onchange="salvarEdicao(${o.id})"></td>
                     <td><input type="text" id="p-${o.id}" class="mini-input w-24" value="${o.preco.toLocaleString('pt-BR')}" onchange="salvarEdicao(${o.id})"></td>
                     <td><span class="btn-del" onclick="deletar(${o.id})">Excluir</span></td>
