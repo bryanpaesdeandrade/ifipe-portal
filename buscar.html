@@ -80,7 +80,7 @@
             initTicker();
             const [p, v, r] = await Promise.all([
                 _s.from('produtos_mestre').select('id, nome').order('nome'),
-                _s.from('variacoes').select('*'), // Carrega tudo para a mágica da cascata
+                _s.from('variacoes').select('*'), 
                 _s.from('regioes').select('id, nome, bandeira')
             ]);
             
@@ -89,12 +89,11 @@
             document.getElementById('f_produto').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('f_regiao').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             
-            atualizarFiltrosCascata(); // Ativa os filtros iniciais
+            atualizarFiltrosCascata(); 
             carregarDados();
             setInterval(carregarDados, 5000); 
         }
 
-        // LÓGICA DE CASCATA: Filtra opções baseado no aparelho escolhido
         function atualizarFiltrosCascata() {
             const pid = document.getElementById('f_produto').value;
             const selectCap = document.getElementById('f_capacidade');
@@ -106,7 +105,6 @@
             let vars = gradeVariacoes;
             if (pid) { vars = vars.filter(x => x.produto_id == pid); }
 
-            // Junta tamanho (Mac/Watch) e capacidade (iPhone) no mesmo filtro de forma inteligente
             const caps = [...new Set(vars.map(x => x.capacidade || x.tamanho).filter(Boolean))];
             const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
 
@@ -144,11 +142,11 @@
                 
                 let tagEstoque = '';
                 if (o.quantidade < 5) {
-                    tagEstoque = `<span class="tag-status tag-poucas">POUCAS UNIDADES</span>`;
-                } else if (o.quantidade >= 7) {
-                    tagEstoque = `<span class="tag-status tag-muitas">ALTO ESTOQUE</span>`;
+                    tagEstoque = `<span class="tag-status tag-poucas">POUCAS UNIDADES (${o.quantidade})</span>`;
+                } else if (o.quantidade > 10) {
+                    tagEstoque = `<span class="tag-status tag-muitas">ALTO ESTOQUE (${o.quantidade})</span>`;
                 } else {
-                    tagEstoque = `<span class="tag-status tag-disponivel">ESTOQUE DISPONÍVEL</span>`;
+                    tagEstoque = `<span class="tag-status tag-disponivel">ESTOQUE DISPONÍVEL (${o.quantidade})</span>`;
                 }
 
                 const tagPreco = historicoPrecos[o.id] ? (o.preco > historicoPrecos[o.id] ? '<span class="tag-status tag-subiu">SUBIU</span>' : (o.preco < historicoPrecos[o.id] ? '<span class="tag-status tag-caiu">CAIU</span>' : '')) : '';
