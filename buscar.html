@@ -11,7 +11,9 @@
         
         .nav-bar { background:rgba(28,28,30,0.8); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:15px 30px; position:sticky; top:0; z-index:100; }
         .filter-bar { background:#1c1c1e; padding:15px; border-radius:16px; margin-top:20px; border:1px solid #38383a; }
-        .apple-input { background:#2c2c2e; border:1px solid #38383a; border-radius:10px; padding:10px; width:100%; color:white; outline:none; font-size:12px; }
+        
+        /* AJUSTE AQUI: text-align:center e text-align-last:center forçam a simetria no dropdown */
+        .apple-input { background:#2c2c2e; border:1px solid #38383a; border-radius:10px; padding:10px; width:100%; color:white; outline:none; font-size:12px; text-align:center; text-align-last:center; }
         
         .product-card { background:#1c1c1e; border:1px solid #38383a; border-radius:16px; padding:15px; transition:0.3s; position:relative; overflow:hidden; }
         .product-card:hover { border-color:#0071e3; transform:translateY(-4px); }
@@ -32,7 +34,9 @@
 
         .ticker-link { color:#ffcc00; font-size:11px; font-weight:900; text-transform:uppercase; text-decoration:none; letter-spacing:0.1em; transition: 0.3s; }
         .ticker-link:hover { color: #fff; }
-        label { display:block; text-transform:uppercase; font-size:8px; color:#86868b; margin-bottom:4px; font-weight:900; letter-spacing:0.1em; }
+        
+        /* AJUSTE AQUI: text-align:center para os títulos das caixinhas */
+        label { display:block; text-transform:uppercase; font-size:8px; color:#86868b; margin-bottom:4px; font-weight:900; letter-spacing:0.1em; text-align:center; }
     </style>
 </head>
 <body>
@@ -58,8 +62,8 @@
             <div><label>Memória/Tam</label><select id="f_capacidade" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
             <div><label>Cor</label><select id="f_cor" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
             <div><label>Região</label><select id="f_regiao" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-            <div><label>Lojista</label><select id="f_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
-            <div><label>Cid. do Lojista</label><select id="f_cidade_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+            <div><label>Atacadista</label><select id="f_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
+            <div><label>Cidade do Atacadista</label><select id="f_cidade_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
         </div>
 
         <div id="rankingGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8"></div>
@@ -85,7 +89,6 @@
                 _s.from('produtos_mestre').select('id, nome').order('nome'),
                 _s.from('variacoes').select('*'), 
                 _s.from('regioes').select('id, nome, bandeira'),
-                // Busca também a cidade dos fornecedores para montar o novo filtro
                 _s.from('fornecedores').select('id, nome, verificado, cidade').eq('ativo', true).order('nome')
             ]);
             
@@ -94,10 +97,8 @@
             document.getElementById('f_produto').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('f_regiao').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             
-            // Filtro Lojista com VERIFICADO
             document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? '[✔️ VERIFICADO]' : ''}</option>`).join('');
             
-            // Monta Filtro de Cidades
             const cidadesUnicas = [...new Set(f.data.map(x => x.cidade).filter(Boolean))].sort();
             document.getElementById('f_cidade_lojista').innerHTML += cidadesUnicas.map(c => `<option value="${c}">${c}</option>`).join('');
 
@@ -127,7 +128,6 @@
         }
 
         async function carregarDados() {
-            // Puxa a cidade do fornecedor na querie
             const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)');
             ofertasAtuais = data || [];
             
@@ -165,7 +165,7 @@
             const fCor = document.getElementById('f_cor').value;
             const fR = document.getElementById('f_regiao').value;
             const fL = document.getElementById('f_lojista').value;
-            const fCidLoj = document.getElementById('f_cidade_lojista').value; // Novo Filtro
+            const fCidLoj = document.getElementById('f_cidade_lojista').value;
 
             let filtrados = ofertasAtuais.filter(o => 
                 (o.quantidade > 0) &&
@@ -175,7 +175,7 @@
                 (!fCor || o.variacoes.cor == fCor) &&
                 (!fR || o.regiao_id == fR) &&
                 (!fL || o.fornecedores.id == fL) &&
-                (!fCidLoj || o.fornecedores.cidade == fCidLoj) // Aplica o novo filtro de cidade do Lojista
+                (!fCidLoj || o.fornecedores.cidade == fCidLoj)
             );
 
             filtrados.sort((a, b) => {
@@ -223,7 +223,6 @@
                 const detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao.toUpperCase()].filter(Boolean).join(' | ');
 
                 let tagsExtra = [];
-                // Se ele preencheu a cidade do produto, exibe, se não exibe a cidade do cadastro dele
                 if (o.cidade || o.fornecedores.cidade) tagsExtra.push(`📍 ${o.cidade || o.fornecedores.cidade}`);
                 if (o.aceita_coleta) tagsExtra.push('🏬 Coleta');
                 if (o.tem_boy) tagsExtra.push('🛵 Motoboy');
@@ -236,7 +235,6 @@
                     tagsHtml = `<div class="text-[9px] text-gray-300 font-bold uppercase tracking-widest mt-2 mb-2 flex flex-wrap gap-2 items-center">${tagsExtra.join('<span class="text-[#38383a]">|</span>')}</div>`;
                 }
 
-                // SELO DE VERIFICADO DE ALTA CONVERSÃO
                 const seloVIP = o.fornecedores.verificado ? `<span class="inline-flex items-center justify-center bg-blue-500 text-white rounded px-1.5 py-0.5 text-[8px] font-black uppercase ml-2 tracking-widest" title="Lojista Verificado">✔️ Verificado</span>` : '';
 
                 return `
