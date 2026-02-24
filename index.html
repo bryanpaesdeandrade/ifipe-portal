@@ -75,7 +75,7 @@
                     <button onclick="realizarLogin()" class="apple-button w-full">ENTRAR NO iFIPE</button>
                     <div class="text-center mt-6 space-y-2">
                         <span class="link-nav" onclick="toggleForm()">FAZER MEU CADASTRO</span>
-                        <span class="link-nav text-gray-500" onclick="alert('Contate o suporte.')">ESQUECI MINHA SENHA</span>
+                        <span class="link-nav text-gray-500" onclick="alert('Contate o administrador para redefinir sua senha.')">ESQUECI MINHA SENHA</span>
                     </div>
                 </div>
 
@@ -100,7 +100,6 @@
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
-        // 1. WebSocket separado para não travar o carregamento
         function iniciarCambio() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (event) => {
@@ -110,16 +109,20 @@
             };
         }
 
-        // 2. Window.onload com trava de segurança
-        window.onload = () => {
+        // REDIRECIONAMENTO INTELIGENTE (SEM LOOP)
+        window.onload = async () => {
             iniciarCambio();
-            
-            // Só redireciona se houver token E não estivermos vindo de um erro
             const token = localStorage.getItem('iFipe_Token');
-            if (token && !window.location.search.includes('logout')) {
-                console.log("Token detectado, verificando...");
-                // Pequeno delay para garantir que o DOM carregou antes de pular de página
-                setTimeout(() => { window.location.replace('buscar.html'); }, 100);
+            
+            if (token) {
+                // Valida se o usuário ainda existe/está ativo antes de pular
+                const { data } = await _s.from('clientes_buscador').select('id, aprovado').eq('id', token).maybeSingle();
+                if (data && data.aprovado) {
+                    window.location.replace('buscar.html');
+                } else {
+                    // Token inválido ou não aprovado: limpa a sujeira
+                    localStorage.removeItem('iFipe_Token');
+                }
             }
         };
 
@@ -133,7 +136,7 @@
             const e = document.getElementById('logEmail').value, p = document.getElementById('logPass').value, m = document.getElementById('msg');
             if(!e || !p) { m.innerText = "PREENCHA OS CAMPOS."; m.style.color = "#ff3b30"; return; }
             
-            const { data, error } = await _s.from('clientes_buscador').select('*').eq('email', e).eq('senha', p).maybeSingle();
+            const { data } = await _s.from('clientes_buscador').select('*').eq('email', e).eq('senha', p).maybeSingle();
             
             if(data) {
                 if(!data.aprovado) { m.innerText = "ACESSO PENDENTE."; m.style.color = "#ffcc00"; return; }
@@ -149,6 +152,7 @@
             if(!n||!c||!e||!p){m.innerText="PREENCHA TUDO.";m.style.color="#ff3b30";return;}
             const { error } = await _s.from('clientes_buscador').insert([{ nome: n, cpf: c, email: e, whatsapp: w, senha: p, aprovado: false }]);
             if(!error) { m.innerText = "SOLICITAÇÃO ENVIADA!"; m.style.color = "#32d74b"; setTimeout(toggleForm, 3000); }
+            else { m.innerText = "ERRO NO CADASTRO."; m.style.color = "#ff3b30"; }
         }
     </script>
 </body>
