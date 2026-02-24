@@ -44,6 +44,17 @@
                 <label>Nome</label>
                 <input type="text" id="edit_nome" class="apple-input py-2" required>
                 
+                <div id="loc_box" class="hidden grid-cols-2 gap-2 mt-2 mb-2">
+                    <div>
+                        <label>Estado (Ex: SP)</label>
+                        <input type="text" id="edit_estado" class="apple-input py-2 mb-0">
+                    </div>
+                    <div>
+                        <label>Cidade</label>
+                        <input type="text" id="edit_cidade" class="apple-input py-2 mb-0">
+                    </div>
+                </div>
+
                 <label id="label_email">E-mail / Usuário</label>
                 <input type="text" id="edit_email" class="apple-input py-2">
                 
@@ -92,6 +103,10 @@
                     <h3 class="font-bold text-[11px] text-blue-500 mb-4 uppercase tracking-widest">Novo Lojista</h3>
                     <form onsubmit="addLojista(event)">
                         <input type="text" id="nl_nome" class="apple-input py-2" placeholder="Nome da Loja" required>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="nl_estado" class="apple-input py-2" placeholder="Estado (Ex: SP)" required>
+                            <input type="text" id="nl_cidade" class="apple-input py-2" placeholder="Cidade" required>
+                        </div>
                         <input type="text" id="nl_whats" class="apple-input py-2" placeholder="WhatsApp" required>
                         <input type="text" id="nl_senha" class="apple-input py-2" placeholder="Senha de Acesso" required>
                         <button type="submit" class="apple-button bg-blue-600 text-white hover:bg-blue-500 border-0">Cadastrar Lojista</button>
@@ -198,29 +213,38 @@
             window.location.reload(); 
         }
 
-        function abrirModalEdicao(tabela, id, nome, email, whats, senha) {
+        function abrirModalEdicao(tabela, id, nome, email, whats, senha, estado, cidade) {
             document.getElementById('edit_tabela').value = tabela;
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_nome').value = nome || '';
             document.getElementById('edit_email').value = email || '';
             document.getElementById('edit_whats').value = whats || '';
             document.getElementById('edit_senha').value = senha || '';
+            document.getElementById('edit_estado').value = estado || '';
+            document.getElementById('edit_cidade').value = cidade || '';
 
             if(tabela === 'fornecedores') {
                 document.getElementById('edit_email').style.display = 'none';
                 document.getElementById('label_email').style.display = 'none';
                 document.getElementById('edit_whats').style.display = 'block';
                 document.getElementById('label_whats').style.display = 'block';
+                // Mostra a localização
+                document.getElementById('loc_box').classList.remove('hidden');
+                document.getElementById('loc_box').classList.add('grid');
             } else if(tabela === 'admin_users') {
                 document.getElementById('edit_email').style.display = 'block';
                 document.getElementById('label_email').style.display = 'block';
                 document.getElementById('edit_whats').style.display = 'none';
                 document.getElementById('label_whats').style.display = 'none';
+                document.getElementById('loc_box').classList.add('hidden');
+                document.getElementById('loc_box').classList.remove('grid');
             } else {
                 document.getElementById('edit_email').style.display = 'block';
                 document.getElementById('label_email').style.display = 'block';
                 document.getElementById('edit_whats').style.display = 'block';
                 document.getElementById('label_whats').style.display = 'block';
+                document.getElementById('loc_box').classList.add('hidden');
+                document.getElementById('loc_box').classList.remove('grid');
             }
 
             document.getElementById('editModal').classList.remove('hidden');
@@ -240,6 +264,8 @@
 
             if(t === 'fornecedores') {
                 updateData.whatsapp = document.getElementById('edit_whats').value;
+                updateData.estado = document.getElementById('edit_estado').value;
+                updateData.cidade = document.getElementById('edit_cidade').value;
             } else if (t === 'admin_users') {
                 updateData.email = document.getElementById('edit_email').value;
             } else if (t === 'clientes_buscador') {
@@ -258,7 +284,13 @@
             const n = document.getElementById('nl_nome').value;
             const w = document.getElementById('nl_whats').value;
             const s = document.getElementById('nl_senha').value;
-            await _s.from('fornecedores').insert([{ nome: n, whatsapp: w, senha: s, ativo: true }]);
+            const est = document.getElementById('nl_estado').value;
+            const cid = document.getElementById('nl_cidade').value;
+            
+            await _s.from('fornecedores').insert([{ 
+                nome: n, whatsapp: w, senha: s, estado: est, cidade: cid, pais: 'Brasil', ativo: true 
+            }]);
+            
             e.target.reset();
             carregarTabelas();
             alert("Lojista cadastrado com sucesso!");
@@ -291,23 +323,23 @@
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
         async function carregarTabelas() {
-            // Lojistas (AGORA COM BOTÃO DE SELO VIP)
+            // Lojistas
             const { data: lojas } = await _s.from('fornecedores').select('*').order('id', {ascending: true});
             document.getElementById('listaFornecedores').innerHTML = lojas.map(l => `
                 <tr>
                     <td>
                         <span class="font-bold block">${l.nome} ${l.verificado ? '✔️' : ''}</span>
-                        <span class="text-[10px] text-gray-500">ID: ${l.id}</span>
+                        <span class="text-[10px] text-gray-500">ID: ${l.id} | ${l.cidade || 'Sem Cidade'} - ${l.estado || 'Sem UF'}</span>
                     </td>
                     <td>${l.whatsapp}</td>
                     <td class="text-red-400 font-mono tracking-wider">${l.senha}</td>
                     <td>${l.ativo ? '<span class="text-green-500 font-bold">Ativo</span>' : '<span class="text-red-500 font-bold">Inativo</span>'}</td>
                     <td>
                         <div class="flex flex-wrap gap-1">
-                            <span class="btn-acao btn-azul" onclick="abrirModalEdicao('fornecedores', ${l.id}, '${escapeString(l.nome)}', '', '${escapeString(l.whatsapp)}', '${escapeString(l.senha)}')">Editar</span>
+                            <span class="btn-acao btn-azul" onclick="abrirModalEdicao('fornecedores', ${l.id}, '${escapeString(l.nome)}', '', '${escapeString(l.whatsapp)}', '${escapeString(l.senha)}', '${escapeString(l.estado)}', '${escapeString(l.cidade)}')">Editar</span>
                             ${!l.ativo ? `<span class="btn-acao btn-verde" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', true)">Ativar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', false)">Inativar</span>`}
                             
-                            ${!l.verificado ? `<span class="btn-acao bg-blue-600 text-white hover:bg-blue-500" onclick="alterarStatus('fornecedores', ${l.id}, 'verificado', true)">Dar Selo VIP</span>` : `<span class="btn-acao bg-gray-600 text-white hover:bg-gray-500" onclick="alterarStatus('fornecedores', ${l.id}, 'verificado', false)">Tirar Selo</span>`}
+                            ${!l.verificado ? `<span class="btn-acao bg-blue-600 text-white hover:bg-blue-500" onclick="alterarStatus('fornecedores', ${l.id}, 'verificado', true)">Verificar Lojista</span>` : `<span class="btn-acao bg-gray-600 text-white hover:bg-gray-500" onclick="alterarStatus('fornecedores', ${l.id}, 'verificado', false)">Remover Verificação</span>`}
                             
                             <span class="btn-acao btn-vermelho" onclick="excluirLojista(${l.id})">Excluir</span>
                         </div>
