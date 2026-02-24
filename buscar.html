@@ -52,9 +52,9 @@
 
     <main class="max-w-7xl mx-auto px-4 pb-20">
         <div class="filter-bar grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div><label>Aparelho</label><select id="f_produto" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
+            <div><label>Aparelho</label><select id="f_produto" class="apple-input" onchange="atualizarFiltrosCascata()"><option value="">Todos</option></select></div>
             <div><label>Condição</label><select id="f_condicao" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select></div>
-            <div><label>Memória/Armaz.</label><select id="f_capacidade" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+            <div><label>Memória/Tamanho</label><select id="f_capacidade" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
             <div><label>Cor</label><select id="f_cor" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
             <div><label>Região</label><select id="f_regiao" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
         </div>
@@ -66,6 +66,7 @@
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let ofertasAtuais = [];
         let historicoPrecos = {};
+        let gradeVariacoes = [];
 
         function initTicker() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
@@ -79,21 +80,43 @@
             initTicker();
             const [p, v, r] = await Promise.all([
                 _s.from('produtos_mestre').select('id, nome').order('nome'),
-                _s.from('variacoes').select('capacidade, cor'),
+                _s.from('variacoes').select('*'), // Carrega tudo para a mágica da cascata
                 _s.from('regioes').select('id, nome, bandeira')
             ]);
             
+            gradeVariacoes = v.data;
+
             document.getElementById('f_produto').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('f_capacidade').innerHTML += [...new Set(v.data.map(x => x.capacidade))].filter(Boolean).map(x => `<option value="${x}">${x}</option>`).join('');
-            document.getElementById('f_cor').innerHTML += [...new Set(v.data.map(x => x.cor))].filter(Boolean).map(x => `<option value="${x}">${x}</option>`).join('');
             document.getElementById('f_regiao').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             
+            atualizarFiltrosCascata(); // Ativa os filtros iniciais
             carregarDados();
             setInterval(carregarDados, 5000); 
         }
 
+        // LÓGICA DE CASCATA: Filtra opções baseado no aparelho escolhido
+        function atualizarFiltrosCascata() {
+            const pid = document.getElementById('f_produto').value;
+            const selectCap = document.getElementById('f_capacidade');
+            const selectCor = document.getElementById('f_cor');
+            
+            const capAtual = selectCap.value;
+            const corAtual = selectCor.value;
+
+            let vars = gradeVariacoes;
+            if (pid) { vars = vars.filter(x => x.produto_id == pid); }
+
+            // Junta tamanho (Mac/Watch) e capacidade (iPhone) no mesmo filtro de forma inteligente
+            const caps = [...new Set(vars.map(x => x.capacidade || x.tamanho).filter(Boolean))];
+            const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
+
+            selectCap.innerHTML = '<option value="">Todas</option>' + caps.map(c => `<option value="${c}" ${c === capAtual ? 'selected' : ''}>${c}</option>`).join('');
+            selectCor.innerHTML = '<option value="">Todas</option>' + cores.map(c => `<option value="${c}" ${c === corAtual ? 'selected' : ''}>${c}</option>`).join('');
+            
+            renderizarRanking();
+        }
+
         async function carregarDados() {
-            // PUXANDO O TAMANHO TAMBÉM DO BANCO DE DADOS
             const { data } = await _s.from('ofertas').select('*, fornecedores(nome, whatsapp), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)').order('preco', {ascending: true});
             ofertasAtuais = data || [];
             renderizarRanking();
@@ -111,7 +134,7 @@
                 (o.quantidade > 0) &&
                 (!fP || o.variacoes.produtos_mestre.id == fP) &&
                 (!fC || o.condicao == fC) &&
-                (!fCap || o.variacoes.capacidade == fCap) &&
+                (!fCap || o.variacoes.capacidade == fCap || o.variacoes.tamanho == fCap) &&
                 (!fCor || o.variacoes.cor == fCor) &&
                 (!fR || o.regiao_id == fR)
             );
@@ -131,7 +154,6 @@
                 const tagPreco = historicoPrecos[o.id] ? (o.preco > historicoPrecos[o.id] ? '<span class="tag-status tag-subiu">SUBIU</span>' : (o.preco < historicoPrecos[o.id] ? '<span class="tag-status tag-caiu">CAIU</span>' : '')) : '';
                 historicoPrecos[o.id] = o.preco;
 
-                // CONCATENANDO OS NOVOS DADOS DA VARIAÇÃO (Tamanho + HD + Cor)
                 const detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao.toUpperCase()].filter(Boolean).join(' | ');
 
                 return `
