@@ -83,14 +83,13 @@
                 _s.from('produtos_mestre').select('id, nome').order('nome'),
                 _s.from('variacoes').select('*'), 
                 _s.from('regioes').select('id, nome, bandeira'),
-                _s.from('fornecedores').select('id, nome').eq('ativo', true).order('nome') // Puxa os lojistas ativos
+                _s.from('fornecedores').select('id, nome').eq('ativo', true).order('nome')
             ]);
             
             gradeVariacoes = v.data;
 
             document.getElementById('f_produto').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('f_regiao').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
-            // Popula o novo filtro de Lojista
             document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             
             atualizarFiltrosCascata(); 
@@ -119,13 +118,14 @@
         }
 
         async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)').order('preco', {ascending: true});
+            // Nota: Puxo os dados sem ordenar no SQL agora, a ordenação visual será no renderizarRanking
+            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)');
             ofertasAtuais = data || [];
             
             const agora = Date.now();
             let salvouAlteracao = false;
             
-            // TRAVA DE 15 MINUTOS (900.000 ms) À PROVA DE F5
+            // TRAVA DE TEMPO (15 MINUTOS = 900000ms)
             ofertasAtuais.forEach(o => {
                 if (!historicoPrecos[o.id]) {
                     historicoPrecos[o.id] = { preco: o.preco, status: '', timestamp: 0 };
@@ -133,10 +133,9 @@
                 } else if (historicoPrecos[o.id].preco !== o.preco) {
                     historicoPrecos[o.id].status = o.preco > historicoPrecos[o.id].preco ? 'subiu' : 'caiu';
                     historicoPrecos[o.id].preco = o.preco; 
-                    historicoPrecos[o.id].timestamp = agora + 900000; // Começa a contar 15 minutos a partir de AGORA
+                    historicoPrecos[o.id].timestamp = agora + 900000; 
                     salvouAlteracao = true;
                 } else if (historicoPrecos[o.id].timestamp > 0 && agora > historicoPrecos[o.id].timestamp) {
-                    // Se o tempo atual for maior que o timestamp gravado, o tempo acabou.
                     historicoPrecos[o.id].status = '';
                     historicoPrecos[o.id].timestamp = 0;
                     salvouAlteracao = true;
@@ -157,8 +156,9 @@
             const fCap = document.getElementById('f_capacidade').value;
             const fCor = document.getElementById('f_cor').value;
             const fR = document.getElementById('f_regiao').value;
-            const fL = document.getElementById('f_lojista').value; // Puxa o valor do filtro Lojista
+            const fL = document.getElementById('f_lojista').value;
 
+            // 1. Filtragem Inicial
             let filtrados = ofertasAtuais.filter(o => 
                 (o.quantidade > 0) &&
                 (!fP || o.variacoes.produtos_mestre.id == fP) &&
@@ -166,12 +166,23 @@
                 (!fCap || o.variacoes.capacidade == fCap || o.variacoes.tamanho == fCap) &&
                 (!fCor || o.variacoes.cor == fCor) &&
                 (!fR || o.regiao_id == fR) &&
-                (!fL || o.fornecedores.id == fL) // Aplica o filtro de Lojista
+                (!fL || o.fornecedores.id == fL) 
             );
+
+            // 2. ORDENAÇÃO DE DUPLA CAMADA (HIERARQUIA: NOVO > SEMINOVO -> PREÇO CRESCENTE)
+            filtrados.sort((a, b) => {
+                // Se um for 'Novo' e outro 'Seminovo', o 'Novo' vem antes (-1)
+                if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
+                if (a.condicao !== 'Novo' && b.condicao === 'Novo') return 1;
+                
+                // Se ambos tiverem a mesma condição (ex: dois 'Novos'), empurra o mais barato para cima
+                return a.preco - b.preco;
+            });
 
             const menoresPrecosPorProduto = {};
             filtrados.forEach(o => {
                 const pid = o.variacoes.produtos_mestre.id;
+                // Acha o menor preço por produto, ignorando a condição. Se quiser que o menor seja só do 'Novo', adicione o.condicao === 'Novo'
                 if (!menoresPrecosPorProduto[pid] || o.preco < menoresPrecosPorProduto[pid]) {
                     menoresPrecosPorProduto[pid] = o.preco;
                 }
@@ -198,18 +209,16 @@
 
                 const detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao.toUpperCase()].filter(Boolean).join(' | ');
 
-                // CONSTRUÇÃO DAS TAGS ALINHADAS E COM O EMOJI 💲
                 let tagsExtra = [];
                 if (o.cidade) tagsExtra.push(`📍 ${o.cidade}`);
                 if (o.aceita_coleta) tagsExtra.push('🏬 Coleta');
                 if (o.tem_boy) tagsExtra.push('🛵 Motoboy');
                 if (o.faz_envio) tagsExtra.push('📦 Envio');
                 if (o.emite_nota) tagsExtra.push('🧾 Nota');
-                if (o.aceita_usdt) tagsExtra.push('💲 USDT'); // Emoji alterado aqui
+                if (o.aceita_usdt) tagsExtra.push('💲 USDT'); 
                 
                 let tagsHtml = '';
                 if (tagsExtra.length > 0) {
-                    // gap-2 adiciona um espaçamento limpo entre as tags, flex-wrap garante que elas não fujam da caixa
                     tagsHtml = `<div class="text-[9px] text-gray-300 font-bold uppercase tracking-widest mt-2 mb-2 flex flex-wrap gap-2 items-center">${tagsExtra.join('<span class="text-[#38383a]">|</span>')}</div>`;
                 }
 
