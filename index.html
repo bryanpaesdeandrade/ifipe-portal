@@ -71,25 +71,29 @@
                     <p class="text-[9px] text-blue-500 font-black uppercase tracking-[0.3em] mt-3">BUSCADOR APPLE ONLINE</p>
                 </div>
 
-                <div id="loginForm">
-                    <label>E-mail de Acesso</label><input type="email" id="logEmail" class="apple-input" placeholder="seu@email.com">
-                    <label>Senha</label><input type="password" id="logPass" class="apple-input" placeholder="••••••••">
-                    <button onclick="realizarLogin()" class="apple-button w-full">ENTRAR NO iFIPE</button>
+                <form id="loginForm" onsubmit="realizarLogin(event)">
+                    <label>E-mail de Acesso</label>
+                    <input type="email" id="logEmail" class="apple-input" placeholder="seu@email.com" required>
+                    <label>Senha</label>
+                    <input type="password" id="logPass" class="apple-input" placeholder="••••••••" required>
+                    <button type="submit" class="apple-button w-full">ENTRAR NO iFIPE</button>
+                    
                     <div class="text-center mt-6 space-y-2">
                         <span class="link-nav" onclick="toggleForm()">FAZER MEU CADASTRO</span>
                         <span class="link-nav text-gray-500" onclick="alert('Contate o suporte.')">ESQUECI MINHA SENHA</span>
                     </div>
-                </div>
+                </form>
 
-                <div id="registerForm" class="hidden">
-                    <label>Nome Completo</label><input type="text" id="regNome" class="apple-input">
-                    <label>CPF</label><input type="text" id="regCpf" class="apple-input">
-                    <label>E-mail Oficial</label><input type="email" id="regEmail" class="apple-input">
-                    <label>WhatsApp</label><input type="text" id="regWhats" class="apple-input">
-                    <label>Criar Senha</label><input type="password" id="regPass" class="apple-input">
-                    <button onclick="solicitarCadastro()" class="apple-button w-full">ENVIAR SOLICITAÇÃO</button>
+                <form id="registerForm" class="hidden" onsubmit="solicitarCadastro(event)">
+                    <label>Nome Completo</label><input type="text" id="regNome" class="apple-input" required>
+                    <label>CPF</label><input type="text" id="regCpf" class="apple-input" required>
+                    <label>E-mail Oficial</label><input type="email" id="regEmail" class="apple-input" required>
+                    <label>WhatsApp</label><input type="text" id="regWhats" class="apple-input" required>
+                    <label>Criar Senha</label><input type="password" id="regPass" class="apple-input" required>
+                    <button type="submit" class="apple-button w-full">ENVIAR SOLICITAÇÃO</button>
                     <span class="link-nav text-center mt-4" onclick="toggleForm()">VOLTAR AO LOGIN</span>
-                </div>
+                </form>
+                
                 <p id="msg" class="mt-4 text-center text-[9px] font-black uppercase tracking-widest"></p>
             </div>
 
@@ -101,6 +105,9 @@
     </div>
 
     <script>
+        // QUEIMA DE TOKENS FANTASMAS (Mata o loop pela raiz assim que abre a página)
+        localStorage.removeItem('iFipe_Token');
+
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
         function iniciarCambio() {
@@ -112,7 +119,6 @@
             };
         }
 
-        // CARREGAMENTO SEGURO E SEM REDIRECIONAMENTOS AUTOMÁTICOS
         window.onload = () => {
             iniciarCambio();
         };
@@ -123,9 +129,13 @@
             document.getElementById('msg').innerText = ""; 
         }
 
-        async function realizarLogin() {
-            const e = document.getElementById('logEmail').value, p = document.getElementById('logPass').value, m = document.getElementById('msg');
-            if(!e || !p) { m.innerText = "PREENCHA OS CAMPOS."; m.style.color = "#ff3b30"; return; }
+        async function realizarLogin(event) {
+            // TRAVA MÁXIMA: Impede o formulário de recarregar a página!
+            event.preventDefault(); 
+            
+            const e = document.getElementById('logEmail').value;
+            const p = document.getElementById('logPass').value;
+            const m = document.getElementById('msg');
             
             m.innerText = "VERIFICANDO..."; 
             m.style.color = "#fff";
@@ -133,20 +143,44 @@
             const { data } = await _s.from('clientes_buscador').select('*').eq('email', e).eq('senha', p).maybeSingle();
             
             if(data) {
-                if(!data.aprovado) { m.innerText = "ACESSO PENDENTE."; m.style.color = "#ffcc00"; return; }
+                if(!data.aprovado) { 
+                    m.innerText = "ACESSO PENDENTE DE LIBERAÇÃO."; 
+                    m.style.color = "#ffcc00"; 
+                    return; 
+                }
+                // Se estiver tudo certo, cria o token e te leva para a próxima página.
                 localStorage.setItem('iFipe_Token', data.id);
-                // O redirecionamento acontece SOMENTE aqui, por ação manual sua.
                 window.location.href = 'buscar.html';
             } else { 
-                m.innerText = "DADOS INCORRETOS."; m.style.color = "#ff3b30"; 
+                m.innerText = "E-MAIL OU SENHA INCORRETOS."; 
+                m.style.color = "#ff3b30"; 
             }
         }
 
-        async function solicitarCadastro() {
-            const n=document.getElementById('regNome').value, c=document.getElementById('regCpf').value.replace(/\D/g,''), e=document.getElementById('regEmail').value, w=document.getElementById('regWhats').value, p=document.getElementById('regPass').value, m=document.getElementById('msg');
-            if(!n||!c||!e||!p){m.innerText="PREENCHA TUDO.";m.style.color="#ff3b30";return;}
+        async function solicitarCadastro(event) {
+            // TRAVA MÁXIMA AQUI TAMBÉM
+            event.preventDefault();
+
+            const n = document.getElementById('regNome').value;
+            const c = document.getElementById('regCpf').value.replace(/\D/g,'');
+            const e = document.getElementById('regEmail').value;
+            const w = document.getElementById('regWhats').value;
+            const p = document.getElementById('regPass').value;
+            const m = document.getElementById('msg');
+            
+            m.innerText = "ENVIANDO..."; 
+            m.style.color = "#fff";
+
             const { error } = await _s.from('clientes_buscador').insert([{ nome: n, cpf: c, email: e, whatsapp: w, senha: p, aprovado: false }]);
-            if(!error) { m.innerText = "SOLICITAÇÃO ENVIADA!"; m.style.color = "#32d74b"; setTimeout(toggleForm, 3000); }
+            
+            if(!error) { 
+                m.innerText = "SOLICITAÇÃO ENVIADA COM SUCESSO!"; 
+                m.style.color = "#32d74b"; 
+                setTimeout(toggleForm, 3000); 
+            } else {
+                m.innerText = "ERRO AO ENVIAR. TENTE NOVAMENTE."; 
+                m.style.color = "#ff3b30";
+            }
         }
     </script>
 </body>
