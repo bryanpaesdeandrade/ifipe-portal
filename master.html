@@ -198,9 +198,6 @@
             window.location.reload(); 
         }
 
-        // ==========================================
-        // SISTEMA DE EDIÇÃO RÁPIDA (MODAL)
-        // ==========================================
         function abrirModalEdicao(tabela, id, nome, email, whats, senha) {
             document.getElementById('edit_tabela').value = tabela;
             document.getElementById('edit_id').value = id;
@@ -209,7 +206,6 @@
             document.getElementById('edit_whats').value = whats || '';
             document.getElementById('edit_senha').value = senha || '';
 
-            // Oculta campos inúteis dependendo de quem estamos editando
             if(tabela === 'fornecedores') {
                 document.getElementById('edit_email').style.display = 'none';
                 document.getElementById('label_email').style.display = 'none';
@@ -257,9 +253,6 @@
             alert("Dados atualizados com sucesso!");
         }
 
-        // ==========================================
-        // FUNÇÕES DE CADASTRO DIRETO
-        // ==========================================
         async function addLojista(e) {
             e.preventDefault();
             const n = document.getElementById('nl_nome').value;
@@ -295,24 +288,29 @@
             alert("Admin cadastrado com sucesso!");
         }
 
-        // ==========================================
-        // FUNÇÕES DE CARREGAMENTO E STATUS
-        // ==========================================
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
         async function carregarTabelas() {
-            // Lojistas
+            // Lojistas (AGORA COM BOTÃO DE SELO VIP)
             const { data: lojas } = await _s.from('fornecedores').select('*').order('id', {ascending: true});
             document.getElementById('listaFornecedores').innerHTML = lojas.map(l => `
                 <tr>
-                    <td><span class="font-bold block">${l.nome}</span><span class="text-[10px] text-gray-500">ID: ${l.id}</span></td>
+                    <td>
+                        <span class="font-bold block">${l.nome} ${l.verificado ? '✔️' : ''}</span>
+                        <span class="text-[10px] text-gray-500">ID: ${l.id}</span>
+                    </td>
                     <td>${l.whatsapp}</td>
                     <td class="text-red-400 font-mono tracking-wider">${l.senha}</td>
                     <td>${l.ativo ? '<span class="text-green-500 font-bold">Ativo</span>' : '<span class="text-red-500 font-bold">Inativo</span>'}</td>
                     <td>
-                        <span class="btn-acao btn-azul" onclick="abrirModalEdicao('fornecedores', ${l.id}, '${escapeString(l.nome)}', '', '${escapeString(l.whatsapp)}', '${escapeString(l.senha)}')">Editar</span>
-                        ${!l.ativo ? `<span class="btn-acao btn-verde" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', true)">Ativar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', false)">Inativar</span>`}
-                        <span class="btn-acao btn-vermelho" onclick="excluirLojista(${l.id})">Excluir</span>
+                        <div class="flex flex-wrap gap-1">
+                            <span class="btn-acao btn-azul" onclick="abrirModalEdicao('fornecedores', ${l.id}, '${escapeString(l.nome)}', '', '${escapeString(l.whatsapp)}', '${escapeString(l.senha)}')">Editar</span>
+                            ${!l.ativo ? `<span class="btn-acao btn-verde" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', true)">Ativar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', false)">Inativar</span>`}
+                            
+                            ${!l.verificado ? `<span class="btn-acao bg-blue-600 text-white hover:bg-blue-500" onclick="alterarStatus('fornecedores', ${l.id}, 'verificado', true)">Dar Selo VIP</span>` : `<span class="btn-acao bg-gray-600 text-white hover:bg-gray-500" onclick="alterarStatus('fornecedores', ${l.id}, 'verificado', false)">Tirar Selo</span>`}
+                            
+                            <span class="btn-acao btn-vermelho" onclick="excluirLojista(${l.id})">Excluir</span>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -326,9 +324,11 @@
                     <td class="text-red-400 font-mono tracking-wider">${c.senha}</td>
                     <td>${c.aprovado ? '<span class="text-green-500 font-bold">Aprovado</span>' : '<span class="text-yellow-500 font-bold">Pendente</span>'}</td>
                     <td>
-                        <span class="btn-acao btn-azul" onclick="abrirModalEdicao('clientes_buscador', ${c.id}, '${escapeString(c.nome)}', '${escapeString(c.email)}', '${escapeString(c.whatsapp)}', '${escapeString(c.senha)}')">Editar</span>
-                        ${!c.aprovado ? `<span class="btn-acao btn-verde" onclick="alterarStatus('clientes_buscador', ${c.id}, 'aprovado', true)">Aprovar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('clientes_buscador', ${c.id}, 'aprovado', false)">Bloquear</span>`}
-                        <span class="btn-acao btn-vermelho" onclick="excluirRegistro('clientes_buscador', ${c.id})">Excluir</span>
+                        <div class="flex flex-wrap gap-1">
+                            <span class="btn-acao btn-azul" onclick="abrirModalEdicao('clientes_buscador', ${c.id}, '${escapeString(c.nome)}', '${escapeString(c.email)}', '${escapeString(c.whatsapp)}', '${escapeString(c.senha)}')">Editar</span>
+                            ${!c.aprovado ? `<span class="btn-acao btn-verde" onclick="alterarStatus('clientes_buscador', ${c.id}, 'aprovado', true)">Aprovar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('clientes_buscador', ${c.id}, 'aprovado', false)">Bloquear</span>`}
+                            <span class="btn-acao btn-vermelho" onclick="excluirRegistro('clientes_buscador', ${c.id})">Excluir</span>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -342,9 +342,11 @@
                     <td class="text-red-400 font-mono tracking-wider">${a.senha}</td>
                     <td>${a.ativo ? '<span class="text-green-500 font-bold">Ativo</span>' : '<span class="text-red-500 font-bold">Inativo</span>'}</td>
                     <td>
-                        <span class="btn-acao btn-azul" onclick="abrirModalEdicao('admin_users', ${a.id}, '${escapeString(a.nome)}', '${escapeString(a.email)}', '', '${escapeString(a.senha)}')">Editar</span>
-                        ${!a.ativo ? `<span class="btn-acao btn-verde" onclick="alterarStatus('admin_users', ${a.id}, 'ativo', true)">Ativar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('admin_users', ${a.id}, 'ativo', false)">Inativar</span>`}
-                        ${a.email !== 'bryan' ? `<span class="btn-acao btn-vermelho" onclick="excluirRegistro('admin_users', ${a.id})">Excluir</span>` : '<span class="text-[9px] text-gray-500">Master Intocável</span>'}
+                        <div class="flex flex-wrap gap-1">
+                            <span class="btn-acao btn-azul" onclick="abrirModalEdicao('admin_users', ${a.id}, '${escapeString(a.nome)}', '${escapeString(a.email)}', '', '${escapeString(a.senha)}')">Editar</span>
+                            ${!a.ativo ? `<span class="btn-acao btn-verde" onclick="alterarStatus('admin_users', ${a.id}, 'ativo', true)">Ativar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('admin_users', ${a.id}, 'ativo', false)">Inativar</span>`}
+                            ${a.email !== 'bryan' ? `<span class="btn-acao btn-vermelho" onclick="excluirRegistro('admin_users', ${a.id})">Excluir</span>` : '<span class="text-[9px] text-gray-500">Master Intocável</span>'}
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -355,9 +357,6 @@
             carregarTabelas();
         }
 
-        // ==========================================
-        // FUNÇÕES DE EXCLUSÃO (DELETE)
-        // ==========================================
         async function excluirRegistro(tabela, id) {
             if(confirm("Tem certeza que deseja EXCLUIR DEFINITIVAMENTE este registro?")) {
                 await _s.from(tabela).delete().eq('id', id);
