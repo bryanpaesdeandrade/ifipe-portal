@@ -23,6 +23,7 @@
         .tag-poucas { background:#ffcc00; color:#000; }
         .tag-muitas { background:#0071e3; color:#fff; }
         .tag-disponivel { background:#38383a; color:#fff; }
+        .tag-garantia { background:rgba(255, 204, 0, 0.2); color:#ffcc00; border: 1px solid #ffcc00; }
 
         .price-text { font-size:26px; font-weight:900; color:#fff; letter-spacing:-0.05em; }
         
@@ -118,6 +119,7 @@
         }
 
         async function carregarDados() {
+            // Nota: Adicionei o campo "garantia" na chamada do banco de dados
             const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)');
             ofertasAtuais = data || [];
             
@@ -167,14 +169,13 @@
                 (!fL || o.fornecedores.id == fL) 
             );
 
-            // 2. ORDENAÇÃO DE TRIPLA CAMADA
+            // 2. ORDENAÇÃO DE TRIPLA CAMADA (Condição -> Modelo Atual -> Preço)
             filtrados.sort((a, b) => {
                 // CAMADA 1: CONDIÇÃO (Novo SEMPRE ganha de Seminovo)
                 if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
                 if (a.condicao !== 'Novo' && b.condicao === 'Novo') return 1;
                 
-                // CAMADA 2: GERAÇÃO DO APARELHO (ID Maior = Mais Novo/Premium. Fica no Topo)
-                // Ex: iPhone 17 Pro Max (ID 27) ganha do iPhone 11 (ID 1)
+                // CAMADA 2: GERAÇÃO DO APARELHO (ID Maior = Mais Novo. Fica no Topo)
                 if (b.variacoes.produtos_mestre.id !== a.variacoes.produtos_mestre.id) {
                     return b.variacoes.produtos_mestre.id - a.variacoes.produtos_mestre.id; 
                 }
@@ -183,7 +184,7 @@
                 return a.preco - b.preco;
             });
 
-            // Encontra o menor preço apenas para aplicar a tag (agora categorizado por modelo e condição)
+            // Acha o Menor Preço (categorizado por Modelo + Condição)
             const menoresPrecosPorCategoria = {};
             filtrados.forEach(o => {
                 const chave = `${o.variacoes.produtos_mestre.id}_${o.condicao}`; 
@@ -212,6 +213,12 @@
                     tagPreco = '<span class="tag-status tag-caiu">PREÇO CAIU APROVEITE</span>';
                 }
 
+                // EXIBIÇÃO DA GARANTIA PARA SEMINOVOS
+                let tagGarantia = '';
+                if (o.condicao === 'Seminovo' && o.garantia) {
+                    tagGarantia = `<span class="tag-status tag-garantia">🛡️ GARANTIA: ${o.garantia}</span>`;
+                }
+
                 const detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao.toUpperCase()].filter(Boolean).join(' | ');
 
                 let tagsExtra = [];
@@ -233,6 +240,7 @@
                         <div class="flex flex-col gap-1 items-start">
                             ${isMenorPreco ? '<span class="tag-status tag-menor">MENOR PREÇO</span>' : ''}
                             ${tagEstoque}
+                            ${tagGarantia}
                             ${tagPreco}
                         </div>
                         <span class="text-[18px] ml-2 leading-none">${o.regioes.bandeira}</span>
