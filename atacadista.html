@@ -49,7 +49,7 @@
                 <div class="text-[11px] font-black uppercase tracking-widest">
                     Loja: <span id="nomeLoja" class="text-blue-500">...</span>
                 </div>
-                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase tracking-widest">Sair</button>
+                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase tracking-widest hover:text-white">Sair</button>
             </div>
         </div>
 
@@ -76,6 +76,19 @@
 
                         <label>Região / Origem</label>
                         <select id="regiao_id" class="apple-input" required></select>
+
+                        <div class="mt-4 mb-4 p-4 border border-[#38383a] rounded-xl bg-[#2c2c2e]">
+                            <h4 class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-3">Informações Adicionais (Opcional)</h4>
+                            <input type="text" id="obs_cidade" class="apple-input py-2 mb-3 bg-[#1c1c1e] text-[12px]" placeholder="Cidade (Ex: São Paulo - SP)">
+                            
+                            <div class="grid grid-cols-2 gap-3 text-[9px] text-gray-300 font-bold uppercase tracking-wider">
+                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="obs_coleta" class="accent-[#0071e3] w-4 h-4"> Aceita Coleta</label>
+                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="obs_boy" class="accent-[#0071e3] w-4 h-4"> Motoboy</label>
+                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="obs_usdt" class="accent-[#0071e3] w-4 h-4"> Aceita USDT</label>
+                                <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="obs_nota" class="accent-[#0071e3] w-4 h-4"> Emite Nota</label>
+                                <label class="flex items-center gap-2 cursor-pointer col-span-2 hover:text-white"><input type="checkbox" id="obs_envio" class="accent-[#0071e3] w-4 h-4"> Faço Envio (Correios/Transp.)</label>
+                            </div>
+                        </div>
 
                         <label>Preço Unitário (R$)</label>
                         <input type="text" id="preco" class="apple-input" placeholder="Ex: 5400,00" required>
@@ -123,7 +136,7 @@
         };
 
         async function fazerLogin(event) {
-            event.preventDefault(); // Trava de loop
+            event.preventDefault(); 
             const u = document.getElementById('loginId').value.trim();
             const p = document.getElementById('loginPass').value.trim();
             const msg = document.getElementById('loginMsg');
@@ -170,8 +183,8 @@
             if(!pid) return;
 
             const vars = gradeVariacoes.filter(x => x.produto_id == pid);
-            const tams = [...new Set(vars.map(x => x.tamanho).filter(Boolean))]; // MacBooks e Watches
-            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; // Armazenamento
+            const tams = [...new Set(vars.map(x => x.tamanho).filter(Boolean))]; 
+            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; 
             const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
 
             let html = '<div class="grid grid-cols-1 gap-4 mt-4">';
@@ -183,7 +196,7 @@
         }
 
         async function salvarOferta(event) {
-            event.preventDefault(); // Trava de envio do form
+            event.preventDefault(); 
             const msg = document.getElementById('formMsg');
             msg.innerText = "SALVANDO...";
             msg.style.color = "#fff";
@@ -193,7 +206,6 @@
             const cap = document.getElementById('f_cap')?.value || null;
             const cor = document.getElementById('f_cor')?.value || null;
             
-            // Busca a variação exata no banco de dados
             const v = gradeVariacoes.find(x => 
                 x.produto_id == pid && 
                 (x.tamanho === tam || (!x.tamanho && !tam)) &&
@@ -222,12 +234,24 @@
                 regiao_id: document.getElementById('regiao_id').value,
                 preco: precoLimpo,
                 quantidade: document.getElementById('quantidade').value,
-                condicao: document.getElementById('condicao').value
+                condicao: document.getElementById('condicao').value,
+                cidade: document.getElementById('obs_cidade').value.trim(),
+                aceita_coleta: document.getElementById('obs_coleta').checked,
+                tem_boy: document.getElementById('obs_boy').checked,
+                aceita_usdt: document.getElementById('obs_usdt').checked,
+                emite_nota: document.getElementById('obs_nota').checked,
+                faz_envio: document.getElementById('obs_envio').checked
             }]);
             
             if(!error) {
                 document.getElementById('preco').value = "";
                 document.getElementById('quantidade').value = "1";
+                document.getElementById('obs_cidade').value = "";
+                document.getElementById('obs_coleta').checked = false;
+                document.getElementById('obs_boy').checked = false;
+                document.getElementById('obs_usdt').checked = false;
+                document.getElementById('obs_nota').checked = false;
+                document.getElementById('obs_envio').checked = false;
                 msg.innerText = "";
                 atualizarLista();
             } else {
@@ -240,9 +264,19 @@
             const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, tamanho, cor, produtos_mestre(nome))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
             document.getElementById('listaAtivos').innerHTML = data.map(o => {
                 const detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' | ');
+                
+                const obs = [];
+                if(o.cidade) obs.push(o.cidade);
+                if(o.aceita_coleta) obs.push('Coleta');
+                if(o.tem_boy) obs.push('Boy');
+                if(o.aceita_usdt) obs.push('USDT');
+                if(o.emite_nota) obs.push('Nota');
+                if(o.faz_envio) obs.push('Envio');
+                const obsStr = obs.length > 0 ? `<span class="block mt-1 text-[9px] text-blue-400 font-bold uppercase">${obs.join(' | ')}</span>` : '';
+
                 return `
                 <tr>
-                    <td><span class="block font-bold">${o.variacoes.produtos_mestre.nome}</span><span class="text-[10px] text-gray-400">${detalhes}</span></td>
+                    <td><span class="block font-bold">${o.variacoes.produtos_mestre.nome}</span><span class="text-[10px] text-gray-400">${detalhes}</span>${obsStr}</td>
                     <td><span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600">${o.condicao}</span></td>
                     <td><input type="number" id="q-${o.id}" class="mini-input" value="${o.quantidade}" onchange="salvarEdicao(${o.id})"></td>
                     <td><input type="text" id="p-${o.id}" class="mini-input w-24" value="${o.preco.toLocaleString('pt-BR')}" onchange="salvarEdicao(${o.id})"></td>
