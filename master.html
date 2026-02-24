@@ -76,7 +76,6 @@
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
-        // VALIDA SE JÁ ESTÁ LOGADO (Evita deslogar no F5)
         window.onload = async () => {
             const token = localStorage.getItem('iFipe_MasterToken');
             if (token) {
@@ -86,16 +85,26 @@
         };
 
         async function fazerLoginAdmin(event) {
-            event.preventDefault(); // Impede o refresh da página
-            const e = document.getElementById('adminEmail').value, p = document.getElementById('adminPass').value, m = document.getElementById('loginMsg');
+            event.preventDefault(); // Trava contra loop de atualização
+            
+            // O .trim() mata espaços em branco invisíveis
+            const e = document.getElementById('adminEmail').value.trim();
+            const p = document.getElementById('adminPass').value.trim();
+            const m = document.getElementById('loginMsg');
             
             m.innerText = "VERIFICANDO...";
-            const { data } = await _s.from('admin_users').select('*').eq('email', e).eq('senha', p).maybeSingle();
+            m.style.color = "#fff";
+            
+            // O .ilike ignora diferenças de maiúsculas e minúsculas
+            const { data } = await _s.from('admin_users').select('*').ilike('email', e).eq('senha', p).maybeSingle();
             
             if(data && data.ativo) { 
                 localStorage.setItem('iFipe_MasterToken', data.id); 
                 liberarAcesso(); 
-            } else { m.innerText = "ACESSO NEGADO OU INATIVO."; }
+            } else { 
+                m.innerText = "ACESSO NEGADO. VERIFIQUE OS DADOS."; 
+                m.style.color = "#ff3b30";
+            }
         }
 
         function liberarAcesso() {
@@ -110,7 +119,6 @@
         }
 
         async function carregarTabelas() {
-            // Carrega Clientes
             const { data: clientes } = await _s.from('clientes_buscador').select('*').order('criado_em', {ascending: false});
             document.getElementById('listaClientes').innerHTML = clientes.map(c => `
                 <tr>
@@ -123,7 +131,6 @@
                 </tr>
             `).join('');
 
-            // Carrega Lojistas
             const { data: lojas } = await _s.from('fornecedores').select('*').order('id', {ascending: true});
             document.getElementById('listaFornecedores').innerHTML = lojas.map(l => `
                 <tr>
