@@ -52,13 +52,14 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 pb-20">
-        <div class="filter-bar grid grid-cols-2 md:grid-cols-6 gap-3">
+        <div class="filter-bar grid grid-cols-2 md:grid-cols-7 gap-2">
             <div><label>Aparelho</label><select id="f_produto" class="apple-input" onchange="atualizarFiltrosCascata()"><option value="">Todos</option></select></div>
             <div><label>Condição</label><select id="f_condicao" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select></div>
             <div><label>Memória/Tam</label><select id="f_capacidade" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
             <div><label>Cor</label><select id="f_cor" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
             <div><label>Região</label><select id="f_regiao" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
             <div><label>Lojista</label><select id="f_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
+            <div><label>Cid. do Lojista</label><select id="f_cidade_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
         </div>
 
         <div id="rankingGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-8"></div>
@@ -84,8 +85,8 @@
                 _s.from('produtos_mestre').select('id, nome').order('nome'),
                 _s.from('variacoes').select('*'), 
                 _s.from('regioes').select('id, nome, bandeira'),
-                // Busca também a flag "verificado" do banco
-                _s.from('fornecedores').select('id, nome, verificado').eq('ativo', true).order('nome')
+                // Busca também a cidade dos fornecedores para montar o novo filtro
+                _s.from('fornecedores').select('id, nome, verificado, cidade').eq('ativo', true).order('nome')
             ]);
             
             gradeVariacoes = v.data;
@@ -93,9 +94,13 @@
             document.getElementById('f_produto').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('f_regiao').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             
-            // Adiciona o ✔️ VIP direto no filtro se o lojista for verificado
-            document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? '✔️ VIP' : ''}</option>`).join('');
+            // Filtro Lojista com VERIFICADO
+            document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? '[✔️ VERIFICADO]' : ''}</option>`).join('');
             
+            // Monta Filtro de Cidades
+            const cidadesUnicas = [...new Set(f.data.map(x => x.cidade).filter(Boolean))].sort();
+            document.getElementById('f_cidade_lojista').innerHTML += cidadesUnicas.map(c => `<option value="${c}">${c}</option>`).join('');
+
             atualizarFiltrosCascata(); 
             carregarDados();
             setInterval(carregarDados, 5000); 
@@ -122,8 +127,8 @@
         }
 
         async function carregarDados() {
-            // Atualizada a chamada para puxar o campo "verificado" dentro dos dados do fornecedor
-            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)');
+            // Puxa a cidade do fornecedor na querie
+            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)');
             ofertasAtuais = data || [];
             
             const agora = Date.now();
@@ -160,6 +165,7 @@
             const fCor = document.getElementById('f_cor').value;
             const fR = document.getElementById('f_regiao').value;
             const fL = document.getElementById('f_lojista').value;
+            const fCidLoj = document.getElementById('f_cidade_lojista').value; // Novo Filtro
 
             let filtrados = ofertasAtuais.filter(o => 
                 (o.quantidade > 0) &&
@@ -168,7 +174,8 @@
                 (!fCap || o.variacoes.capacidade == fCap || o.variacoes.tamanho == fCap) &&
                 (!fCor || o.variacoes.cor == fCor) &&
                 (!fR || o.regiao_id == fR) &&
-                (!fL || o.fornecedores.id == fL) 
+                (!fL || o.fornecedores.id == fL) &&
+                (!fCidLoj || o.fornecedores.cidade == fCidLoj) // Aplica o novo filtro de cidade do Lojista
             );
 
             filtrados.sort((a, b) => {
@@ -216,7 +223,8 @@
                 const detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao.toUpperCase()].filter(Boolean).join(' | ');
 
                 let tagsExtra = [];
-                if (o.cidade) tagsExtra.push(`📍 ${o.cidade}`);
+                // Se ele preencheu a cidade do produto, exibe, se não exibe a cidade do cadastro dele
+                if (o.cidade || o.fornecedores.cidade) tagsExtra.push(`📍 ${o.cidade || o.fornecedores.cidade}`);
                 if (o.aceita_coleta) tagsExtra.push('🏬 Coleta');
                 if (o.tem_boy) tagsExtra.push('🛵 Motoboy');
                 if (o.faz_envio) tagsExtra.push('📦 Envio');
@@ -228,8 +236,8 @@
                     tagsHtml = `<div class="text-[9px] text-gray-300 font-bold uppercase tracking-widest mt-2 mb-2 flex flex-wrap gap-2 items-center">${tagsExtra.join('<span class="text-[#38383a]">|</span>')}</div>`;
                 }
 
-                // Cria o elemento visual do Selo VIP se o atacadista for verificado
-                const seloVIP = o.fornecedores.verificado ? `<span class="inline-flex items-center justify-center bg-blue-500 text-white rounded-full w-3 h-3 text-[7px] ml-1 align-middle" title="Lojista Verificado">✓</span>` : '';
+                // SELO DE VERIFICADO DE ALTA CONVERSÃO
+                const seloVIP = o.fornecedores.verificado ? `<span class="inline-flex items-center justify-center bg-blue-500 text-white rounded px-1.5 py-0.5 text-[8px] font-black uppercase ml-2 tracking-widest" title="Lojista Verificado">✔️ Verificado</span>` : '';
 
                 return `
                 <div class="product-card">
