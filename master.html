@@ -102,7 +102,7 @@
                 <div class="apple-card overflow-x-auto">
                     <h3 class="font-bold text-[14px] text-blue-500 mb-4 uppercase tracking-widest">Lojistas Atacadistas</h3>
                     <table>
-                        <thead><tr><th>Loja</th><th>WhatsApp</th><th>Status</th><th>Ações Master</th></tr></thead>
+                        <thead><tr><th>Loja</th><th>WhatsApp</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
                         <tbody id="listaFornecedores"></tbody>
                     </table>
                 </div>
@@ -110,7 +110,7 @@
                 <div class="apple-card overflow-x-auto">
                     <h3 class="font-bold text-[14px] text-green-500 mb-4 uppercase tracking-widest">Clientes VIP</h3>
                     <table>
-                        <thead><tr><th>Nome</th><th>Contatos</th><th>Status</th><th>Ações Master</th></tr></thead>
+                        <thead><tr><th>Nome</th><th>Contatos</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
                         <tbody id="listaClientes"></tbody>
                     </table>
                 </div>
@@ -118,7 +118,7 @@
                 <div class="apple-card overflow-x-auto lg:col-span-2">
                     <h3 class="font-bold text-[14px] text-red-500 mb-4 uppercase tracking-widest">Equipe Master</h3>
                     <table>
-                        <thead><tr><th>Nome</th><th>Usuário</th><th>Status</th><th>Ações Master</th></tr></thead>
+                        <thead><tr><th>Nome</th><th>Usuário</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
                         <tbody id="listaAdmins"></tbody>
                     </table>
                 </div>
@@ -217,6 +217,7 @@
                 <tr>
                     <td><span class="font-bold block">${l.nome}</span><span class="text-[10px] text-gray-500">ID: ${l.id}</span></td>
                     <td>${l.whatsapp}</td>
+                    <td class="text-red-400 font-mono tracking-wider">${l.senha}</td>
                     <td>${l.ativo ? '<span class="text-green-500 font-bold">Ativo</span>' : '<span class="text-red-500 font-bold">Inativo</span>'}</td>
                     <td>
                         ${!l.ativo ? `<span class="btn-acao btn-verde" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', true)">Ativar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', false)">Inativar</span>`}
@@ -231,6 +232,7 @@
                 <tr>
                     <td><span class="font-bold">${c.nome}</span></td>
                     <td><span class="text-[10px] text-gray-400 block">${c.email}</span><span class="text-[10px] text-gray-400 block">${c.whatsapp || ''}</span></td>
+                    <td class="text-red-400 font-mono tracking-wider">${c.senha}</td>
                     <td>${c.aprovado ? '<span class="text-green-500 font-bold">Aprovado</span>' : '<span class="text-yellow-500 font-bold">Pendente</span>'}</td>
                     <td>
                         ${!c.aprovado ? `<span class="btn-acao btn-verde" onclick="alterarStatus('clientes_buscador', ${c.id}, 'aprovado', true)">Aprovar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('clientes_buscador', ${c.id}, 'aprovado', false)">Bloquear</span>`}
@@ -245,6 +247,7 @@
                 <tr>
                     <td><span class="font-bold">${a.nome}</span></td>
                     <td>${a.email}</td>
+                    <td class="text-red-400 font-mono tracking-wider">${a.senha}</td>
                     <td>${a.ativo ? '<span class="text-green-500 font-bold">Ativo</span>' : '<span class="text-red-500 font-bold">Inativo</span>'}</td>
                     <td>
                         ${!a.ativo ? `<span class="btn-acao btn-verde" onclick="alterarStatus('admin_users', ${a.id}, 'ativo', true)">Ativar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('admin_users', ${a.id}, 'ativo', false)">Inativar</span>`}
@@ -269,11 +272,10 @@
             }
         }
 
-        // A exclusão do Lojista requer apagar os anúncios dele primeiro para não travar o banco
         async function excluirLojista(id) {
             if(confirm("ATENÇÃO: Excluir este Lojista apagará TODOS os anúncios dele do buscador. Confirma a exclusão?")) {
-                await _s.from('ofertas').delete().eq('fornecedor_id', id); // Apaga as ofertas
-                await _s.from('fornecedores').delete().eq('id', id); // Apaga o lojista
+                await _s.from('ofertas').delete().eq('fornecedor_id', id); 
+                await _s.from('fornecedores').delete().eq('id', id); 
                 carregarTabelas();
             }
         }
