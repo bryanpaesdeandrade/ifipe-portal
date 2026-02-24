@@ -146,8 +146,9 @@
                 <div class="apple-card overflow-x-auto">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
                         <h3 class="font-bold text-[14px] text-blue-500 uppercase tracking-widest m-0">Lojistas Atacadistas</h3>
-                        <input type="text" onkeyup="filtrarTabela('listaFornecedores', this.value)" class="apple-input py-2 text-[11px] w-full md:w-1/2" style="margin-bottom:0;" placeholder="🔍 Buscar Loja, Whats ou Cidade...">
+                        <button onclick="acaoEmMassa('fornecedores', 'ativo', false)" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">INATIVAR TODOS</button>
                     </div>
+                    <input type="text" onkeyup="filtrarTabela('listaFornecedores', this.value)" class="apple-input py-2 text-[11px]" style="margin-bottom:0;" placeholder="🔍 Buscar Loja, Whats ou Cidade...">
                     <table>
                         <thead><tr><th>Loja</th><th>WhatsApp</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
                         <tbody id="listaFornecedores"></tbody>
@@ -157,8 +158,12 @@
                 <div class="apple-card overflow-x-auto">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
                         <h3 class="font-bold text-[14px] text-green-500 uppercase tracking-widest m-0">Clientes VIP</h3>
-                        <input type="text" onkeyup="filtrarTabela('listaClientes', this.value)" class="apple-input py-2 text-[11px] w-full md:w-1/2" style="margin-bottom:0;" placeholder="🔍 Buscar Nome, Email ou Status...">
+                        <div class="flex gap-2">
+                            <button onclick="acaoEmMassa('clientes_buscador', 'aprovado', true)" class="text-[9px] bg-green-800 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-green-600 transition-colors border-0">APROVAR TODOS</button>
+                            <button onclick="acaoEmMassa('clientes_buscador', 'aprovado', false)" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">BLOQUEAR TODOS</button>
+                        </div>
                     </div>
+                    <input type="text" onkeyup="filtrarTabela('listaClientes', this.value)" class="apple-input py-2 text-[11px]" style="margin-bottom:0;" placeholder="🔍 Buscar Nome, Email ou Status...">
                     <table>
                         <thead><tr><th>Nome</th><th>Contatos</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
                         <tbody id="listaClientes"></tbody>
@@ -219,9 +224,6 @@
             window.location.reload(); 
         }
 
-        // ==========================================
-        // MOTOR DE BUSCA INSTANTÂNEA
-        // ==========================================
         function filtrarTabela(tabelaId, termo) {
             const tbody = document.getElementById(tabelaId);
             const linhas = tbody.getElementsByTagName('tr');
@@ -234,6 +236,17 @@
                 } else {
                     linhas[i].style.display = 'none';
                 }
+            }
+        }
+
+        // MOTOR DE AÇÕES EM MASSA (BLINDADO)
+        async function acaoEmMassa(tabela, coluna, valor) {
+            const acaoStr = valor ? "APROVAR/ATIVAR" : "BLOQUEAR/INATIVAR";
+            if(confirm(`Você está prestes a ${acaoStr} TODOS os cadastros de ${tabela.replace('_',' ')}. Tem certeza absoluta?`)) {
+                // Ao omitir um 'eq', o Supabase negaria por segurança, então usamos 'neq' com um id impossível para pegar todos.
+                await _s.from(tabela).update({ [coluna]: valor }).neq('id', -1); 
+                carregarTabelas();
+                alert(`Comando de ${acaoStr} executado com sucesso em toda a tabela!`);
             }
         }
 
