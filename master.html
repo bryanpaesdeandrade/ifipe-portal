@@ -23,6 +23,8 @@
         .btn-verde:hover { background: #32d74b; color: #000; }
         .btn-amarelo { background: rgba(255, 204, 0, 0.2); color: #ffcc00; }
         .btn-amarelo:hover { background: #ffcc00; color: #000; }
+        .btn-azul { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
+        .btn-azul:hover { background: #0071e3; color: #fff; }
         .btn-vermelho { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
         .btn-vermelho:hover { background: #ff3b30; color: #fff; }
         
@@ -31,6 +33,33 @@
     </style>
 </head>
 <body>
+
+    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200] px-4">
+        <div class="apple-card w-full max-w-[400px]">
+            <h3 class="font-bold text-[14px] text-blue-500 mb-4 uppercase tracking-widest">Editar Cadastro</h3>
+            <form onsubmit="salvarEdicao(event)">
+                <input type="hidden" id="edit_id">
+                <input type="hidden" id="edit_tabela">
+                
+                <label>Nome</label>
+                <input type="text" id="edit_nome" class="apple-input py-2" required>
+                
+                <label id="label_email">E-mail / Usuário</label>
+                <input type="text" id="edit_email" class="apple-input py-2">
+                
+                <label id="label_whats">WhatsApp</label>
+                <input type="text" id="edit_whats" class="apple-input py-2">
+                
+                <label>Senha de Acesso</label>
+                <input type="text" id="edit_senha" class="apple-input py-2" required>
+                
+                <div class="flex gap-2 mt-4">
+                    <button type="button" onclick="fecharModal()" class="apple-button bg-gray-600 text-white w-1/2 border-0">Cancelar</button>
+                    <button type="submit" class="apple-button bg-blue-600 text-white w-1/2 border-0">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div id="loginSection" class="flex items-center justify-center min-h-screen px-4">
         <div class="apple-card max-w-[400px] text-center w-full">
@@ -170,6 +199,65 @@
         }
 
         // ==========================================
+        // SISTEMA DE EDIÇÃO RÁPIDA (MODAL)
+        // ==========================================
+        function abrirModalEdicao(tabela, id, nome, email, whats, senha) {
+            document.getElementById('edit_tabela').value = tabela;
+            document.getElementById('edit_id').value = id;
+            document.getElementById('edit_nome').value = nome || '';
+            document.getElementById('edit_email').value = email || '';
+            document.getElementById('edit_whats').value = whats || '';
+            document.getElementById('edit_senha').value = senha || '';
+
+            // Oculta campos inúteis dependendo de quem estamos editando
+            if(tabela === 'fornecedores') {
+                document.getElementById('edit_email').style.display = 'none';
+                document.getElementById('label_email').style.display = 'none';
+                document.getElementById('edit_whats').style.display = 'block';
+                document.getElementById('label_whats').style.display = 'block';
+            } else if(tabela === 'admin_users') {
+                document.getElementById('edit_email').style.display = 'block';
+                document.getElementById('label_email').style.display = 'block';
+                document.getElementById('edit_whats').style.display = 'none';
+                document.getElementById('label_whats').style.display = 'none';
+            } else {
+                document.getElementById('edit_email').style.display = 'block';
+                document.getElementById('label_email').style.display = 'block';
+                document.getElementById('edit_whats').style.display = 'block';
+                document.getElementById('label_whats').style.display = 'block';
+            }
+
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function fecharModal() { document.getElementById('editModal').classList.add('hidden'); }
+
+        async function salvarEdicao(e) {
+            e.preventDefault();
+            const t = document.getElementById('edit_tabela').value;
+            const id = document.getElementById('edit_id').value;
+            
+            let updateData = {
+                nome: document.getElementById('edit_nome').value,
+                senha: document.getElementById('edit_senha').value
+            };
+
+            if(t === 'fornecedores') {
+                updateData.whatsapp = document.getElementById('edit_whats').value;
+            } else if (t === 'admin_users') {
+                updateData.email = document.getElementById('edit_email').value;
+            } else if (t === 'clientes_buscador') {
+                updateData.email = document.getElementById('edit_email').value;
+                updateData.whatsapp = document.getElementById('edit_whats').value;
+            }
+
+            await _s.from(t).update(updateData).eq('id', id);
+            fecharModal();
+            carregarTabelas();
+            alert("Dados atualizados com sucesso!");
+        }
+
+        // ==========================================
         // FUNÇÕES DE CADASTRO DIRETO
         // ==========================================
         async function addLojista(e) {
@@ -210,6 +298,8 @@
         // ==========================================
         // FUNÇÕES DE CARREGAMENTO E STATUS
         // ==========================================
+        function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
+
         async function carregarTabelas() {
             // Lojistas
             const { data: lojas } = await _s.from('fornecedores').select('*').order('id', {ascending: true});
@@ -220,6 +310,7 @@
                     <td class="text-red-400 font-mono tracking-wider">${l.senha}</td>
                     <td>${l.ativo ? '<span class="text-green-500 font-bold">Ativo</span>' : '<span class="text-red-500 font-bold">Inativo</span>'}</td>
                     <td>
+                        <span class="btn-acao btn-azul" onclick="abrirModalEdicao('fornecedores', ${l.id}, '${escapeString(l.nome)}', '', '${escapeString(l.whatsapp)}', '${escapeString(l.senha)}')">Editar</span>
                         ${!l.ativo ? `<span class="btn-acao btn-verde" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', true)">Ativar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', false)">Inativar</span>`}
                         <span class="btn-acao btn-vermelho" onclick="excluirLojista(${l.id})">Excluir</span>
                     </td>
@@ -235,6 +326,7 @@
                     <td class="text-red-400 font-mono tracking-wider">${c.senha}</td>
                     <td>${c.aprovado ? '<span class="text-green-500 font-bold">Aprovado</span>' : '<span class="text-yellow-500 font-bold">Pendente</span>'}</td>
                     <td>
+                        <span class="btn-acao btn-azul" onclick="abrirModalEdicao('clientes_buscador', ${c.id}, '${escapeString(c.nome)}', '${escapeString(c.email)}', '${escapeString(c.whatsapp)}', '${escapeString(c.senha)}')">Editar</span>
                         ${!c.aprovado ? `<span class="btn-acao btn-verde" onclick="alterarStatus('clientes_buscador', ${c.id}, 'aprovado', true)">Aprovar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('clientes_buscador', ${c.id}, 'aprovado', false)">Bloquear</span>`}
                         <span class="btn-acao btn-vermelho" onclick="excluirRegistro('clientes_buscador', ${c.id})">Excluir</span>
                     </td>
@@ -250,6 +342,7 @@
                     <td class="text-red-400 font-mono tracking-wider">${a.senha}</td>
                     <td>${a.ativo ? '<span class="text-green-500 font-bold">Ativo</span>' : '<span class="text-red-500 font-bold">Inativo</span>'}</td>
                     <td>
+                        <span class="btn-acao btn-azul" onclick="abrirModalEdicao('admin_users', ${a.id}, '${escapeString(a.nome)}', '${escapeString(a.email)}', '', '${escapeString(a.senha)}')">Editar</span>
                         ${!a.ativo ? `<span class="btn-acao btn-verde" onclick="alterarStatus('admin_users', ${a.id}, 'ativo', true)">Ativar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('admin_users', ${a.id}, 'ativo', false)">Inativar</span>`}
                         ${a.email !== 'bryan' ? `<span class="btn-acao btn-vermelho" onclick="excluirRegistro('admin_users', ${a.id})">Excluir</span>` : '<span class="text-[9px] text-gray-500">Master Intocável</span>'}
                     </td>
