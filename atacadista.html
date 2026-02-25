@@ -7,19 +7,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; }
-        .user-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:15px 20px; position:sticky; top:0; z-index:100; }
-        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 14px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 14px; transition: 0.3s; }
+        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
+        body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; }
+        
+        .user-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 20px; position:sticky; top:0; z-index:100; }
+        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 2rem; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 12px; padding: 14px; width: 100%; color: var(--text); outline: none; margin-bottom: 1rem; font-size: 14px; transition: 0.3s; }
         .apple-input:focus { border-color: #0071e3; }
         .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 16px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 13px; transition: 0.3s; }
         .apple-button:hover { background: #0071e3; color: #fff; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 12px; text-align: left; border-bottom: 1px solid #38383a; letter-spacing: 0.1em; }
-        td { padding: 14px 12px; border-bottom: 1px solid #2c2c2e; font-size: 13px; }
+        th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); letter-spacing: 0.1em; }
+        td { padding: 14px 12px; border-bottom: 1px solid var(--input); font-size: 13px; }
         
-        .mini-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 8px; padding: 6px; width: 80px; color: #fff; text-align: center; font-weight: bold; }
+        .mini-input { background: var(--input); border: 1px solid var(--border); border-radius: 8px; padding: 6px; width: 80px; color: var(--text); text-align: center; font-weight: bold; }
         .btn-acao { font-weight: bold; cursor: pointer; font-size: 10px; text-transform: uppercase; padding: 6px 10px; border-radius: 6px; display: inline-block; margin-bottom: 4px; }
         .btn-edit { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
         .btn-edit:hover { background: #0071e3; color: #fff; }
@@ -30,9 +33,10 @@
         .hidden { display: none !important; }
         
         .battery-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 8px; margin-bottom: 15px;}
-        .battery-pill { padding: 12px 10px; border-radius: 10px; background: #2c2c2e; border: 1px solid #38383a; cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; text-align: center; transition: 0.2s; color: #86868b; display: flex; align-items: center; justify-content: center; line-height: 1.2;}
+        .battery-pill { padding: 12px 10px; border-radius: 10px; background: var(--input); border: 1px solid var(--border); cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; text-align: center; transition: 0.2s; color: #86868b; display: flex; align-items: center; justify-content: center; line-height: 1.2;}
         .battery-pill.active { background: #32d74b !important; color: #000 !important; border-color: #32d74b !important; box-shadow: 0 0 15px rgba(50, 215, 75, 0.3); }
         .pill-full { grid-column: span 2; }
+        .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 12px; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -79,11 +83,11 @@
                 <div id="edit_boxBateria" class="hidden">
                     <label class="text-green-500">Saúde da Bateria</label>
                     <div class="battery-grid">
-                        <div class="battery-pill b-edit" onclick="setBatEdicao('ABAIXO 85%')">Abaixo 85%</div>
-                        <div class="battery-pill b-edit" onclick="setBatEdicao('ACIMA 85%')">Acima 85%</div>
-                        <div class="battery-pill b-edit" onclick="setBatEdicao('ACIMA 90%')">Acima 90%</div>
-                        <div class="battery-pill b-edit" onclick="setBatEdicao('ACIMA 95%')">Acima 95%</div>
-                        <div class="battery-pill b-edit pill-full" onclick="setBatEdicao('BATERIA EM 100%')">Bateria em 100%</div>
+                        <div class="battery-pill b-edit" data-val="BATERIA ABAIXO DE 85%" onclick="setBatEdicao('BATERIA ABAIXO DE 85%')">Bat. < 85%</div>
+                        <div class="battery-pill b-edit" data-val="BATERIA ACIMA DE 85%" onclick="setBatEdicao('BATERIA ACIMA DE 85%')">Bat. > 85%</div>
+                        <div class="battery-pill b-edit" data-val="BATERIA ACIMA DE 90%" onclick="setBatEdicao('BATERIA ACIMA DE 90%')">Bat. > 90%</div>
+                        <div class="battery-pill b-edit" data-val="BATERIA ACIMA DE 95%" onclick="setBatEdicao('BATERIA ACIMA DE 95%')">Bat. > 95%</div>
+                        <div class="battery-pill b-edit pill-full" data-val="BATERIA EM 100%" onclick="setBatEdicao('BATERIA EM 100%')">Bateria 100%</div>
                     </div>
                     <input type="hidden" id="edit_saude_bateria">
                 </div>
@@ -186,11 +190,11 @@
                         <div id="boxBateria" class="hidden mb-4">
                             <label class="text-green-500">Saúde da Bateria</label>
                             <div class="battery-grid">
-                                <div class="battery-pill b-new" onclick="setBat('ABAIXO 85%')">Abaixo 85%</div>
-                                <div class="battery-pill b-new" onclick="setBat('ACIMA 85%')">Acima 85%</div>
-                                <div class="battery-pill b-new" onclick="setBat('ACIMA 90%')">Acima 90%</div>
-                                <div class="battery-pill b-new" onclick="setBat('ACIMA 95%')">Acima 95%</div>
-                                <div class="battery-pill b-new pill-full" onclick="setBat('BATERIA EM 100%')">Bateria em 100%</div>
+                                <div class="battery-pill b-new" data-val="BATERIA ABAIXO DE 85%" onclick="setBat('BATERIA ABAIXO DE 85%')">Bat. < 85%</div>
+                                <div class="battery-pill b-new" data-val="BATERIA ACIMA DE 85%" onclick="setBat('BATERIA ACIMA DE 85%')">Bat. > 85%</div>
+                                <div class="battery-pill b-new" data-val="BATERIA ACIMA DE 90%" onclick="setBat('BATERIA ACIMA DE 90%')">Bat. > 90%</div>
+                                <div class="battery-pill b-new" data-val="BATERIA ACIMA DE 95%" onclick="setBat('BATERIA ACIMA DE 95%')">Bat. > 95%</div>
+                                <div class="battery-pill b-new pill-full" data-val="BATERIA EM 100%" onclick="setBat('BATERIA EM 100%')">Bateria 100%</div>
                             </div>
                             <input type="hidden" id="saude_bateria">
                         </div>
@@ -249,9 +253,17 @@
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let loja = null; let gradeVariacoes = []; let anunciosDaLoja = [];
+        let loja = null; let gradeVariacoes = []; let anunciosDaLoja = []; let todasRegioes = [];
+
+        function toggleTheme() {
+            const b = document.body; b.classList.toggle('light-mode');
+            const isLight = b.classList.contains('light-mode');
+            document.getElementById('themeBtn').innerText = isLight ? "☀️ Modo" : "🌙 Modo";
+            localStorage.setItem('iFipe_Theme', isLight ? 'light' : 'dark');
+        }
 
         window.onload = async () => {
+            if(localStorage.getItem('iFipe_Theme') === 'light') toggleTheme();
             const token = localStorage.getItem('iFipe_Anunciante');
             if (token) {
                 const { data } = await _s.from('fornecedores').select('*').eq('id', token).maybeSingle();
@@ -353,13 +365,13 @@
         function setBat(val) {
             document.getElementById('saude_bateria').value = val;
             const pills = document.querySelectorAll('.b-new');
-            pills.forEach(p => { if (p.innerText === val) p.classList.add('active'); else p.classList.remove('active'); });
+            pills.forEach(p => { if (p.getAttribute('data-val') === val) p.classList.add('active'); else p.classList.remove('active'); });
         }
 
         function setBatEdicao(val) {
             document.getElementById('edit_saude_bateria').value = val;
             const pills = document.querySelectorAll('.b-edit');
-            pills.forEach(p => { if (p.innerText === val) p.classList.add('active'); else p.classList.remove('active'); });
+            pills.forEach(p => { if (val && p.getAttribute('data-val') === val) p.classList.add('active'); else p.classList.remove('active'); });
         }
 
         function checarCondicao() {
@@ -434,12 +446,16 @@
         }
 
         async function atualizarLista() {
-            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, tamanho, cor, produtos_mestre(nome))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
+            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, tamanho, cor, produtos_mestre(nome)), regioes(moeda)').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
             anunciosDaLoja = data || [];
             
             document.getElementById('listaAtivos').innerHTML = anunciosDaLoja.map(o => {
                 const det = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' | ');
-                const tagB = o.saude_bateria ? `<br><span class="text-green-500 font-bold text-[9px]">${o.saude_bateria}</span>` : '';
+                
+                // Formatação fina da Bateria na Tabela
+                let txtBat = o.saude_bateria ? o.saude_bateria.replace('BATERIA ', '').replace('BAT. ', '') : '';
+                let tagB = txtBat ? `<br><span class="text-[9px] bg-green-900/30 text-green-500 border border-green-500 px-1 py-0.5 rounded font-black uppercase tracking-wider inline-block mt-1">🔋 BAT: ${txtBat}</span>` : '';
+                
                 const sym = o.moeda === 'USD' ? '$' : 'R$'; 
                 
                 let tagEstoque = '';
@@ -472,7 +488,6 @@
             document.getElementById('edit_id').value = o.id; document.getElementById('edit_condicao').value = o.condicao; document.getElementById('edit_quantidade').value = o.quantidade;
             document.getElementById('edit_titulo').innerText = `${o.variacoes.produtos_mestre.nome}`;
             
-            // Popula o campo correto baseado na moeda salva
             if(o.moeda === 'USD') {
                 document.getElementById('edit_preco_usd').value = o.preco.toLocaleString('pt-BR');
                 document.getElementById('edit_preco_brl').value = '';
