@@ -37,8 +37,6 @@
         .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 12px; transition: 0.3s; letter-spacing: 0.05em; }
         .buy-button:hover { background: #005bb5; }
         
-        .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; color: #86868b; margin: 40px 0 15px 5px; display: flex; align-items: center; gap: 10px; }
-        .section-title::after { content: ""; height: 1px; background: var(--border); flex-grow: 1; }
         .hidden { display: none !important; }
         .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 14px; font-weight: 700; }
 
@@ -90,7 +88,7 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 pb-20">
-        <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
             <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Aparelho</label><select id="f_prod" class="apple-input" onchange="atualizarFiltrosCascata()"><option value="">Todos</option></select></div>
             <div>
                 <label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Condição</label>
@@ -107,9 +105,8 @@
             <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cidade da Loja</label><select id="f_cid" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
         </div>
 
-        <div id="secBR" class="hidden"><h3 class="section-title">🇧🇷 RANKING BRASIL (REAIS R$)</h3><div id="gridBR" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div></div>
-        <div id="secPY" class="hidden"><h3 class="section-title">🇵🇾 RANKING PARAGUAI E FRONTEIRA (DÓLAR $)</h3><div id="gridPY" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div></div>
-        <div id="secUS" class="hidden"><h3 class="section-title">🇺🇸 RANKING MIAMI (DÓLAR $)</h3><div id="gridUS" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div></div>
+        <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            </div>
     </main>
 
     <a href="https://wa.me/556896003049?text=Ol%C3%A1%20venho%20do%20iFipe%20e%20preciso%20de%20suporte" target="_blank" class="btn-wpp-float">
@@ -167,7 +164,6 @@
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (e) => { document.getElementById('ticker').innerText = `R$ ${parseFloat(JSON.parse(e.data).c).toFixed(4).replace('.',',')}`; };
             
-            // AQUI ESTÁ O SEGREDO: Adicionado "pais" na requisição dos fornecedores
             const [p, r, v, f] = await Promise.all([
                 _s.from('produtos_mestre').select('*').order('nome'),
                 _s.from('regioes').select('*').order('nome'),
@@ -201,7 +197,6 @@
         }
 
         async function carregarDados() {
-            // Requisita o PAÍS do fornecedor também para exibir no card
             const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)');
             ofertasAtuais = data || []; 
             renderizarRanking();
@@ -227,19 +222,40 @@
                 (!fCid || o.fornecedores.cidade == fCid)
             );
 
-            const criarCard = (o, menorPreco) => {
+            const grid = document.getElementById('gridGeral');
+
+            if(filtrados.length === 0) {
+                grid.innerHTML = '<p class="text-gray-500 text-center col-span-full py-10 font-bold uppercase tracking-widest">Nenhuma oferta encontrada com estes filtros.</p>';
+                return;
+            }
+
+            // REGRA: Real concorre apenas com Real, Dólar com Dólar
+            let menores = {}; 
+            filtrados.forEach(o => { 
+                let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`; // Chave separada por Moeda
+                if(!menores[k] || o.preco < menores[k]) menores[k] = o.preco; 
+            });
+
+            // REGRA DE OURO (JOGO DE CADEIRAS) + AGRUPAMENTO DE MOEDA
+            filtrados.sort((a,b) => {
+                if (a.moeda !== b.moeda) return a.moeda.localeCompare(b.moeda); // Agrupa os Reais e os Dólares
+                if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
+                if (a.condicao !== 'Novo' && b.condicao === 'Novo') return 1;
+                return a.preco - b.preco; // O menor preço puxa pra cima na hora!
+            });
+
+            grid.innerHTML = filtrados.map(o => {
                 let moeda = o.moeda === 'USD' ? '$' : 'R$';
+                let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`;
+                let menorPreco = menores[k];
                 
                 // TAGS TEMPORÁRIAS (PREÇO CAIU / PREÇO SUBIU) - DURA 15 MINUTOS
                 let tagAlteracao = '';
                 if(o.data_alteracao_preco && o.preco_anterior) {
                     const diffMinutos = (new Date() - new Date(o.data_alteracao_preco)) / 60000;
                     if(diffMinutos <= 15) {
-                        if(o.preco < o.preco_anterior) {
-                            tagAlteracao = `<span class="tag-status" style="background:#32d74b; color:#000;">📉 PREÇO CAIU</span>`;
-                        } else if (o.preco > o.preco_anterior) {
-                            tagAlteracao = `<span class="tag-status" style="background:#ff3b30; color:#fff;">📈 PREÇO SUBIU</span>`;
-                        }
+                        if(o.preco < o.preco_anterior) tagAlteracao = `<span class="tag-status" style="background:#32d74b; color:#000;">📉 PREÇO CAIU</span>`;
+                        else if (o.preco > o.preco_anterior) tagAlteracao = `<span class="tag-status" style="background:#ff3b30; color:#fff;">📈 PREÇO SUBIU</span>`;
                     }
                 }
 
@@ -293,52 +309,7 @@
                     
                     <a href="${linkWpp}" target="_blank" class="buy-button">Comprar agora no WhatsApp</a>
                 </div>`;
-            };
-
-            const processar = (lista, gId, sId) => {
-                const sec = document.getElementById(sId); 
-                if(lista.length === 0) { sec.classList.add('hidden'); return; } 
-                sec.classList.remove('hidden');
-                
-                let menores = {}; 
-                lista.forEach(o => { 
-                    let k = `${o.variacao_id}_${o.condicao}`; 
-                    if(!menores[k] || o.preco < menores[k]) menores[k] = o.preco; 
-                });
-                
-                // REGRA DE OURO (JOGO DE CADEIRAS): Novo primeiro, depois os menores preços
-                lista.sort((a,b) => {
-                    if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
-                    if (a.condicao !== 'Novo' && b.condicao === 'Novo') return 1;
-                    return a.preco - b.preco; // O menor preço puxa pra cima na hora!
-                });
-                
-                document.getElementById(gId).innerHTML = lista.map(o => criarCard(o, menores[`${o.variacao_id}_${o.condicao}`])).join('');
-            };
-
-            // SEPARAÇÃO INTELIGENTE POR MOEDA E REGIÃO
-            const listaBRL = filtrados.filter(o => o.moeda === 'BRL');
-            const listaUSD = filtrados.filter(o => o.moeda === 'USD');
-            
-            const listaMiami = listaUSD.filter(o => {
-                const pais = o.fornecedores.pais ? o.fornecedores.pais.toLowerCase() : '';
-                const c1 = o.cidade ? o.cidade.toLowerCase() : '';
-                const c2 = o.fornecedores.cidade ? o.fornecedores.cidade.toLowerCase() : '';
-                return pais.includes('eua') || pais.includes('estados unidos') || c1.includes('miami') || c2.includes('miami');
-            });
-
-            const listaPY = listaUSD.filter(o => {
-                const pais = o.fornecedores.pais ? o.fornecedores.pais.toLowerCase() : '';
-                const c1 = o.cidade ? o.cidade.toLowerCase() : '';
-                const c2 = o.fornecedores.cidade ? o.fornecedores.cidade.toLowerCase() : '';
-                
-                // Se a loja não for EUA nem Miami, entra no Ranking Fronteira
-                return !(pais.includes('eua') || pais.includes('estados unidos') || c1.includes('miami') || c2.includes('miami'));
-            });
-
-            processar(listaBRL, 'gridBR', 'secBR');
-            processar(listaPY, 'gridPY', 'secPY');
-            processar(listaMiami, 'gridUS', 'secUS');
+            }).join('');
         }
 
         function logout() { localStorage.removeItem('iFipe_Token'); window.location.replace('index.html'); }
