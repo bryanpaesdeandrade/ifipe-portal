@@ -7,22 +7,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
-        body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; }
-        
-        .user-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 20px; position:sticky; top:0; z-index:100; }
-        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 2rem; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 12px; padding: 14px; width: 100%; color: var(--text); outline: none; margin-bottom: 1rem; font-size: 14px; transition: 0.3s; }
+        body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; }
+        .user-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:15px 20px; position:sticky; top:0; z-index:100; }
+        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 14px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 14px; transition: 0.3s; }
         .apple-input:focus { border-color: #0071e3; }
         .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 16px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 13px; transition: 0.3s; }
         .apple-button:hover { background: #0071e3; color: #fff; }
         
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); letter-spacing: 0.1em; }
-        td { padding: 14px 12px; border-bottom: 1px solid var(--input); font-size: 13px; }
+        th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 12px; text-align: left; border-bottom: 1px solid #38383a; letter-spacing: 0.1em; }
+        td { padding: 14px 12px; border-bottom: 1px solid #2c2c2e; font-size: 13px; }
         
-        .mini-input { background: var(--input); border: 1px solid var(--border); border-radius: 8px; padding: 6px; width: 80px; color: var(--text); text-align: center; font-weight: bold; }
+        .mini-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 8px; padding: 6px; width: 80px; color: #fff; text-align: center; font-weight: bold; }
         .btn-acao { font-weight: bold; cursor: pointer; font-size: 10px; text-transform: uppercase; padding: 6px 10px; border-radius: 6px; display: inline-block; margin-bottom: 4px; }
         .btn-edit { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
         .btn-edit:hover { background: #0071e3; color: #fff; }
@@ -33,13 +30,32 @@
         .hidden { display: none !important; }
         
         .battery-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 8px; margin-bottom: 15px;}
-        .battery-pill { padding: 12px 10px; border-radius: 10px; background: var(--input); border: 1px solid var(--border); cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; text-align: center; transition: 0.2s; color: #86868b; display: flex; align-items: center; justify-content: center; line-height: 1.2;}
+        .battery-pill { padding: 12px 10px; border-radius: 10px; background: #2c2c2e; border: 1px solid #38383a; cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; text-align: center; transition: 0.2s; color: #86868b; display: flex; align-items: center; justify-content: center; line-height: 1.2;}
         .battery-pill.active { background: #32d74b !important; color: #000 !important; border-color: #32d74b !important; box-shadow: 0 0 15px rgba(50, 215, 75, 0.3); }
         .pill-full { grid-column: span 2; }
-        .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 12px; font-weight: 700; }
     </style>
 </head>
 <body>
+
+    <div id="contaModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200] px-4">
+        <div class="apple-card w-full max-w-[400px]">
+            <h3 class="font-bold text-[14px] text-blue-500 mb-4 uppercase tracking-widest">Minha Conta</h3>
+            <form onsubmit="salvarConta(event)">
+                <label>WhatsApp da Loja</label>
+                <input type="text" id="conta_whats" class="apple-input" placeholder="Ex: 11999999999">
+                <label>Senha de Acesso</label>
+                <input type="text" id="conta_senha" class="apple-input" required>
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    <div><label>Estado (UF)</label><input type="text" id="conta_estado" class="apple-input" placeholder="Ex: SP"></div>
+                    <div><label>Cidade Sede</label><input type="text" id="conta_cidade" class="apple-input" placeholder="Ex: São Paulo"></div>
+                </div>
+                <div class="flex gap-2 mt-4">
+                    <button type="button" onclick="fecharConta()" class="apple-button bg-gray-600 text-white w-1/3 border-0">Fechar</button>
+                    <button type="submit" class="apple-button bg-blue-600 text-white w-2/3 border-0">Salvar Dados</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200] px-4">
         <div class="apple-card w-full max-w-[500px]">
@@ -94,7 +110,7 @@
                         <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="edit_usdt" class="accent-[#0071e3] w-4 h-4"> USDT</label>
                         <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="edit_nota" class="accent-[#0071e3] w-4 h-4"> NF</label>
                         <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="edit_envio" class="accent-[#0071e3] w-4 h-4"> Envio</label>
-                        <label class="flex items-center gap-2 cursor-pointer hover:text-white text-[#5e5ce6]"><input type="checkbox" id="edit_proposta" class="accent-[#5e5ce6] w-4 h-4"> 🤝 Lote</label>
+                        <label class="flex items-center gap-2 cursor-pointer hover:text-white text-[#5e5ce6]"><input type="checkbox" id="edit_proposta" class="accent-[#5e5ce6] w-4 h-4"> 🤝 Negocia Qtd</label>
                     </div>
                 </div>
                 
@@ -135,8 +151,11 @@
                 </div>
 
                 <div class="flex items-center gap-4">
-                    <button onclick="toggleTheme()" id="themeBtn" class="theme-toggle">🌙 Modo</button>
-                    <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase hover:text-white transition-colors">Sair da Conta</button>
+                    <button onclick="abrirConta()" class="text-[10px] text-blue-400 font-black uppercase hover:text-white transition-colors flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/><path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/></svg>
+                        Minha Conta
+                    </button>
+                    <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase hover:text-white transition-colors">Sair</button>
                 </div>
             </div>
         </div>
@@ -204,7 +223,7 @@
                                 <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="obs_usdt" class="accent-[#0071e3] w-4 h-4"> USDT</label>
                                 <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="obs_nota" class="accent-[#0071e3] w-4 h-4"> NF</label>
                                 <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="obs_envio" class="accent-[#0071e3] w-4 h-4"> Envio</label>
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white text-[#5e5ce6]"><input type="checkbox" id="obs_proposta" class="accent-[#5e5ce6] w-4 h-4"> 🤝 Lote</label>
+                                <label class="flex items-center gap-2 cursor-pointer hover:text-white text-[#5e5ce6]"><input type="checkbox" id="obs_proposta" class="accent-[#5e5ce6] w-4 h-4"> 🤝 Negocia Qtd</label>
                             </div>
                         </div>
 
@@ -232,15 +251,7 @@
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let loja = null; let gradeVariacoes = []; let anunciosDaLoja = [];
 
-        function toggleTheme() {
-            const b = document.body; b.classList.toggle('light-mode');
-            const isLight = b.classList.contains('light-mode');
-            document.getElementById('themeBtn').innerText = isLight ? "☀️ Modo" : "🌙 Modo";
-            localStorage.setItem('iFipe_Theme', isLight ? 'light' : 'dark');
-        }
-
         window.onload = async () => {
-            if(localStorage.getItem('iFipe_Theme') === 'light') toggleTheme();
             const token = localStorage.getItem('iFipe_Anunciante');
             if (token) {
                 const { data } = await _s.from('fornecedores').select('*').eq('id', token).maybeSingle();
@@ -286,205 +297,18 @@
 
         function sairPainel() { localStorage.removeItem('iFipe_Anunciante'); window.location.reload(); }
 
-        async function init() {
-            const [p, r, v] = await Promise.all([
-                _s.from('produtos_mestre').select('id, nome').order('nome'), 
-                _s.from('regioes').select('*').order('nome'), 
-                _s.from('variacoes').select('*')
-            ]);
-            gradeVariacoes = v.data;
-            document.getElementById('produto_id').innerHTML = '<option value="">Selecione o Aparelho...</option>' + p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('regiao_id').innerHTML = '<option value="">Origem/Região...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
-            atualizarLista();
+        // --- SISTEMA "MINHA CONTA" ---
+        function abrirConta() {
+            document.getElementById('conta_whats').value = loja.whatsapp || '';
+            document.getElementById('conta_senha').value = loja.senha || '';
+            document.getElementById('conta_estado').value = loja.estado || '';
+            document.getElementById('conta_cidade').value = loja.cidade || '';
+            document.getElementById('contaModal').classList.remove('hidden');
         }
 
-        function aoMudarProduto() {
-            const pid = document.getElementById('produto_id').value;
-            const container = document.getElementById('gradeOpcoes');
-            container.innerHTML = ""; if(!pid) return;
-            const vars = gradeVariacoes.filter(x => x.produto_id == pid);
-            const tams = [...new Set(vars.map(x => x.tamanho).filter(Boolean))]; 
-            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; 
-            const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
-            let html = '<div class="grid grid-cols-1 gap-4 mt-4">';
-            if(tams.length) html += `<div><label>Tamanho</label><select id="f_tam" class="apple-input" required><option value="">Selecione...</option>${tams.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
-            if(caps.length) html += `<div><label>Armazenamento</label><select id="f_cap" class="apple-input" required><option value="">Selecione...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
-            if(cores.length) html += `<div><label>Cor</label><select id="f_cor" class="apple-input" required><option value="">Selecione...</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
-            container.innerHTML = html + '</div>';
-        }
+        function fecharConta() { document.getElementById('contaModal').classList.add('hidden'); }
 
-        function setBat(val) {
-            document.getElementById('saude_bateria').value = val;
-            const pills = document.querySelectorAll('.b-new');
-            pills.forEach(p => { if (p.innerText === val) p.classList.add('active'); else p.classList.remove('active'); });
-        }
-
-        function setBatEdicao(val) {
-            document.getElementById('edit_saude_bateria').value = val;
-            const pills = document.querySelectorAll('.b-edit');
-            pills.forEach(p => { if (p.innerText === val) p.classList.add('active'); else p.classList.remove('active'); });
-        }
-
-        function checarCondicao() {
-            const cond = document.getElementById('condicao').value;
-            const boxG = document.getElementById('boxGarantia');
-            const boxB = document.getElementById('boxBateria');
-            if(cond !== 'Novo') { boxG.classList.remove('hidden'); boxB.classList.remove('hidden'); }
-            else { boxG.classList.add('hidden'); boxB.classList.add('hidden'); document.getElementById('saude_bateria').value = ""; document.querySelectorAll('.b-new').forEach(p => p.classList.remove('active')); }
-        }
-
-        function checarCondicaoEdicao() {
-            const cond = document.getElementById('edit_condicao').value;
-            const boxG = document.getElementById('edit_boxGarantia');
-            const boxB = document.getElementById('edit_boxBateria');
-            if(cond !== 'Novo') { boxG.classList.remove('hidden'); boxB.classList.remove('hidden'); }
-            else { boxG.classList.add('hidden'); boxB.classList.add('hidden'); document.getElementById('edit_saude_bateria').value = ""; document.querySelectorAll('.b-edit').forEach(p => p.classList.remove('active')); }
-        }
-
-        // Limpa o outro campo de preço para evitar dados duplicados
-        function limparPreco(tipo) {
-            if(tipo === 'brl') document.getElementById('preco_usd').value = '';
-            if(tipo === 'usd') document.getElementById('preco_brl').value = '';
-        }
-
-        function limparPrecoEdit(tipo) {
-            if(tipo === 'brl') document.getElementById('edit_preco_usd').value = '';
-            if(tipo === 'usd') document.getElementById('edit_preco_brl').value = '';
-        }
-
-        async function salvarOferta(event) {
-            event.preventDefault(); 
-            const msg = document.getElementById('formMsg'); msg.innerText = "SALVANDO...";
-            const pid = document.getElementById('produto_id').value;
-            const tam = document.getElementById('f_tam')?.value || null;
-            const cap = document.getElementById('f_cap')?.value || null;
-            const cor = document.getElementById('f_cor')?.value || null;
-            const v = gradeVariacoes.find(x => x.produto_id == pid && (x.tamanho === tam || (!x.tamanho && !tam)) && (x.capacidade === cap || (!x.capacidade && !cap)) && (x.cor === cor || (!x.cor && !cor)));
-            
-            if(!v) { msg.innerText = "COMBINAÇÃO INVÁLIDA."; return; }
-            
-            const valBrl = document.getElementById('preco_brl').value.trim();
-            const valUsd = document.getElementById('preco_usd').value.trim();
-            if(!valBrl && !valUsd) { msg.innerText = "PREENCHA O PREÇO (REAL OU DÓLAR)."; return; }
-            
-            let precoFinal = 0;
-            let moedaFinal = 'BRL';
-
-            if(valBrl) {
-                precoFinal = parseFloat(valBrl.replace(/\./g, '').replace(',', '.'));
-                moedaFinal = 'BRL';
-            } else {
-                precoFinal = parseFloat(valUsd.replace(/\./g, '').replace(',', '.'));
-                moedaFinal = 'USD';
-            }
-            
-            const cond = document.getElementById('condicao').value;
-            const bat = document.getElementById('saude_bateria').value;
-            
-            if(cond !== 'Novo' && !bat) { msg.innerText = "SELECIONE A SAÚDE DA BATERIA."; return; }
-            
-            const { error } = await _s.from('ofertas').insert([{
-                fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value,
-                preco: precoFinal, moeda: moedaFinal, quantidade: document.getElementById('quantidade').value,
-                condicao: cond, garantia: cond !== 'Novo' && document.getElementById('garantia').value ? document.getElementById('garantia').value + ' Meses' : null,
-                saude_bateria: bat || null, cidade: document.getElementById('obs_cidade').value.trim(),
-                aceita_coleta: document.getElementById('obs_coleta').checked, tem_boy: document.getElementById('obs_boy').checked,
-                aceita_usdt: document.getElementById('obs_usdt').checked, emite_nota: document.getElementById('obs_nota').checked,
-                faz_envio: document.getElementById('obs_envio').checked, aceita_proposta: document.getElementById('obs_proposta').checked
-            }]);
-            
-            if(!error) { 
-                event.target.reset(); 
-                document.getElementById('condicao').value = "Novo"; 
-                checarCondicao(); 
-                atualizarLista(); 
-                msg.innerText = "ANÚNCIO PUBLICADO!"; 
-                setTimeout(() => msg.innerText = "", 3000); 
-            } else { msg.innerText = "ERRO AO SALVAR."; }
-        }
-
-        async function atualizarLista() {
-            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, tamanho, cor, produtos_mestre(nome))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
-            anunciosDaLoja = data || [];
-            
-            document.getElementById('listaAtivos').innerHTML = anunciosDaLoja.map(o => {
-                const det = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' | ');
-                const tagB = o.saude_bateria ? `<br><span class="text-green-500 font-bold text-[9px]">${o.saude_bateria}</span>` : '';
-                const sym = o.moeda === 'USD' ? '$' : 'R$'; 
-                
-                let tagEstoque = '';
-                if(o.quantidade == 0) tagEstoque = '<br><span class="text-[9px] bg-red-900 text-white px-2 py-0.5 rounded font-bold">ESGOTADO (PAUSADO)</span>';
-                else if(o.quantidade >= 1 && o.quantidade <= 3) tagEstoque = `<br><span class="text-[9px] bg-[#ffcc00] text-black px-2 py-0.5 rounded font-bold">APENAS ${o.quantidade} UN</span>`;
-                else if(o.quantidade >= 4 && o.quantidade <= 10) tagEstoque = `<br><span class="text-[9px] bg-[#0071e3] text-white px-2 py-0.5 rounded font-bold">EM ESTOQUE ${o.quantidade} UN</span>`;
-                else if(o.quantidade >= 11) tagEstoque = `<br><span class="text-[9px] bg-[#32d74b] text-black px-2 py-0.5 rounded font-bold">ALTO ESTOQUE ${o.quantidade} UN</span>`;
-                
-                return `<tr>
-                <td><span class="block font-bold">${o.variacoes.produtos_mestre.nome}</span><span class="text-[10px] text-gray-400">${det}</span></td>
-                <td><span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600">${o.condicao}</span>${tagB}</td>
-                <td><input type="number" id="q-${o.id}" class="mini-input mb-1" value="${o.quantidade}" min="0" onchange="salvarEdicaoRapida(${o.id})">${tagEstoque}</td>
-                <td class="whitespace-nowrap"><span class="text-[10px] text-gray-500 font-bold mr-1">${sym}</span><input type="text" id="p-${o.id}" class="mini-input w-20" value="${o.preco.toLocaleString('pt-BR')}" onchange="salvarEdicaoRapida(${o.id})"></td>
-                <td><span class="btn-acao btn-edit" onclick="abrirModalEdicao(${o.id})">Editar</span><span class="btn-acao btn-del" onclick="deletar(${o.id})">Excluir</span></td>
-                </tr>`
-            }).join('');
-        }
-
-        async function salvarEdicaoRapida(id) {
-            const q = document.getElementById(`q-${id}`).value;
-            const pStr = document.getElementById(`p-${id}`).value.replace(/\./g, '').replace(',', '.');
-            const pNovo = parseFloat(pStr); const o = anunciosDaLoja.find(x => x.id == id); const pAntigo = o.preco;
-            let dadosUpdate = { quantidade: q, preco: pNovo };
-            if (pNovo !== pAntigo) { dadosUpdate.preco_anterior = pAntigo; dadosUpdate.data_alteracao_preco = new Date().toISOString(); }
-            await _s.from('ofertas').update(dadosUpdate).eq('id', id); atualizarLista();
-        }
-
-        function abrirModalEdicao(id) {
-            const o = anunciosDaLoja.find(x => x.id == id); if (!o) return;
-            document.getElementById('edit_id').value = o.id; document.getElementById('edit_condicao').value = o.condicao; document.getElementById('edit_quantidade').value = o.quantidade;
-            document.getElementById('edit_titulo').innerText = `${o.variacoes.produtos_mestre.nome}`;
-            
-            // Popula o campo correto baseado na moeda salva
-            if(o.moeda === 'USD') {
-                document.getElementById('edit_preco_usd').value = o.preco.toLocaleString('pt-BR');
-                document.getElementById('edit_preco_brl').value = '';
-            } else {
-                document.getElementById('edit_preco_brl').value = o.preco.toLocaleString('pt-BR');
-                document.getElementById('edit_preco_usd').value = '';
-            }
-
-            checarCondicaoEdicao();
-            if (o.condicao !== 'Novo') { document.getElementById('edit_garantia').value = o.garantia ? o.garantia.replace(/\D/g, '') : ''; setBatEdicao(o.saude_bateria || ""); }
-            else { document.getElementById('edit_garantia').value = ''; setBatEdicao(""); }
-            document.getElementById('edit_cidade').value = o.cidade || ''; document.getElementById('edit_coleta').checked = o.aceita_coleta;
-            document.getElementById('edit_boy').checked = o.tem_boy; document.getElementById('edit_usdt').checked = o.aceita_usdt;
-            document.getElementById('edit_nota').checked = o.emite_nota; document.getElementById('edit_envio').checked = o.faz_envio || false;
-            if(o.aceita_proposta !== undefined) document.getElementById('edit_proposta').checked = o.aceita_proposta;
-            document.getElementById('editModal').classList.remove('hidden');
-        }
-
-        function fecharModalEdicao() { document.getElementById('editModal').classList.add('hidden'); }
-
-        async function salvarEdicaoCompleta(e) {
+        async function salvarConta(e) {
             e.preventDefault();
-            const id = document.getElementById('edit_id').value; const o = anunciosDaLoja.find(x => x.id == id);
-            
-            const valBrl = document.getElementById('edit_preco_brl').value.trim();
-            const valUsd = document.getElementById('edit_preco_usd').value.trim();
-            if(!valBrl && !valUsd) { alert("PREENCHA O PREÇO (REAL OU DÓLAR)."); return; }
-            
-            let pNovo = 0; let moedaNova = 'BRL';
-            if(valBrl) { pNovo = parseFloat(valBrl.replace(/\./g, '').replace(',', '.')); moedaNova = 'BRL'; }
-            else { pNovo = parseFloat(valUsd.replace(/\./g, '').replace(',', '.')); moedaNova = 'USD'; }
-
-            const cond = document.getElementById('edit_condicao').value; const bat = document.getElementById('edit_saude_bateria').value;
-            if(cond !== 'Novo' && !bat) { alert("Selecione a bateria!"); return; }
-            
-            let dadosUpdate = { condicao: cond, quantidade: document.getElementById('edit_quantidade').value, preco: pNovo, moeda: moedaNova, garantia: cond !== 'Novo' && document.getElementById('edit_garantia').value ? document.getElementById('edit_garantia').value + ' Meses' : null, saude_bateria: cond !== 'Novo' ? bat : null, cidade: document.getElementById('edit_cidade').value.trim(), aceita_coleta: document.getElementById('edit_coleta').checked, tem_boy: document.getElementById('edit_boy').checked, aceita_usdt: document.getElementById('edit_usdt').checked, emite_nota: document.getElementById('edit_nota').checked, faz_envio: document.getElementById('edit_envio').checked, aceita_proposta: document.getElementById('edit_proposta').checked };
-            if (pNovo !== o.preco) { dadosUpdate.preco_anterior = o.preco; dadosUpdate.data_alteracao_preco = new Date().toISOString(); }
-            
-            await _s.from('ofertas').update(dadosUpdate).eq('id', id); fecharModalEdicao(); atualizarLista();
-        }
-
-        async function deletar(id) { if(confirm("Excluir definitivamente?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
-    </script>
-</body>
-</html>
+            const w = document.getElementById('conta_whats').value;
+            const s
