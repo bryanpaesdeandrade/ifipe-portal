@@ -85,13 +85,17 @@
             gradeVariacoes = v.data;
             document.getElementById('f_produto').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('f_regiao').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
-            document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? '[✔️ VERIFICADO]' : ''}</option>`).join('');
+            document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             const cidades = [...new Set(f.data.map(x => x.cidade).filter(Boolean))].sort();
             document.getElementById('f_cidade_lojista').innerHTML += cidades.map(c => `<option value="${c}">${c}</option>`).join('');
             carregarDados(); setInterval(carregarDados, 5000);
         }
 
-        async function carregarDados() { const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)'); ofertasAtuais = data || []; renderizarRanking(); }
+        async function carregarDados() { 
+            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)'); 
+            ofertasAtuais = data || []; 
+            renderizarRanking(); 
+        }
         
         function atualizarFiltrosCascata() { 
             const pid = document.getElementById('f_produto').value; 
@@ -167,12 +171,15 @@
 
                 const tagB = (o.condicao !== 'Novo' && o.saude_bateria) ? `<span class="tag-status tag-bateria">🔋 BATERIA: ${o.saude_bateria}</span>` : '';
                 const tagG = (o.condicao !== 'Novo' && o.garantia) ? `<span class="tag-status tag-garantia">🛡️ GARANTIA: ${o.garantia}</span>` : '';
-                const selo = o.fornecedores.verificado ? '<span class="bg-blue-500 text-white rounded px-1 py-0.5 text-[7px] font-black uppercase ml-1">✔️ VERIFICADO</span>' : '';
+                const tagP = o.aceita_proposta ? `<span class="tag-status" style="background:#5e5ce6; color:#fff; border: 1px solid #5e5ce6;">🤝 NEGOCIO QUANTIDADE</span>` : '';
+                
+                // SELO VIP DOURADO (GOLD)
+                const selo = o.fornecedores.verificado ? '<span style="background:#ffcc00; color:#000;" class="rounded px-1 py-0.5 text-[7px] font-black uppercase ml-1">✔️ VERIFICADO</span>' : '';
 
                 return `<div class="product-card">
                     <div class="flex flex-col gap-1 items-start mb-3">
                         <div class="flex flex-wrap gap-1">${tagEstoque} ${tagMenorPreco} ${tagMudanca}</div>
-                        <div class="flex flex-wrap gap-1 mt-1">${tagB} ${tagG}</div>
+                        <div class="flex flex-wrap gap-1 mt-1">${tagB} ${tagG} ${tagP}</div>
                     </div>
                     <h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2>
                     <p class="text-[9px] text-gray-400 uppercase font-bold mt-1">${[o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ')}</p>
