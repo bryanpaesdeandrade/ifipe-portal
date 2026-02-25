@@ -3,114 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Buscador VIP</title>
+    <title>iFipe - Painel do Anunciante</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin:0; }
-        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 20px; display: flex; justify-content: space-between; align-items: center; }
-        .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: #fff; outline: none; font-size: 12px; text-align: center; }
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; transition: 0.3s; position: relative; }
-        .tag-menor { background: #ff3b30; color: #fff; font-size: 8px; font-weight: 900; padding: 4px 8px; border-radius: 50px; }
-        .price-text { font-size: 26px; font-weight: 900; color: var(--text); }
-        .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; color: #86868b; margin: 30px 0 10px 0; display: flex; align-items: center; gap: 10px; }
-        .section-title::after { content: ""; height: 1px; background: var(--border); flex-grow: 1; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; }
+        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 2rem; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 12px; padding: 14px; width: 100%; color: #fff; outline: none; margin-bottom: 1rem; }
+        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 16px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; }
+        .user-bar { background: rgba(28, 28, 30, 0.8); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         .hidden { display: none !important; }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 12px; border-bottom: 1px solid var(--border); text-align: left; font-size: 13px; }
     </style>
 </head>
 <body>
-    <nav class="nav-bar">
-        <h1 class="text-2xl font-black italic m-0">iFipe</h1>
-        <div id="ticker" class="text-[#32d74b] font-black font-mono">$ --</div>
-        <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
-    </nav>
 
-    <main class="max-w-7xl mx-auto px-4 pb-20">
-        <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-            <select id="f_prod" class="apple-input" onchange="atualizarFiltros()"><option value="">Aparelho</option></select>
-            <select id="f_cond" class="apple-input" onchange="filtrar()"><option value="">Condição</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
-            <select id="f_cap" class="apple-input" onchange="filtrar()"><option value="">Memória</option></select>
-            <select id="f_cor" class="apple-input" onchange="filtrar()"><option value="">Cor</option></select>
-            <select id="f_reg" class="apple-input" onchange="filtrar()"><option value="">Região</option></select>
-            <select id="f_cid" class="apple-input" onchange="filtrar()"><option value="">Cidade</option></select>
+    <div id="loginSection" class="flex items-center justify-center min-h-screen px-4">
+        <div class="apple-card max-w-[400px] text-center">
+            <h1 class="text-4xl font-black italic mb-6">iFipe Login</h1>
+            <form onsubmit="fazerLogin(event)">
+                <input type="text" id="loginId" class="apple-input" placeholder="Nome da Loja" required>
+                <input type="password" id="loginPass" class="apple-input" placeholder="Sua Senha" required>
+                <button type="submit" id="btnEntrar" class="apple-button">Entrar</button>
+            </form>
+            <p id="loginMsg" class="mt-4 text-red-500 font-bold uppercase text-[10px]"></p>
         </div>
+    </div>
 
-        <div id="secBR" class="hidden"><h3 class="section-title">🇧🇷 RANKING BRASIL (R$)</h3><div id="gridBR" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4"></div></div>
-        <div id="secPY" class="hidden"><h3 class="section-title">🇵🇾 RANKING PARAGUAI ($)</h3><div id="gridPY" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4"></div></div>
-        <div id="secUS" class="hidden"><h3 class="section-title">🇺🇸 RANKING MIAMI ($)</h3><div id="gridUS" class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4"></div></div>
-    </main>
+    <div id="panelSection" class="hidden">
+        <div class="user-bar">
+            <span class="font-black uppercase text-[11px]">Loja: <span id="nomeLoja" class="text-blue-500"></span></span>
+            <button onclick="sair()" class="text-red-500 font-black uppercase text-[10px]">Sair</button>
+        </div>
+        <div class="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1">
+                <div class="apple-card">
+                    <h2 class="text-xl font-black mb-4">Novo Anúncio</h2>
+                    <form onsubmit="publicar(event)">
+                        <select id="p_id" class="apple-input" onchange="carregarGrade()" required></select>
+                        <div id="grade"></div>
+                        <select id="cond" class="apple-input"><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
+                        <input type="number" id="qtd" class="apple-input" placeholder="Quantidade" required>
+                        <input type="text" id="prc" class="apple-input" placeholder="Preço (Ex: 5500.00)" required>
+                        <select id="reg" class="apple-input" required></select>
+                        <button type="submit" class="apple-button bg-blue-600 text-white">Publicar</button>
+                    </form>
+                </div>
+            </div>
+            <div class="lg:col-span-2">
+                <div class="apple-card">
+                    <h2 class="text-xl font-black mb-4">Seus Ativos</h2>
+                    <div class="overflow-x-auto">
+                        <table>
+                            <thead><tr><th>Produto</th><th>Qtd</th><th>Preço</th><th>Ação</th></tr></thead>
+                            <tbody id="lista"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let ofertas = []; let grade = [];
+        let lojaID = null; let vars = [];
 
-        async function init() {
-            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            socket.onmessage = (e) => { document.getElementById('ticker').innerText = `$ ${parseFloat(JSON.parse(e.data).c).toFixed(4).replace('.',',')}`; };
+        window.onload = async () => {
+            const id = localStorage.getItem('iFipe_Anunciante');
+            if(id) { 
+                const { data } = await _s.from('fornecedores').select('id, nome').eq('id', id).single();
+                if(data) { lojaID = data.id; document.getElementById('nomeLoja').innerText = data.nome; abrirPainel(); }
+            }
+        };
+
+        async function fazerLogin(e) {
+            e.preventDefault();
+            const n = document.getElementById('loginId').value;
+            const s = document.getElementById('loginPass').value;
+            const { data } = await _s.from('fornecedores').select('*').ilike('nome', n).eq('senha', s).maybeSingle();
+            if(data) { localStorage.setItem('iFipe_Anunciante', data.id); location.reload(); }
+            else { document.getElementById('loginMsg').innerText = "Erro: Loja ou Senha incorretos."; }
+        }
+
+        async function abrirPainel() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('panelSection').classList.remove('hidden');
             const [p, r, v] = await Promise.all([_s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*'), _s.from('variacoes').select('*')]);
-            grade = v.data;
-            document.getElementById('f_prod').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('f_reg').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
-            carregarDados(); setInterval(carregarDados, 5000);
+            vars = v.data;
+            document.getElementById('p_id').innerHTML = '<option value="">Aparelho...</option>' + p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('reg').innerHTML = '<option value="">Região...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            atualizarLista();
         }
 
-        function atualizarFiltros() {
-            const pid = document.getElementById('f_prod').value;
-            const f = pid ? grade.filter(x => x.produto_id == pid) : grade;
-            const caps = [...new Set(f.map(x => x.capacidade))];
-            const cores = [...new Set(f.map(x => x.cor))];
-            document.getElementById('f_cap').innerHTML = '<option value="">Memória</option>' + caps.map(x => `<option value="${x}">${x}</option>`).join('');
-            document.getElementById('f_cor').innerHTML = '<option value="">Cor</option>' + cores.map(x => `<option value="${x}">${x}</option>`).join('');
-            filtrar();
+        function carregarGrade() {
+            const pid = document.getElementById('p_id').value;
+            const f = vars.filter(x => x.produto_id == pid);
+            const c = [...new Set(f.map(x => x.capacidade))];
+            const cr = [...new Set(f.map(x => x.cor))];
+            document.getElementById('grade').innerHTML = `
+                <select id="v_cap" class="apple-input">${c.map(x => `<option value="${x}">${x}</option>`).join('')}</select>
+                <select id="v_cor" class="apple-input">${cr.map(x => `<option value="${x}">${x}</option>`).join('')}</select>
+            `;
         }
 
-        async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(*), variacoes(*, produtos_mestre(*)), regioes(*)');
-            ofertas = data || []; filtrar();
+        async function atualizarLista() {
+            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome))').eq('fornecedor_id', lojaID).order('criado_em', {ascending:false});
+            document.getElementById('lista').innerHTML = data.map(o => `<tr><td>${o.variacoes.produtos_mestre.nome} (${o.variacoes.capacidade})</td><td>${o.quantidade}</td><td>R$ ${o.preco}</td><td><button onclick="del(${o.id})" class="text-red-500">X</button></td></tr>`).join('');
         }
 
-        function filtrar() {
-            const fP = document.getElementById('f_prod').value;
-            const fC = document.getElementById('f_cond').value;
-            const fCap = document.getElementById('f_cap').value;
-            const fCor = document.getElementById('f_cor').value;
-
-            let lista = ofertas.filter(o => o.quantidade > 0 && (!fP || o.variacoes.produto_id == fP) && (!fC || o.condicao == fC) && (!fCap || o.variacoes.capacidade == fCap) && (!fCor || o.variacoes.cor == fCor));
-
-            const render = (items, gridId, secId) => {
-                const sec = document.getElementById(secId);
-                if(items.length === 0) { sec.classList.add('hidden'); return; }
-                sec.classList.remove('hidden');
-                
-                let menores = {};
-                items.forEach(o => { 
-                    let k = `${o.variacao_id}_${o.condicao}`; 
-                    if(!menores[k] || o.preco < menores[k]) menores[k] = o.preco; 
-                });
-
-                items.sort((a,b) => (a.condicao === 'Novo' ? -1 : 1) || a.preco - b.preco);
-                
-                document.getElementById(gridId).innerHTML = items.map(o => `
-                    <div class="product-card">
-                        <div class="mb-2">${o.preco === menores[`${o.variacao_id}_${o.condicao}`] ? '<span class="tag-menor">🔥 MENOR PREÇO</span>' : ''}</div>
-                        <h2 class="font-black text-lg">${o.variacoes.produtos_mestre.nome}</h2>
-                        <p class="text-[10px] text-gray-400 uppercase font-bold">${o.variacoes.capacidade} | ${o.variacoes.cor} | ${o.condicao}</p>
-                        <div class="mt-4"><p class="text-[10px] text-blue-500 font-bold">LOJA: ${o.fornecedores.nome}</p>
-                        <div class="price-text">${o.regioes.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR')}</div></div>
-                        <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}" target="_blank" class="block bg-blue-600 text-white text-center rounded-full p-3 mt-4 text-[11px] font-black uppercase">Chamar no Whats</a>
-                    </div>
-                `).join('');
-            };
-
-            render(lista.filter(o => o.regioes.moeda === 'BRL'), 'gridBR', 'secBR');
-            render(lista.filter(o => o.regioes.nome === 'Ciudad del Este'), 'gridPY', 'secPY');
-            render(lista.filter(o => o.regioes.nome === 'Miami'), 'gridUS', 'secUS');
+        async function publicar(e) {
+            e.preventDefault();
+            const v = vars.find(x => x.produto_id == document.getElementById('p_id').value && x.capacidade == document.getElementById('v_cap').value && x.cor == document.getElementById('v_cor').value);
+            await _s.from('ofertas').insert([{ fornecedor_id: lojaID, variacao_id: v.id, regiao_id: document.getElementById('reg').value, preco: parseFloat(document.getElementById('prc').value), quantidade: document.getElementById('qtd').value, condicao: document.getElementById('cond').value }]);
+            atualizarLista(); e.target.reset();
         }
 
-        function logout() { localStorage.removeItem('iFipe_Token'); location.replace('index.html'); }
-        init();
+        async function del(id) { if(confirm("Apagar?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
+        function sair() { localStorage.removeItem('iFipe_Anunciante'); location.reload(); }
     </script>
 </body>
 </html>
