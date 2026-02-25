@@ -225,14 +225,25 @@
     </div>
 
     <div id="loginSection" class="hidden flex items-center justify-center min-h-screen px-4">
-        <div class="apple-card max-w-[400px] text-center">
+        <div class="apple-card max-w-[400px] text-center w-full">
             <h1 class="text-5xl font-black italic mb-2">iFipe</h1>
             <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel do Anunciante</p>
-            <form onsubmit="fazerLogin(event)">
+            
+            <form id="loginForm" onsubmit="fazerLogin(event)">
                 <input type="text" id="loginId" class="apple-input" placeholder="Nome da sua Loja" required>
                 <input type="password" id="loginPass" class="apple-input" placeholder="Senha" required>
                 <button type="submit" class="apple-button w-full" id="btnEntrar">Entrar no Painel</button>
+                <span class="block text-[#0071e3] cursor-pointer text-[10px] font-black uppercase mt-5 text-center tracking-widest" onclick="toggleForm()">QUERO SER UM FORNECEDOR</span>
             </form>
+
+            <form id="registerForm" class="hidden" onsubmit="solicitarCadastro(event)">
+                <input type="text" id="regNome" class="apple-input" placeholder="NOME DA LOJA" required>
+                <input type="text" id="regWhats" class="apple-input" placeholder="WHATSAPP DA LOJA" required>
+                <input type="password" id="regPass" class="apple-input" placeholder="CRIAR SENHA" required>
+                <button type="submit" class="apple-button w-full mt-2 border border-[#38383a] bg-[#2c2c2e] text-white hover:bg-[#0071e3]" id="btnCadastrar">Enviar Solicitação</button>
+                <span class="block text-gray-500 cursor-pointer text-[10px] font-black uppercase mt-5 text-center tracking-widest hover:text-white" onclick="toggleForm()">VOLTAR AO LOGIN</span>
+            </form>
+
             <p id="loginMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase"></p>
         </div>
     </div>
@@ -438,6 +449,35 @@
             const { data } = await _s.from('fornecedores').select('*').ilike('nome', u).eq('senha', p).maybeSingle();
             if(data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); window.location.reload(); } 
             else { document.getElementById('loginMsg').innerText = "LOJA OU SENHA INCORRETOS."; btn.innerText = "Entrar no Painel"; }
+        }
+
+        function toggleForm() { 
+            document.getElementById('loginForm').classList.toggle('hidden'); 
+            document.getElementById('registerForm').classList.toggle('hidden'); 
+            document.getElementById('loginMsg').innerText = "";
+        }
+
+        async function solicitarCadastro(event) {
+            event.preventDefault();
+            const btn = document.getElementById('btnCadastrar');
+            btn.innerText = "Enviando...";
+            
+            const { error } = await _s.from('fornecedores').insert([{ 
+                nome: document.getElementById('regNome').value.trim(), 
+                whatsapp: document.getElementById('regWhats').value.trim(),
+                senha: document.getElementById('regPass').value.trim(),
+                ativo: false
+            }]);
+            
+            if(!error) { 
+                alert("SOLICITAÇÃO ENVIADA COM SUCESSO! Aguarde a aprovação da equipa iFipe."); 
+                toggleForm(); 
+                event.target.reset();
+            } else { 
+                alert("ERRO AO ENVIAR CADASTRO."); 
+                console.error(error);
+            }
+            btn.innerText = "Enviar Solicitação";
         }
 
         function liberarAcesso() { document.getElementById('loginSection').classList.add('hidden'); document.getElementById('formSection').classList.remove('hidden'); document.getElementById('nomeLoja').innerText = loja.nome; init(); }
