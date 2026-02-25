@@ -12,13 +12,13 @@
         body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; }
         .nav-bar { background:rgba(28,28,30,0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; position:sticky; top:0; z-index:100; display: flex; justify-content: space-between; align-items: center; }
         .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
-        .apple-input { background: var(--input); border:1px solid var(--border); border-radius:10px; padding:10px; width:100%; color: var(--text); outline:none; font-size:12px; text-align:center; }
+        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; }
         .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; transition: 0.3s; position: relative; overflow: hidden; }
         .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
         .tag-status { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 50px; letter-spacing: 0.05em; display: inline-block; margin-bottom: 3px; }
         .tag-menor { background: #ff3b30; color: #fff; }
-        .tag-poucas { background: #ffcc00; color: #000; }
-        .tag-muitas { background: #0071e3; color: #fff; }
+        .tag-intl { background: #0071e3; color: #fff; border: 1px solid #fff; }
+        .tag-est { background: #32d74b; color: #000; }
         .price-text { font-size: 26px; font-weight: 900; color: var(--text); letter-spacing: -0.05em; }
         .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 10px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 12px; }
         .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; color: #86868b; margin: 40px 0 15px 5px; display: flex; align-items: center; gap: 10px; }
@@ -38,7 +38,7 @@
 
     <main class="max-w-7xl mx-auto px-4 pb-20">
         <div class="filter-bar grid grid-cols-2 md:grid-cols-7 gap-3">
-            <div class="filter-item"><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Aparelho</label><select id="f_produto" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
+            <div class="filter-item"><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Aparelho</label><select id="f_produto" class="apple-input" onchange="atualizarFiltrosCascata()"><option value="">Todos</option></select></div>
             <div class="filter-item"><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Condição</label><select id="f_condicao" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select></div>
             <div class="filter-item"><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Memória</label><select id="f_capacidade" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
             <div class="filter-item"><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cor</label><select id="f_cor" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
@@ -47,30 +47,43 @@
             <div class="filter-item"><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cidade</label><select id="f_cidade_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
         </div>
 
-        <div id="sectionBR" class="hidden"><h3 class="section-title">🇧🇷 BRASIL (R$)</h3><div id="gridBR" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div></div>
-        <div id="sectionPY" class="hidden"><h3 class="section-title">🇵🇾 PARAGUAI ($)</h3><div id="gridPY" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div></div>
-        <div id="sectionUS" class="hidden"><h3 class="section-title">🇺🇸 MIAMI ($)</h3><div id="gridUS" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div></div>
+        <div id="sectionBR" class="hidden"><h3 class="section-title">🇧🇷 RANKING BRASIL (R$)</h3><div id="gridBR" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div></div>
+        <div id="sectionPY" class="hidden"><h3 class="section-title">🇵🇾 RANKING PARAGUAI ($)</h3><div id="gridPY" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div></div>
+        <div id="sectionUS" class="hidden"><h3 class="section-title">🇺🇸 RANKING MIAMI ($)</h3><div id="gridUS" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div></div>
     </main>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let ofertasAtuais = [];
+        let ofertasAtuais = []; let gradeVariacoes = [];
 
         function toggleTheme() { document.body.classList.toggle('light-mode'); }
 
         async function init() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (e) => { document.getElementById('ticker').innerText = `$ ${parseFloat(JSON.parse(e.data).c).toFixed(4).replace('.',',')}`; };
-            const [p, r, f] = await Promise.all([_s.from('produtos_mestre').select('id, nome').order('nome'), _s.from('regioes').select('*'), _s.from('fornecedores').select('id, nome, verificado, cidade').eq('ativo', true)]);
+            const [p, r, f, v] = await Promise.all([
+                _s.from('produtos_mestre').select('id, nome').order('nome'),
+                _s.from('regioes').select('*').order('nome'),
+                _s.from('fornecedores').select('id, nome, verificado, cidade').eq('ativo', true),
+                _s.from('variacoes').select('*')
+            ]);
+            gradeVariacoes = v.data;
             document.getElementById('f_produto').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('f_regiao').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? '[✔️]' : ''}</option>`).join('');
-            
-            // RESTAURAÇÃO: Popula as cidades corretamente
             const cidades = [...new Set(f.data.map(x => x.cidade).filter(Boolean))].sort();
             document.getElementById('f_cidade_lojista').innerHTML = '<option value="">Todas</option>' + cidades.map(c => `<option value="${c}">${c}</option>`).join('');
-            
             carregarDados(); setInterval(carregarDados, 5000);
+        }
+
+        function atualizarFiltrosCascata() {
+            const pid = document.getElementById('f_produto').value;
+            let vars = pid ? gradeVariacoes.filter(x => x.produto_id == pid) : gradeVariacoes;
+            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
+            const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
+            document.getElementById('f_capacidade').innerHTML = '<option value="">Todas</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('f_cor').innerHTML = '<option value="">Todas</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join('');
+            renderizarRanking();
         }
 
         async function carregarDados() {
@@ -81,18 +94,19 @@
         function renderizarRanking() {
             const fP = document.getElementById('f_produto').value;
             const fC = document.getElementById('f_condicao').value;
+            const fCap = document.getElementById('f_capacidade').value;
+            const fCor = document.getElementById('f_cor').value;
             const fCid = document.getElementById('f_cidade_lojista').value;
             
-            let filtrados = ofertasAtuais.filter(o => o.quantidade > 0 && (!fP || o.variacoes.produtos_mestre.id == fP) && (!fC || o.condicao == fC) && (!fCid || o.fornecedores.cidade == fCid));
+            let filtrados = ofertasAtuais.filter(o => o.quantidade > 0 && (!fP || o.variacoes.produtos_mestre.id == fP) && (!fC || o.condicao == fC) && (!fCap || o.variacoes.capacidade == fCap) && (!fCor || o.variacoes.cor == fCor) && (!fCid || o.fornecedores.cidade == fCid));
 
             const criarCard = (o, menorPreco) => {
                 let moeda = o.regioes.moeda === 'USD' ? '$' : 'R$';
                 let tagMenor = o.preco === menorPreco ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
-                let tagEst = o.quantidade <= 3 ? `<span class="tag-status tag-poucas">APENAS ${o.quantidade} UN</span>` : `<span class="tag-status tag-muitas">EM ESTOQUE ${o.quantidade} UN</span>`;
-                let detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ');
-                
+                let tagLoc = o.regioes.moeda === 'USD' ? `<span class="tag-status tag-intl">LOJA EM ${o.regioes.nome.toUpperCase()} ${o.regioes.bandeira}</span>` : '';
+                let detalhes = [o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ');
                 return `<div class="product-card">
-                    <div class="flex flex-wrap gap-1 mb-3">${tagEst} ${tagMenor}</div>
+                    <div class="flex flex-wrap gap-1 mb-3">${tagMenor} ${tagLoc}</div>
                     <h2 class="text-lg font-black">${o.variacoes.produtos_mestre.nome}</h2>
                     <p class="text-[9px] text-gray-400 font-bold mt-1">${detalhes}</p>
                     <div class="mt-4"><p class="text-[9px] text-blue-500 font-bold">ATACADISTA: ${o.fornecedores.nome}</p>
@@ -106,14 +120,11 @@
                 const sec = document.getElementById(sectionId);
                 if(lista.length === 0) { sec.classList.add('hidden'); return; }
                 sec.classList.remove('hidden');
-                
                 let menores = {};
                 lista.forEach(o => {
                     let chave = `${o.variacao_id}_${o.condicao}`;
                     if (!menores[chave] || o.preco < menores[chave]) menores[chave] = o.preco;
                 });
-
-                // REGRAS: Novos primeiro, depois o jogo de cadeiras por preço
                 lista.sort((a, b) => {
                     if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
                     if (a.condicao !== 'Novo' && b.condicao === 'Novo') return 1;
