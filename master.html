@@ -616,4 +616,23 @@
         }
     </script>
 </body>
+
+    // CONFIGURAÇÃO DO SOM E ALERTA DE NOVO ANÚNCIO
+const somAlerta = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+
+_s.channel('painel-master')
+  .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'ofertas' }, (payload) => {
+    // 1. Toca o som de aviso
+    somAlerta.play().catch(() => console.log("Clique na tela para liberar o som"));
+    
+    // 2. Avisa na tela quem postou (opcional, mas ajuda muito)
+    console.log("Novo anúncio detectado!", payload.new);
+    
+    // 3. Recarrega a sua lista automaticamente para o anúncio novo já aparecer
+    if (typeof filtrar === 'function') { 
+        filtrar(); // Aqui ele chama a função que você já tem no Master para atualizar a tabela
+    }
+  })
+  .subscribe();
+
 </html>
