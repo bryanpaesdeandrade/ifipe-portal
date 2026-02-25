@@ -39,7 +39,6 @@
         .pill-full { grid-column: span 2; }
         .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 12px; font-weight: 700; }
 
-        /* BOTOES FLUTUANTES */
         .btn-wpp-float { position: fixed; bottom: 20px; right: 20px; background-color: #25d366; color: #fff; width: 60px; height: 60px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 5px 20px rgba(37,211,102,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; }
         .btn-wpp-float svg { flex-shrink: 0; width: 30px; height: 30px; fill: #fff; }
         .wpp-text { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
@@ -51,6 +50,8 @@
         .calc-text { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
         .btn-calc-float:hover { width: 170px; padding-left: 18px; justify-content: flex-start; }
         .btn-calc-float:hover .calc-text { opacity: 1; }
+
+        .check-box { accent-color: #0071e3; width: 16px; height: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -61,9 +62,7 @@
             
             <div class="text-center mb-5 mt-2">
                 <h2 class="text-lg font-black italic text-white">Calculadora VIP</h2>
-                <p class="text-[9px] text-blue-500 font-black uppercase mt-2 tracking-widest leading-relaxed">
-                    Coloque o preço em Dólar e saiba o custo em SP
-                </p>
+                <p class="text-[9px] text-blue-500 font-black uppercase mt-2 tracking-widest leading-relaxed">Coloque o preço em Dólar e saiba o custo em SP</p>
             </div>
 
             <div class="bg-[#0a0a0a] border-2 border-[#2c2c2e] rounded-2xl p-4 text-right mb-4 relative shadow-inner">
@@ -293,10 +292,18 @@
 
             <div class="lg:col-span-2">
                 <div class="apple-card">
-                    <h2 class="text-xl font-black italic mb-6">Meus Anúncios Ativos</h2>
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-[#38383a] pb-4">
+                        <h2 class="text-xl font-black italic m-0">Meus Anúncios</h2>
+                        <div class="flex gap-2 flex-wrap items-center">
+                            <button onclick="selecionarTodosAnuncios()" class="text-[10px] bg-gray-700 text-white px-4 py-2 rounded-full font-black uppercase tracking-widest hover:bg-gray-600 transition-colors border-0">Todos</button>
+                            <button onclick="bulkPausar()" class="text-[10px] bg-yellow-600 text-black px-4 py-2 rounded-full font-black uppercase tracking-widest hover:bg-yellow-500 transition-colors border-0">Pausar (Zerar Est.)</button>
+                            <button onclick="bulkExcluir()" class="text-[10px] bg-red-900 text-white px-4 py-2 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">Excluir Tudo</button>
+                        </div>
+                    </div>
+                    
                     <div class="overflow-x-auto">
                         <table>
-                            <thead><tr><th>Produto</th><th>Condição</th><th>Estoque</th><th>Preço</th><th>Ações</th></tr></thead>
+                            <thead><tr><th>Sel</th><th>Produto</th><th>Condição</th><th>Estoque</th><th>Preço</th><th>Ações</th></tr></thead>
                             <tbody id="listaAtivos"></tbody>
                         </table>
                     </div>
@@ -318,7 +325,8 @@
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let loja = null; let gradeVariacoes = []; let anunciosDaLoja = [];
-        let currentUsdtRate = 0;
+        let currentUsdtRate = 0; 
+        let chkEstado = false; // Controle da seleção em massa
 
         function toggleTheme() {
             const b = document.body; b.classList.toggle('light-mode');
@@ -497,8 +505,53 @@
                 else if(o.quantidade <= 3) tagEstoque = `<br><span class="text-[9px] bg-[#ffcc00] text-black px-2 py-0.5 rounded font-bold">APENAS ${o.quantidade} UN</span>`;
                 else if(o.quantidade <= 10) tagEstoque = `<br><span class="text-[9px] bg-[#0071e3] text-white px-2 py-0.5 rounded font-bold">ESTOQUE ${o.quantidade} UN</span>`;
                 else tagEstoque = `<br><span class="text-[9px] bg-[#32d74b] text-black px-2 py-0.5 rounded font-bold">ALTO ESTOQUE ${o.quantidade} UN</span>`;
-                return `<tr><td><span class="block font-bold">${o.variacoes.produtos_mestre.nome}</span><span class="text-[10px] text-gray-400">${det}</span></td><td><span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600">${o.condicao}</span>${tagB}</td><td><input type="number" id="q-${o.id}" class="mini-input mb-1" value="${o.quantidade}" min="0" onchange="salvarEdicaoRapida(${o.id})">${tagEstoque}</td><td class="whitespace-nowrap"><span class="text-[10px] text-gray-500 font-bold mr-1">${sym}</span><input type="text" id="p-${o.id}" class="mini-input w-20" value="${o.preco.toLocaleString('pt-BR')}" onchange="salvarEdicaoRapida(${o.id})"></td><td><span class="btn-acao btn-edit" onclick="abrirModalEdicao(${o.id})">Editar</span><span class="btn-acao btn-del" onclick="deletar(${o.id})">Excluir</span></td></tr>`;
+                
+                // INCLUSÃO DA CHECKBOX NA TABELA PARA AÇÕES EM MASSA
+                return `<tr>
+                    <td class="text-center"><input type="checkbox" class="check-box chk-anuncio" value="${o.id}"></td>
+                    <td><span class="block font-bold">${o.variacoes.produtos_mestre.nome}</span><span class="text-[10px] text-gray-400">${det}</span></td>
+                    <td><span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600">${o.condicao}</span>${tagB}</td>
+                    <td><input type="number" id="q-${o.id}" class="mini-input mb-1" value="${o.quantidade}" min="0" onchange="salvarEdicaoRapida(${o.id})">${tagEstoque}</td>
+                    <td class="whitespace-nowrap"><span class="text-[10px] text-gray-500 font-bold mr-1">${sym}</span><input type="text" id="p-${o.id}" class="mini-input w-20" value="${o.preco.toLocaleString('pt-BR')}" onchange="salvarEdicaoRapida(${o.id})"></td>
+                    <td><span class="btn-acao btn-edit" onclick="abrirModalEdicao(${o.id})">Editar</span><span class="btn-acao btn-del" onclick="deletar(${o.id})">Excluir</span></td>
+                </tr>`;
             }).join('');
+        }
+
+        // ==========================================
+        // LÓGICA DE AÇÕES EM MASSA (MOTOR NOVO)
+        // ==========================================
+        function selecionarTodosAnuncios() {
+            chkEstado = !chkEstado;
+            document.querySelectorAll('.chk-anuncio').forEach(chk => chk.checked = chkEstado);
+        }
+
+        async function bulkPausar() {
+            const ids = Array.from(document.querySelectorAll('.chk-anuncio:checked')).map(c => parseInt(c.value));
+            if(ids.length === 0) return alert("Selecione os anúncios marcando a caixinha ao lado deles.");
+            
+            if(confirm(`Tem certeza que deseja ZERAR O ESTOQUE de ${ids.length} anúncios? Eles ficarão ocultos no Buscador.`)) {
+                const { error } = await _s.from('ofertas').update({ quantidade: 0 }).in('id', ids);
+                if(!error) {
+                    chkEstado = false;
+                    atualizarLista();
+                    alert("Estoque zerado com sucesso!");
+                } else { alert("Erro ao pausar anúncios."); }
+            }
+        }
+
+        async function bulkExcluir() {
+            const ids = Array.from(document.querySelectorAll('.chk-anuncio:checked')).map(c => parseInt(c.value));
+            if(ids.length === 0) return alert("Selecione os anúncios marcando a caixinha ao lado deles.");
+            
+            if(confirm(`Tem certeza que deseja EXCLUIR DEFINITIVAMENTE ${ids.length} anúncios?`)) {
+                const { error } = await _s.from('ofertas').delete().in('id', ids);
+                if(!error) {
+                    chkEstado = false;
+                    atualizarLista();
+                    alert("Anúncios excluídos com sucesso!");
+                } else { alert("Erro ao excluir anúncios."); }
+            }
         }
 
         async function salvarEdicaoRapida(id) {
