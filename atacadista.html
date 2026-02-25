@@ -33,9 +33,12 @@
         .battery-pill.active { background: #32d74b !important; color: #000 !important; border-color: #32d74b !important; box-shadow: 0 0 15px rgba(50, 215, 75, 0.3); }
         .pill-full { grid-column: span 2; }
 
-        /* Botão WhatsApp Flutuante */
-        .btn-wpp-float { position: fixed; bottom: 20px; right: 20px; background-color: #25d366; color: #fff; border-radius: 50px; padding: 12px 20px; font-size: 12px; font-weight: 900; text-transform: uppercase; text-decoration: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 1000; animation: pulse-wpp 2s infinite; letter-spacing: 0.05em; }
-        @keyframes pulse-wpp { 0% { transform: scale(1); } 50% { transform: scale(1.05); box-shadow: 0 4px 20px rgba(37,211,102,0.6); } 100% { transform: scale(1); } }
+        /* Botão WhatsApp Retrátil */
+        .btn-wpp-float { position: fixed; bottom: 20px; right: 20px; background-color: #25d366; color: #fff; width: 50px; height: 50px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 1000; transition: width 0.3s ease, padding 0.3s ease; overflow: hidden; white-space: nowrap; }
+        .btn-wpp-float svg { flex-shrink: 0; width: 24px; height: 24px; }
+        .wpp-text { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; max-width: 0; opacity: 0; transition: max-width 0.3s ease, opacity 0.3s ease, margin-left 0.3s ease; }
+        .btn-wpp-float:hover { width: 170px; padding-left: 15px; justify-content: flex-start; }
+        .btn-wpp-float:hover .wpp-text { max-width: 150px; opacity: 1; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -68,11 +71,11 @@
                 <div id="edit_boxBateria" class="hidden">
                     <label class="text-green-500">Saúde da Bateria</label>
                     <div class="battery-grid">
-                        <div class="battery-pill b-edit" data-val="ABAIXO DE 85%" onclick="setBatEdicao(this)">Abaixo 85%</div>
-                        <div class="battery-pill b-edit" data-val="ACIMA DE 85%" onclick="setBatEdicao(this)">Acima 85%</div>
-                        <div class="battery-pill b-edit" data-val="ACIMA DE 90%" onclick="setBatEdicao(this)">Acima 90%</div>
-                        <div class="battery-pill b-edit" data-val="ACIMA DE 95%" onclick="setBatEdicao(this)">Acima 95%</div>
-                        <div class="battery-pill b-edit pill-full" data-val="EM 100%" onclick="setBatEdicao(this)">Bateria em 100%</div>
+                        <div class="battery-pill b-edit" onclick="setBatEdicao('ABAIXO DE 85%')">Abaixo 85%</div>
+                        <div class="battery-pill b-edit" onclick="setBatEdicao('ACIMA DE 85%')">Acima 85%</div>
+                        <div class="battery-pill b-edit" onclick="setBatEdicao('ACIMA DE 90%')">Acima 90%</div>
+                        <div class="battery-pill b-edit" onclick="setBatEdicao('ACIMA DE 95%')">Acima 95%</div>
+                        <div class="battery-pill b-edit pill-full" onclick="setBatEdicao('EM 100%')">Bateria em 100%</div>
                     </div>
                     <input type="hidden" id="edit_saude_bateria">
                 </div>
@@ -122,11 +125,9 @@
         <div class="user-bar">
             <div class="max-w-7xl mx-auto flex justify-between items-center gap-4">
                 <div class="text-[11px] font-black uppercase tracking-widest whitespace-nowrap">Loja: <span id="nomeLoja" class="text-blue-500">...</span></div>
-                
                 <div class="text-[9px] md:text-[11px] font-black text-[#32d74b] bg-[#1c1c1e] px-3 py-1.5 rounded-full border border-[#38383a] flex items-center gap-2">
                     <span class="animate-pulse">🟢</span> <span id="onlineCount">--</span> ONLINE
                 </div>
-
                 <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase hover:text-white transition-colors">Sair</button>
             </div>
         </div>
@@ -138,7 +139,6 @@
                     <form id="priceForm" onsubmit="salvarOferta(event)">
                         <label>Aparelho</label>
                         <select id="produto_id" class="apple-input" onchange="aoMudarProduto()" required></select>
-                        
                         <div class="grid grid-cols-2 gap-4">
                             <div><label>Condição</label>
                                 <select id="condicao" class="apple-input" onchange="checarCondicao()">
@@ -154,7 +154,6 @@
                             </div>
                             <div><label>Estoque</label><input type="number" id="quantidade" class="apple-input" value="1" min="0" required></div>
                         </div>
-
                         <div id="boxBateria" class="hidden mb-4">
                             <label class="text-green-500">Saúde da Bateria</label>
                             <div class="battery-grid">
@@ -166,19 +165,14 @@
                             </div>
                             <input type="hidden" id="saude_bateria">
                         </div>
-
                         <div id="boxGarantia" class="hidden"><label class="text-yellow-500">Garantia (Meses)</label><input type="number" id="garantia" class="apple-input" placeholder="Ex: 3"></div>
-
                         <div id="gradeOpcoes" class="mb-4"></div>
-
                         <label>Preço Unitário (R$)</label>
                         <input type="text" id="preco" class="apple-input" placeholder="Ex: 5400,00" required>
-
                         <label>Região / Origem</label>
                         <select id="regiao_id" class="apple-input" required></select>
-
                         <div class="mt-4 mb-4 p-4 border border-[#38383a] rounded-xl bg-[#2c2c2e]">
-                            <input type="text" id="obs_cidade" class="apple-input py-2 mb-3 bg-[#1c1c1e] text-[12px]" placeholder="Cidade da Retirada (Opcional)">
+                            <input type="text" id="obs_cidade" class="apple-input py-2 mb-3 bg-[#1c1c1e] text-[12px]" placeholder="Cidade">
                             <div class="grid grid-cols-3 gap-3 text-[9px] text-gray-300 font-bold uppercase tracking-wider">
                                 <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="obs_coleta" class="accent-[#0071e3] w-4 h-4"> Coleta</label>
                                 <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="obs_boy" class="accent-[#0071e3] w-4 h-4"> Motoboy</label>
@@ -188,13 +182,11 @@
                                 <label class="flex items-center gap-2 cursor-pointer hover:text-white text-[#5e5ce6]"><input type="checkbox" id="obs_proposta" class="accent-[#5e5ce6] w-4 h-4"> 🤝 Negocio Quantidade</label>
                             </div>
                         </div>
-
                         <button type="submit" class="apple-button w-full bg-blue-600 text-white border-0 mt-4">Publicar Oferta</button>
                         <p id="formMsg" class="mt-4 text-[10px] font-bold text-red-500 text-center uppercase tracking-widest"></p>
                     </form>
                 </div>
             </div>
-
             <div class="lg:col-span-2">
                 <div class="apple-card">
                     <h2 class="text-xl font-black italic mb-6">Meus Anúncios Ativos</h2>
@@ -210,15 +202,13 @@
     </div>
     
     <a href="https://wa.me/556896003049?text=Ol%C3%A1,%20preciso%20de%20suporte%20no%20Painel%20do%20iFipe!" target="_blank" class="btn-wpp-float">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
-        Suporte iFipe
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
+        <span class="wpp-text">Suporte iFipe</span>
     </a>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let loja = null;
-        let gradeVariacoes = [];
-        let anunciosDaLoja = [];
+        let loja = null; let gradeVariacoes = []; let anunciosDaLoja = [];
 
         function atualizarOnlineSincronizado() {
             const el = document.getElementById('onlineCount');
@@ -258,11 +248,7 @@
         function sairPainel() { localStorage.removeItem('iFipe_Anunciante'); window.location.reload(); }
 
         async function init() {
-            const [p, r, v] = await Promise.all([
-                _s.from('produtos_mestre').select('id, nome').order('nome'),
-                _s.from('regioes').select('*').order('nome'),
-                _s.from('variacoes').select('*')
-            ]);
+            const [p, r, v] = await Promise.all([_s.from('produtos_mestre').select('id, nome').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*')]);
             gradeVariacoes = v.data;
             document.getElementById('produto_id').innerHTML = '<option value="">Selecione o Aparelho...</option>' + p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('regiao_id').innerHTML = '<option value="">Origem/Região...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
@@ -287,19 +273,13 @@
         function setBat(val) {
             document.getElementById('saude_bateria').value = val;
             const pills = document.querySelectorAll('.b-new');
-            pills.forEach(p => {
-                if (p.getAttribute('onclick').includes(`'${val}'`)) p.classList.add('active');
-                else p.classList.remove('active');
-            });
+            pills.forEach(p => { if (p.getAttribute('onclick').includes(`'${val}'`)) p.classList.add('active'); else p.classList.remove('active'); });
         }
 
         function setBatEdicao(val) {
             document.getElementById('edit_saude_bateria').value = val;
             const pills = document.querySelectorAll('.b-edit');
-            pills.forEach(p => {
-                if (val && p.getAttribute('onclick').includes(`'${val}'`)) p.classList.add('active');
-                else p.classList.remove('active');
-            });
+            pills.forEach(p => { if (val && p.getAttribute('onclick').includes(`'${val}'`)) p.classList.add('active'); else p.classList.remove('active'); });
         }
 
         function checarCondicao() {
@@ -320,43 +300,28 @@
 
         async function salvarOferta(event) {
             event.preventDefault(); 
-            const msg = document.getElementById('formMsg');
-            msg.innerText = "SALVANDO...";
+            const msg = document.getElementById('formMsg'); msg.innerText = "SALVANDO...";
             const pid = document.getElementById('produto_id').value;
             const tam = document.getElementById('f_tam')?.value || null;
             const cap = document.getElementById('f_cap')?.value || null;
             const cor = document.getElementById('f_cor')?.value || null;
             const v = gradeVariacoes.find(x => x.produto_id == pid && (x.tamanho === tam || (!x.tamanho && !tam)) && (x.capacidade === cap || (!x.capacidade && !cap)) && (x.cor === cor || (!x.cor && !cor)));
             if(!v) { msg.innerText = "COMBINAÇÃO INVÁLIDA."; return; }
-            
             const pStr = document.getElementById('preco').value.replace(/\./g, '').replace(',', '.');
             const cond = document.getElementById('condicao').value;
             const bat = document.getElementById('saude_bateria').value;
-
-            if(cond !== 'Novo' && !bat) {
-                msg.innerText = "SELECIONE A SAÚDE DA BATERIA.";
-                return;
-            }
-
+            if(cond !== 'Novo' && !bat) { msg.innerText = "SELECIONE A SAÚDE DA BATERIA."; return; }
             const { error } = await _s.from('ofertas').insert([{
                 fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value,
                 preco: parseFloat(pStr), quantidade: document.getElementById('quantidade').value,
                 condicao: cond, garantia: cond !== 'Novo' && document.getElementById('garantia').value ? document.getElementById('garantia').value + ' Meses' : null,
-                saude_bateria: bat || null,
-                cidade: document.getElementById('obs_cidade').value.trim(),
+                saude_bateria: bat || null, cidade: document.getElementById('obs_cidade').value.trim(),
                 aceita_coleta: document.getElementById('obs_coleta').checked, tem_boy: document.getElementById('obs_boy').checked,
                 aceita_usdt: document.getElementById('obs_usdt').checked, emite_nota: document.getElementById('obs_nota').checked,
-                faz_envio: document.getElementById('obs_envio') ? document.getElementById('obs_envio').checked : false,
-                aceita_proposta: document.getElementById('obs_proposta') ? document.getElementById('obs_proposta').checked : false
+                faz_envio: document.getElementById('obs_envio').checked, aceita_proposta: document.getElementById('obs_proposta').checked
             }]);
-            
-            if(!error) {
-                event.target.reset(); document.getElementById('condicao').value = "Novo"; checarCondicao(); atualizarLista();
-                msg.innerText = "ANÚNCIO PUBLICADO!";
-                setTimeout(() => msg.innerText = "", 3000);
-            } else {
-                msg.innerText = "ERRO AO SALVAR.";
-            }
+            if(!error) { event.target.reset(); document.getElementById('condicao').value = "Novo"; checarCondicao(); atualizarLista(); msg.innerText = "ANÚNCIO PUBLICADO!"; setTimeout(() => msg.innerText = "", 3000); }
+            else { msg.innerText = "ERRO AO SALVAR."; }
         }
 
         async function atualizarLista() {
@@ -365,63 +330,38 @@
             document.getElementById('listaAtivos').innerHTML = anunciosDaLoja.map(o => {
                 const det = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' | ');
                 const tagB = o.saude_bateria ? `<br><span class="text-green-500 font-bold text-[9px]">${o.saude_bateria}</span>` : '';
-                
                 let tagEstoque = '';
                 if(o.quantidade == 0) tagEstoque = '<br><span class="text-[9px] bg-red-900 text-white px-2 py-0.5 rounded font-bold">ESGOTADO (PAUSADO)</span>';
                 else if(o.quantidade >= 1 && o.quantidade <= 3) tagEstoque = `<br><span class="text-[9px] bg-[#ffcc00] text-black px-2 py-0.5 rounded font-bold">APENAS ${o.quantidade} UN</span>`;
                 else if(o.quantidade >= 4 && o.quantidade <= 10) tagEstoque = `<br><span class="text-[9px] bg-[#0071e3] text-white px-2 py-0.5 rounded font-bold">EM ESTOQUE ${o.quantidade} UN</span>`;
                 else if(o.quantidade >= 11) tagEstoque = `<br><span class="text-[9px] bg-[#32d74b] text-black px-2 py-0.5 rounded font-bold">ALTO ESTOQUE ${o.quantidade} UN</span>`;
-
                 return `<tr><td><span class="block font-bold">${o.variacoes.produtos_mestre.nome}</span><span class="text-[10px] text-gray-400">${det}</span></td>
                 <td><span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600">${o.condicao}</span>${tagB}</td>
                 <td><input type="number" id="q-${o.id}" class="mini-input mb-1" value="${o.quantidade}" min="0" onchange="salvarEdicaoRapida(${o.id})">${tagEstoque}</td>
                 <td><input type="text" id="p-${o.id}" class="mini-input w-24" value="${o.preco.toLocaleString('pt-BR')}" onchange="salvarEdicaoRapida(${o.id})"></td>
-                <td><span class="btn-acao btn-edit" onclick="abrirModalEdicao(${o.id})">Editar</span><span class="btn-acao btn-del" onclick="deletar(${o.id})">Excluir</span></td></tr>`}).join('');
+                <td><span class="btn-edit" onclick="abrirModalEdicao(${o.id})">Editar</span><span class="btn-del" onclick="deletar(${o.id})">Excluir</span></td></tr>`}).join('');
         }
 
         async function salvarEdicaoRapida(id) {
             const q = document.getElementById(`q-${id}`).value;
             const pStr = document.getElementById(`p-${id}`).value.replace(/\./g, '').replace(',', '.');
-            const pNovo = parseFloat(pStr);
-            const o = anunciosDaLoja.find(x => x.id == id);
-            const pAntigo = o.preco;
-
+            const pNovo = parseFloat(pStr); const o = anunciosDaLoja.find(x => x.id == id); const pAntigo = o.preco;
             let dadosUpdate = { quantidade: q, preco: pNovo };
-
-            if (pNovo !== pAntigo) {
-                dadosUpdate.preco_anterior = pAntigo;
-                dadosUpdate.data_alteracao_preco = new Date().toISOString();
-            }
-
-            await _s.from('ofertas').update(dadosUpdate).eq('id', id);
-            atualizarLista();
+            if (pNovo !== pAntigo) { dadosUpdate.preco_anterior = pAntigo; dadosUpdate.data_alteracao_preco = new Date().toISOString(); }
+            await _s.from('ofertas').update(dadosUpdate).eq('id', id); atualizarLista();
         }
 
         function abrirModalEdicao(id) {
             const o = anunciosDaLoja.find(x => x.id == id); if (!o) return;
-            document.getElementById('edit_id').value = o.id;
-            document.getElementById('edit_condicao').value = o.condicao;
-            document.getElementById('edit_quantidade').value = o.quantidade;
-            document.getElementById('edit_preco').value = o.preco.toLocaleString('pt-BR');
-            document.getElementById('edit_titulo').innerText = `${o.variacoes.produtos_mestre.nome}`;
+            document.getElementById('edit_id').value = o.id; document.getElementById('edit_condicao').value = o.condicao; document.getElementById('edit_quantidade').value = o.quantidade;
+            document.getElementById('edit_preco').value = o.preco.toLocaleString('pt-BR'); document.getElementById('edit_titulo').innerText = `${o.variacoes.produtos_mestre.nome}`;
             checarCondicaoEdicao();
-            
-            if (o.condicao !== 'Novo') {
-                document.getElementById('edit_garantia').value = o.garantia ? o.garantia.replace(/\D/g, '') : '';
-                setBatEdicao(o.saude_bateria || "");
-            } else {
-                document.getElementById('edit_garantia').value = '';
-                setBatEdicao("");
-            }
-            
-            document.getElementById('edit_cidade').value = o.cidade || '';
-            document.getElementById('edit_coleta').checked = o.aceita_coleta;
-            document.getElementById('edit_boy').checked = o.tem_boy;
-            document.getElementById('edit_usdt').checked = o.aceita_usdt;
-            document.getElementById('edit_nota').checked = o.emite_nota;
-            if(document.getElementById('edit_envio')) document.getElementById('edit_envio').checked = o.faz_envio || false;
-            if(document.getElementById('edit_proposta')) document.getElementById('edit_proposta').checked = o.aceita_proposta || false;
-            
+            if (o.condicao !== 'Novo') { document.getElementById('edit_garantia').value = o.garantia ? o.garantia.replace(/\D/g, '') : ''; setBatEdicao(o.saude_bateria || ""); }
+            else { document.getElementById('edit_garantia').value = ''; setBatEdicao(""); }
+            document.getElementById('edit_cidade').value = o.cidade || ''; document.getElementById('edit_coleta').checked = o.aceita_coleta;
+            document.getElementById('edit_boy').checked = o.tem_boy; document.getElementById('edit_usdt').checked = o.aceita_usdt;
+            document.getElementById('edit_nota').checked = o.emite_nota; document.getElementById('edit_envio').checked = o.faz_envio || false;
+            document.getElementById('edit_proposta').checked = o.aceita_proposta || false;
             document.getElementById('editModal').classList.remove('hidden');
         }
 
@@ -429,43 +369,14 @@
 
         async function salvarEdicaoCompleta(e) {
             e.preventDefault();
-            const id = document.getElementById('edit_id').value;
-            const o = anunciosDaLoja.find(x => x.id == id);
-            const cond = document.getElementById('edit_condicao').value;
-            const bat = document.getElementById('edit_saude_bateria').value;
+            const id = document.getElementById('edit_id').value; const o = anunciosDaLoja.find(x => x.id == id);
+            const cond = document.getElementById('edit_condicao').value; const bat = document.getElementById('edit_saude_bateria').value;
             const pStr = document.getElementById('edit_preco').value.replace(/\./g, '').replace(',', '.');
-            const pNovo = parseFloat(pStr);
-            const pAntigo = o.preco;
-
-            if(cond !== 'Novo' && !bat) {
-                alert("Selecione a bateria!");
-                return;
-            }
-
-            let dadosUpdate = {
-                condicao: cond, 
-                quantidade: document.getElementById('edit_quantidade').value, 
-                preco: pNovo,
-                garantia: cond !== 'Novo' && document.getElementById('edit_garantia').value ? document.getElementById('edit_garantia').value + ' Meses' : null,
-                saude_bateria: cond !== 'Novo' ? bat : null,
-                cidade: document.getElementById('edit_cidade').value.trim(),
-                aceita_coleta: document.getElementById('edit_coleta').checked, 
-                tem_boy: document.getElementById('edit_boy').checked,
-                aceita_usdt: document.getElementById('edit_usdt').checked, 
-                emite_nota: document.getElementById('edit_nota').checked
-            };
-
-            if(document.getElementById('edit_envio')) dadosUpdate.faz_envio = document.getElementById('edit_envio').checked;
-            if(document.getElementById('edit_proposta')) dadosUpdate.aceita_proposta = document.getElementById('edit_proposta').checked;
-
-            if (pNovo !== pAntigo) {
-                dadosUpdate.preco_anterior = pAntigo;
-                dadosUpdate.data_alteracao_preco = new Date().toISOString();
-            }
-
-            await _s.from('ofertas').update(dadosUpdate).eq('id', id);
-            fecharModalEdicao(); 
-            atualizarLista();
+            const pNovo = parseFloat(pStr); const pAntigo = o.preco;
+            if(cond !== 'Novo' && !bat) { alert("Selecione a bateria!"); return; }
+            let dadosUpdate = { condicao: cond, quantidade: document.getElementById('edit_quantidade').value, preco: pNovo, garantia: cond !== 'Novo' && document.getElementById('edit_garantia').value ? document.getElementById('edit_garantia').value + ' Meses' : null, saude_bateria: cond !== 'Novo' ? bat : null, cidade: document.getElementById('edit_cidade').value.trim(), aceita_coleta: document.getElementById('edit_coleta').checked, tem_boy: document.getElementById('edit_boy').checked, aceita_usdt: document.getElementById('edit_usdt').checked, emite_nota: document.getElementById('edit_nota').checked, faz_envio: document.getElementById('edit_envio').checked, aceita_proposta: document.getElementById('edit_proposta').checked };
+            if (pNovo !== pAntigo) { dadosUpdate.preco_anterior = pAntigo; dadosUpdate.data_alteracao_preco = new Date().toISOString(); }
+            await _s.from('ofertas').update(dadosUpdate).eq('id', id); fecharModalEdicao(); atualizarLista();
         }
 
         async function deletar(id) { if(confirm("Excluir definitivamente?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
