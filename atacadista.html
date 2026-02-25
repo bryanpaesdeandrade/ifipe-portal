@@ -17,8 +17,7 @@
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
         th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); letter-spacing: 0.1em; }
         td { padding: 14px 12px; border-bottom: 1px solid var(--input); font-size: 13px; }
-        .battery-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 8px; margin-bottom: 15px;}
-        .battery-pill { padding: 12px 10px; border-radius: 10px; background: #2c2c2e; border: 1px solid #38383a; cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; text-align: center; color: #86868b; }
+        .battery-pill { padding: 10px; border-radius: 10px; background: #2c2c2e; border: 1px solid var(--border); cursor: pointer; font-size: 9px; font-weight: 900; text-transform: uppercase; text-align: center; color: #86868b; transition: 0.2s; }
         .battery-pill.active { background: #32d74b !important; color: #000 !important; }
         .hidden { display: none !important; }
     </style>
@@ -38,43 +37,61 @@
     </div>
 
     <div id="formSection" class="hidden">
-        <div class="user-bar"><div class="max-w-7xl mx-auto flex justify-between items-center"><div class="text-[11px] font-black uppercase whitespace-nowrap">Loja: <span id="nomeLoja" class="text-blue-500">...</span></div><button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button></div></div>
+        <div class="user-bar">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="text-[11px] font-black uppercase">Loja: <span id="nomeLoja" class="text-blue-500">...</span></div>
+                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button>
+            </div>
+        </div>
+
         <div class="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-1">
                 <div class="apple-card">
                     <h2 class="text-xl font-black italic mb-6">Novo Anúncio</h2>
-                    <form onsubmit="salvarOferta(event)">
+                    <form id="priceForm" onsubmit="salvarOferta(event)">
                         <label class="text-[9px] uppercase font-bold text-gray-500">Aparelho</label>
                         <select id="produto_id" class="apple-input" onchange="aoMudarProduto()" required></select>
                         <div id="gradeOpcoes"></div>
                         <div class="grid grid-cols-2 gap-4">
                             <div><label class="text-[9px] uppercase font-bold text-gray-500">Condição</label>
                                 <select id="condicao" class="apple-input" onchange="checarCondicao()">
-                                    <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option>
-                                    <option value="Apple As Is">Apple As Is</option><option value="Apple As Is+">Apple As Is+</option>
-                                    <option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option>
+                                    <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
+                                    <option value="CPO">CPO</option><option value="Apple As Is">Apple As Is</option>
+                                    <option value="Apple As Is+">Apple As Is+</option><option value="GRADE A">GRADE A</option>
+                                    <option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option>
                                 </select>
                             </div>
                             <div><label class="text-[9px] uppercase font-bold text-gray-500">Estoque</label><input type="number" id="quantidade" class="apple-input" value="1" min="1" required></div>
                         </div>
-                        <div id="boxBateria" class="hidden"><label class="text-green-500 text-[9px] font-black uppercase mb-1 block">Saúde da Bateria</label><div class="battery-grid"><div class="battery-pill" onclick="setBat('ABAIXO DE 85%')">Abaixo 85%</div><div class="battery-pill" onclick="setBat('ACIMA DE 90%')">Acima 90%</div><div class="battery-pill col-span-2" onclick="setBat('EM 100%')">100%</div></div><input type="hidden" id="saude_bateria"></div>
+                        <div id="boxBateria" class="hidden mb-4">
+                            <label class="text-green-500 text-[9px] font-black uppercase">Saúde da Bateria</label>
+                            <div class="grid grid-cols-2 gap-2 mt-1">
+                                <div class="battery-pill" onclick="setBat('ABAIXO DE 85%')">Abaixo 85%</div>
+                                <div class="battery-pill" onclick="setBat('ACIMA DE 90%')">Acima 90%</div>
+                                <div class="battery-pill col-span-2" onclick="setBat('EM 100%')">100%</div>
+                            </div>
+                            <input type="hidden" id="saude_bateria">
+                        </div>
                         <div id="boxGarantia" class="hidden"><label class="text-yellow-500 text-[9px] font-black uppercase">Garantia (Meses)</label><input type="number" id="garantia" class="apple-input" placeholder="Ex: 3"></div>
-                        <label class="text-[9px] uppercase font-bold text-gray-500">Preço</label><input type="text" id="preco" class="apple-input" required>
-                        <label class="text-[9px] uppercase font-bold text-gray-500">Região</label><select id="regiao_id" class="apple-input" required></select>
+                        <label id="label_preco" class="text-[9px] uppercase font-bold text-gray-500">Preço Unitário</label>
+                        <input type="text" id="preco" class="apple-input" placeholder="Ex: 5400,00" required>
+                        <label class="text-[9px] uppercase font-bold text-gray-500">Região de Saída</label>
+                        <select id="regiao_id" class="apple-input" required></select>
                         <div class="p-4 border border-[#38383a] rounded-xl bg-[#2c2c2e] mb-4">
-                            <input type="text" id="obs_cidade" class="apple-input py-2 mb-3 bg-[#1c1c1e] text-[12px]" placeholder="Cidade de Saída">
+                            <input type="text" id="obs_cidade" class="apple-input py-2 mb-3 bg-[#1c1c1e] text-[12px]" placeholder="Cidade">
                             <div class="grid grid-cols-2 gap-2 text-[8px] font-black uppercase">
                                 <label class="flex items-center gap-2"><input type="checkbox" id="tag_coleta"> Coleta</label>
                                 <label class="flex items-center gap-2"><input type="checkbox" id="tag_usdt"> USDT</label>
-                                <label class="flex items-center gap-2"><input type="checkbox" id="tag_envio"> Envio</label>
                                 <label class="flex items-center gap-2 text-blue-400"><input type="checkbox" id="tag_proposta"> Negocia Lote</label>
                             </div>
                         </div>
-                        <button type="submit" class="apple-button w-full bg-blue-600 text-white border-0">Publicar Agora</button>
+                        <button type="submit" class="apple-button w-full bg-blue-600 text-white border-0 mt-4">Publicar</button>
                     </form>
                 </div>
             </div>
-            <div class="lg:col-span-2"><div class="apple-card"><h2 class="text-xl font-black italic mb-6">Seus Ativos</h2><div class="overflow-x-auto"><table><thead><tr><th>Produto</th><th>Condição</th><th>Preço</th><th>Ação</th></tr></thead><tbody id="listaAtivos"></tbody></table></div></div></div>
+            <div class="lg:col-span-2">
+                <div class="apple-card"><h2 class="text-xl font-black italic mb-6 text-blue-500">Meus Anúncios Ativos</h2><div class="overflow-x-auto"><table><thead><tr><th>Produto</th><th>Condição</th><th>Preço</th><th>Ação</th></tr></thead><tbody id="listaAtivos"></tbody></table></div></div>
+            </div>
         </div>
     </div>
 
@@ -85,8 +102,8 @@
         window.onload = async () => {
             const token = localStorage.getItem('iFipe_Anunciante');
             if (token) {
-                const { data } = await _s.from('fornecedores').select('*, regioes(*)').eq('id', token).maybeSingle();
-                if(data) { loja = data; liberarAcesso(); }
+                const { data } = await _s.from('fornecedores').select('*, regioes(moeda)').eq('id', token).maybeSingle();
+                if(data && data.ativo) { loja = data; liberarAcesso(); }
             } else { document.getElementById('loginSection').classList.remove('hidden'); }
         };
 
@@ -94,16 +111,27 @@
             e.preventDefault();
             const { data } = await _s.from('fornecedores').select('*').ilike('nome', document.getElementById('loginId').value).eq('senha', document.getElementById('loginPass').value).maybeSingle();
             if(data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); window.location.reload(); }
-            else { document.getElementById('loginMsg').innerText = "LOJA NÃO ENCONTRADA."; }
+            else { document.getElementById('loginMsg').innerText = "ERRO NO LOGIN."; }
         }
 
-        function liberarAcesso() { document.getElementById('loginSection').classList.add('hidden'); document.getElementById('formSection').classList.remove('hidden'); document.getElementById('nomeLoja').innerText = loja.nome; init(); }
+        function liberarAcesso() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('formSection').classList.remove('hidden');
+            document.getElementById('nomeLoja').innerText = loja.nome;
+            const prefix = loja.regioes?.moeda === 'USD' ? '$' : 'R$';
+            document.getElementById('label_preco').innerText = `Preço em ${prefix}`;
+            init();
+        }
 
         async function init() {
-            const [p, r, v] = await Promise.all([_s.from('produtos_mestre').select('id, nome').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*')]);
+            const [p, r, v] = await Promise.all([
+                _s.from('produtos_mestre').select('id, nome').order('nome'),
+                _s.from('regioes').select('*').order('nome'),
+                _s.from('variacoes').select('*')
+            ]);
             gradeVariacoes = v.data;
-            document.getElementById('produto_id').innerHTML = '<option value="">Escolha...</option>' + p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('regiao_id').innerHTML = '<option value="">Escolha...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            document.getElementById('produto_id').innerHTML = '<option value="">Aparelho...</option>' + p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('regiao_id').innerHTML = '<option value="">Região...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             atualizarLista();
         }
 
@@ -111,32 +139,35 @@
             const pid = document.getElementById('produto_id').value;
             const container = document.getElementById('gradeOpcoes'); container.innerHTML = "";
             const vars = gradeVariacoes.filter(x => x.produto_id == pid);
-            const caps = [...new Set(vars.map(x => x.capacidade))]; const cores = [...new Set(vars.map(x => x.cor))];
-            container.innerHTML = `<div class="grid grid-cols-2 gap-2 mb-4">
-                <select id="f_cap" class="apple-input" required><option value="">Memória...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
-                <select id="f_cor" class="apple-input" required><option value="">Cor...</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
-            </div>`;
+            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
+            const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
+            let html = '<div class="grid grid-cols-2 gap-2 mb-4">';
+            if(caps.length) html += `<select id="f_cap" class="apple-input" required><option value="">Memória...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
+            if(cores.length) html += `<select id="f_cor" class="apple-input" required><option value="">Cor...</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
+            container.innerHTML = html + '</div>';
         }
 
-        function checarCondicao() { 
-            const isNovo = document.getElementById('condicao').value === 'Novo';
-            document.getElementById('boxBateria').classList.toggle('hidden', isNovo);
-            document.getElementById('boxGarantia').classList.toggle('hidden', isNovo);
-        }
-
-        function setBat(v) { document.getElementById('saude_bateria').value = v; document.querySelectorAll('.battery-pill').forEach(p => p.classList.toggle('active', p.innerText.includes(v.replace('ACIMA DE ','').replace('ABAIXO DE ','')))); }
+        function setBat(v) { document.getElementById('saude_bateria').value = v; document.querySelectorAll('.battery-pill').forEach(p => p.classList.toggle('active', p.innerText.includes(v.replace('ACIMA DE ', '').replace('ABAIXO DE ', '')))); }
+        function checarCondicao() { const isNovo = document.getElementById('condicao').value === 'Novo'; document.getElementById('boxBateria').classList.toggle('hidden', isNovo); document.getElementById('boxGarantia').classList.toggle('hidden', isNovo); }
 
         async function atualizarLista() {
             const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome)), regioes(moeda)').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
-            const sym = loja.regioes?.moeda === 'USD' ? '$' : 'R$';
-            document.getElementById('listaAtivos').innerHTML = data.map(o => `<tr><td><b>${o.variacoes.produtos_mestre.nome}</b><br><span class="text-[10px] text-gray-500">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td><td>${o.condicao}</td><td>${sym} ${o.preco.toLocaleString('pt-BR')}</td><td><button onclick="deletar(${o.id})" class="text-red-500 font-black">X</button></td></tr>`).join('');
+            const prefix = loja.regioes?.moeda === 'USD' ? '$' : 'R$';
+            document.getElementById('listaAtivos').innerHTML = data.map(o => `<tr><td><b>${o.variacoes.produtos_mestre.nome}</b><br><span class="text-[10px] text-gray-500">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td><td>${o.condicao}</td><td>${prefix} ${o.preco.toLocaleString('pt-BR')}</td><td><button onclick="deletar(${o.id})" class="text-red-500 font-bold">X</button></td></tr>`).join('');
         }
 
         async function salvarOferta(e) {
             e.preventDefault();
             const v = gradeVariacoes.find(x => x.produto_id == document.getElementById('produto_id').value && x.capacidade === document.getElementById('f_cap')?.value && x.cor === document.getElementById('f_cor')?.value);
-            await _s.from('ofertas').insert([{ fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value, preco: parseFloat(document.getElementById('preco').value.replace(',','.')), quantidade: document.getElementById('quantidade').value, condicao: document.getElementById('condicao').value, saude_bateria: document.getElementById('saude_bateria').value, cidade: document.getElementById('obs_cidade').value, aceita_coleta: document.getElementById('tag_coleta').checked, aceita_usdt: document.getElementById('tag_usdt').checked, faz_envio: document.getElementById('tag_envio').checked, aceita_proposta: document.getElementById('tag_proposta').checked }]);
-            atualizarLista(); e.target.reset();
+            if(!v) return alert("Erro na combinação.");
+            const { error } = await _s.from('ofertas').insert([{
+                fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value,
+                preco: parseFloat(document.getElementById('preco').value.replace('.','').replace(',','.')),
+                quantidade: document.getElementById('quantidade').value, condicao: document.getElementById('condicao').value,
+                saude_bateria: document.getElementById('saude_bateria').value, cidade: document.getElementById('obs_cidade').value,
+                aceita_coleta: document.getElementById('tag_coleta').checked, aceita_usdt: document.getElementById('tag_usdt').checked, aceita_proposta: document.getElementById('tag_proposta').checked
+            }]);
+            if(!error) { e.target.reset(); atualizarLista(); }
         }
 
         async function deletar(id) { if(confirm("Excluir?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
