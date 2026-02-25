@@ -311,4 +311,210 @@
         async function salvarConta(e) {
             e.preventDefault();
             const w = document.getElementById('conta_whats').value;
-            const s
+            const s = document.getElementById('conta_senha').value;
+            const est = document.getElementById('conta_estado').value;
+            const cid = document.getElementById('conta_cidade').value;
+            const { error } = await _s.from('fornecedores').update({ whatsapp: w, senha: s, estado: est, cidade: cid }).eq('id', loja.id);
+            if(!error) { loja.whatsapp = w; loja.senha = s; loja.estado = est; loja.cidade = cid; fecharConta(); alert("Conta atualizada com sucesso!"); }
+            else { alert("Erro ao atualizar."); }
+        }
+
+        async function init() {
+            const [p, r, v] = await Promise.all([
+                _s.from('produtos_mestre').select('id, nome').order('nome'), 
+                _s.from('regioes').select('*').order('nome'), 
+                _s.from('variacoes').select('*')
+            ]);
+            gradeVariacoes = v.data;
+            
+            // FILTRA MIAMI E CIUDAD DEL ESTE DA ORIGEM DE FABRICAÇÃO
+            const regioesFiltradas = r.data.filter(x => x.nome !== 'Miami' && !x.nome.includes('Ciudad'));
+            
+            document.getElementById('produto_id').innerHTML = '<option value="">Selecione o Aparelho...</option>' + p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('regiao_id').innerHTML = '<option value="">Origem/Fabricação...</option>' + regioesFiltradas.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            atualizarLista();
+        }
+
+        function aoMudarProduto() {
+            const pid = document.getElementById('produto_id').value;
+            const container = document.getElementById('gradeOpcoes');
+            container.innerHTML = ""; if(!pid) return;
+            const vars = gradeVariacoes.filter(x => x.produto_id == pid);
+            const tams = [...new Set(vars.map(x => x.tamanho).filter(Boolean))]; 
+            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; 
+            const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
+            let html = '<div class="grid grid-cols-1 gap-4 mt-4">';
+            if(tams.length) html += `<div><label>Tamanho</label><select id="f_tam" class="apple-input" required><option value="">Selecione...</option>${tams.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
+            if(caps.length) html += `<div><label>Armazenamento</label><select id="f_cap" class="apple-input" required><option value="">Selecione...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
+            if(cores.length) html += `<div><label>Cor</label><select id="f_cor" class="apple-input" required><option value="">Selecione...</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
+            container.innerHTML = html + '</div>';
+        }
+
+        function setBat(val) {
+            document.getElementById('saude_bateria').value = val;
+            const pills = document.querySelectorAll('.b-new');
+            pills.forEach(p => { if (p.innerText === val) p.classList.add('active'); else p.classList.remove('active'); });
+        }
+
+        function setBatEdicao(val) {
+            document.getElementById('edit_saude_bateria').value = val;
+            const pills = document.querySelectorAll('.b-edit');
+            pills.forEach(p => { if (p.innerText === val) p.classList.add('active'); else p.classList.remove('active'); });
+        }
+
+        function checarCondicao() {
+            const cond = document.getElementById('condicao').value;
+            const boxG = document.getElementById('boxGarantia');
+            const boxB = document.getElementById('boxBateria');
+            if(cond !== 'Novo') { boxG.classList.remove('hidden'); boxB.classList.remove('hidden'); }
+            else { boxG.classList.add('hidden'); boxB.classList.add('hidden'); document.getElementById('saude_bateria').value = ""; document.querySelectorAll('.b-new').forEach(p => p.classList.remove('active')); }
+        }
+
+        function checarCondicaoEdicao() {
+            const cond = document.getElementById('edit_condicao').value;
+            const boxG = document.getElementById('edit_boxGarantia');
+            const boxB = document.getElementById('edit_boxBateria');
+            if(cond !== 'Novo') { boxG.classList.remove('hidden'); boxB.classList.remove('hidden'); }
+            else { boxG.classList.add('hidden'); boxB.classList.add('hidden'); document.getElementById('edit_saude_bateria').value = ""; document.querySelectorAll('.b-edit').forEach(p => p.classList.remove('active')); }
+        }
+
+        // Limpa o outro campo de preço para evitar dados duplicados
+        function limparPreco(tipo) {
+            if(tipo === 'brl') document.getElementById('preco_usd').value = '';
+            if(tipo === 'usd') document.getElementById('preco_brl').value = '';
+        }
+
+        function limparPrecoEdit(tipo) {
+            if(tipo === 'brl') document.getElementById('edit_preco_usd').value = '';
+            if(tipo === 'usd') document.getElementById('edit_preco_brl').value = '';
+        }
+
+        async function salvarOferta(event) {
+            event.preventDefault(); 
+            const msg = document.getElementById('formMsg'); msg.innerText = "SALVANDO...";
+            const pid = document.getElementById('produto_id').value;
+            const tam = document.getElementById('f_tam')?.value || null;
+            const cap = document.getElementById('f_cap')?.value || null;
+            const cor = document.getElementById('f_cor')?.value || null;
+            const v = gradeVariacoes.find(x => x.produto_id == pid && (x.tamanho === tam || (!x.tamanho && !tam)) && (x.capacidade === cap || (!x.capacidade && !cap)) && (x.cor === cor || (!x.cor && !cor)));
+            
+            if(!v) { msg.innerText = "COMBINAÇÃO INVÁLIDA."; return; }
+            
+            const valBrl = document.getElementById('preco_brl').value.trim();
+            const valUsd = document.getElementById('preco_usd').value.trim();
+            if(!valBrl && !valUsd) { msg.innerText = "PREENCHA O PREÇO (REAL OU DÓLAR)."; return; }
+            
+            let pNovo = 0; let moedaNova = 'BRL';
+            if(valBrl) { pNovo = parseFloat(valBrl.replace(/\./g, '').replace(',', '.')); moedaNova = 'BRL'; }
+            else { pNovo = parseFloat(valUsd.replace(/\./g, '').replace(',', '.')); moedaNova = 'USD'; }
+
+            const cond = document.getElementById('condicao').value;
+            const bat = document.getElementById('saude_bateria').value;
+            
+            if(cond !== 'Novo' && !bat) { msg.innerText = "SELECIONE A SAÚDE DA BATERIA."; return; }
+            
+            const { error } = await _s.from('ofertas').insert([{
+                fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value,
+                preco: pNovo, moeda: moedaNova, quantidade: document.getElementById('quantidade').value,
+                condicao: cond, garantia: cond !== 'Novo' && document.getElementById('garantia').value ? document.getElementById('garantia').value + ' Meses' : null,
+                saude_bateria: bat || null, cidade: document.getElementById('obs_cidade').value.trim(),
+                aceita_coleta: document.getElementById('obs_coleta').checked, tem_boy: document.getElementById('obs_boy').checked,
+                aceita_usdt: document.getElementById('obs_usdt').checked, emite_nota: document.getElementById('obs_nota').checked,
+                faz_envio: document.getElementById('obs_envio').checked, aceita_proposta: document.getElementById('obs_proposta').checked
+            }]);
+            
+            if(!error) { 
+                event.target.reset(); 
+                document.getElementById('condicao').value = "Novo"; 
+                checarCondicao(); 
+                atualizarLista(); 
+                msg.innerText = "ANÚNCIO PUBLICADO!"; 
+                setTimeout(() => msg.innerText = "", 3000); 
+            } else { msg.innerText = "ERRO AO SALVAR."; }
+        }
+
+        async function atualizarLista() {
+            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, tamanho, cor, produtos_mestre(nome))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
+            anunciosDaLoja = data || [];
+            
+            document.getElementById('listaAtivos').innerHTML = anunciosDaLoja.map(o => {
+                const det = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' | ');
+                const tagB = o.saude_bateria ? `<br><span class="text-green-500 font-bold text-[9px]">${o.saude_bateria}</span>` : '';
+                const sym = o.moeda === 'USD' ? '$' : 'R$'; 
+                
+                let tagEstoque = '';
+                if(o.quantidade == 0) tagEstoque = '<br><span class="text-[9px] bg-red-900 text-white px-2 py-0.5 rounded font-bold">ESGOTADO (PAUSADO)</span>';
+                else if(o.quantidade >= 1 && o.quantidade <= 3) tagEstoque = `<br><span class="text-[9px] bg-[#ffcc00] text-black px-2 py-0.5 rounded font-bold">APENAS ${o.quantidade} UN</span>`;
+                else if(o.quantidade >= 4 && o.quantidade <= 10) tagEstoque = `<br><span class="text-[9px] bg-[#0071e3] text-white px-2 py-0.5 rounded font-bold">EM ESTOQUE ${o.quantidade} UN</span>`;
+                else if(o.quantidade >= 11) tagEstoque = `<br><span class="text-[9px] bg-[#32d74b] text-black px-2 py-0.5 rounded font-bold">ALTO ESTOQUE ${o.quantidade} UN</span>`;
+                
+                return `<tr>
+                <td><span class="block font-bold">${o.variacoes.produtos_mestre.nome}</span><span class="text-[10px] text-gray-400">${det}</span></td>
+                <td><span class="text-[10px] bg-gray-800 px-2 py-1 rounded border border-gray-600">${o.condicao}</span>${tagB}</td>
+                <td><input type="number" id="q-${o.id}" class="mini-input mb-1" value="${o.quantidade}" min="0" onchange="salvarEdicaoRapida(${o.id})">${tagEstoque}</td>
+                <td class="whitespace-nowrap"><span class="text-[10px] text-gray-500 font-bold mr-1">${sym}</span><input type="text" id="p-${o.id}" class="mini-input w-20" value="${o.preco.toLocaleString('pt-BR')}" onchange="salvarEdicaoRapida(${o.id})"></td>
+                <td><span class="btn-acao btn-edit" onclick="abrirModalEdicao(${o.id})">Editar</span><span class="btn-acao btn-del" onclick="deletar(${o.id})">Excluir</span></td>
+                </tr>`
+            }).join('');
+        }
+
+        async function salvarEdicaoRapida(id) {
+            const q = document.getElementById(`q-${id}`).value;
+            const pStr = document.getElementById(`p-${id}`).value.replace(/\./g, '').replace(',', '.');
+            const pNovo = parseFloat(pStr); const o = anunciosDaLoja.find(x => x.id == id); const pAntigo = o.preco;
+            let dadosUpdate = { quantidade: q, preco: pNovo };
+            if (pNovo !== pAntigo) { dadosUpdate.preco_anterior = pAntigo; dadosUpdate.data_alteracao_preco = new Date().toISOString(); }
+            await _s.from('ofertas').update(dadosUpdate).eq('id', id); atualizarLista();
+        }
+
+        function abrirModalEdicao(id) {
+            const o = anunciosDaLoja.find(x => x.id == id); if (!o) return;
+            document.getElementById('edit_id').value = o.id; document.getElementById('edit_condicao').value = o.condicao; document.getElementById('edit_quantidade').value = o.quantidade;
+            document.getElementById('edit_titulo').innerText = `${o.variacoes.produtos_mestre.nome}`;
+            
+            // Popula o campo correto baseado na moeda salva
+            if(o.moeda === 'USD') {
+                document.getElementById('edit_preco_usd').value = o.preco.toLocaleString('pt-BR');
+                document.getElementById('edit_preco_brl').value = '';
+            } else {
+                document.getElementById('edit_preco_brl').value = o.preco.toLocaleString('pt-BR');
+                document.getElementById('edit_preco_usd').value = '';
+            }
+
+            checarCondicaoEdicao();
+            if (o.condicao !== 'Novo') { document.getElementById('edit_garantia').value = o.garantia ? o.garantia.replace(/\D/g, '') : ''; setBatEdicao(o.saude_bateria || ""); }
+            else { document.getElementById('edit_garantia').value = ''; setBatEdicao(""); }
+            document.getElementById('edit_cidade').value = o.cidade || ''; document.getElementById('edit_coleta').checked = o.aceita_coleta;
+            document.getElementById('edit_boy').checked = o.tem_boy; document.getElementById('edit_usdt').checked = o.aceita_usdt;
+            document.getElementById('edit_nota').checked = o.emite_nota; document.getElementById('edit_envio').checked = o.faz_envio || false;
+            if(o.aceita_proposta !== undefined) document.getElementById('edit_proposta').checked = o.aceita_proposta;
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function fecharModalEdicao() { document.getElementById('editModal').classList.add('hidden'); }
+
+        async function salvarEdicaoCompleta(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit_id').value; const o = anunciosDaLoja.find(x => x.id == id);
+            
+            const valBrl = document.getElementById('edit_preco_brl').value.trim();
+            const valUsd = document.getElementById('edit_preco_usd').value.trim();
+            if(!valBrl && !valUsd) { alert("PREENCHA O PREÇO (REAL OU DÓLAR)."); return; }
+            
+            let pNovo = 0; let moedaNova = 'BRL';
+            if(valBrl) { pNovo = parseFloat(valBrl.replace(/\./g, '').replace(',', '.')); moedaNova = 'BRL'; }
+            else { pNovo = parseFloat(valUsd.replace(/\./g, '').replace(',', '.')); moedaNova = 'USD'; }
+
+            const cond = document.getElementById('edit_condicao').value; const bat = document.getElementById('edit_saude_bateria').value;
+            if(cond !== 'Novo' && !bat) { alert("Selecione a bateria!"); return; }
+            
+            let dadosUpdate = { condicao: cond, quantidade: document.getElementById('edit_quantidade').value, preco: pNovo, moeda: moedaNova, garantia: cond !== 'Novo' && document.getElementById('edit_garantia').value ? document.getElementById('edit_garantia').value + ' Meses' : null, saude_bateria: cond !== 'Novo' ? bat : null, cidade: document.getElementById('edit_cidade').value.trim(), aceita_coleta: document.getElementById('edit_coleta').checked, tem_boy: document.getElementById('edit_boy').checked, aceita_usdt: document.getElementById('edit_usdt').checked, emite_nota: document.getElementById('edit_nota').checked, faz_envio: document.getElementById('edit_envio').checked, aceita_proposta: document.getElementById('edit_proposta').checked };
+            if (pNovo !== o.preco) { dadosUpdate.preco_anterior = o.preco; dadosUpdate.data_alteracao_preco = new Date().toISOString(); }
+            
+            await _s.from('ofertas').update(dadosUpdate).eq('id', id); fecharModalEdicao(); atualizarLista();
+        }
+
+        async function deletar(id) { if(confirm("Excluir definitivamente?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
+    </script>
+</body>
+</html>
