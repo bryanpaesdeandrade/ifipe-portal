@@ -13,7 +13,7 @@
         
         .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; }
         .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius:10px; padding:10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; }
+        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; }
         
         .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; transition: 0.3s; position: relative; }
         .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
@@ -24,13 +24,17 @@
         .tag-muitas { background: #0071e3; color: #fff; }
         .tag-estoque-alto { background: #32d74b; color: #000; }
         
-        .mini-tag { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; background: var(--input); color: #86868b; border: 1px solid var(--border); }
+        /* MOLDURAS (MINI-TAGS) */
+        .mini-tag { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 6px; border-radius: 6px; background: var(--input); color: #86868b; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; }
         .mini-tag.active { color: #fff; border-color: #0071e3; background: rgba(0, 113, 227, 0.2); }
         .mini-tag.usdt { color: #32d74b; border-color: #32d74b; background: rgba(50, 215, 75, 0.1); }
         .mini-tag.lote { color: #5e5ce6; border-color: #5e5ce6; background: rgba(94, 92, 230, 0.1); }
+        .mini-tag.bat { color: #32d74b; border-color: #32d74b; background: rgba(50, 215, 75, 0.1); }
+        .mini-tag.gar { color: #ffcc00; border-color: #ffcc00; background: rgba(255, 204, 0, 0.1); }
+        .mini-tag.fab { color: #d2d2d7; border-color: #86868b; background: rgba(134, 134, 139, 0.1); }
         
         .price-text { font-size: 26px; font-weight: 900; color: var(--text); letter-spacing: -0.05em; }
-        .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 10px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 12px; transition: 0.3s; }
+        .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 12px; transition: 0.3s; letter-spacing: 0.05em; }
         .buy-button:hover { background: #005bb5; }
         
         .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; color: #86868b; margin: 40px 0 15px 5px; display: flex; align-items: center; gap: 10px; }
@@ -43,7 +47,7 @@
     <nav class="nav-bar">
         <h1 class="text-2xl font-black italic m-0">iFipe</h1>
         <div class="flex items-center gap-2 bg-[#1c1c1e] p-2 px-4 rounded-xl border border-[#38383a]">
-            <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest hidden md:inline">USDT:</span>
+            <span class="text-[9px] text-gray-500 font-bold uppercase tracking-widest hidden md:inline">USDT/BRL:</span>
             <span class="text-[14px] font-black text-[#32d74b] font-mono" id="ticker">$ --</span>
         </div>
         <div class="flex gap-4 items-center">
@@ -106,9 +110,11 @@
             
             gradeVariacoes = v.data;
             document.getElementById('f_prod').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('f_reg').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
-            document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? '✔️' : ''}</option>`).join('');
             
+            const regioesFiltradas = r.data.filter(x => x.nome !== 'Miami' && !x.nome.includes('Ciudad'));
+            document.getElementById('f_reg').innerHTML += regioesFiltradas.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            
+            document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? '✔️' : ''}</option>`).join('');
             const cidades = [...new Set(f.data.map(x => x.cidade).filter(Boolean))].sort();
             document.getElementById('f_cid').innerHTML += cidades.map(c => `<option value="${c}">${c}</option>`).join('');
             
@@ -127,7 +133,6 @@
         }
 
         async function carregarDados() {
-            // Faz o join para pegar as infos do lojista, variação, aparelho e país de origem
             const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)');
             ofertasAtuais = data || []; 
             renderizarRanking();
@@ -156,37 +161,38 @@
             const criarCard = (o, menorPreco) => {
                 let moeda = o.moeda === 'USD' ? '$' : 'R$';
                 
-                // TAGS PRINCIPAIS
                 let tagMenor = o.preco === menorPreco ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
                 let tagEstoque = '';
                 if(o.quantidade <= 3) tagEstoque = `<span class="tag-status tag-poucas">APENAS ${o.quantidade} UN</span>`;
                 else if(o.quantidade >= 4 && o.quantidade <= 10) tagEstoque = `<span class="tag-status tag-muitas">ESTOQUE ${o.quantidade} UN</span>`;
                 else tagEstoque = `<span class="tag-status tag-estoque-alto">ALTO ESTOQUE ${o.quantidade} UN</span>`;
 
-                // INFOS DO PRODUTO
                 let detalhes = [o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ');
-                let saude = o.saude_bateria ? `<span class="text-[9px] text-green-500 font-black ml-2">${o.saude_bateria}</span>` : '';
-                let gar = o.garantia ? `<span class="text-[9px] text-yellow-500 font-black ml-2">${o.garantia}</span>` : '';
-                let origem = o.regioes ? `<span class="text-[9px] text-gray-400 font-bold ml-2">Fab: ${o.regioes.bandeira} ${o.regioes.nome}</span>` : '';
+                
+                // MOLDURAS (MINI-TAGS) PARA ATRIBUTOS EXTRAS
+                let txtBat = o.saude_bateria ? o.saude_bateria.replace('BATERIA ', '').replace('BAT. ', '') : '';
+                let t_bat = txtBat ? `<span class="mini-tag bat">🔋 BAT: ${txtBat}</span>` : '';
+                let t_gar = o.garantia ? `<span class="mini-tag gar">🛡️ GAR: ${o.garantia}</span>` : '';
+                let t_fab = o.regioes ? `<span class="mini-tag fab">🌎 FAB: ${o.regioes.bandeira} ${o.regioes.nome}</span>` : '';
 
-                // TAGS DO LOJISTA
                 let selo = o.fornecedores.verificado ? '<span style="background:#ffcc00; color:#000;" class="rounded px-1 py-0.5 text-[7px] font-black uppercase ml-1">✔️ Verificado</span>' : '';
                 
-                let t_col = o.aceita_coleta ? '<span class="mini-tag active">Coleta</span>' : '';
-                let t_boy = o.tem_boy ? '<span class="mini-tag active">Motoboy</span>' : '';
-                let t_usd = o.aceita_usdt ? '<span class="mini-tag usdt">USDT</span>' : '';
-                let t_not = o.emite_nota ? '<span class="mini-tag active">NF</span>' : '';
-                let t_env = o.faz_envio ? '<span class="mini-tag active">Envio</span>' : '';
-                let t_pro = o.aceita_proposta ? '<span class="mini-tag lote">🤝 Lote</span>' : '';
-                let tagsStr = [t_col, t_boy, t_usd, t_not, t_env, t_pro].filter(Boolean).join(' ');
+                let t_col = o.aceita_coleta ? `<span class="mini-tag active">Coleta</span>` : '';
+                let t_boy = o.tem_boy ? `<span class="mini-tag active">Motoboy</span>` : '';
+                let t_usd = o.aceita_usdt ? `<span class="mini-tag usdt">USDT</span>` : '';
+                let t_not = o.emite_nota ? `<span class="mini-tag active">NF</span>` : '';
+                let t_env = o.faz_envio ? `<span class="mini-tag active">Envio</span>` : '';
+                let t_pro = o.aceita_proposta ? `<span class="mini-tag lote">🤝 Negocia Qtd</span>` : '';
+                
+                let tagsStr = [t_bat, t_gar, t_fab, t_col, t_boy, t_usd, t_not, t_env, t_pro].filter(Boolean).join(' ');
 
                 return `<div class="product-card">
                     <div class="flex flex-wrap gap-1 mb-2">${tagEstoque} ${tagMenor}</div>
                     
                     <h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-[10px] text-gray-300 font-bold mt-1 uppercase tracking-wide">${detalhes} ${saude} ${gar} ${origem}</p>
+                    <p class="text-[10px] text-gray-300 font-bold mt-1 uppercase tracking-wide mb-3">${detalhes}</p>
                     
-                    <div class="flex flex-wrap gap-1 mt-3 mb-3">${tagsStr}</div>
+                    <div class="flex flex-wrap gap-1.5 mb-3">${tagsStr}</div>
                     
                     <div class="mt-2 border-t border-[#38383a] pt-3">
                         <p class="text-[9px] text-blue-400 font-black uppercase tracking-widest">LOJA: ${o.fornecedores.nome} ${selo}</p>
@@ -194,7 +200,7 @@
                         <div class="price-text">${moeda} ${o.preco.toLocaleString('pt-BR')}</div>
                     </div>
                     
-                    <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=Olá,%20vi%20seu%20anúncio%20do%20${o.variacoes.produtos_mestre.nome}%20no%20iFipe." target="_blank" class="buy-button">Chamar no WhatsApp</a>
+                    <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=Olá,%20vi%20seu%20anúncio%20do%20${o.variacoes.produtos_mestre.nome}%20no%20iFipe." target="_blank" class="buy-button">Comprar agora no WhatsApp</a>
                 </div>`;
             };
 
@@ -203,7 +209,6 @@
                 if(lista.length === 0) { sec.classList.add('hidden'); return; } 
                 sec.classList.remove('hidden');
                 
-                // Acha o menor preço exato por Variação + Condição
                 let menores = {}; 
                 lista.forEach(o => { 
                     let k = `${o.variacao_id}_${o.condicao}`; 
@@ -220,11 +225,10 @@
                 document.getElementById(gId).innerHTML = lista.map(o => criarCard(o, menores[`${o.variacao_id}_${o.condicao}`])).join('');
             };
 
-            // SEPARAÇÃO INTELIGENTE POR MOEDA E CIDADE
+            // SEPARAÇÃO INTELIGENTE
             const listaBRL = filtrados.filter(o => o.moeda === 'BRL');
             const listaUSD = filtrados.filter(o => o.moeda === 'USD');
             
-            // Separa Dólar de Miami vs Dólar do Paraguai (Baseado na cidade do Lojista ou do Anúncio)
             const listaMiami = listaUSD.filter(o => {
                 const c1 = o.cidade ? o.cidade.toLowerCase() : '';
                 const c2 = o.fornecedores.cidade ? o.fornecedores.cidade.toLowerCase() : '';
