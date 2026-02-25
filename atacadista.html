@@ -6,6 +6,7 @@
     <title>iFipe - Painel do Anunciante</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
         body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
@@ -38,45 +39,55 @@
         .pill-full { grid-column: span 2; }
         .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 12px; font-weight: 700; }
 
-        /* BOTOES FLUTUANTES */
-        .btn-wpp-float { position: fixed; bottom: 20px; right: 20px; background-color: #25d366; color: #fff; width: 50px; height: 50px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; }
-        .btn-wpp-float svg { flex-shrink: 0; width: 24px; height: 24px; }
-        .wpp-text { font-size: 11px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
-        .btn-wpp-float:hover { width: 150px; padding-left: 15px; justify-content: flex-start; }
+        /* BOTOES FLUTUANTES (MAIORES E MELHORADOS) */
+        .btn-wpp-float { position: fixed; bottom: 20px; right: 20px; background-color: #25d366; color: #fff; width: 60px; height: 60px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 5px 20px rgba(37,211,102,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; }
+        .btn-wpp-float svg { flex-shrink: 0; width: 30px; height: 30px; fill: #fff; }
+        .wpp-text { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
+        .btn-wpp-float:hover { width: 170px; padding-left: 18px; justify-content: flex-start; }
         .btn-wpp-float:hover .wpp-text { opacity: 1; }
 
-        .btn-calc-float { position: fixed; bottom: 20px; left: 20px; background-color: #0071e3; color: #fff; width: 50px; height: 50px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; cursor: pointer; border: none; }
-        .btn-calc-float svg { flex-shrink: 0; width: 20px; height: 20px; }
-        .calc-text { font-size: 11px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
-        .btn-calc-float:hover { width: 140px; padding-left: 15px; justify-content: flex-start; }
+        .btn-calc-float { position: fixed; bottom: 20px; left: 20px; background-color: #0071e3; color: #fff; width: 60px; height: 60px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 5px 20px rgba(0,113,227,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; cursor: pointer; border: none; }
+        .btn-calc-float svg { flex-shrink: 0; width: 26px; height: 26px; fill: #fff; }
+        .calc-text { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
+        .btn-calc-float:hover { width: 170px; padding-left: 18px; justify-content: flex-start; }
         .btn-calc-float:hover .calc-text { opacity: 1; }
     </style>
 </head>
 <body>
 
     <div id="calcModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[2000] px-4">
-        <div class="apple-card w-full max-w-[350px]">
-            <div class="flex justify-between items-center mb-6 border-b border-[#38383a] pb-3">
-                <h3 class="font-black text-[14px] text-blue-500 uppercase tracking-widest m-0">Custo Total (PY ➔ SP)</h3>
-                <button onclick="fecharCalc()" class="text-gray-500 hover:text-white font-bold text-lg leading-none m-0">×</button>
-            </div>
+        <div class="w-full max-w-[380px] bg-[#1c1c1e] border-2 border-[#38383a] rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="fecharCalc()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
             
-            <div class="bg-[#2c2c2e] p-4 rounded-xl border border-[#38383a] mb-5 text-center">
-                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mb-1">Cotação Atual + Spread (0,06)</p>
-                <p id="calcTaxaEfetiva" class="text-[18px] text-[#32d74b] font-mono font-black">R$ 0,0000</p>
-            </div>
-            
-            <label class="block text-[10px] text-gray-400 uppercase font-black mb-2 text-center">Custo no Paraguai ($)</label>
-            <input type="number" id="calcUsd" class="apple-input text-center text-xl font-black mb-4" placeholder="Ex: 1000" oninput="calcularImportacao()">
-            
-            <div class="flex justify-between text-[9px] font-black text-gray-500 uppercase tracking-widest mb-6 px-2">
-                <span>🔒 Spread: +R$ 0,06</span>
-                <span>🔒 Frete: +6% (PY)</span>
+            <div class="text-center mb-5 mt-2">
+                <h2 class="text-lg font-black italic text-white">Calculadora VIP</h2>
+                <p class="text-[9px] text-blue-500 font-black uppercase mt-2 tracking-widest leading-relaxed">
+                    Coloque o preço em Dólar e saiba o custo em SP
+                </p>
             </div>
 
-            <div class="bg-blue-900/20 border border-blue-500 p-5 rounded-xl text-center shadow-[0_0_20px_rgba(0,113,227,0.15)]">
-                <p class="text-[10px] text-blue-400 font-black uppercase tracking-widest mb-2">Custo Final em São Paulo</p>
-                <p id="calcResult" class="text-3xl font-black text-white tracking-tighter">R$ 0,00</p>
+            <div class="bg-[#0a0a0a] border-2 border-[#2c2c2e] rounded-2xl p-4 text-right mb-4 relative shadow-inner">
+                <span class="absolute top-3 left-4 text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP (R$)</span>
+                <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-4 tracking-tighter">R$ 0,00</div>
+            </div>
+
+            <div class="relative mb-4">
+                <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
+                <input type="number" id="calcUsd" class="w-full bg-[#151516] border-2 border-[#38383a] rounded-xl py-4 pl-12 pr-4 font-mono text-xl font-black text-white outline-none focus:border-[#0071e3] text-center transition-colors" placeholder="Custo no PY (USD)" oninput="calcularImportacao()">
+            </div>
+
+            <div class="bg-black/40 border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase text-gray-500 tracking-wide">
+                <div class="flex justify-between items-center mb-3 border-b border-[#2c2c2e] pb-3">
+                    <span>Taxa Binance</span>
+                    <span id="tickerCalc" class="font-mono text-[11px] text-[#32d74b]">R$ --</span>
+                </div>
+                <div class="flex justify-between items-center mb-3 border-b border-[#2c2c2e] pb-3 gap-2">
+                    <span style="font-size: 8px; line-height: 1.3; max-width: 65%;">Melhor Taxa oferecida e paga por Oráculo</span>
+                    <span id="calcTaxaEfetiva" class="font-mono text-[11px] text-[#32d74b]">R$ --</span>
+                </div>
+                <div class="flex justify-center mt-2 pt-1">
+                    <span class="text-[#0071e3]">🔒 Frete PY X São Paulo incluso</span>
+                </div>
             </div>
         </div>
     </div>
@@ -293,19 +304,19 @@
     </div>
 
     <button onclick="abrirCalc()" class="btn-calc-float">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/><path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-2zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-4z"/></svg>
-        <span class="calc-text">Calc. Custo</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/><path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-2zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-4z"/></svg>
+        <span class="calc-text">CALC PY X SP</span>
     </button>
 
     <a href="https://wa.me/556896003049?text=Ol%C3%A1%20venho%20do%20iFipe%20e%20preciso%20de%20suporte" target="_blank" class="btn-wpp-float">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
-        <span class="wpp-text">Suporte iFipe</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
+        <span class="wpp-text">SUPORTE iFIPE</span>
     </a>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let loja = null; let gradeVariacoes = []; let anunciosDaLoja = [];
-        let currentUsdtRate = 0; // Armazena a cotação ao vivo
+        let currentUsdtRate = 0;
 
         function toggleTheme() {
             const b = document.body; b.classList.toggle('light-mode');
@@ -331,27 +342,35 @@
                 currentUsdtRate = parseFloat(JSON.parse(e.data).c);
                 const el = document.getElementById('ticker_val');
                 if(el) el.innerText = `R$ ${currentUsdtRate.toFixed(4).replace('.',',')}`;
-                calcularImportacao(); // Atualiza a calculadora em tempo real
+                
+                const tic = document.getElementById('tickerCalc');
+                if(tic) tic.innerText = `R$ ${currentUsdtRate.toFixed(4).replace('.',',')}`;
+                
+                calcularImportacao(); 
             };
         }
 
-        // LÓGICA DA CALCULADORA ORÁCULO
+        // LÓGICA DA CALCULADORA ORÁCULO (OCULTANDO REGRAS)
         function abrirCalc() { document.getElementById('calcModal').classList.remove('hidden'); calcularImportacao(); }
         function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
         function calcularImportacao() {
             const inputVal = document.getElementById('calcUsd').value.replace(',', '.');
             const usdInput = parseFloat(inputVal);
             
+            let taxaEfetiva = 0;
+            if (currentUsdtRate > 0) {
+                taxaEfetiva = currentUsdtRate + 0.06; // Binance + Spread Oculto
+                document.getElementById('calcTaxaEfetiva').innerText = `R$ ${taxaEfetiva.toFixed(4).replace('.', ',')}`;
+            }
+
             if(isNaN(usdInput) || currentUsdtRate === 0) {
                 document.getElementById('calcResult').innerText = "R$ 0,00";
                 return;
             }
             
-            const taxaEfetiva = currentUsdtRate + 0.06; // Taxa Binance + Spread Oráculo
             const subtotalBrl = usdInput * taxaEfetiva;
-            const custoFinal = subtotalBrl * 1.06; // Adiciona os 6% do Frete
+            const custoFinal = subtotalBrl * 1.06; // +6% Oculto
             
-            document.getElementById('calcTaxaEfetiva').innerText = `R$ ${taxaEfetiva.toFixed(4).replace('.', ',')}`;
             document.getElementById('calcResult').innerText = custoFinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
