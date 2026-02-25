@@ -26,13 +26,80 @@
         .battery-pill.active { background: #32d74b !important; color: #000 !important; border-color: #32d74b !important; }
         .pill-full { grid-column: span 2; }
         .mini-input { background: var(--input); border: 1px solid var(--border); border-radius: 8px; padding: 6px; width: 85px; color: var(--text); text-align: center; font-weight: bold; font-family: 'JetBrains Mono', monospace; }
-        .btn-acao { font-weight: bold; cursor: pointer; font-size: 10px; text-transform: uppercase; padding: 6px 10px; border-radius: 6px; display: inline-block; }
+        .btn-acao { font-weight: bold; cursor: pointer; font-size: 10px; text-transform: uppercase; padding: 6px 10px; border-radius: 6px; display: inline-block; margin-bottom: 4px; }
         .btn-edit { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
+        .btn-del { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
         .hidden { display: none !important; }
         .check-box { accent-color: #0071e3; width: 18px; height: 18px; cursor: pointer; }
     </style>
 </head>
 <body>
+
+    <div id="bulkEditModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200] px-4">
+        <div class="apple-card w-full max-w-[600px] max-h-[90vh] overflow-y-auto relative">
+            <button onclick="fecharBulkModal()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl">×</button>
+            <h3 class="font-bold text-[14px] text-blue-500 mb-2 uppercase tracking-widest">Ações em Massa</h3>
+            <p class="text-[10px] text-gray-400 font-bold mb-6 uppercase">Alterando <span id="bulkCount" class="text-white">0</span> anúncios selecionados.</p>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                <div><label>💠 PIX</label><select id="bulk_pix" class="apple-input"><option value="">Não alterar</option><option value="true">Ativar</option><option value="false">Remover</option></select></div>
+                <div><label>Coleta</label><select id="bulk_coleta" class="apple-input"><option value="">Não alterar</option><option value="true">Ativar</option><option value="false">Remover</option></select></div>
+                <div><label>Motoboy</label><select id="bulk_boy" class="apple-input"><option value="">Não alterar</option><option value="true">Ativar</option><option value="false">Remover</option></select></div>
+                <div><label class="text-[#32d74b]">USDT</label><select id="bulk_usdt" class="apple-input"><option value="">Não alterar</option><option value="true">Ativar</option><option value="false">Remover</option></select></div>
+                <div><label>Nota Fiscal</label><select id="bulk_nota" class="apple-input"><option value="">Não alterar</option><option value="true">Ativar</option><option value="false">Remover</option></select></div>
+                <div><label>🤝 Negocia Qtd</label><select id="bulk_proposta" class="apple-input"><option value="">Não alterar</option><option value="true">Ativar</option><option value="false">Remover</option></select></div>
+            </div>
+            <button type="button" onclick="salvarBulkEdit()" class="apple-button w-full bg-blue-600 text-white">Aplicar em Massa</button>
+        </div>
+    </div>
+
+    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200] px-4">
+        <div class="apple-card w-full max-w-[500px]">
+            <h3 class="font-bold text-[14px] text-blue-500 mb-2 uppercase tracking-widest">Editar Anúncio</h3>
+            <p id="edit_titulo" class="text-[12px] text-gray-400 font-bold mb-6 uppercase"></p>
+            <form onsubmit="salvarEdicaoCompleta(event)">
+                <input type="hidden" id="edit_id">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label>Condição</label>
+                        <select id="edit_condicao" class="apple-input" onchange="checarCondicaoEdicao()">
+                            <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
+                        </select>
+                    </div>
+                    <div><label>Estoque</label><input type="number" id="edit_quantidade" class="apple-input" required></div>
+                </div>
+                <div id="edit_boxBateria" class="hidden">
+                    <label class="text-green-500 font-black">Saúde da Bateria</label>
+                    <div class="battery-grid">
+                        <div class="battery-pill b-edit" data-val="BATERIA ABAIXO DE 85%" onclick="setBatEdicao('BATERIA ABAIXO DE 85%')">ABAIXO DE 85%</div>
+                        <div class="battery-pill b-edit" data-val="BATERIA ACIMA DE 85%" onclick="setBatEdicao('BATERIA ACIMA DE 85%')">ACIMA DE 85%</div>
+                        <div class="battery-pill b-edit" data-val="BATERIA ACIMA DE 90%" onclick="setBatEdicao('BATERIA ACIMA DE 90%')">ACIMA DE 90%</div>
+                        <div class="battery-pill b-edit" data-val="BATERIA ACIMA DE 95%" onclick="setBatEdicao('BATERIA ACIMA DE 95%')">ACIMA DE 95%</div>
+                        <div class="battery-pill b-edit pill-full" data-val="BATERIA EM 100%" onclick="setBatEdicao('BATERIA EM 100%')">BATERIA EM 100%</div>
+                    </div>
+                    <input type="hidden" id="edit_saude_bateria">
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <input type="text" id="edit_preco_brl" class="apple-input" placeholder="R$" oninput="limparPrecoEdit('brl')">
+                    <input type="text" id="edit_preco_usd" class="apple-input" placeholder="$" oninput="limparPrecoEdit('usd')">
+                </div>
+                <div class="mt-4 p-4 border border-[#38383a] rounded-xl bg-[#2c2c2e] mb-4">
+                    <label class="text-blue-400">Molduras</label>
+                    <div class="grid grid-cols-3 gap-2 text-[8px] font-black">
+                        <label class="flex items-center gap-1"><input type="checkbox" id="edit_coleta"> COLETA</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" id="edit_boy"> BOY</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" id="edit_usdt"> USDT</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" id="edit_pix"> PIX</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" id="edit_nota"> NF</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" id="edit_proposta"> NEGOCIA</label>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="fecharModalEdicao()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
+                    <button type="submit" class="apple-button bg-blue-600 text-white w-2/3">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div id="formSection">
         <div class="user-bar">
@@ -54,18 +121,15 @@
                             <option value="4">MACBOOK</option><option value="5">IMAC</option><option value="6">ACESSÓRIOS APPLE</option>
                             <option value="7">XIAOMI</option><option value="8">REALME</option>
                         </select>
-
                         <label>Modelo</label>
                         <select id="produto_id" class="apple-input" onchange="aoMudarProduto()" required>
                             <option value="">Aguardando categoria...</option>
                         </select>
                         <div id="gradeOpcoes" class="mb-4"></div>
-
                         <div class="grid grid-cols-2 gap-4">
                             <div><label>Condição</label><select id="condicao" class="apple-input" onchange="checarCondicao()"><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select></div>
-                            <div><label>Estoque Inicial</label><input type="number" id="quantidade" class="apple-input" value="1" min="0" required></div>
+                            <div><label>Qtd Inicial</label><input type="number" id="quantidade" class="apple-input" value="1" min="0" required></div>
                         </div>
-
                         <div id="boxBateria" class="hidden mb-4">
                             <label class="text-green-500 font-black">Saúde da Bateria</label>
                             <div class="battery-grid">
@@ -77,36 +141,36 @@
                             </div>
                             <input type="hidden" id="saude_bateria">
                         </div>
-
                         <label>Origem</label><select id="regiao_id" class="apple-input" required></select>
-
                         <div class="grid grid-cols-2 gap-4">
                             <input type="text" id="preco_brl" class="apple-input" placeholder="R$" oninput="limparPreco('brl')">
                             <input type="text" id="preco_usd" class="apple-input" placeholder="$" oninput="limparPreco('usd')">
                         </div>
-
                         <div class="mt-4 p-4 border border-[#38383a] rounded-xl bg-[#2c2c2e]">
-                            <label class="text-blue-400">Molduras</label>
+                            <label class="text-blue-400 font-black">Molduras</label>
                             <div class="grid grid-cols-2 gap-2 text-[8px] font-black">
-                                <label class="flex items-center gap-1"><input type="checkbox" id="obs_coleta" class="check-box"> COLETA</label>
-                                <label class="flex items-center gap-1"><input type="checkbox" id="obs_boy" class="check-box"> MOTOBOY</label>
-                                <label class="flex items-center gap-1"><input type="checkbox" id="obs_usdt" class="check-box"> USDT</label>
-                                <label class="flex items-center gap-1"><input type="checkbox" id="obs_pix" class="check-box"> PIX</label>
-                                <label class="flex items-center gap-1"><input type="checkbox" id="obs_nota" class="check-box"> NF</label>
-                                <label class="flex items-center gap-1"><input type="checkbox" id="obs_proposta" class="check-box"> NEGOCIA QTD</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="obs_coleta" class="check-box"> COLETA</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="obs_boy" class="check-box"> MOTOBOY</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="obs_usdt" class="check-box"> USDT</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="obs_pix" class="check-box"> PIX</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="obs_nota" class="check-box"> NF</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="obs_proposta" class="check-box"> NEGOCIA QTD</label>
                             </div>
                         </div>
-                        <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-6">Adicionar à Minha Base</button>
+                        <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-6">Gravar na Base</button>
                     </form>
                 </div>
             </div>
 
             <div class="lg:col-span-2">
                 <div class="apple-card">
-                    <h2 class="text-xl font-black italic mb-6">Minha Base de Estoque</h2>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-black italic">Base Única de Estoque</h2>
+                        <button onclick="abrirBulkModal()" class="text-[10px] bg-blue-600 px-5 py-2 rounded-full font-black">🛠️ Ajuste em Massa</button>
+                    </div>
                     <div class="overflow-x-auto">
                         <table>
-                            <thead><tr><th>Produto / Variação</th><th>Qtd (Estoque)</th><th>Preço</th><th>Ações</th></tr></thead>
+                            <thead><tr><th>Sel</th><th>Produto</th><th>Qtd</th><th>Preço</th><th>Ação</th></tr></thead>
                             <tbody id="listaAtivos"></tbody>
                         </table>
                     </div>
@@ -124,6 +188,7 @@
             if (token) {
                 const { data } = await _s.from('fornecedores').select('*').eq('id', token).maybeSingle();
                 if(data?.ativo) { loja = data; document.getElementById('nomeLoja').innerText = loja.nome; init(); }
+                else { window.location.reload(); }
             }
         };
 
@@ -137,17 +202,18 @@
         function popularProdutos() {
             const grupoId = document.getElementById('filtro_grupo').value;
             const filtrados = produtosMestre.filter(x => x.grupo_id == grupoId);
-            document.getElementById('produto_id').innerHTML = '<option value="">Selecione o Modelo...</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('produto_id').innerHTML = '<option value="">Selecione...</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
         }
 
         function aoMudarProduto() {
             const pid = document.getElementById('produto_id').value;
             const container = document.getElementById('gradeOpcoes');
+            if(!pid) { container.innerHTML = ""; return; }
             const vars = gradeVariacoes.filter(x => x.produto_id == pid);
             const tams = [...new Set(vars.map(x => x.tamanho).filter(Boolean))]; 
             const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; 
             const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
-            let html = '<div class="grid grid-cols-1 gap-2 mt-4">';
+            let html = '<div class="grid grid-cols-1 gap-1 mt-4">';
             if(tams.length) html += `<label>Tamanho</label><select id="f_tam" class="apple-input" required>${tams.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
             if(caps.length) html += `<label>GB</label><select id="f_cap" class="apple-input" required>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
             if(cores.length) html += `<label>Cor</label><select id="f_cor" class="apple-input" required>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
@@ -159,7 +225,8 @@
             anunciosDaLoja = data;
             document.getElementById('listaAtivos').innerHTML = data.map(o => `
                 <tr>
-                    <td><b>${o.variacoes.produtos_mestre.nome}</b><br><small class="text-gray-500">${[o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' | ')}</small></td>
+                    <td><input type="checkbox" class="chk-anuncio" value="${o.id}"></td>
+                    <td><b>${o.variacoes.produtos_mestre.nome}</b><br><small>${[o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor].filter(Boolean).join(' | ')}</small></td>
                     <td><input type="number" class="mini-input" value="${o.quantidade}" onchange="salvarEdicaoRapida(${o.id}, this.value, null)"></td>
                     <td><input type="text" class="mini-input" value="${o.preco.toLocaleString('pt-BR')}" onchange="salvarEdicaoRapida(${o.id}, null, this.value)"></td>
                     <td><span class="btn-acao btn-edit" onclick="abrirModalEdicao(${o.id})">EDITAR</span></td>
@@ -168,11 +235,66 @@
         }
 
         async function salvarEdicaoRapida(id, qtd, preco) {
-            let updates = {};
-            if(qtd !== null) updates.quantidade = qtd;
-            if(preco !== null) updates.preco = parseFloat(preco.replace(/\./g, '').replace(',', '.'));
-            await _s.from('ofertas').update(updates).eq('id', id);
-            alert("Salvo!"); atualizarLista();
+            let up = {};
+            if(qtd !== null) up.quantidade = qtd;
+            if(preco !== null) up.preco = parseFloat(preco.replace(/\./g, '').replace(',', '.'));
+            await _s.from('ofertas').update(up).eq('id', id);
+            atualizarLista();
+        }
+
+        function abrirBulkModal() {
+            const ids = Array.from(document.querySelectorAll('.chk-anuncio:checked')).map(c => c.value);
+            if(!ids.length) return alert("Selecione na tabela!");
+            document.getElementById('bulkCount').innerText = ids.length;
+            document.getElementById('bulkEditModal').classList.remove('hidden');
+        }
+        function fecharBulkModal() { document.getElementById('bulkEditModal').classList.add('hidden'); }
+        async function salvarBulkEdit() {
+            const ids = Array.from(document.querySelectorAll('.chk-anuncio:checked')).map(c => c.value);
+            let up = {};
+            const fields = [['pix','aceita_pix'],['coleta','aceita_coleta'],['boy','tem_boy'],['usdt','aceita_usdt'],['nota','emite_nota'],['proposta','aceita_proposta']];
+            fields.forEach(f => { let v = document.getElementById('bulk_'+f[0]).value; if(v!=="") up[f[1]] = v === "true"; });
+            await _s.from('ofertas').update(up).in('id', ids);
+            fecharBulkModal(); atualizarLista(); alert("Feito!");
+        }
+
+        function abrirModalEdicao(id) {
+            const o = anunciosDaLoja.find(x => x.id == id);
+            document.getElementById('edit_id').value = o.id;
+            document.getElementById('edit_titulo').innerText = o.variacoes.produtos_mestre.nome;
+            document.getElementById('edit_quantidade').value = o.quantidade;
+            document.getElementById('edit_condicao').value = o.condicao;
+            document.getElementById('edit_preco_brl').value = o.moeda==='BRL' ? o.preco.toLocaleString('pt-BR') : '';
+            document.getElementById('edit_preco_usd').value = o.moeda==='USD' ? o.preco.toLocaleString('pt-BR') : '';
+            document.getElementById('edit_coleta').checked = o.aceita_coleta;
+            document.getElementById('edit_boy').checked = o.tem_boy;
+            document.getElementById('edit_usdt').checked = o.aceita_usdt;
+            document.getElementById('edit_pix').checked = o.aceita_pix;
+            document.getElementById('edit_nota').checked = o.emite_nota;
+            document.getElementById('edit_proposta').checked = o.aceita_proposta;
+            checarCondicaoEdicao(); setBatEdicao(o.saude_bateria || '');
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+        function fecharModalEdicao() { document.getElementById('editModal').classList.add('hidden'); }
+        async function salvarEdicaoCompleta(e) {
+            e.preventDefault();
+            const valBrl = document.getElementById('edit_preco_brl').value.trim();
+            const valUsd = document.getElementById('edit_preco_usd').value.trim();
+            let up = {
+                quantidade: document.getElementById('edit_quantidade').value,
+                condicao: document.getElementById('edit_condicao').value,
+                saude_bateria: document.getElementById('edit_saude_bateria').value || null,
+                preco: valBrl ? parseFloat(valBrl.replace(/\./g, '').replace(',', '.')) : parseFloat(valUsd.replace(/\./g, '').replace(',', '.')),
+                moeda: valBrl ? 'BRL' : 'USD',
+                aceita_coleta: document.getElementById('edit_coleta').checked,
+                tem_boy: document.getElementById('edit_boy').checked,
+                aceita_usdt: document.getElementById('edit_usdt').checked,
+                aceita_pix: document.getElementById('edit_pix').checked,
+                emite_nota: document.getElementById('edit_nota').checked,
+                aceita_proposta: document.getElementById('edit_proposta').checked
+            };
+            await _s.from('ofertas').update(up).eq('id', document.getElementById('edit_id').value);
+            fecharModalEdicao(); atualizarLista();
         }
 
         async function salvarOferta(e) {
@@ -182,25 +304,28 @@
             const cap = document.getElementById('f_cap')?.value || null; 
             const cor = document.getElementById('f_cor')?.value || null;
             const v = gradeVariacoes.find(x => x.produto_id == pid && (x.tamanho === tam || !tam) && (x.capacidade === cap || !cap) && (x.cor === cor || !cor));
-            
-            const valBrl = document.getElementById('preco_brl').value.trim(); 
+            const valBrl = document.getElementById('preco_brl').value.trim();
             const valUsd = document.getElementById('preco_usd').value.trim();
-            let pNovo = valBrl ? parseFloat(valBrl.replace(/\./g, '').replace(',', '.')) : parseFloat(valUsd.replace(/\./g, '').replace(',', '.'));
-            let moeda = valBrl ? 'BRL' : 'USD';
-
             await _s.from('ofertas').insert([{
                 fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value,
-                preco: pNovo, moeda: moeda, quantidade: document.getElementById('quantidade').value,
+                preco: valBrl ? parseFloat(valBrl.replace(/\./g, '').replace(',', '.')) : parseFloat(valUsd.replace(/\./g, '').replace(',', '.')),
+                moeda: valBrl ? 'BRL' : 'USD', quantidade: document.getElementById('quantidade').value,
                 condicao: document.getElementById('condicao').value, saude_bateria: document.getElementById('saude_bateria').value || null,
-                aceita_coleta: document.getElementById('obs_coleta').checked, tem_boy: document.getElementById('obs_boy').checked, aceita_usdt: document.getElementById('obs_usdt').checked, emite_nota: document.getElementById('obs_nota').checked, aceita_proposta: document.getElementById('obs_proposta').checked, aceita_pix: document.getElementById('obs_pix').checked
+                aceita_coleta: document.getElementById('obs_coleta').checked, tem_boy: document.getElementById('obs_boy').checked,
+                aceita_usdt: document.getElementById('obs_usdt').checked, emite_nota: document.getElementById('obs_nota').checked,
+                aceita_proposta: document.getElementById('obs_proposta').checked, aceita_pix: document.getElementById('obs_pix').checked
             }]);
-            alert("Adicionado!"); atualizarLista();
+            alert("Ok!"); atualizarLista();
         }
 
         function setBat(v) { document.getElementById('saude_bateria').value = v; document.querySelectorAll('.b-new').forEach(p => p.classList.toggle('active', p.getAttribute('data-val') === v)); }
+        function setBatEdicao(v) { document.getElementById('edit_saude_bateria').value = v; document.querySelectorAll('.b-edit').forEach(p => p.classList.toggle('active', p.getAttribute('data-val') === v)); }
         function checarCondicao() { document.getElementById('boxBateria').classList.toggle('hidden', document.getElementById('condicao').value === 'Novo'); }
+        function checarCondicaoEdicao() { document.getElementById('edit_boxBateria').classList.toggle('hidden', document.getElementById('edit_condicao').value === 'Novo'); }
         function limparPreco(t) { if(t==='brl')document.getElementById('preco_usd').value=''; else document.getElementById('preco_brl').value=''; }
+        function limparPrecoEdit(t) { if(t==='brl')document.getElementById('edit_preco_usd').value=''; else document.getElementById('edit_preco_brl').value=''; }
         function sairPainel() { localStorage.removeItem('iFipe_Anunciante'); window.location.reload(); }
+        function toggleForm() { document.getElementById('loginForm').classList.toggle('hidden'); document.getElementById('registerForm').classList.toggle('hidden'); }
     </script>
 </body>
 </html>
