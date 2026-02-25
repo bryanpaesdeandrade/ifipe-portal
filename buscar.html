@@ -6,6 +6,7 @@
     <title>iFipe - Buscador VIP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
         body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
@@ -24,7 +25,7 @@
         .tag-muitas { background: #0071e3; color: #fff; }
         .tag-estoque-alto { background: #32d74b; color: #000; }
         
-        /* MOLDURAS (MINI-TAGS) */
+        /* MOLDURAS */
         .mini-tag { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 6px; border-radius: 6px; background: var(--input); color: #86868b; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; }
         .mini-tag.active { color: #fff; border-color: #0071e3; background: rgba(0, 113, 227, 0.2); }
         .mini-tag.usdt { color: #32d74b; border-color: #32d74b; background: rgba(50, 215, 75, 0.1); }
@@ -40,15 +41,58 @@
         .hidden { display: none !important; }
         .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 14px; font-weight: 700; }
 
-        /* BOTÃO WHATSAPP RETRÁTIL (SUPORTE) */
-        .btn-wpp-float { position: fixed; bottom: 20px; right: 20px; background-color: #25d366; color: #fff; width: 50px; height: 50px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; }
-        .btn-wpp-float svg { flex-shrink: 0; width: 24px; height: 24px; }
-        .wpp-text { font-size: 11px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
-        .btn-wpp-float:hover { width: 150px; padding-left: 15px; justify-content: flex-start; }
+        /* BOTOES FLUTUANTES (MAIORES E MELHORADOS) */
+        .btn-wpp-float { position: fixed; bottom: 20px; right: 20px; background-color: #25d366; color: #fff; width: 60px; height: 60px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 5px 20px rgba(37,211,102,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; }
+        .btn-wpp-float svg { flex-shrink: 0; width: 30px; height: 30px; fill: #fff; }
+        .wpp-text { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
+        .btn-wpp-float:hover { width: 170px; padding-left: 18px; justify-content: flex-start; }
         .btn-wpp-float:hover .wpp-text { opacity: 1; }
+
+        .btn-calc-float { position: fixed; bottom: 20px; left: 20px; background-color: #0071e3; color: #fff; width: 60px; height: 60px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 5px 20px rgba(0,113,227,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; cursor: pointer; border: none; }
+        .btn-calc-float svg { flex-shrink: 0; width: 26px; height: 26px; fill: #fff; }
+        .calc-text { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
+        .btn-calc-float:hover { width: 170px; padding-left: 18px; justify-content: flex-start; }
+        .btn-calc-float:hover .calc-text { opacity: 1; }
     </style>
 </head>
 <body>
+
+    <div id="calcModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[2000] px-4">
+        <div class="w-full max-w-[380px] bg-[#1c1c1e] border-2 border-[#38383a] rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="fecharCalc()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+            
+            <div class="text-center mb-5 mt-2">
+                <h2 class="text-lg font-black italic text-white">Calculadora VIP</h2>
+                <p class="text-[9px] text-blue-500 font-black uppercase mt-2 tracking-widest leading-relaxed">
+                    Coloque o preço do iPhone em Dólar e saiba o preço entregue em SP
+                </p>
+            </div>
+
+            <div class="bg-[#0a0a0a] border-2 border-[#2c2c2e] rounded-2xl p-4 text-right mb-4 relative shadow-inner">
+                <span class="absolute top-3 left-4 text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP (R$)</span>
+                <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-4 tracking-tighter">R$ 0,00</div>
+            </div>
+
+            <div class="relative mb-4">
+                <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
+                <input type="number" id="calcUsd" class="w-full bg-[#151516] border-2 border-[#38383a] rounded-xl py-4 pl-12 pr-4 font-mono text-xl font-black text-white outline-none focus:border-[#0071e3] text-center transition-colors" placeholder="Custo no PY (USD)" oninput="calcularImportacao()">
+            </div>
+
+            <div class="bg-black/40 border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase text-gray-500 tracking-wide">
+                <div class="flex justify-between items-center mb-3 border-b border-[#2c2c2e] pb-3">
+                    <span>Taxa Binance</span>
+                    <span id="tickerCalc" class="font-mono text-[11px] text-[#32d74b]">R$ --</span>
+                </div>
+                <div class="flex justify-between items-center mb-3 border-b border-[#2c2c2e] pb-3 gap-2">
+                    <span style="font-size: 8px; line-height: 1.3; max-width: 65%;">Melhor Taxa oferecida e paga por Oráculo</span>
+                    <span id="calcTaxaEfetiva" class="font-mono text-[11px] text-[#32d74b]">R$ --</span>
+                </div>
+                <div class="flex justify-center mt-2 pt-1">
+                    <span class="text-[#0071e3]">🔒 Frete PY X São Paulo incluso</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="contaModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200] px-4">
         <div class="bg-[#1c1c1e] border border-[#38383a] rounded-2xl w-full max-w-[400px] p-8">
@@ -76,12 +120,10 @@
                 Compra USDT c/ Oráculo
             </a>
         </div>
-
         <div class="flex gap-4 items-center">
             <button onclick="toggleTheme()" id="themeBtn" class="theme-toggle">🌙 Modo</button>
             <button onclick="abrirConta()" class="text-[10px] text-blue-400 font-black uppercase hover:text-white transition-colors flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/><path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/></svg>
-                Conta
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/><path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/></svg>Conta
             </button>
             <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
         </div>
@@ -105,18 +147,23 @@
             <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cidade da Loja</label><select id="f_cid" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
         </div>
 
-        <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            </div>
+        <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
     </main>
 
+    <button onclick="abrirCalc()" class="btn-calc-float">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/><path d="M4 2.5a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-2zm0 4a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3-6a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm0 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-4z"/></svg>
+        <span class="calc-text">CALC PY X SP</span>
+    </button>
+
     <a href="https://wa.me/556896003049?text=Ol%C3%A1%20venho%20do%20iFipe%20e%20preciso%20de%20suporte" target="_blank" class="btn-wpp-float">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
-        <span class="wpp-text">Suporte iFipe</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
+        <span class="wpp-text">SUPORTE iFIPE</span>
     </a>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let ofertasAtuais = []; let gradeVariacoes = []; let clienteLogado = null;
+        let currentUsdtRate = 0; 
 
         function toggleTheme() {
             const b = document.body; b.classList.toggle('light-mode');
@@ -128,16 +175,52 @@
         window.onload = async () => {
             if(localStorage.getItem('iFipe_Theme') === 'light') toggleTheme();
             const token = localStorage.getItem('iFipe_Token');
-            if(!token) {
-                window.location.replace('index.html');
-            } else {
+            if(!token) { window.location.replace('index.html'); } 
+            else {
                 const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
                 if(data) clienteLogado = data;
                 init();
             }
         };
 
-        // GESTÃO DA CONTA DO CLIENTE
+        function iniciarTicker() {
+            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+            socket.onmessage = (e) => {
+                currentUsdtRate = parseFloat(JSON.parse(e.data).c);
+                const el = document.getElementById('ticker');
+                if(el) el.innerText = `R$ ${currentUsdtRate.toFixed(4).replace('.',',')}`;
+                
+                const tic = document.getElementById('tickerCalc');
+                if(tic) tic.innerText = `R$ ${currentUsdtRate.toFixed(4).replace('.',',')}`;
+                
+                calcularImportacao();
+            };
+        }
+
+        // LÓGICA DA CALCULADORA ORÁCULO
+        function abrirCalc() { document.getElementById('calcModal').classList.remove('hidden'); calcularImportacao(); }
+        function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
+        function calcularImportacao() {
+            const inputVal = document.getElementById('calcUsd').value.replace(',', '.');
+            const usdInput = parseFloat(inputVal);
+            
+            let taxaEfetiva = 0;
+            if (currentUsdtRate > 0) {
+                taxaEfetiva = currentUsdtRate + 0.06; // Binance + Spread Oculto
+                document.getElementById('calcTaxaEfetiva').innerText = `R$ ${taxaEfetiva.toFixed(4).replace('.', ',')}`;
+            }
+
+            if(isNaN(usdInput) || currentUsdtRate === 0) {
+                document.getElementById('calcResult').innerText = "R$ 0,00";
+                return;
+            }
+            
+            const subtotalBrl = usdInput * taxaEfetiva;
+            const custoFinal = subtotalBrl * 1.06; // Frete Oculto
+            
+            document.getElementById('calcResult').innerText = custoFinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
         function abrirConta() {
             if(!clienteLogado) return;
             document.getElementById('conta_whats').value = clienteLogado.whatsapp || '';
@@ -149,48 +232,29 @@
 
         async function salvarConta(e) {
             e.preventDefault();
-            const w = document.getElementById('conta_whats').value;
-            const s = document.getElementById('conta_senha').value;
+            const w = document.getElementById('conta_whats').value; const s = document.getElementById('conta_senha').value;
             const { error } = await _s.from('clientes_buscador').update({ whatsapp: w, senha: s }).eq('id', clienteLogado.id);
-            if(!error) { 
-                clienteLogado.whatsapp = w; 
-                clienteLogado.senha = s; 
-                fecharConta(); 
-                alert("Conta atualizada com sucesso!"); 
-            } else { alert("Erro ao atualizar dados."); }
+            if(!error) { clienteLogado.whatsapp = w; clienteLogado.senha = s; fecharConta(); alert("Conta atualizada!"); } 
+            else { alert("Erro ao atualizar."); }
         }
 
         async function init() {
-            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            socket.onmessage = (e) => { document.getElementById('ticker').innerText = `R$ ${parseFloat(JSON.parse(e.data).c).toFixed(4).replace('.',',')}`; };
-            
-            const [p, r, v, f] = await Promise.all([
-                _s.from('produtos_mestre').select('*').order('nome'),
-                _s.from('regioes').select('*').order('nome'),
-                _s.from('variacoes').select('*'),
-                _s.from('fornecedores').select('id, nome, cidade, pais, verificado').eq('ativo', true)
-            ]);
-            
+            iniciarTicker();
+            const [p, r, v, f] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*'), _s.from('fornecedores').select('id, nome, cidade, pais, verificado').eq('ativo', true) ]);
             gradeVariacoes = v.data;
             document.getElementById('f_prod').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            
             const regioesFiltradas = r.data.filter(x => x.nome !== 'Miami' && !x.nome.includes('Ciudad'));
             document.getElementById('f_reg').innerHTML += regioesFiltradas.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
-            
             document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? ' [ ✔️ VERIFICADO ]' : ''}</option>`).join('');
-            
             const cidades = [...new Set(f.data.map(x => x.cidade).filter(Boolean))].sort();
             document.getElementById('f_cid').innerHTML += cidades.map(c => `<option value="${c}">${c}</option>`).join('');
-            
-            carregarDados(); setInterval(carregarDados, 5000); // RECARREGA A CADA 5s (JOGO DE CADEIRAS)
+            carregarDados(); setInterval(carregarDados, 5000);
         }
 
         function atualizarFiltrosCascata() {
             const pid = document.getElementById('f_prod').value;
             const vars = pid ? gradeVariacoes.filter(x => x.produto_id == pid) : gradeVariacoes;
-            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
-            const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
-            
+            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
             document.getElementById('f_cap').innerHTML = '<option value="">Todas</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
             document.getElementById('f_cor').innerHTML = '<option value="">Todas</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join('');
             renderizarRanking();
@@ -198,117 +262,55 @@
 
         async function carregarDados() {
             const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)');
-            ofertasAtuais = data || []; 
-            renderizarRanking();
+            ofertasAtuais = data || []; renderizarRanking();
         }
 
         function renderizarRanking() {
-            const fP = document.getElementById('f_prod').value;
-            const fC = document.getElementById('f_cond').value;
-            const fCap = document.getElementById('f_cap').value;
-            const fCor = document.getElementById('f_cor').value;
-            const fReg = document.getElementById('f_reg').value;
-            const fLoj = document.getElementById('f_lojista').value;
-            const fCid = document.getElementById('f_cid').value;
-
-            let filtrados = ofertasAtuais.filter(o => 
-                o.quantidade > 0 && 
-                (!fP || o.variacoes.produtos_mestre.id == fP) && 
-                (!fC || o.condicao == fC) && 
-                (!fCap || o.variacoes.capacidade == fCap) && 
-                (!fCor || o.variacoes.cor == fCor) &&
-                (!fReg || o.regiao_id == fReg) &&
-                (!fLoj || o.fornecedor_id == fLoj) &&
-                (!fCid || o.fornecedores.cidade == fCid)
-            );
-
+            const fP = document.getElementById('f_prod').value; const fC = document.getElementById('f_cond').value; const fCap = document.getElementById('f_cap').value; const fCor = document.getElementById('f_cor').value; const fReg = document.getElementById('f_reg').value; const fLoj = document.getElementById('f_lojista').value; const fCid = document.getElementById('f_cid').value;
+            let filtrados = ofertasAtuais.filter(o => o.quantidade > 0 && (!fP || o.variacoes.produtos_mestre.id == fP) && (!fC || o.condicao == fC) && (!fCap || o.variacoes.capacidade == fCap) && (!fCor || o.variacoes.cor == fCor) && (!fReg || o.regiao_id == fReg) && (!fLoj || o.fornecedor_id == fLoj) && (!fCid || o.fornecedores.cidade == fCid) );
             const grid = document.getElementById('gridGeral');
+            if(filtrados.length === 0) { grid.innerHTML = '<p class="text-gray-500 text-center col-span-full py-10 font-bold uppercase tracking-widest">Nenhuma oferta encontrada com estes filtros.</p>'; return; }
 
-            if(filtrados.length === 0) {
-                grid.innerHTML = '<p class="text-gray-500 text-center col-span-full py-10 font-bold uppercase tracking-widest">Nenhuma oferta encontrada com estes filtros.</p>';
-                return;
-            }
+            let menores = {}; filtrados.forEach(o => { let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`; if(!menores[k] || o.preco < menores[k]) menores[k] = o.preco; });
 
-            // REGRA: Real concorre apenas com Real, Dólar com Dólar
-            let menores = {}; 
-            filtrados.forEach(o => { 
-                let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`; // Chave separada por Moeda
-                if(!menores[k] || o.preco < menores[k]) menores[k] = o.preco; 
-            });
-
-            // REGRA DE OURO (JOGO DE CADEIRAS) + AGRUPAMENTO DE MOEDA
             filtrados.sort((a,b) => {
-                if (a.moeda !== b.moeda) return a.moeda.localeCompare(b.moeda); // Agrupa os Reais e os Dólares
+                if (a.moeda !== b.moeda) return a.moeda.localeCompare(b.moeda);
                 if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
                 if (a.condicao !== 'Novo' && b.condicao === 'Novo') return 1;
-                return a.preco - b.preco; // O menor preço puxa pra cima na hora!
+                return a.preco - b.preco; 
             });
 
             grid.innerHTML = filtrados.map(o => {
                 let moeda = o.moeda === 'USD' ? '$' : 'R$';
-                let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`;
-                let menorPreco = menores[k];
+                let menorPreco = menores[`${o.variacao_id}_${o.condicao}_${o.moeda}`];
                 
-                // TAGS TEMPORÁRIAS (PREÇO CAIU / PREÇO SUBIU) - DURA 15 MINUTOS
                 let tagAlteracao = '';
                 if(o.data_alteracao_preco && o.preco_anterior) {
-                    const diffMinutos = (new Date() - new Date(o.data_alteracao_preco)) / 60000;
-                    if(diffMinutos <= 15) {
+                    if(((new Date() - new Date(o.data_alteracao_preco)) / 60000) <= 15) {
                         if(o.preco < o.preco_anterior) tagAlteracao = `<span class="tag-status" style="background:#32d74b; color:#000;">📉 PREÇO CAIU</span>`;
                         else if (o.preco > o.preco_anterior) tagAlteracao = `<span class="tag-status" style="background:#ff3b30; color:#fff;">📈 PREÇO SUBIU</span>`;
                     }
                 }
 
-                // TAGS PRINCIPAIS (ESTOQUE E MENOR PREÇO GERAL)
                 let tagMenor = o.preco === menorPreco ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
-                let tagEstoque = '';
-                if(o.quantidade <= 3) tagEstoque = `<span class="tag-status tag-poucas">APENAS ${o.quantidade} UN</span>`;
-                else if(o.quantidade >= 4 && o.quantidade <= 10) tagEstoque = `<span class="tag-status tag-muitas">ESTOQUE ${o.quantidade} UN</span>`;
-                else tagEstoque = `<span class="tag-status tag-estoque-alto">ALTO ESTOQUE ${o.quantidade} UN</span>`;
-
+                let tagEstoque = o.quantidade <= 3 ? `<span class="tag-status tag-poucas">APENAS ${o.quantidade} UN</span>` : (o.quantidade <= 10 ? `<span class="tag-status tag-muitas">ESTOQUE ${o.quantidade} UN</span>` : `<span class="tag-status tag-estoque-alto">ALTO ESTOQUE ${o.quantidade} UN</span>`);
                 let detalhes = [o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ');
                 
-                // MOLDURAS (MINI-TAGS) PARA ATRIBUTOS EXTRAS
                 let txtBat = o.saude_bateria ? o.saude_bateria.replace('BATERIA ', '').replace('BAT. ', '') : '';
                 let t_bat = txtBat ? `<span class="mini-tag bat">🔋 BATERIA: ${txtBat}</span>` : '';
                 let t_gar = o.garantia ? `<span class="mini-tag gar">🛡️ GAR: ${o.garantia}</span>` : '';
                 let t_fab = o.regioes ? `<span class="mini-tag fab">🌎 FAB: ${o.regioes.bandeira} ${o.regioes.nome}</span>` : '';
-
                 let selo = o.fornecedores.verificado ? '<span style="background:#ffcc00; color:#000;" class="rounded px-1 py-0.5 text-[7px] font-black uppercase ml-1">✔️ Verificado</span>' : '';
                 
-                let t_col = o.aceita_coleta ? `<span class="mini-tag active">Coleta</span>` : '';
-                let t_boy = o.tem_boy ? `<span class="mini-tag active">Motoboy</span>` : '';
-                let t_usd = o.aceita_usdt ? `<span class="mini-tag usdt">USDT</span>` : '';
-                let t_not = o.emite_nota ? `<span class="mini-tag active">NF</span>` : '';
-                let t_env = o.faz_envio ? `<span class="mini-tag active">Envio</span>` : '';
-                let t_pro = o.aceita_proposta ? `<span class="mini-tag lote">🤝 Negocia Qtd</span>` : '';
-                
+                let t_col = o.aceita_coleta ? `<span class="mini-tag active">Coleta</span>` : ''; let t_boy = o.tem_boy ? `<span class="mini-tag active">Motoboy</span>` : ''; let t_usd = o.aceita_usdt ? `<span class="mini-tag usdt">USDT</span>` : ''; let t_not = o.emite_nota ? `<span class="mini-tag active">NF</span>` : ''; let t_env = o.faz_envio ? `<span class="mini-tag active">Envio</span>` : ''; let t_pro = o.aceita_proposta ? `<span class="mini-tag lote">🤝 Negocia Qtd</span>` : '';
                 let tagsStr = [t_bat, t_gar, t_fab, t_col, t_boy, t_usd, t_not, t_env, t_pro].filter(Boolean).join(' ');
 
-                // PAÍS DE ORIGEM DO FORNECEDOR MOSTRADO NO CARD
                 let paisLoja = o.fornecedores.pais ? ` | ${o.fornecedores.pais}` : '';
-
-                // MENSAGEM WHATSAPP CUSTOMIZADA PARA O LOJISTA
                 let precoFormatado = `${moeda} ${o.preco.toLocaleString('pt-BR')}`;
                 let msgTexto = `Olá tudo bem! encontrei seu anuncio de um ${o.variacoes.produtos_mestre.nome} | ${detalhes} pelo valor de ${precoFormatado} \n\nVENHO PELO *https://ifipe.com.br/*`;
                 let linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(msgTexto)}`;
 
-                return `<div class="product-card">
-                    <div class="flex flex-wrap gap-1 mb-2">${tagAlteracao} ${tagEstoque} ${tagMenor}</div>
-                    
-                    <h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-[10px] text-gray-300 font-bold mt-1 uppercase tracking-wide mb-3">${detalhes}</p>
-                    
-                    <div class="flex flex-wrap gap-1.5 mb-3">${tagsStr}</div>
-                    
-                    <div class="mt-2 border-t border-[#38383a] pt-3">
-                        <p class="text-[9px] text-blue-400 font-black uppercase tracking-widest">LOJA: ${o.fornecedores.nome} ${selo}</p>
-                        <p class="text-[8px] text-gray-500 font-bold uppercase mb-1">Local: ${o.cidade || o.fornecedores.cidade}${paisLoja}</p>
-                        <div class="price-text">${precoFormatado}</div>
-                    </div>
-                    
-                    <a href="${linkWpp}" target="_blank" class="buy-button">Comprar agora no WhatsApp</a>
-                </div>`;
+                return `<div class="product-card"><div class="flex flex-wrap gap-1 mb-2">${tagAlteracao} ${tagEstoque} ${tagMenor}</div><h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2><p class="text-[10px] text-gray-300 font-bold mt-1 uppercase tracking-wide mb-3">${detalhes}</p><div class="flex flex-wrap gap-1.5 mb-3">${tagsStr}</div><div class="mt-2 border-t border-[#38383a] pt-3"><p class="text-[9px] text-blue-400 font-black uppercase tracking-widest">LOJA: ${o.fornecedores.nome} ${selo}</p><p class="text-[8px] text-gray-500 font-bold uppercase mb-1">Local: ${o.cidade || o.fornecedores.cidade}${paisLoja}</p><div class="price-text">${precoFormatado}</div></div><a href="${linkWpp}" target="_blank" class="buy-button">Comprar agora no WhatsApp</a></div>`;
             }).join('');
         }
 
