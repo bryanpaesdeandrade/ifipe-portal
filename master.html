@@ -47,14 +47,28 @@
                 <label>Nome</label>
                 <input type="text" id="edit_nome" class="apple-input py-2" required>
                 
-                <div id="loc_box" class="hidden grid-cols-2 gap-2 mt-2 mb-2">
-                    <div>
-                        <label>Estado (Ex: SP)</label>
-                        <input type="text" id="edit_estado" class="apple-input py-2 mb-0">
+                <div id="loc_box" class="hidden flex-col gap-2 mt-2 mb-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label>Estado (Ex: SP)</label>
+                            <input type="text" id="edit_estado" class="apple-input py-2 mb-0">
+                        </div>
+                        <div>
+                            <label>Cidade</label>
+                            <input type="text" id="edit_cidade" class="apple-input py-2 mb-0">
+                        </div>
                     </div>
                     <div>
-                        <label>Cidade</label>
-                        <input type="text" id="edit_cidade" class="apple-input py-2 mb-0">
+                        <label>País</label>
+                        <select id="edit_pais" class="apple-input py-2 mb-0">
+                            <option value="Brasil">Brasil 🇧🇷</option>
+                            <option value="Paraguai">Paraguai 🇵🇾</option>
+                            <option value="Argentina">Argentina 🇦🇷</option>
+                            <option value="Uruguai">Uruguai 🇺🇾</option>
+                            <option value="China">China 🇨🇳</option>
+                            <option value="Estados Unidos">Estados Unidos 🇺🇸</option>
+                            <option value="Dubai">Dubai 🇦🇪</option>
+                        </select>
                     </div>
                 </div>
 
@@ -106,6 +120,16 @@
                     <h3 class="font-bold text-[11px] text-blue-500 mb-4 uppercase tracking-widest">Novo Lojista</h3>
                     <form onsubmit="addLojista(event)">
                         <input type="text" id="nl_nome" class="apple-input py-2" placeholder="Nome da Loja" required>
+                        <select id="nl_pais" class="apple-input py-2" required>
+                            <option value="" disabled selected>Selecione o País...</option>
+                            <option value="Brasil">Brasil 🇧🇷</option>
+                            <option value="Paraguai">Paraguai 🇵🇾</option>
+                            <option value="Argentina">Argentina 🇦🇷</option>
+                            <option value="Uruguai">Uruguai 🇺🇾</option>
+                            <option value="China">China 🇨🇳</option>
+                            <option value="Estados Unidos">Estados Unidos 🇺🇸</option>
+                            <option value="Dubai">Dubai 🇦🇪</option>
+                        </select>
                         <div class="grid grid-cols-2 gap-2">
                             <input type="text" id="nl_estado" class="apple-input py-2" placeholder="Estado (Ex: SP)" required>
                             <input type="text" id="nl_cidade" class="apple-input py-2" placeholder="Cidade" required>
@@ -149,14 +173,15 @@
                 <div class="apple-card overflow-x-auto">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
                         <h3 class="font-bold text-[14px] text-blue-500 uppercase tracking-widest m-0">Lojistas Atacadistas</h3>
-                        <div class="flex gap-2 items-center">
+                        <div class="flex gap-2 items-center flex-wrap">
                             <button onclick="selecionarTodos('chk-lojista')" class="text-[9px] bg-gray-700 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-gray-600 transition-colors border-0">Todos</button>
+                            <button onclick="acaoEmLote('fornecedores', 'ativo', true, 'chk-lojista')" class="text-[9px] bg-green-800 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-green-600 transition-colors border-0">ATIVAR SELECIONADOS</button>
                             <button onclick="acaoEmLote('fornecedores', 'ativo', false, 'chk-lojista')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">INATIVAR SELECIONADOS</button>
                         </div>
                     </div>
-                    <input type="text" onkeyup="filtrarTabela('listaFornecedores', this.value)" class="apple-input py-2 text-[11px]" style="margin-bottom:0;" placeholder="🔍 Buscar Loja, Whats ou Cidade...">
+                    <input type="text" onkeyup="filtrarTabela('listaFornecedores', this.value)" class="apple-input py-2 text-[11px]" style="margin-bottom:0;" placeholder="🔍 Buscar Loja, Whats, País ou Cidade...">
                     <table>
-                        <thead><tr><th>Sel</th><th>Loja</th><th>WhatsApp</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
+                        <thead><tr><th>Sel</th><th>Loja / Local</th><th>WhatsApp</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
                         <tbody id="listaFornecedores"></tbody>
                     </table>
                 </div>
@@ -237,7 +262,6 @@
             const filtro = termo.toLowerCase();
 
             for (let i = 0; i < linhas.length; i++) {
-                // Pular elementos ocultos ou checks para filtrar apenas pelo texto da linha
                 const textoLinha = linhas[i].innerText.toLowerCase();
                 if (textoLinha.includes(filtro)) {
                     linhas[i].style.display = '';
@@ -250,17 +274,14 @@
         // ==========================================
         // MOTOR DE SELEÇÃO E AÇÃO EM LOTE
         // ==========================================
-        let checkboxesEstado = {}; // Para alternar entre selecionar/desmarcar todos
+        let checkboxesEstado = {}; 
 
         function selecionarTodos(classeCheck) {
             const checkboxes = document.querySelectorAll(`.${classeCheck}`);
-            
-            // Verifica o estado atual para esta classe e inverte
             checkboxesEstado[classeCheck] = !checkboxesEstado[classeCheck];
             const estado = checkboxesEstado[classeCheck];
 
             checkboxes.forEach(chk => {
-                // Só seleciona os que estão visíveis na tela (respeita o filtro de busca)
                 const tr = chk.closest('tr');
                 if(tr && tr.style.display !== 'none') {
                     chk.checked = estado;
@@ -279,21 +300,20 @@
 
             const acaoStr = valor ? "APROVAR/ATIVAR" : "BLOQUEAR/INATIVAR";
             if(confirm(`Tem certeza que deseja ${acaoStr} os ${idsSelecionados.length} itens selecionados?`)) {
-                // Usando o comando "in" do Supabase para atualizar vários IDs de uma vez
                 const { error } = await _s.from(tabela).update({ [coluna]: valor }).in('id', idsSelecionados);
                 
                 if(error) {
                     alert("Ocorreu um erro ao atualizar: " + error.message);
                 } else {
                     alert(`Ação concluída com sucesso em ${idsSelecionados.length} itens.`);
-                    // Reseta o estado do botão "Todos" para aquela classe
                     checkboxesEstado[classeCheck] = false;
                     carregarTabelas();
                 }
             }
         }
 
-        function abrirModalEdicao(tabela, id, nome, email, whats, senha, estado, cidade) {
+        // ATUALIZADO PARA INCLUIR O PAÍS
+        function abrirModalEdicao(tabela, id, nome, email, whats, senha, estado, cidade, pais) {
             document.getElementById('edit_tabela').value = tabela;
             document.getElementById('edit_id').value = id;
             document.getElementById('edit_nome').value = nome || '';
@@ -302,6 +322,7 @@
             document.getElementById('edit_senha').value = senha || '';
             document.getElementById('edit_estado').value = estado || '';
             document.getElementById('edit_cidade').value = cidade || '';
+            document.getElementById('edit_pais').value = pais || 'Brasil';
 
             if(tabela === 'fornecedores') {
                 document.getElementById('edit_email').style.display = 'none';
@@ -309,21 +330,21 @@
                 document.getElementById('edit_whats').style.display = 'block';
                 document.getElementById('label_whats').style.display = 'block';
                 document.getElementById('loc_box').classList.remove('hidden');
-                document.getElementById('loc_box').classList.add('grid');
+                document.getElementById('loc_box').classList.add('flex');
             } else if(tabela === 'admin_users') {
                 document.getElementById('edit_email').style.display = 'block';
                 document.getElementById('label_email').style.display = 'block';
                 document.getElementById('edit_whats').style.display = 'none';
                 document.getElementById('label_whats').style.display = 'none';
                 document.getElementById('loc_box').classList.add('hidden');
-                document.getElementById('loc_box').classList.remove('grid');
+                document.getElementById('loc_box').classList.remove('flex');
             } else {
                 document.getElementById('edit_email').style.display = 'block';
                 document.getElementById('label_email').style.display = 'block';
                 document.getElementById('edit_whats').style.display = 'block';
                 document.getElementById('label_whats').style.display = 'block';
                 document.getElementById('loc_box').classList.add('hidden');
-                document.getElementById('loc_box').classList.remove('grid');
+                document.getElementById('loc_box').classList.remove('flex');
             }
 
             document.getElementById('editModal').classList.remove('hidden');
@@ -345,6 +366,7 @@
                 updateData.whatsapp = document.getElementById('edit_whats').value;
                 updateData.estado = document.getElementById('edit_estado').value;
                 updateData.cidade = document.getElementById('edit_cidade').value;
+                updateData.pais = document.getElementById('edit_pais').value;
             } else if (t === 'admin_users') {
                 updateData.email = document.getElementById('edit_email').value;
             } else if (t === 'clientes_buscador') {
@@ -361,13 +383,14 @@
         async function addLojista(e) {
             e.preventDefault();
             const n = document.getElementById('nl_nome').value;
-            const w = document.getElementById('nl_whats').value;
-            const s = document.getElementById('nl_senha').value;
+            const p = document.getElementById('nl_pais').value;
             const est = document.getElementById('nl_estado').value;
             const cid = document.getElementById('nl_cidade').value;
+            const w = document.getElementById('nl_whats').value;
+            const s = document.getElementById('nl_senha').value;
             
             await _s.from('fornecedores').insert([{ 
-                nome: n, whatsapp: w, senha: s, estado: est, cidade: cid, pais: 'Brasil', ativo: true 
+                nome: n, whatsapp: w, senha: s, estado: est, cidade: cid, pais: p, ativo: true 
             }]);
             
             e.target.reset();
@@ -402,21 +425,21 @@
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
         async function carregarTabelas() {
-            // Lojistas (Com Checkbox)
+            // Lojistas
             const { data: lojas } = await _s.from('fornecedores').select('*').order('id', {ascending: true});
             document.getElementById('listaFornecedores').innerHTML = lojas.map(l => `
                 <tr>
                     <td class="text-center"><input type="checkbox" class="check-box chk-lojista" value="${l.id}"></td>
                     <td>
                         <span class="font-bold block">${l.nome} ${l.verificado ? '✔️' : ''}</span>
-                        <span class="text-[10px] text-gray-500">ID: ${l.id} | ${l.cidade || 'Sem Cidade'} - ${l.estado || 'Sem UF'}</span>
+                        <span class="text-[10px] text-gray-500">ID: ${l.id} | ${l.pais || 'Brasil'} - ${l.estado || 'Sem UF'} - ${l.cidade || 'Sem Cidade'}</span>
                     </td>
                     <td>${l.whatsapp}</td>
                     <td class="text-red-400 font-mono tracking-wider">${l.senha}</td>
                     <td>${l.ativo ? '<span class="text-green-500 font-bold">Ativo</span>' : '<span class="text-red-500 font-bold">Inativo</span>'}</td>
                     <td>
                         <div class="flex flex-wrap gap-1">
-                            <span class="btn-acao btn-azul" onclick="abrirModalEdicao('fornecedores', ${l.id}, '${escapeString(l.nome)}', '', '${escapeString(l.whatsapp)}', '${escapeString(l.senha)}', '${escapeString(l.estado)}', '${escapeString(l.cidade)}')">Editar</span>
+                            <span class="btn-acao btn-azul" onclick="abrirModalEdicao('fornecedores', ${l.id}, '${escapeString(l.nome)}', '', '${escapeString(l.whatsapp)}', '${escapeString(l.senha)}', '${escapeString(l.estado)}', '${escapeString(l.cidade)}', '${escapeString(l.pais)}')">Editar</span>
                             ${!l.ativo ? `<span class="btn-acao btn-verde" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', true)">Ativar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', false)">Inativar</span>`}
                             
                             ${!l.verificado ? `<span class="btn-acao bg-blue-600 text-white hover:bg-blue-500" onclick="alterarStatus('fornecedores', ${l.id}, 'verificado', true)">Verificar Lojista</span>` : `<span class="btn-acao bg-gray-600 text-white hover:bg-gray-500" onclick="alterarStatus('fornecedores', ${l.id}, 'verificado', false)">Remover Verificação</span>`}
@@ -427,7 +450,7 @@
                 </tr>
             `).join('');
 
-            // Clientes (Com Checkbox)
+            // Clientes
             const { data: clientes } = await _s.from('clientes_buscador').select('*').order('criado_em', {ascending: false});
             document.getElementById('listaClientes').innerHTML = clientes.map(c => `
                 <tr>
@@ -446,7 +469,7 @@
                 </tr>
             `).join('');
 
-            // Admins (Sem Checkbox, por segurança)
+            // Admins
             const { data: admins } = await _s.from('admin_users').select('*').order('id', {ascending: true});
             document.getElementById('listaAdmins').innerHTML = admins.map(a => `
                 <tr>
