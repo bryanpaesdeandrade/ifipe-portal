@@ -180,7 +180,9 @@
             const regioesFiltradas = r.data.filter(x => x.nome !== 'Miami' && !x.nome.includes('Ciudad'));
             document.getElementById('f_reg').innerHTML += regioesFiltradas.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             
-            document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? '✔️' : ''}</option>`).join('');
+            // AQUI OCORREU A MUDANÇA DO SELO VERIFICADO NO FILTRO PARA "[ ✔️ VERIFICADO ]"
+            document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? ' [ ✔️ VERIFICADO ]' : ''}</option>`).join('');
+            
             const cidades = [...new Set(f.data.map(x => x.cidade).filter(Boolean))].sort();
             document.getElementById('f_cid').innerHTML += cidades.map(c => `<option value="${c}">${c}</option>`).join('');
             
@@ -227,7 +229,7 @@
             const criarCard = (o, menorPreco) => {
                 let moeda = o.moeda === 'USD' ? '$' : 'R$';
                 
-                // --- REGRA: TAGS TEMPORÁRIAS (PREÇO CAIU / PREÇO SUBIU) - DURA 15 MINUTOS ---
+                // TAGS TEMPORÁRIAS (PREÇO CAIU / PREÇO SUBIU) - DURA 15 MINUTOS
                 let tagAlteracao = '';
                 if(o.data_alteracao_preco && o.preco_anterior) {
                     const diffMinutos = (new Date() - new Date(o.data_alteracao_preco)) / 60000;
@@ -235,7 +237,6 @@
                         if(o.preco < o.preco_anterior) {
                             tagAlteracao = `<span class="tag-status" style="background:#32d74b; color:#000;">📉 PREÇO CAIU</span>`;
                         } else if (o.preco > o.preco_anterior) {
-                            // Se ele tentou burlar subindo o preço, o sistema dedura ele de vermelho!
                             tagAlteracao = `<span class="tag-status" style="background:#ff3b30; color:#fff;">📈 PREÇO SUBIU</span>`;
                         }
                     }
@@ -256,6 +257,7 @@
                 let t_gar = o.garantia ? `<span class="mini-tag gar">🛡️ GAR: ${o.garantia}</span>` : '';
                 let t_fab = o.regioes ? `<span class="mini-tag fab">🌎 FAB: ${o.regioes.bandeira} ${o.regioes.nome}</span>` : '';
 
+                // SELO DE VERIFICADO IDÊNTICO AO DO CARD
                 let selo = o.fornecedores.verificado ? '<span style="background:#ffcc00; color:#000;" class="rounded px-1 py-0.5 text-[7px] font-black uppercase ml-1">✔️ Verificado</span>' : '';
                 
                 let t_col = o.aceita_coleta ? `<span class="mini-tag active">Coleta</span>` : '';
