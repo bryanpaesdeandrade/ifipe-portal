@@ -167,11 +167,12 @@
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (e) => { document.getElementById('ticker').innerText = `R$ ${parseFloat(JSON.parse(e.data).c).toFixed(4).replace('.',',')}`; };
             
+            // AQUI ESTÁ O SEGREDO: Adicionado "pais" na requisição dos fornecedores
             const [p, r, v, f] = await Promise.all([
                 _s.from('produtos_mestre').select('*').order('nome'),
                 _s.from('regioes').select('*').order('nome'),
                 _s.from('variacoes').select('*'),
-                _s.from('fornecedores').select('id, nome, cidade, verificado').eq('ativo', true)
+                _s.from('fornecedores').select('id, nome, cidade, pais, verificado').eq('ativo', true)
             ]);
             
             gradeVariacoes = v.data;
@@ -180,7 +181,6 @@
             const regioesFiltradas = r.data.filter(x => x.nome !== 'Miami' && !x.nome.includes('Ciudad'));
             document.getElementById('f_reg').innerHTML += regioesFiltradas.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             
-            // AQUI OCORREU A MUDANÇA DO SELO VERIFICADO NO FILTRO PARA "[ ✔️ VERIFICADO ]"
             document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? ' [ ✔️ VERIFICADO ]' : ''}</option>`).join('');
             
             const cidades = [...new Set(f.data.map(x => x.cidade).filter(Boolean))].sort();
@@ -201,7 +201,8 @@
         }
 
         async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)');
+            // Requisita o PAÍS do fornecedor também para exibir no card
+            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)');
             ofertasAtuais = data || []; 
             renderizarRanking();
         }
@@ -257,7 +258,6 @@
                 let t_gar = o.garantia ? `<span class="mini-tag gar">🛡️ GAR: ${o.garantia}</span>` : '';
                 let t_fab = o.regioes ? `<span class="mini-tag fab">🌎 FAB: ${o.regioes.bandeira} ${o.regioes.nome}</span>` : '';
 
-                // SELO DE VERIFICADO IDÊNTICO AO DO CARD
                 let selo = o.fornecedores.verificado ? '<span style="background:#ffcc00; color:#000;" class="rounded px-1 py-0.5 text-[7px] font-black uppercase ml-1">✔️ Verificado</span>' : '';
                 
                 let t_col = o.aceita_coleta ? `<span class="mini-tag active">Coleta</span>` : '';
@@ -268,6 +268,9 @@
                 let t_pro = o.aceita_proposta ? `<span class="mini-tag lote">🤝 Negocia Qtd</span>` : '';
                 
                 let tagsStr = [t_bat, t_gar, t_fab, t_col, t_boy, t_usd, t_not, t_env, t_pro].filter(Boolean).join(' ');
+
+                // PAÍS DE ORIGEM DO FORNECEDOR MOSTRADO NO CARD
+                let paisLoja = o.fornecedores.pais ? ` | ${o.fornecedores.pais}` : '';
 
                 // MENSAGEM WHATSAPP CUSTOMIZADA PARA O LOJISTA
                 let precoFormatado = `${moeda} ${o.preco.toLocaleString('pt-BR')}`;
@@ -284,7 +287,7 @@
                     
                     <div class="mt-2 border-t border-[#38383a] pt-3">
                         <p class="text-[9px] text-blue-400 font-black uppercase tracking-widest">LOJA: ${o.fornecedores.nome} ${selo}</p>
-                        <p class="text-[8px] text-gray-500 font-bold uppercase mb-1">Local: ${o.cidade || o.fornecedores.cidade}</p>
+                        <p class="text-[8px] text-gray-500 font-bold uppercase mb-1">Local: ${o.cidade || o.fornecedores.cidade}${paisLoja}</p>
                         <div class="price-text">${precoFormatado}</div>
                     </div>
                     
@@ -318,15 +321,19 @@
             const listaUSD = filtrados.filter(o => o.moeda === 'USD');
             
             const listaMiami = listaUSD.filter(o => {
+                const pais = o.fornecedores.pais ? o.fornecedores.pais.toLowerCase() : '';
                 const c1 = o.cidade ? o.cidade.toLowerCase() : '';
                 const c2 = o.fornecedores.cidade ? o.fornecedores.cidade.toLowerCase() : '';
-                return c1.includes('miami') || c2.includes('miami');
+                return pais.includes('eua') || pais.includes('estados unidos') || c1.includes('miami') || c2.includes('miami');
             });
 
             const listaPY = listaUSD.filter(o => {
+                const pais = o.fornecedores.pais ? o.fornecedores.pais.toLowerCase() : '';
                 const c1 = o.cidade ? o.cidade.toLowerCase() : '';
                 const c2 = o.fornecedores.cidade ? o.fornecedores.cidade.toLowerCase() : '';
-                return !c1.includes('miami') && !c2.includes('miami');
+                
+                // Se a loja não for EUA nem Miami, entra no Ranking Fronteira
+                return !(pais.includes('eua') || pais.includes('estados unidos') || c1.includes('miami') || c2.includes('miami'));
             });
 
             processar(listaBRL, 'gridBR', 'secBR');
