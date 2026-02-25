@@ -108,7 +108,7 @@
         </div>
     </div>
 
-    <div id="loginSection" class="flex items-center justify-center min-h-screen px-4">
+    <div id="loginSection" class="hidden flex items-center justify-center min-h-screen px-4">
         <div class="apple-card max-w-[400px] text-center">
             <h1 class="text-5xl font-black italic mb-2">iFipe</h1>
             <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel do Anunciante</p>
@@ -123,11 +123,8 @@
 
     <div id="formSection" class="hidden">
         <div class="user-bar">
-            <div class="max-w-7xl mx-auto flex justify-between items-center gap-4">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <div class="text-[11px] font-black uppercase tracking-widest whitespace-nowrap">Loja: <span id="nomeLoja" class="text-blue-500">...</span></div>
-                <div class="text-[9px] md:text-[11px] font-black text-[#32d74b] bg-[#1c1c1e] px-3 py-1.5 rounded-full border border-[#38383a] flex items-center gap-2">
-                    <span class="animate-pulse">🟢</span> <span id="onlineCount">--</span> ONLINE
-                </div>
                 <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase hover:text-white transition-colors">Sair</button>
             </div>
         </div>
@@ -179,7 +176,7 @@
                                 <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="obs_usdt" class="accent-[#0071e3] w-4 h-4"> USDT</label>
                                 <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="obs_nota" class="accent-[#0071e3] w-4 h-4"> Nota</label>
                                 <label class="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" id="obs_envio" class="accent-[#0071e3] w-4 h-4"> Faço Envio</label>
-                                <label class="flex items-center gap-2 cursor-pointer hover:text-white text-[#5e5ce6]"><input type="checkbox" id="obs_proposta" class="accent-[#5e5ce6] w-4 h-4"> 🤝 Negocio Quantidade</label>
+                                <label class="flex items-center gap-2 cursor-pointer hover:text-white text-[#5e5ce6]"><input type="checkbox" id="obs_proposta" class="accent-[#5e5ce6] w-4 h-4"> 🤝 Negocia Lote</label>
                             </div>
                         </div>
                         <button type="submit" class="apple-button w-full bg-blue-600 text-white border-0 mt-4">Publicar Oferta</button>
@@ -210,23 +207,13 @@
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let loja = null; let gradeVariacoes = []; let anunciosDaLoja = [];
 
-        function atualizarOnlineSincronizado() {
-            const el = document.getElementById('onlineCount');
-            if(!el) return;
-            const agora = new Date();
-            const semente = agora.getHours() + agora.getMinutes() + (Math.floor(agora.getSeconds() / 10));
-            const randomico = (semente * 123) % 101; 
-            el.innerText = 20 + randomico; 
-        }
-
         window.onload = async () => {
-            atualizarOnlineSincronizado(); setInterval(atualizarOnlineSincronizado, 10000);
             const token = localStorage.getItem('iFipe_Anunciante');
             if (token) {
                 const { data } = await _s.from('fornecedores').select('*').eq('id', token).maybeSingle();
                 if(data && data.ativo) { loja = data; liberarAcesso(); } 
-                else { localStorage.removeItem('iFipe_Anunciante'); }
-            }
+                else { localStorage.removeItem('iFipe_Anunciante'); document.getElementById('loginSection').classList.remove('hidden'); }
+            } else { document.getElementById('loginSection').classList.remove('hidden'); }
         };
 
         async function fazerLogin(event) {
@@ -235,7 +222,7 @@
             const p = document.getElementById('loginPass').value.trim();
             const { data } = await _s.from('fornecedores').select('*').ilike('nome', u).eq('senha', p).maybeSingle();
             if(data && data.ativo) { loja = data; localStorage.setItem('iFipe_Anunciante', data.id); liberarAcesso(); }
-            else { document.getElementById('loginMsg').innerText = "ERRO NO LOGIN. TENTE NOVAMENTE."; }
+            else { document.getElementById('loginMsg').innerText = "ERRO NO LOGIN."; }
         }
 
         function liberarAcesso() {
@@ -361,7 +348,7 @@
             document.getElementById('edit_cidade').value = o.cidade || ''; document.getElementById('edit_coleta').checked = o.aceita_coleta;
             document.getElementById('edit_boy').checked = o.tem_boy; document.getElementById('edit_usdt').checked = o.aceita_usdt;
             document.getElementById('edit_nota').checked = o.emite_nota; document.getElementById('edit_envio').checked = o.faz_envio || false;
-            document.getElementById('edit_proposta').checked = o.aceita_proposta || false;
+            if(o.aceita_proposta !== undefined) document.getElementById('edit_proposta').checked = o.aceita_proposta;
             document.getElementById('editModal').classList.remove('hidden');
         }
 
