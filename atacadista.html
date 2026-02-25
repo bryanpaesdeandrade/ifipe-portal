@@ -8,29 +8,35 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; }
+        body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; }
+        
         .user-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 20px; position:sticky; top:0; z-index:100; }
         .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 2rem; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
         .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 12px; padding: 14px; width: 100%; color: var(--text); outline: none; margin-bottom: 1rem; font-size: 14px; }
         .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 16px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 13px; transition: 0.3s; }
         .apple-button:hover { background: #0071e3; color: #fff; }
+        
         table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
         th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); letter-spacing: 0.1em; }
         td { padding: 14px 12px; border-bottom: 1px solid var(--input); font-size: 13px; }
-        .battery-pill { padding: 10px; border-radius: 10px; background: #2c2c2e; border: 1px solid var(--border); cursor: pointer; font-size: 9px; font-weight: 900; text-transform: uppercase; text-align: center; color: #86868b; transition: 0.2s; }
+        
+        .battery-pill { padding: 10px; border-radius: 10px; background: var(--input); border: 1px solid var(--border); cursor: pointer; font-size: 9px; font-weight: 900; text-transform: uppercase; text-align: center; color: #86868b; transition: 0.2s; }
         .battery-pill.active { background: #32d74b !important; color: #000 !important; }
         .hidden { display: none !important; }
+        .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 12px; font-weight: 700; }
     </style>
 </head>
 <body>
 
     <div id="loginSection" class="flex items-center justify-center min-h-screen px-4">
         <div class="apple-card max-w-[400px] text-center">
-            <h1 class="text-5xl font-black italic mb-8">iFipe</h1>
+            <h1 class="text-5xl font-black italic mb-2">iFipe</h1>
+            <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel do Anunciante</p>
             <form onsubmit="fazerLogin(event)">
                 <input type="text" id="loginId" class="apple-input" placeholder="Nome da Loja" required>
                 <input type="password" id="loginPass" class="apple-input" placeholder="Senha" required>
-                <button type="submit" class="apple-button w-full">Entrar</button>
+                <button type="submit" class="apple-button w-full">Entrar no Painel</button>
             </form>
             <p id="loginMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase"></p>
         </div>
@@ -40,7 +46,10 @@
         <div class="user-bar">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <div class="text-[11px] font-black uppercase">Loja: <span id="nomeLoja" class="text-blue-500">...</span></div>
-                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button>
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleTheme()" id="themeBtn" class="theme-toggle">🌙 Modo</button>
+                    <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button>
+                </div>
             </div>
         </div>
 
@@ -48,129 +57,171 @@
             <div class="lg:col-span-1">
                 <div class="apple-card">
                     <h2 class="text-xl font-black italic mb-6">Novo Anúncio</h2>
-                    <form id="priceForm" onsubmit="salvarOferta(event)">
+                    <form onsubmit="salvarOferta(event)" id="offerForm">
                         <label class="text-[9px] uppercase font-bold text-gray-500">Aparelho</label>
-                        <select id="produto_id" class="apple-input" onchange="aoMudarProduto()" required></select>
-                        <div id="gradeOpcoes"></div>
+                        <select id="p_id" class="apple-input" onchange="aoMudarProduto()" required></select>
+
+                        <div id="gradeOpcoes" class="grid grid-cols-2 gap-2 mb-4"></div>
+
                         <div class="grid grid-cols-2 gap-4">
                             <div><label class="text-[9px] uppercase font-bold text-gray-500">Condição</label>
-                                <select id="condicao" class="apple-input" onchange="checarCondicao()">
-                                    <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
-                                    <option value="CPO">CPO</option><option value="Apple As Is">Apple As Is</option>
-                                    <option value="Apple As Is+">Apple As Is+</option><option value="GRADE A">GRADE A</option>
-                                    <option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option>
+                                <select id="cond" class="apple-input" onchange="checarCondicao()">
+                                    <option value="Novo">Novo</option>
+                                    <option value="Seminovo">Seminovo</option>
+                                    <option value="CPO">CPO</option>
+                                    <option value="Apple As Is">Apple As Is</option>
+                                    <option value="Apple As Is+">Apple As Is+</option>
+                                    <option value="GRADE A">GRADE A</option>
+                                    <option value="GRADE B">GRADE B</option>
+                                    <option value="GRADE C">GRADE C</option>
                                 </select>
                             </div>
-                            <div><label class="text-[9px] uppercase font-bold text-gray-500">Estoque</label><input type="number" id="quantidade" class="apple-input" value="1" min="1" required></div>
+                            <div><label class="text-[9px] uppercase font-bold text-gray-500">Estoque</label><input type="number" id="qtd" class="apple-input" value="1" min="0" required></div>
                         </div>
-                        <div id="boxBateria" class="hidden mb-4">
-                            <label class="text-green-500 text-[9px] font-black uppercase">Saúde da Bateria</label>
-                            <div class="grid grid-cols-2 gap-2 mt-1">
+
+                        <div id="boxBat" class="hidden mb-4">
+                            <label class="text-green-500 text-[9px] font-black uppercase mb-1 block">Saúde da Bateria</label>
+                            <div class="grid grid-cols-2 gap-2">
                                 <div class="battery-pill" onclick="setBat('ABAIXO DE 85%')">Abaixo 85%</div>
                                 <div class="battery-pill" onclick="setBat('ACIMA DE 90%')">Acima 90%</div>
                                 <div class="battery-pill col-span-2" onclick="setBat('EM 100%')">100%</div>
                             </div>
-                            <input type="hidden" id="saude_bateria">
+                            <input type="hidden" id="saude_val">
                         </div>
-                        <div id="boxGarantia" class="hidden"><label class="text-yellow-500 text-[9px] font-black uppercase">Garantia (Meses)</label><input type="number" id="garantia" class="apple-input" placeholder="Ex: 3"></div>
+
+                        <div id="boxGar" class="hidden"><label class="text-yellow-500 text-[9px] font-black uppercase">Garantia (Meses)</label><input type="number" id="gar" class="apple-input" placeholder="Ex: 3"></div>
+
                         <label id="label_preco" class="text-[9px] uppercase font-bold text-gray-500">Preço Unitário</label>
-                        <input type="text" id="preco" class="apple-input" placeholder="Ex: 5400,00" required>
+                        <input type="text" id="prc" class="apple-input" placeholder="0000,00" required>
+
                         <label class="text-[9px] uppercase font-bold text-gray-500">Região de Saída</label>
-                        <select id="regiao_id" class="apple-input" required></select>
+                        <select id="reg_id" class="apple-input" onchange="atualizarMoedaLabel()" required></select>
+
                         <div class="p-4 border border-[#38383a] rounded-xl bg-[#2c2c2e] mb-4">
-                            <input type="text" id="obs_cidade" class="apple-input py-2 mb-3 bg-[#1c1c1e] text-[12px]" placeholder="Cidade">
+                            <input type="text" id="cid" class="apple-input py-2 mb-3 bg-[#1c1c1e] text-[12px]" placeholder="Cidade">
                             <div class="grid grid-cols-2 gap-2 text-[8px] font-black uppercase">
-                                <label class="flex items-center gap-2"><input type="checkbox" id="tag_coleta"> Coleta</label>
-                                <label class="flex items-center gap-2"><input type="checkbox" id="tag_usdt"> USDT</label>
-                                <label class="flex items-center gap-2 text-blue-400"><input type="checkbox" id="tag_proposta"> Negocia Lote</label>
+                                <label class="flex items-center gap-2"><input type="checkbox" id="t_col"> Coleta</label>
+                                <label class="flex items-center gap-2"><input type="checkbox" id="t_usd"> USDT</label>
+                                <label class="flex items-center gap-2"><input type="checkbox" id="t_env"> Envio</label>
+                                <label class="flex items-center gap-2 text-blue-400"><input type="checkbox" id="t_pro"> Negocia Lote</label>
                             </div>
                         </div>
-                        <button type="submit" class="apple-button w-full bg-blue-600 text-white border-0 mt-4">Publicar</button>
+
+                        <button type="submit" class="apple-button w-full bg-blue-600 text-white border-0">Publicar Agora</button>
                     </form>
                 </div>
             </div>
+
             <div class="lg:col-span-2">
-                <div class="apple-card"><h2 class="text-xl font-black italic mb-6 text-blue-500">Meus Anúncios Ativos</h2><div class="overflow-x-auto"><table><thead><tr><th>Produto</th><th>Condição</th><th>Preço</th><th>Ação</th></tr></thead><tbody id="listaAtivos"></tbody></table></div></div>
+                <div class="apple-card">
+                    <h2 class="text-xl font-black italic mb-6">Meus Anúncios Ativos</h2>
+                    <div class="overflow-x-auto">
+                        <table>
+                            <thead><tr><th>Produto</th><th>Condição</th><th>Estoque</th><th>Preço</th><th>Ação</th></tr></thead>
+                            <tbody id="listaAtivos"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let loja = null; let gradeVariacoes = [];
+        let loja = null; let allVars = []; let allRegs = [];
+
+        function toggleTheme() { document.body.classList.toggle('light-mode'); }
 
         window.onload = async () => {
             const token = localStorage.getItem('iFipe_Anunciante');
             if (token) {
-                const { data } = await _s.from('fornecedores').select('*, regioes(moeda)').eq('id', token).maybeSingle();
-                if(data && data.ativo) { loja = data; liberarAcesso(); }
-            } else { document.getElementById('loginSection').classList.remove('hidden'); }
+                const { data } = await _s.from('fornecedores').select('*').eq('id', token).maybeSingle();
+                if(data && data.ativo) { loja = data; liberar(); }
+            }
         };
 
         async function fazerLogin(e) {
             e.preventDefault();
             const { data } = await _s.from('fornecedores').select('*').ilike('nome', document.getElementById('loginId').value).eq('senha', document.getElementById('loginPass').value).maybeSingle();
             if(data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); window.location.reload(); }
-            else { document.getElementById('loginMsg').innerText = "ERRO NO LOGIN."; }
+            else { document.getElementById('loginMsg').innerText = "DADOS INCORRETOS."; }
         }
 
-        function liberarAcesso() {
+        function liberar() {
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('formSection').classList.remove('hidden');
             document.getElementById('nomeLoja').innerText = loja.nome;
-            const prefix = loja.regioes?.moeda === 'USD' ? '$' : 'R$';
-            document.getElementById('label_preco').innerText = `Preço em ${prefix}`;
             init();
         }
 
         async function init() {
             const [p, r, v] = await Promise.all([
-                _s.from('produtos_mestre').select('id, nome').order('nome'),
+                _s.from('produtos_mestre').select('*').order('nome'),
                 _s.from('regioes').select('*').order('nome'),
                 _s.from('variacoes').select('*')
             ]);
-            gradeVariacoes = v.data;
-            document.getElementById('produto_id').innerHTML = '<option value="">Aparelho...</option>' + p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('regiao_id').innerHTML = '<option value="">Região...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            allVars = v.data; allRegs = r.data;
+            document.getElementById('p_id').innerHTML = '<option value="">Escolha...</option>' + p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('reg_id').innerHTML = '<option value="">Escolha...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             atualizarLista();
         }
 
         function aoMudarProduto() {
-            const pid = document.getElementById('produto_id').value;
+            const pid = document.getElementById('p_id').value;
             const container = document.getElementById('gradeOpcoes'); container.innerHTML = "";
-            const vars = gradeVariacoes.filter(x => x.produto_id == pid);
-            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
-            const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
-            let html = '<div class="grid grid-cols-2 gap-2 mb-4">';
-            if(caps.length) html += `<select id="f_cap" class="apple-input" required><option value="">Memória...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
-            if(cores.length) html += `<select id="f_cor" class="apple-input" required><option value="">Cor...</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
-            container.innerHTML = html + '</div>';
+            if(!pid) return;
+            const filtered = allVars.filter(x => x.produto_id == pid);
+            const caps = [...new Set(filtered.map(x => x.capacidade).filter(Boolean))];
+            const cores = [...new Set(filtered.map(x => x.cor).filter(Boolean))];
+            
+            container.innerHTML = `
+                <div><label class="text-[8px] uppercase font-bold text-gray-500">Memória</label><select id="v_cap" class="apple-input" required><option value="">Selecione...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+                <div><label class="text-[8px] uppercase font-bold text-gray-500">Cor</label><select id="v_cor" class="apple-input" required><option value="">Selecione...</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+            `;
         }
 
-        function setBat(v) { document.getElementById('saude_bateria').value = v; document.querySelectorAll('.battery-pill').forEach(p => p.classList.toggle('active', p.innerText.includes(v.replace('ACIMA DE ', '').replace('ABAIXO DE ', '')))); }
-        function checarCondicao() { const isNovo = document.getElementById('condicao').value === 'Novo'; document.getElementById('boxBateria').classList.toggle('hidden', isNovo); document.getElementById('boxGarantia').classList.toggle('hidden', isNovo); }
+        function checarCondicao() {
+            const isNovo = document.getElementById('cond').value === 'Novo';
+            document.getElementById('boxBat').classList.toggle('hidden', isNovo);
+            document.getElementById('boxGar').classList.toggle('hidden', isNovo);
+        }
 
-        async function atualizarLista() {
-            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome)), regioes(moeda)').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
-            const prefix = loja.regioes?.moeda === 'USD' ? '$' : 'R$';
-            document.getElementById('listaAtivos').innerHTML = data.map(o => `<tr><td><b>${o.variacoes.produtos_mestre.nome}</b><br><span class="text-[10px] text-gray-500">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td><td>${o.condicao}</td><td>${prefix} ${o.preco.toLocaleString('pt-BR')}</td><td><button onclick="deletar(${o.id})" class="text-red-500 font-bold">X</button></td></tr>`).join('');
+        function setBat(v) { document.getElementById('saude_val').value = v; document.querySelectorAll('.battery-pill').forEach(p => p.classList.toggle('active', p.innerText.includes(v.replace('ACIMA DE ','').replace('ABAIXO DE ','')))); }
+
+        function atualizarMoedaLabel() {
+            const reg = allRegs.find(x => x.id == document.getElementById('reg_id').value);
+            document.getElementById('label_preco').innerText = `Preço em ${reg?.moeda === 'USD' ? '$ (DÓLAR)' : 'R$ (REAL)'}`;
         }
 
         async function salvarOferta(e) {
             e.preventDefault();
-            const v = gradeVariacoes.find(x => x.produto_id == document.getElementById('produto_id').value && x.capacidade === document.getElementById('f_cap')?.value && x.cor === document.getElementById('f_cor')?.value);
-            if(!v) return alert("Erro na combinação.");
-            const { error } = await _s.from('ofertas').insert([{
-                fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value,
-                preco: parseFloat(document.getElementById('preco').value.replace('.','').replace(',','.')),
-                quantidade: document.getElementById('quantidade').value, condicao: document.getElementById('condicao').value,
-                saude_bateria: document.getElementById('saude_bateria').value, cidade: document.getElementById('obs_cidade').value,
-                aceita_coleta: document.getElementById('tag_coleta').checked, aceita_usdt: document.getElementById('tag_usdt').checked, aceita_proposta: document.getElementById('tag_proposta').checked
+            const v = allVars.find(x => x.produto_id == document.getElementById('p_id').value && x.capacidade === document.getElementById('v_cap').value && x.cor === document.getElementById('v_cor').value);
+            if(!v) return alert("Erro na variação.");
+            
+            await _s.from('ofertas').insert([{
+                fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('reg_id').value,
+                preco: parseFloat(document.getElementById('prc').value.replace('.','').replace(',','.')),
+                quantidade: document.getElementById('qtd').value, condicao: document.getElementById('cond').value,
+                saude_bateria: document.getElementById('saude_val').value, cidade: document.getElementById('cid').value,
+                aceita_coleta: document.getElementById('t_col').checked, aceita_usdt: document.getElementById('t_usd').checked, 
+                faz_envio: document.getElementById('t_env').checked, aceita_proposta: document.getElementById('t_pro').checked
             }]);
-            if(!error) { e.target.reset(); atualizarLista(); }
+            e.target.reset(); document.getElementById('gradeOpcoes').innerHTML = ""; atualizarLista();
         }
 
-        async function deletar(id) { if(confirm("Excluir?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
+        async function atualizarLista() {
+            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome)), regioes(moeda)').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
+            document.getElementById('listaAtivos').innerHTML = data.map(o => `
+                <tr>
+                    <td><b>${o.variacoes.produtos_mestre.nome}</b><br><span class="text-[10px] text-gray-500">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td>
+                    <td><span class="text-[10px] bg-gray-800 px-2 py-1 rounded">${o.condicao}</span></td>
+                    <td>${o.quantidade} UN</td>
+                    <td>${o.regioes?.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR')}</td>
+                    <td><button onclick="deletar(${o.id})" class="text-red-500 font-bold text-[10px]">Excluir</button></td>
+                </tr>`).join('');
+        }
+
+        async function deletar(id) { if(confirm("Apagar?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
         function sairPainel() { localStorage.removeItem('iFipe_Anunciante'); window.location.reload(); }
     </script>
 </body>
