@@ -125,7 +125,21 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 pb-20">
-        <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+        <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+            <div>
+                <label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center text-blue-400">Categoria</label>
+                <select id="f_cat" class="apple-input" onchange="popularAparelhos()">
+                    <option value="">Todas</option>
+                    <option value="1">IPHONE</option>
+                    <option value="2">APPLE WATCH</option>
+                    <option value="3">IPAD</option>
+                    <option value="4">MACBOOK</option>
+                    <option value="5">IMAC</option>
+                    <option value="6">ACESSÓRIOS APPLE</option>
+                    <option value="7">XIAOMI</option>
+                    <option value="8">REALME</option>
+                </select>
+            </div>
             <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Aparelho</label><select id="f_prod" class="apple-input" onchange="atualizarFiltrosCascata()"><option value="">Todos</option></select></div>
             <div>
                 <label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Condição</label>
@@ -157,7 +171,7 @@
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let ofertasAtuais = []; let gradeVariacoes = []; let clienteLogado = null;
+        let ofertasAtuais = []; let gradeVariacoes = []; let clienteLogado = null; let produtosMestreGlobais = [];
         let currentUsdtRate = 0; 
 
         function toggleTheme() {
@@ -235,14 +249,27 @@
         async function init() {
             iniciarTicker();
             const [p, r, v, f] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*'), _s.from('fornecedores').select('id, nome, cidade, pais, verificado').eq('ativo', true) ]);
+            produtosMestreGlobais = p.data;
             gradeVariacoes = v.data;
-            document.getElementById('f_prod').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            
+            // Popula os modelos inicialmente com todos
+            document.getElementById('f_prod').innerHTML += produtosMestreGlobais.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            
             const regioesFiltradas = r.data.filter(x => x.nome !== 'Miami' && !x.nome.includes('Ciudad'));
             document.getElementById('f_reg').innerHTML += regioesFiltradas.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? ' [ ✔️ VERIFICADO ]' : ''}</option>`).join('');
             const cidades = [...new Set(f.data.map(x => x.cidade).filter(Boolean))].sort();
             document.getElementById('f_cid').innerHTML += cidades.map(c => `<option value="${c}">${c}</option>`).join('');
+            
             carregarDados(); setInterval(carregarDados, 5000);
+        }
+
+        // AJUSTE 1: FUNÇÃO PARA FILTRAR MODELOS PELA CATEGORIA SELECIONADA
+        function popularAparelhos() {
+            const catId = document.getElementById('f_cat').value;
+            const filtrados = catId ? produtosMestreGlobais.filter(x => x.grupo_id == catId) : produtosMestreGlobais;
+            document.getElementById('f_prod').innerHTML = '<option value="">Todos</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            atualizarFiltrosCascata();
         }
 
         function atualizarFiltrosCascata() {
@@ -255,7 +282,7 @@
         }
 
         async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome)), regioes(nome, bandeira)');
+            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira)');
             ofertasAtuais = data || []; renderizarRanking();
         }
 
@@ -289,8 +316,27 @@
         }
 
         function renderizarRanking() {
-            const fP = document.getElementById('f_prod').value; const fC = document.getElementById('f_cond').value; const fCap = document.getElementById('f_cap').value; const fCor = document.getElementById('f_cor').value; const fReg = document.getElementById('f_reg').value; const fLoj = document.getElementById('f_lojista').value; const fCid = document.getElementById('f_cid').value;
-            let filtrados = ofertasAtuais.filter(o => o.quantidade > 0 && (!fP || o.variacoes.produtos_mestre.id == fP) && (!fC || o.condicao == fC) && (!fCap || o.variacoes.capacidade == fCap) && (!fCor || o.variacoes.cor == fCor) && (!fReg || o.regiao_id == fReg) && (!fLoj || o.fornecedor_id == fLoj) && (!fCid || o.fornecedores.cidade == fCid) );
+            const fCat = document.getElementById('f_cat').value; // Pegando a categoria do filtro
+            const fP = document.getElementById('f_prod').value; 
+            const fC = document.getElementById('f_cond').value; 
+            const fCap = document.getElementById('f_cap').value; 
+            const fCor = document.getElementById('f_cor').value; 
+            const fReg = document.getElementById('f_reg').value; 
+            const fLoj = document.getElementById('f_lojista').value; 
+            const fCid = document.getElementById('f_cid').value;
+            
+            let filtrados = ofertasAtuais.filter(o => 
+                o.quantidade > 0 && 
+                (!fCat || o.variacoes.produtos_mestre.grupo_id == fCat) && // Filtro de Categoria integrado
+                (!fP || o.variacoes.produtos_mestre.id == fP) && 
+                (!fC || o.condicao == fC) && 
+                (!fCap || o.variacoes.capacidade == fCap) && 
+                (!fCor || o.variacoes.cor == fCor) && 
+                (!fReg || o.regiao_id == fReg) && 
+                (!fLoj || o.fornecedor_id == fLoj) && 
+                (!fCid || o.fornecedores.cidade == fCid) 
+            );
+            
             const grid = document.getElementById('gridGeral');
             if(filtrados.length === 0) { grid.innerHTML = '<p class="text-gray-500 text-center col-span-full py-10 font-bold uppercase tracking-widest">Nenhuma oferta encontrada com estes filtros.</p>'; return; }
 
@@ -348,10 +394,14 @@
 
                 let tagMenor = o.preco === menorPreco ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
                 let tagEstoque = o.quantidade <= 3 ? `<span class="tag-status tag-poucas">APENAS ${o.quantidade} UN</span>` : (o.quantidade <= 10 ? `<span class="tag-status tag-muitas">ESTOQUE ${o.quantidade} UN</span>` : `<span class="tag-status tag-estoque-alto">ALTO ESTOQUE ${o.quantidade} UN</span>`);
-                let detalhes = [o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ');
                 
-                let txtBat = o.saude_bateria ? o.saude_bateria.replace('BATERIA ', '').replace('BAT. ', '') : '';
-                let t_bat = txtBat ? `<span class="mini-tag bat">🔋 BATERIA: ${txtBat}</span>` : '';
+                // MOLDURA DO TAMANHO DO APPLE WATCH, SE EXISTIR
+                let tamanhoWatch = o.variacoes.tamanho ? o.variacoes.tamanho : '';
+                let detalhes = [tamanhoWatch, o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ');
+                
+                // AJUSTE 3: BATERIA CLARA
+                let t_bat = o.saude_bateria ? `<span class="mini-tag bat">🔋 ${o.saude_bateria}</span>` : '';
+                
                 let t_gar = o.garantia ? `<span class="mini-tag gar">🛡️ GAR: ${o.garantia}</span>` : '';
                 let t_fab = o.regioes ? `<span class="mini-tag fab">🌎 FAB: ${o.regioes.bandeira} ${o.regioes.nome}</span>` : '';
                 let selo = o.fornecedores.verificado ? '<span style="background:#ffcc00; color:#000;" class="rounded px-1 py-0.5 text-[7px] font-black uppercase ml-1">✔️ Verificado</span>' : '';
@@ -362,7 +412,9 @@
                 let t_pix = o.aceita_pix ? `<span class="mini-tag pix">💠 PIX</span>` : ''; 
                 let t_not = o.emite_nota ? `<span class="mini-tag active">NF</span>` : ''; 
                 let t_env = o.faz_envio ? `<span class="mini-tag active">Envio</span>` : ''; 
-                let t_pro = o.aceita_proposta ? `<span class="mini-tag lote">🤝 Negocia Qtd</span>` : '';
+                
+                // AJUSTE 2: LOTE MUDOU PARA NEGOCIA QTD
+                let t_pro = o.aceita_proposta ? `<span class="mini-tag lote">🤝 NEGOCIA QTD</span>` : '';
                 
                 let tagsStr = [t_bat, t_gar, t_fab, t_col, t_boy, t_usd, t_pix, t_not, t_env, t_pro].filter(Boolean).join(' ');
 
@@ -379,4 +431,3 @@
     </script>
 </body>
 </html>
-
