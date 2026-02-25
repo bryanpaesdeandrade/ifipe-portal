@@ -20,7 +20,6 @@
 
         .main-wrapper { width: 100%; max-width: 1200px; margin: 0 auto; padding: 15px; display: flex; flex-direction: column; align-items: center; min-height: calc(100vh - 50px); }
         
-        /* CABEÇALHO ORIGINAL MANTIDO */
         .brand-header { display: flex; flex-direction: column; align-items: center; text-align: center; margin: 25px 0; gap: 5px; }
         .apple-logo { font-size: 3.2rem; font-weight: 900; font-style: italic; letter-spacing: -0.05em; line-height: 1; margin: 0; }
         .slogan-sep { display: none; font-size: 3.5rem; color: var(--border); font-weight: 100; }
@@ -34,15 +33,12 @@
             .ticker-val { font-size: 20px; }
         }
         
-        /* GRID INTELIGENTE (MOBILE VS DESKTOP) */
         .responsive-grid { display: flex; flex-direction: column; align-items: center; gap: 25px; width: 100%; }
         
-        /* ORDEM NO CELULAR (Login -> Calc -> Banner) */
         .item-login { order: 1; width: 100%; max-width: 360px; }
         .item-calc { order: 2; width: 100%; max-width: 360px; }
         .item-banner { order: 3; width: 100%; max-width: 300px; }
 
-        /* ORDEM NO DESKTOP (Calc -> Login -> Banner) */
         @media (min-width: 1024px) { 
             .responsive-grid { flex-direction: row; justify-content: center; align-items: stretch; gap: 30px; } 
             .item-calc { order: 1; }
@@ -72,11 +68,10 @@
         body.light-mode .calc-input-vip { background: #f5f5f7; }
         .calc-input-vip:focus { border-color: #0071e3; box-shadow: 0 0 15px rgba(0,113,227,0.2); }
         .locked-rules { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; padding: 15px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #86868b; }
-        .rule-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+        .rule-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         .rule-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
         .val-mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
 
-        /* RODAPÉ E MODAIS MANTIDOS INTACTOS */
         .footer-juridico { width: 100%; padding: 25px 0; display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: auto; }
         .footer-juridico span { font-size: 8px; color: #86868b; font-weight: 900; text-transform: uppercase; cursor: pointer; transition: 0.3s; }
         .footer-juridico span:hover { color: #0071e3; }
@@ -120,7 +115,7 @@
                 <div class="text-center mb-5">
                     <h2 class="text-lg font-black italic">Calculadora VIP</h2>
                     <p class="text-[9px] text-blue-500 font-black uppercase mt-2 tracking-widest leading-relaxed">
-                        Coloque o preço do iPhone em Dólar.<br>O resultado é PY ➔ SP
+                        Coloque o preço do iPhone em Dólar e saiba o preço entregue em SP
                     </p>
                 </div>
 
@@ -139,13 +134,12 @@
                         <span>Taxa Binance</span>
                         <span id="tickerIndex" class="val-mono text-[#32d74b]">R$ --</span>
                     </div>
-                    <div class="rule-row">
-                        <span>Spread Oráculo</span>
-                        <span class="val-mono">+R$ 0,06</span>
+                    <div class="rule-row items-center gap-2">
+                        <span style="font-size: 8px; line-height: 1.3; max-width: 65%;">Melhor Taxa oferecida e paga por Oráculo</span>
+                        <span id="calcTaxaEfetivaIndex" class="val-mono text-[#32d74b]">R$ --</span>
                     </div>
-                    <div class="rule-row border-none pb-0">
-                        <span class="text-[#0071e3]">🔒 Frete (PY ➔ SP)</span>
-                        <span class="val-mono text-[#0071e3]">+6%</span>
+                    <div class="rule-row border-none pb-0 mt-2 pt-2 justify-center border-t border-[#38383a]">
+                        <span class="text-[#0071e3] text-center w-full">🔒 Frete PY X São Paulo incluso</span>
                     </div>
                 </div>
             </div>
@@ -243,12 +237,16 @@
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (e) => {
                 currentUsdtRateIndex = parseFloat(JSON.parse(e.data).c);
+                
+                // Header Ticker
                 const el = document.getElementById('usdt_val');
                 if(el) el.innerText = `$ ${currentUsdtRateIndex.toFixed(4).replace('.',',')}`;
                 
+                // Info Box Ticker
                 const tic = document.getElementById('tickerIndex');
                 if(tic) tic.innerText = `R$ ${currentUsdtRateIndex.toFixed(4).replace('.',',')}`;
                 
+                // Recalcula pra mostrar a taxa do Oráculo mesmo que o campo esteja vazio
                 calcularImportacaoIndex();
             };
         }
@@ -257,13 +255,21 @@
             const inputVal = document.getElementById('calcUsdIndex').value.replace(',', '.');
             const usdInput = parseFloat(inputVal);
 
+            // Calcula a Taxa Efetiva independente do valor do input
+            let taxaEfetiva = 0;
+            if (currentUsdtRateIndex > 0) {
+                taxaEfetiva = currentUsdtRateIndex + 0.06; // Binance + Spread Oculto
+                document.getElementById('calcTaxaEfetivaIndex').innerText = `R$ ${taxaEfetiva.toFixed(4).replace('.', ',')}`;
+            }
+
             if(isNaN(usdInput) || currentUsdtRateIndex === 0) {
                 document.getElementById('calcResultIndex').innerText = "R$ 0,00";
                 return;
             }
 
-            const taxaEfetiva = currentUsdtRateIndex + 0.06;
-            const custoFinal = (usdInput * taxaEfetiva) * 1.06;
+            // Calcula o custo final embutindo os 6% silenciosamente
+            const subtotalBrl = usdInput * taxaEfetiva;
+            const custoFinal = subtotalBrl * 1.06;
 
             document.getElementById('calcResultIndex').innerText = custoFinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
