@@ -52,9 +52,6 @@
             </div>
         </div>
         <div class="nav-right mt-2 md:mt-0">
-            <div class="text-[9px] md:text-[11px] font-black text-[#32d74b] bg-[#1c1c1e] px-3 py-1.5 rounded-full border border-[#38383a] flex items-center gap-2">
-                <span class="animate-pulse">🟢</span> <span id="onlineCount">--</span> ONLINE
-            </div>
             <button onclick="logout()" class="text-red-500 font-black uppercase text-[10px] ml-4 hover:text-white transition-colors">Sair</button>
         </div>
     </nav>
@@ -81,16 +78,7 @@
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let ofertasAtuais = []; let gradeVariacoes = [];
 
-        function atualizarOnlineSincronizado() {
-            const el = document.getElementById('onlineCount');
-            const agora = new Date();
-            const semente = agora.getHours() + agora.getMinutes() + (Math.floor(agora.getSeconds() / 10));
-            const randomico = (semente * 123) % 101; 
-            el.innerText = 20 + randomico; 
-        }
-
         async function init() {
-            atualizarOnlineSincronizado(); setInterval(atualizarOnlineSincronizado, 10000);
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (e) => { document.getElementById('ticker').innerText = `$ ${parseFloat(JSON.parse(e.data).c).toFixed(4).replace('.',',')}`; };
             const [p, v, r, f] = await Promise.all([_s.from('produtos_mestre').select('id, nome').order('nome'), _s.from('variacoes').select('*'), _s.from('regioes').select('id, nome, bandeira'), _s.from('fornecedores').select('id, nome, verificado, cidade').eq('ativo', true).order('nome')]);
