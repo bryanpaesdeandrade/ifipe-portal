@@ -9,7 +9,7 @@
     <style>
         body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; }
         .nav-bar { background:rgba(28,28,30,0.8); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:15px 30px; position:sticky; top:0; z-index:100; }
-        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); position: relative; }
         .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 14px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 13px; }
         .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 16px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 12px; transition: 0.3s; }
         .apple-button:hover { background: #0071e3; color: #fff; }
@@ -36,6 +36,50 @@
     </style>
 </head>
 <body>
+
+    <div id="bulkMasterModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[300] px-4">
+        <div class="apple-card w-full max-w-[400px]">
+            <button type="button" onclick="fecharBulkMaster()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none bg-transparent border-0 cursor-pointer">×</button>
+            <h3 class="font-bold text-[14px] text-blue-500 mb-2 uppercase tracking-widest">Edição em Massa</h3>
+            <p class="text-[10px] text-gray-400 font-bold mb-4 uppercase tracking-wide">Alterando <span id="bulkMasterCount" class="text-white font-black">0</span> cadastros.</p>
+            
+            <p class="text-[9px] text-yellow-500 font-bold uppercase mb-4 tracking-widest bg-yellow-900/20 p-2 rounded border border-yellow-700/50">Atenção: Preencha apenas os campos que deseja corrigir. O que ficar vazio será mantido intacto.</p>
+
+            <form id="formBulkMaster" onsubmit="salvarBulkMaster(event)">
+                <input type="hidden" id="bm_tabela">
+                
+                <div id="bm_lojista_fields" class="hidden flex-col gap-2 mb-4">
+                    <div>
+                        <label>Padronizar País</label>
+                        <select id="bm_pais" class="apple-input py-2 mb-0">
+                            <option value="">-- Não Alterar --</option>
+                            <option value="Brasil">LOJA NO BRASIL 🇧🇷</option>
+                            <option value="Paraguai">LOJA NO PARAGUAI 🇵🇾</option>
+                            <option value="Dubai">LOJA EM DUBAI 🇦🇪</option>
+                            <option value="Estados Unidos">LOJA NOS EUA 🇺🇸</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mt-2">Padronizar Estado (UF)</label>
+                        <input type="text" id="bm_estado" class="apple-input py-2 mb-0" placeholder="Ex: SP">
+                    </div>
+                    <div>
+                        <label class="mt-2">Padronizar Cidade</label>
+                        <input type="text" id="bm_cidade" class="apple-input py-2 mb-0" placeholder="Ex: São Paulo">
+                    </div>
+                </div>
+
+                <div id="bm_cliente_fields" class="hidden flex-col gap-2 mb-4">
+                    <div>
+                        <label>Padronizar Senha (Reset)</label>
+                        <input type="text" id="bm_senha" class="apple-input py-2 mb-0" placeholder="Ex: 123456">
+                    </div>
+                </div>
+                
+                <button type="submit" id="btnSalvarBulkMaster" class="apple-button w-full bg-blue-600 text-white border-0 mt-2">Aplicar Alterações</button>
+            </form>
+        </div>
+    </div>
 
     <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200] px-4">
         <div class="apple-card w-full max-w-[400px]">
@@ -105,7 +149,7 @@
     <div id="dashboardSection" class="hidden">
         <nav class="nav-bar flex justify-between items-center">
             <h1 class="text-2xl font-black italic">iFipe <span class="text-red-500 text-sm">MASTER</span></h1>
-            <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase tracking-widest hover:text-white transition-colors">Sair do Painel</button>
+            <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase tracking-widest hover:text-white transition-colors border-0 bg-transparent cursor-pointer">Sair do Painel</button>
         </nav>
 
         <div class="max-w-7xl mx-auto p-4 md:p-8">
@@ -169,8 +213,9 @@
                         <h3 class="font-bold text-[14px] text-blue-500 uppercase tracking-widest m-0">Lojistas Atacadistas</h3>
                         <div class="flex gap-2 items-center flex-wrap">
                             <button onclick="selecionarTodos('chk-lojista')" class="text-[9px] bg-gray-700 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-gray-600 transition-colors border-0">Todos</button>
-                            <button onclick="acaoEmLote('fornecedores', 'ativo', true, 'chk-lojista')" class="text-[9px] bg-green-800 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-green-600 transition-colors border-0">ATIVAR SELECIONADOS</button>
-                            <button onclick="acaoEmLote('fornecedores', 'ativo', false, 'chk-lojista')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">INATIVAR SELECIONADOS</button>
+                            <button onclick="abrirBulkMaster('fornecedores')" class="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-blue-500 transition-colors border-0">🛠️ EDITAR EM MASSA</button>
+                            <button onclick="acaoEmLote('fornecedores', 'ativo', true, 'chk-lojista')" class="text-[9px] bg-green-800 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-green-600 transition-colors border-0">Ativar</button>
+                            <button onclick="acaoEmLote('fornecedores', 'ativo', false, 'chk-lojista')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">Inativar</button>
                         </div>
                     </div>
                     <input type="text" onkeyup="filtrarTabela('listaFornecedores', this.value)" class="apple-input py-2 text-[11px]" style="margin-bottom:0;" placeholder="🔍 Buscar Loja, Whats, País ou Cidade...">
@@ -185,8 +230,9 @@
                         <h3 class="font-bold text-[14px] text-green-500 uppercase tracking-widest m-0">Clientes VIP</h3>
                         <div class="flex gap-2 flex-wrap items-center">
                             <button onclick="selecionarTodos('chk-cliente')" class="text-[9px] bg-gray-700 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-gray-600 transition-colors border-0">Todos</button>
-                            <button onclick="acaoEmLote('clientes_buscador', 'aprovado', true, 'chk-cliente')" class="text-[9px] bg-green-800 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-green-600 transition-colors border-0">APROVAR SELECIONADOS</button>
-                            <button onclick="acaoEmLote('clientes_buscador', 'aprovado', false, 'chk-cliente')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">BLOQUEAR SELECIONADOS</button>
+                            <button onclick="abrirBulkMaster('clientes_buscador')" class="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-blue-500 transition-colors border-0">🛠️ EDITAR EM MASSA</button>
+                            <button onclick="acaoEmLote('clientes_buscador', 'aprovado', true, 'chk-cliente')" class="text-[9px] bg-green-800 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-green-600 transition-colors border-0">Aprovar</button>
+                            <button onclick="acaoEmLote('clientes_buscador', 'aprovado', false, 'chk-cliente')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">Bloquear</button>
                         </div>
                     </div>
                     <input type="text" onkeyup="filtrarTabela('listaClientes', this.value)" class="apple-input py-2 text-[11px]" style="margin-bottom:0;" placeholder="🔍 Buscar Nome, Email ou Status...">
@@ -292,7 +338,6 @@
             const acaoStr = valor ? "APROVAR/ATIVAR" : "BLOQUEAR/INATIVAR";
             if(confirm(`Tem certeza que deseja ${acaoStr} os ${idsSelecionados.length} itens selecionados?`)) {
                 const { error } = await _s.from(tabela).update({ [coluna]: valor }).in('id', idsSelecionados);
-                
                 if(error) {
                     alert("Ocorreu um erro ao atualizar: " + error.message);
                 } else {
@@ -302,6 +347,77 @@
                 }
             }
         }
+
+        // ==========================================
+        // NOVO MOTOR DE EDIÇÃO EM MASSA (MASTER)
+        // ==========================================
+        function abrirBulkMaster(tabela) {
+            let classe = tabela === 'fornecedores' ? 'chk-lojista' : 'chk-cliente';
+            const ids = Array.from(document.querySelectorAll(`.${classe}:checked`)).map(c => parseInt(c.value));
+            
+            if(ids.length === 0) return alert("Selecione os cadastros marcando a caixinha ao lado deles na tabela.");
+            
+            document.getElementById('bm_tabela').value = tabela;
+            document.getElementById('bulkMasterCount').innerText = ids.length;
+            
+            if(tabela === 'fornecedores') {
+                document.getElementById('bm_lojista_fields').classList.remove('hidden');
+                document.getElementById('bm_lojista_fields').classList.add('flex');
+                document.getElementById('bm_cliente_fields').classList.add('hidden');
+                document.getElementById('bm_cliente_fields').classList.remove('flex');
+            } else {
+                document.getElementById('bm_cliente_fields').classList.remove('hidden');
+                document.getElementById('bm_cliente_fields').classList.add('flex');
+                document.getElementById('bm_lojista_fields').classList.add('hidden');
+                document.getElementById('bm_lojista_fields').classList.remove('flex');
+            }
+            
+            document.getElementById('bulkMasterModal').classList.remove('hidden');
+        }
+
+        function fecharBulkMaster() {
+            document.getElementById('bulkMasterModal').classList.add('hidden');
+            document.getElementById('formBulkMaster').reset();
+        }
+
+        async function salvarBulkMaster(e) {
+            e.preventDefault();
+            const t = document.getElementById('bm_tabela').value;
+            let classe = t === 'fornecedores' ? 'chk-lojista' : 'chk-cliente';
+            const ids = Array.from(document.querySelectorAll(`.${classe}:checked`)).map(c => parseInt(c.value));
+            
+            let updates = {};
+            
+            if (t === 'fornecedores') {
+                const pais = document.getElementById('bm_pais').value;
+                const est = document.getElementById('bm_estado').value.trim();
+                const cid = document.getElementById('bm_cidade').value.trim();
+                if (pais) updates.pais = pais;
+                if (est) updates.estado = est;
+                if (cid) updates.cidade = cid;
+            } else {
+                const senha = document.getElementById('bm_senha').value.trim();
+                if (senha) updates.senha = senha;
+            }
+            
+            if(Object.keys(updates).length === 0) return alert("Preencha ao menos um campo para aplicar a alteração em massa.");
+            
+            document.getElementById('btnSalvarBulkMaster').innerText = "Salvando...";
+            
+            const { error } = await _s.from(t).update(updates).in('id', ids);
+            
+            document.getElementById('btnSalvarBulkMaster').innerText = "Aplicar Alterações";
+            
+            if(!error) {
+                checkboxesEstado[classe] = false;
+                fecharBulkMaster();
+                carregarTabelas();
+                alert("Cadastros corrigidos com sucesso!");
+            } else {
+                alert("Erro ao atualizar: " + error.message);
+            }
+        }
+
 
         function abrirModalEdicao(tabela, id, nome, email, whats, senha, estado, cidade, pais) {
             document.getElementById('edit_tabela').value = tabela;
@@ -313,7 +429,6 @@
             document.getElementById('edit_estado').value = estado || '';
             document.getElementById('edit_cidade').value = cidade || '';
             
-            // Define o valor padrão caso a loja antiga não tenha país cadastrado
             document.getElementById('edit_pais').value = pais || 'Brasil';
 
             if(tabela === 'fornecedores') {
