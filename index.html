@@ -7,12 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; overflow-x: hidden; }
+        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
+        body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
+
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; overflow-x: hidden; transition: 0.3s; }
         
-        /* Ticker Bar Limpa */
-        .ticker-bar { background:rgba(28, 28, 30, 0.9); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:12px 20px; position:sticky; top:0; z-index:100; display:flex; justify-content:center; align-items:center; }
-        .ticker-val { color:#32d74b; font-family:monospace; font-size: 16px; font-weight:900; }
-        .ticker-label { color:#86868b; font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; margin-right: 10px; }
+        /* Ticker com Destaque no Valor */
+        .ticker-bar { background:rgba(28, 28, 30, 0.9); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:12px 20px; position:sticky; top:0; z-index:100; display:flex; justify-content:center; align-items:center; }
+        body.light-mode .ticker-bar { background: rgba(255,255,255,0.8); }
+        .ticker-val { color:#32d74b; font-family:monospace; font-size: 20px; font-weight:900; }
+        .ticker-label { color:#86868b; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; margin-right: 12px; }
 
         .main-wrapper { width: 100%; max-width: 1400px; margin: 0 auto; padding: 30px 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         .apple-logo { font-size: 5rem; font-weight: 900; font-style: italic; letter-spacing: -0.05em; line-height: 1; margin-bottom: 40px; text-align: center; }
@@ -23,40 +27,39 @@
             .apple-logo { font-size: 9rem; margin-bottom: 60px; } 
         }
 
-        .banner-link { display: block; width: 100%; max-width: 320px; transition: 0.3s; border-radius: 24px; border: 1px solid #38383a; overflow: hidden; height: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .banner-link { display: block; width: 100%; max-width: 320px; transition: 0.3s; border-radius: 24px; border: 1px solid var(--border); overflow: hidden; height: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .banner-link:hover { transform: translateY(-5px); border-color: #0071e3; }
         
-        .login-box { width: 100%; max-width: 400px; background: #1c1c1e; border: 1px solid #38383a; border-radius: 28px; padding: 2.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 14px; padding: 16px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 14px; }
-        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 18px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 13px; transition: 0.3s; letter-spacing: 0.05em; }
+        .login-box { width: 100%; max-width: 400px; background: var(--card); border: 1px solid var(--border); border-radius: 28px; padding: 2.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 14px; padding: 16px; width: 100%; color: var(--text); outline: none; margin-bottom: 1rem; font-size: 14px; }
+        .apple-button { background: var(--text); color: var(--bg); font-weight: 900; border-radius: 50px; padding: 18px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 13px; transition: 0.3s; letter-spacing: 0.05em; }
         .apple-button:hover { background: #0071e3; color: #fff; }
         
         .link-nav { color: #0071e3; cursor: pointer; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; text-decoration: none; display: block; margin-top: 18px; transition: 0.3s; }
-        .link-nav:hover { color: #fff; }
+        .link-nav:hover { color: var(--text); }
         
         label { display: block; text-transform: uppercase; font-size: 9px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.1em; }
         .hidden { display: none !important; }
 
-        /* Rodapé Jurídico com Separadores */
-        .footer-juridico { width: 100%; padding: 40px 0; display: flex; justify-content: center; align-items: center; gap: 15px; border-top: 1px solid #1c1c1e; margin-top: 40px; }
+        /* Rodapé Jurídico com Barras */
+        .footer-juridico { width: 100%; padding: 40px 0; display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 40px; }
         .footer-juridico span { font-size: 10px; color: #48484a; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; transition: 0.3s; }
-        .footer-juridico span:hover { color: #fff; }
-        .footer-sep { color: #2c2c2e; font-size: 12px; }
+        .footer-juridico span:hover { color: var(--text); }
+        .footer-sep { color: #2c2c2e; font-size: 12px; font-weight: 100; }
 
         /* Modal Jurídico com Scroll Corrigido */
         .modal-juridico { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .modal-body { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; max-width: 800px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; position: relative; }
-        .modal-header { padding: 30px 40px 10px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1c1c1e; }
+        .modal-body { background: var(--card); border: 1px solid var(--border); border-radius: 24px; max-width: 800px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; position: relative; }
+        .modal-header { padding: 30px 40px 10px 40px; display: flex; justify-content: space-between; align-items: center; }
         .modal-header h2 { font-size: 18px; font-weight: 900; text-transform: uppercase; color: #0071e3; margin: 0; }
-        .btn-fechar-topo { color: #86868b; font-weight: 900; cursor: pointer; font-size: 12px; text-transform: uppercase; }
-        .btn-fechar-topo:hover { color: #fff; }
+        .btn-fechar { color: #86868b; font-weight: 900; cursor: pointer; font-size: 12px; text-transform: uppercase; }
         
-        .modal-scroll-area { padding: 20px 40px 40px 40px; overflow-y: auto; flex-grow: 1; scrollbar-width: thin; scrollbar-color: #38383a transparent; }
+        /* Área de Scroll - Correção para mostrar todo o texto */
+        .modal-scroll-area { padding: 20px 40px 40px 40px; overflow-y: auto; flex-grow: 1; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
         .modal-text { font-size: 13px; line-height: 1.8; color: #d1d1d6; white-space: pre-line; text-align: justify; }
+        body.light-mode .modal-text { color: #1d1d1f; }
         
-        /* Estilização da barra de rolagem */
-        .modal-scroll-area::-webkit-scrollbar { width: 6px; }
-        .modal-scroll-area::-webkit-scrollbar-thumb { background: #38383a; border-radius: 10px; }
+        .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 14px; position: fixed; top: 15px; right: 20px; z-index: 200; font-weight: 700; transition: 0.3s; }
     </style>
 </head>
 <body>
@@ -65,6 +68,8 @@
         <span class="ticker-label">USDT/BRL BINANCE:</span>
         <span class="ticker-val" id="usdt_val">$ --</span>
     </div>
+
+    <button onclick="toggleTheme()" id="themeBtn" class="theme-toggle">🌙 Modo</button>
 
     <div class="main-wrapper">
         <h1 class="apple-logo">iFipe</h1>
@@ -86,9 +91,8 @@
                     <label>Senha</label>
                     <input type="password" id="logPass" class="apple-input" placeholder="••••••••" required>
                     <button type="submit" class="apple-button w-full">ENTRAR NO iFIPE</button>
-                    <div class="text-center mt-6 space-y-2">
+                    <div class="text-center mt-6">
                         <span class="link-nav" onclick="toggleForm()">FAZER MEU CADASTRO</span>
-                        <span class="link-nav text-gray-500" onclick="alert('Contate o suporte.')">ESQUECI MINHA SENHA</span>
                     </div>
                 </form>
 
@@ -101,7 +105,6 @@
                     <button type="submit" class="apple-button w-full">ENVIAR SOLICITAÇÃO</button>
                     <span class="link-nav text-center mt-4" onclick="toggleForm()">VOLTAR AO LOGIN</span>
                 </form>
-                <p id="msg" class="mt-4 text-center text-[9px] font-black uppercase tracking-widest"></p>
             </div>
 
             <a href="https://linktr.ee/vipbrecossistema" target="_blank" class="banner-link">
@@ -118,11 +121,11 @@
         </div>
     </div>
 
-    <div id="modalJuridico" class="modal-juridico" onclick="fecharJuridico(event)">
+    <div id="modalJuridico" class="modal-juridico" onclick="fecharJuridico()">
         <div class="modal-body" onclick="event.stopPropagation()">
             <div class="modal-header">
                 <h2 id="modalTitulo"></h2>
-                <span class="btn-fechar-topo" onclick="fecharJuridico()">Fechar [x]</span>
+                <span class="btn-fechar" onclick="fecharJuridico()">Fechar [x]</span>
             </div>
             <div class="modal-scroll-area">
                 <div id="modalConteudo" class="modal-text"></div>
@@ -136,129 +139,72 @@
         const textosJuridicos = {
             termos: {
                 titulo: "Termos e Condições de Uso",
-                texto: `TERMOS E CONDIÇÕES DE USO – IFIPE.COM.BR
-                
-                1. Natureza Jurídica e Finalidade da Plataforma
-                O iFipe.com.br constitui-se como plataforma informativa, destinada exclusivamente à divulgação, organização e disponibilização pública de dados fornecidos por terceiros, referentes a preços, modelos e demais informações relacionadas a dispositivos Apple comercializados por lojistas independentes.
-                A plataforma não exerce atividade comercial, não intermedeia negociações, não representa fornecedores, não valida informações e não participa de qualquer relação contratual estabelecida entre usuários e anunciantes.
-                O iFipe.com.br atua como mero repositório e indexador de informações, sem ingerência sobre a origem, veracidade, atualização ou precisão dos dados disponibilizados por terceiros.
-
-                2. Ausência de Responsabilidade e Limitação de Garantias
-                O usuário declara ciência de que o iFipe.com.br não assume qualquer responsabilidade, direta ou indireta, solidária ou subsidiária, por:
-                - Atos, omissões, condutas, negociações ou transações realizadas entre usuários e fornecedores.
-                - Pagamentos, transferências bancárias, comprovantes, fraudes, golpes ou quaisquer operações financeiras.
-                - Entregas, prazos, logística, extravios, defeitos, vícios, garantias ou funcionamento dos produtos adquiridos.
-                - Divergências de preço, estoque, disponibilidade, autenticidade ou procedência dos itens anunciados.
-                - Informações incorretas, incompletas, desatualizadas ou imprecisas fornecidas por terceiros.
-                - Danos materiais, morais, lucros cessantes, perdas financeiras ou qualquer prejuízo decorrente de transações comerciais.
-                O iFipe.com.br não garante a continuidade, precisão, integridade ou atualização das informações exibidas, que possuem caráter meramente indicativo e não vinculante.
-
-                3. Obrigações e Condutas do Usuário
-                Ao acessar a plataforma, o usuário compromete-se a:
-                - Utilizar o serviço em conformidade com a legislação brasileira.
-                - Abster-se de empregar robôs, scripts ou automações de extração de dados.
-                - Realizar toda verificação necessária antes de qualquer negociação.
-
-                4. Direitos Autorais
-                Todo o conteúdo constitui propriedade exclusiva da plataforma, protegido pela legislação brasileira.
-
-                5. Foro Competente
-                Fica eleito o Foro da Comarca de São Paulo – SP.
-
-                Canal de Comunicação: bryan.paes@icloud.com`
+                texto: `TERMOS E CONDIÇÕES DE USO – IFIPE.COM.BR\n\n1. Natureza Jurídica e Finalidade\nO iFipe.com.br atua como plataforma informativa para divulgação de dados fornecidos por terceiros. Não exercemos atividade comercial nem intermediamos negociações.\n\n2. Ausência de Responsabilidade\nNão assumimos responsabilidade por transações, pagamentos, fraudes, logística ou defeitos de produtos dos lojistas independentes listados.\n\n3. Obrigações do Usuário\nO usuário compromete-se a utilizar o serviço conforme a lei e realizar suas próprias verificações antes de qualquer compra.`
             },
             privacidade: {
                 titulo: "Política de Privacidade",
-                texto: `POLÍTICA DE PRIVACIDADE – IFIPE.COM.BR
-
-                1. Disposições Gerais
-                Esta Política estabelece as diretrizes quanto ao tratamento de dados pessoais, em conformidade com a LGPD. O uso da plataforma implica ciência e concordância integral.
-
-                2. Categorias de Dados Tratados
-                - Identificação básica: nome completo (fornecido voluntariamente).
-                - Credenciais de contato: e-mail e WhatsApp (comunicação operacional e autenticação).
-                - Registros eletrônicos: IP, data/hora de acesso, tipo de dispositivo e navegador.
-                Nenhum dado sensível é coletado ou tratado.
-
-                3. Finalidades do Tratamento
-                Os dados são usados para administração de conta, autenticação segura, prevenção de acessos indevidos e cumprimento de obrigações legais. Não utilizamos dados para fins publicitários ou venda.
-
-                4. Segurança da Informação
-                Adotamos medidas técnicas como criptografia, armazenamento de senhas com hash seguro e comunicação HTTPS para proteção dos dados pessoais.`
+                texto: `POLÍTICA DE PRIVACIDADE – IFIPE.COM.BR\n\n1. Coleta de Dados\nTratamos dados de identificação básica (nome), contato (e-mail e WhatsApp) e registros eletrônicos (IP) para fins de segurança e autenticação.\n\n2. Finalidade\nOs dados são usados exclusivamente para manutenção da conta e comunicação operacional. Não vendemos informações para terceiros.\n\n3. Segurança\nAdotamos medidas técnicas como criptografia em trânsito e armazenamento seguro de credenciais.`
             },
             lgpd: {
                 titulo: "Tratamento de Dados (LGPD)",
-                texto: `POLÍTICA DE TRATAMENTO DE DADOS PESSOAIS – IFIPE.COM.BR (LGPD)
-
-                1. Premissas e Enquadramento Legal
-                O tratamento observa rigorosamente a Lei nº 13.709/2018. A plataforma atua como indexador de informações públicas. O iFipe.com.br é o Controlador dos dados pessoais fornecidos pelos usuários.
-
-                2. Fundamentos Jurídicos
-                O tratamento está amparado no consentimento do titular, execução de procedimentos necessários ao acesso e legítimo interesse para segurança da plataforma.
-
-                3. Direitos do Titular
-                Nos termos dos arts. 17 a 22 da LGPD, o usuário possui direitos de confirmação de tratamento, acesso, correção, eliminação de dados ou revogação do consentimento.
-
-                4. Medidas de Segurança e Governança
-                Adotamos criptografia de dados em trânsito e repouso, controle de acesso por permissão e monitoramento de sessões suspeitas conforme o art. 46 da LGPD.
-
-                Encarregado pelo Tratamento (DPO): bryan.paes@icloud.com`
+                texto: `CONFORMIDADE LGPD – IFIPE.COM.BR\n\n1. Controlador\nO iFipe.com.br é o controlador dos dados fornecidos voluntariamente pelos usuários.\n\n2. Direitos\nO titular pode solicitar a qualquer momento o acesso, correção, eliminação ou portabilidade de seus dados pessoais.\n\n3. Contato (DPO)\nPara exercer seus direitos, contate: bryan.paes@icloud.com`
             }
         };
 
-        function abrirJuridico(tipo) {
-            const modal = document.getElementById('modalJuridico');
-            document.getElementById('modalTitulo').innerText = textosJuridicos[tipo].titulo;
-            document.getElementById('modalConteudo').innerText = textosJuridicos[tipo].texto;
-            modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden'; // Trava o scroll do fundo
+        function toggleTheme() {
+            const b = document.body;
+            b.classList.toggle('light-mode');
+            const isLight = b.classList.contains('light-mode');
+            document.getElementById('themeBtn').innerText = isLight ? "☀️ Modo" : "🌙 Modo";
+            localStorage.setItem('iFipe_Theme', isLight ? 'light' : 'dark');
         }
 
-        function fecharJuridico() {
-            document.getElementById('modalJuridico').style.display = 'none';
-            document.body.style.overflow = 'auto'; // Libera o scroll do fundo
+        function abrirJuridico(tipo) {
+            document.getElementById('modalTitulo').innerText = textosJuridicos[tipo].titulo;
+            document.getElementById('modalConteudo').innerText = textosJuridicos[tipo].texto;
+            document.getElementById('modalJuridico').style.display = 'flex';
         }
+
+        function fecharJuridico() { document.getElementById('modalJuridico').style.display = 'none'; }
 
         function iniciarCambio() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                const el = document.getElementById('usdt_val');
-                if(el) el.innerText = `$ ${parseFloat(data.c).toFixed(4).replace('.',',')}`;
+            socket.onmessage = (e) => {
+                const val = JSON.parse(e.data).c;
+                document.getElementById('usdt_val').innerText = `$ ${parseFloat(val).toFixed(4).replace('.',',')}`;
             };
         }
 
-        window.onload = iniciarCambio;
+        window.onload = () => {
+            if(localStorage.getItem('iFipe_Theme') === 'light') toggleTheme();
+            iniciarCambio();
+        };
 
         function toggleForm() { 
             document.getElementById('loginForm').classList.toggle('hidden'); 
             document.getElementById('registerForm').classList.toggle('hidden'); 
-            document.getElementById('msg').innerText = ""; 
         }
 
         async function realizarLogin(event) {
             event.preventDefault();
-            const e = document.getElementById('logEmail').value;
-            const p = document.getElementById('logPass').value;
-            const { data } = await _s.from('clientes_buscador').select('*').eq('email', e).eq('senha', p).maybeSingle();
-            
-            if(data) {
-                if(!data.aprovado) { alert("ACESSO PENDENTE DE LIBERAÇÃO."); return; }
+            const { data } = await _s.from('clientes_buscador').select('*').eq('email', document.getElementById('logEmail').value).eq('senha', document.getElementById('logPass').value).maybeSingle();
+            if(data && data.aprovado) {
                 localStorage.setItem('iFipe_Token', data.id);
                 window.location.href = 'buscar.html';
-            } else { alert("E-MAIL OU SENHA INCORRETOS."); }
+            } else if(data) { alert("Acesso pendente de liberação."); } else { alert("E-mail ou senha incorretos."); }
         }
 
         async function solicitarCadastro(event) {
             event.preventDefault();
-            const n = document.getElementById('regNome').value;
-            const c = document.getElementById('regCpf').value.replace(/\D/g,'');
-            const em = document.getElementById('regEmail').value;
-            const w = document.getElementById('regWhats').value;
-            const p = document.getElementById('regPass').value;
-            const { error } = await _s.from('clientes_buscador').insert([{ nome: n, cpf: c, email: em, whatsapp: w, senha: p, aprovado: false }]);
-            if(!error) { alert("SOLICITAÇÃO ENVIADA COM SUCESSO!"); toggleForm(); }
-            else { alert("ERRO AO CADASTRAR. VERIFIQUE OS DADOS."); }
+            const { error } = await _s.from('clientes_buscador').insert([{ 
+                nome: document.getElementById('regNome').value, 
+                cpf: document.getElementById('regCpf').value.replace(/\D/g,''),
+                email: document.getElementById('regEmail').value,
+                whatsapp: document.getElementById('regWhats').value,
+                senha: document.getElementById('regPass').value,
+                aprovado: false
+            }]);
+            if(!error) { alert("Solicitação enviada!"); toggleForm(); } else { alert("Erro ao solicitar."); }
         }
     </script>
 </body>
