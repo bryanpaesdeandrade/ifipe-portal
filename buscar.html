@@ -24,7 +24,7 @@
         .tag-muitas { background: #0071e3; color: #fff; }
         .tag-estoque-alto { background: #32d74b; color: #000; }
         
-        /* MOLDURAS (MINI-TAGS) ATUALIZADAS */
+        /* MOLDURAS (MINI-TAGS) */
         .mini-tag { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 6px; border-radius: 6px; background: var(--input); color: #86868b; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; }
         .mini-tag.active { color: #fff; border-color: #0071e3; background: rgba(0, 113, 227, 0.2); }
         .mini-tag.usdt { color: #32d74b; border-color: #32d74b; background: rgba(50, 215, 75, 0.1); }
@@ -51,6 +51,23 @@
     </style>
 </head>
 <body>
+
+    <div id="contaModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200] px-4">
+        <div class="bg-[#1c1c1e] border border-[#38383a] rounded-2xl w-full max-w-[400px] p-8">
+            <h3 class="font-bold text-[14px] text-blue-500 mb-4 uppercase tracking-widest">Minha Conta VIP</h3>
+            <form onsubmit="salvarConta(event)">
+                <label class="block text-[10px] text-gray-400 uppercase font-black mb-1">Meu WhatsApp</label>
+                <input type="text" id="conta_whats" class="apple-input" placeholder="Ex: 11999999999" required>
+                <label class="block text-[10px] text-gray-400 uppercase font-black mb-1">Minha Senha</label>
+                <input type="text" id="conta_senha" class="apple-input" required>
+                <div class="flex gap-2 mt-4">
+                    <button type="button" onclick="fecharConta()" class="bg-gray-600 text-white font-black uppercase text-[12px] rounded-full px-6 py-3 w-1/3">Sair</button>
+                    <button type="submit" class="bg-blue-600 text-white font-black uppercase text-[12px] rounded-full px-6 py-3 w-2/3">Atualizar Dados</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <nav class="nav-bar">
         <h1 class="text-2xl font-black italic m-0">iFipe</h1>
         
@@ -64,6 +81,10 @@
 
         <div class="flex gap-4 items-center">
             <button onclick="toggleTheme()" id="themeBtn" class="theme-toggle">🌙 Modo</button>
+            <button onclick="abrirConta()" class="text-[10px] text-blue-400 font-black uppercase hover:text-white transition-colors flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/><path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/></svg>
+                Conta
+            </button>
             <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
         </div>
     </nav>
@@ -98,7 +119,7 @@
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let ofertasAtuais = []; let gradeVariacoes = [];
+        let ofertasAtuais = []; let gradeVariacoes = []; let clienteLogado = null;
 
         function toggleTheme() {
             const b = document.body; b.classList.toggle('light-mode');
@@ -110,9 +131,37 @@
         window.onload = async () => {
             if(localStorage.getItem('iFipe_Theme') === 'light') toggleTheme();
             const token = localStorage.getItem('iFipe_Token');
-            if(!token) window.location.replace('index.html');
-            init();
+            if(!token) {
+                window.location.replace('index.html');
+            } else {
+                const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
+                if(data) clienteLogado = data;
+                init();
+            }
         };
+
+        // GESTÃO DA CONTA DO CLIENTE
+        function abrirConta() {
+            if(!clienteLogado) return;
+            document.getElementById('conta_whats').value = clienteLogado.whatsapp || '';
+            document.getElementById('conta_senha').value = clienteLogado.senha || '';
+            document.getElementById('contaModal').classList.remove('hidden');
+        }
+
+        function fecharConta() { document.getElementById('contaModal').classList.add('hidden'); }
+
+        async function salvarConta(e) {
+            e.preventDefault();
+            const w = document.getElementById('conta_whats').value;
+            const s = document.getElementById('conta_senha').value;
+            const { error } = await _s.from('clientes_buscador').update({ whatsapp: w, senha: s }).eq('id', clienteLogado.id);
+            if(!error) { 
+                clienteLogado.whatsapp = w; 
+                clienteLogado.senha = s; 
+                fecharConta(); 
+                alert("Conta atualizada com sucesso!"); 
+            } else { alert("Erro ao atualizar dados."); }
+        }
 
         async function init() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
@@ -132,11 +181,10 @@
             document.getElementById('f_reg').innerHTML += regioesFiltradas.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             
             document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? '✔️' : ''}</option>`).join('');
-            
             const cidades = [...new Set(f.data.map(x => x.cidade).filter(Boolean))].sort();
             document.getElementById('f_cid').innerHTML += cidades.map(c => `<option value="${c}">${c}</option>`).join('');
             
-            carregarDados(); setInterval(carregarDados, 5000);
+            carregarDados(); setInterval(carregarDados, 5000); // RECARREGA A CADA 5s (JOGO DE CADEIRAS)
         }
 
         function atualizarFiltrosCascata() {
@@ -179,7 +227,21 @@
             const criarCard = (o, menorPreco) => {
                 let moeda = o.moeda === 'USD' ? '$' : 'R$';
                 
-                // TAGS PRINCIPAIS (ESTOQUE E MENOR PREÇO)
+                // --- REGRA: TAGS TEMPORÁRIAS (PREÇO CAIU / PREÇO SUBIU) - DURA 15 MINUTOS ---
+                let tagAlteracao = '';
+                if(o.data_alteracao_preco && o.preco_anterior) {
+                    const diffMinutos = (new Date() - new Date(o.data_alteracao_preco)) / 60000;
+                    if(diffMinutos <= 15) {
+                        if(o.preco < o.preco_anterior) {
+                            tagAlteracao = `<span class="tag-status" style="background:#32d74b; color:#000;">📉 PREÇO CAIU</span>`;
+                        } else if (o.preco > o.preco_anterior) {
+                            // Se ele tentou burlar subindo o preço, o sistema dedura ele de vermelho!
+                            tagAlteracao = `<span class="tag-status" style="background:#ff3b30; color:#fff;">📈 PREÇO SUBIU</span>`;
+                        }
+                    }
+                }
+
+                // TAGS PRINCIPAIS (ESTOQUE E MENOR PREÇO GERAL)
                 let tagMenor = o.preco === menorPreco ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
                 let tagEstoque = '';
                 if(o.quantidade <= 3) tagEstoque = `<span class="tag-status tag-poucas">APENAS ${o.quantidade} UN</span>`;
@@ -188,7 +250,7 @@
 
                 let detalhes = [o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ');
                 
-                // MOLDURAS (MINI-TAGS) PARA ATRIBUTOS EXTRAS (IDÊNTICO AO SEU PRINT)
+                // MOLDURAS (MINI-TAGS) PARA ATRIBUTOS EXTRAS
                 let txtBat = o.saude_bateria ? o.saude_bateria.replace('BATERIA ', '').replace('BAT. ', '') : '';
                 let t_bat = txtBat ? `<span class="mini-tag bat">🔋 BATERIA: ${txtBat}</span>` : '';
                 let t_gar = o.garantia ? `<span class="mini-tag gar">🛡️ GAR: ${o.garantia}</span>` : '';
@@ -201,16 +263,17 @@
                 let t_usd = o.aceita_usdt ? `<span class="mini-tag usdt">USDT</span>` : '';
                 let t_not = o.emite_nota ? `<span class="mini-tag active">NF</span>` : '';
                 let t_env = o.faz_envio ? `<span class="mini-tag active">Envio</span>` : '';
-                let t_pro = o.aceita_proposta ? `<span class="mini-tag lote">🤝 Negocia Qtd</span>` : ''; // Ajustado!
+                let t_pro = o.aceita_proposta ? `<span class="mini-tag lote">🤝 Negocia Qtd</span>` : '';
                 
                 let tagsStr = [t_bat, t_gar, t_fab, t_col, t_boy, t_usd, t_not, t_env, t_pro].filter(Boolean).join(' ');
 
-                // GERADOR DE MENSAGEM WHATSAPP
-                let msgTexto = `Olá tudo bem! encontrei seu anuncio de um ${o.variacoes.produtos_mestre.nome} | ${detalhes} pelo valor de ${moeda} ${o.preco.toLocaleString('pt-BR')} \n\nVENHO PELO *https://ifipe.com.br/*`;
+                // MENSAGEM WHATSAPP CUSTOMIZADA PARA O LOJISTA
+                let precoFormatado = `${moeda} ${o.preco.toLocaleString('pt-BR')}`;
+                let msgTexto = `Olá tudo bem! encontrei seu anuncio de um ${o.variacoes.produtos_mestre.nome} | ${detalhes} pelo valor de ${precoFormatado} \n\nVENHO PELO *https://ifipe.com.br/*`;
                 let linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(msgTexto)}`;
 
                 return `<div class="product-card">
-                    <div class="flex flex-wrap gap-1 mb-2">${tagEstoque} ${tagMenor}</div>
+                    <div class="flex flex-wrap gap-1 mb-2">${tagAlteracao} ${tagEstoque} ${tagMenor}</div>
                     
                     <h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2>
                     <p class="text-[10px] text-gray-300 font-bold mt-1 uppercase tracking-wide mb-3">${detalhes}</p>
@@ -220,7 +283,7 @@
                     <div class="mt-2 border-t border-[#38383a] pt-3">
                         <p class="text-[9px] text-blue-400 font-black uppercase tracking-widest">LOJA: ${o.fornecedores.nome} ${selo}</p>
                         <p class="text-[8px] text-gray-500 font-bold uppercase mb-1">Local: ${o.cidade || o.fornecedores.cidade}</p>
-                        <div class="price-text">${moeda} ${o.preco.toLocaleString('pt-BR')}</div>
+                        <div class="price-text">${precoFormatado}</div>
                     </div>
                     
                     <a href="${linkWpp}" target="_blank" class="buy-button">Comprar agora no WhatsApp</a>
@@ -238,17 +301,17 @@
                     if(!menores[k] || o.preco < menores[k]) menores[k] = o.preco; 
                 });
                 
-                // REGRA DE OURO: Novo primeiro, depois os menores preços
+                // REGRA DE OURO (JOGO DE CADEIRAS): Novo primeiro, depois os menores preços
                 lista.sort((a,b) => {
                     if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
                     if (a.condicao !== 'Novo' && b.condicao === 'Novo') return 1;
-                    return a.preco - b.preco;
+                    return a.preco - b.preco; // O menor preço puxa pra cima na hora!
                 });
                 
                 document.getElementById(gId).innerHTML = lista.map(o => criarCard(o, menores[`${o.variacao_id}_${o.condicao}`])).join('');
             };
 
-            // SEPARAÇÃO INTELIGENTE
+            // SEPARAÇÃO INTELIGENTE POR MOEDA E REGIÃO
             const listaBRL = filtrados.filter(o => o.moeda === 'BRL');
             const listaUSD = filtrados.filter(o => o.moeda === 'USD');
             
