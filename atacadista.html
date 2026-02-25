@@ -59,22 +59,18 @@
     <div id="calcModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[2000] px-4">
         <div class="w-full max-w-[380px] bg-[#1c1c1e] border-2 border-[#38383a] rounded-3xl p-6 shadow-2xl relative">
             <button onclick="fecharCalc()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
-            
             <div class="text-center mb-5 mt-2">
                 <h2 class="text-lg font-black italic text-white">Calculadora VIP</h2>
                 <p class="text-[9px] text-blue-500 font-black uppercase mt-2 tracking-widest leading-relaxed">Coloque o preço em Dólar e saiba o custo em SP</p>
             </div>
-
             <div class="bg-[#0a0a0a] border-2 border-[#2c2c2e] rounded-2xl p-4 text-right mb-4 relative shadow-inner">
                 <span class="absolute top-3 left-4 text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP (R$)</span>
                 <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-4 tracking-tighter">R$ 0,00</div>
             </div>
-
             <div class="relative mb-4">
                 <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
                 <input type="number" id="calcUsd" class="w-full bg-[#151516] border-2 border-[#38383a] rounded-xl py-4 pl-12 pr-4 font-mono text-xl font-black text-white outline-none focus:border-[#0071e3] text-center transition-colors" placeholder="Custo no PY (USD)" oninput="calcularImportacao()">
             </div>
-
             <div class="bg-black/40 border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase text-gray-500 tracking-wide">
                 <div class="flex justify-between items-center mb-3 border-b border-[#2c2c2e] pb-3">
                     <span>Taxa Binance</span>
@@ -294,11 +290,17 @@
                 <div class="apple-card">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-[#38383a] pb-4">
                         <h2 class="text-xl font-black italic m-0">Meus Anúncios</h2>
+                        
                         <div class="flex gap-2 flex-wrap items-center">
                             <button onclick="selecionarTodosAnuncios()" class="text-[10px] bg-gray-700 text-white px-4 py-2 rounded-full font-black uppercase tracking-widest hover:bg-gray-600 transition-colors border-0">Todos</button>
+                            
+                            <button onclick="bulkPix(true)" class="text-[10px] bg-[#32bcad] text-black px-4 py-2 rounded-full font-black uppercase tracking-widest hover:bg-teal-500 transition-colors border-0">ATIVAR 💠 PIX</button>
+                            <button onclick="bulkPix(false)" class="text-[10px] bg-gray-600 text-white px-4 py-2 rounded-full font-black uppercase tracking-widest hover:bg-gray-500 transition-colors border-0">Remover PIX</button>
+                            
                             <button onclick="bulkPausar()" class="text-[10px] bg-yellow-600 text-black px-4 py-2 rounded-full font-black uppercase tracking-widest hover:bg-yellow-500 transition-colors border-0">Pausar (Zerar Est.)</button>
-                            <button onclick="bulkExcluir()" class="text-[10px] bg-red-900 text-white px-4 py-2 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">Excluir Tudo</button>
+                            <button onclick="bulkExcluir()" class="text-[10px] bg-red-900 text-white px-4 py-2 rounded-full font-black uppercase tracking-widest hover:bg-red-700 transition-colors border-0">Excluir</button>
                         </div>
+
                     </div>
                     
                     <div class="overflow-x-auto">
@@ -326,7 +328,7 @@
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let loja = null; let gradeVariacoes = []; let anunciosDaLoja = [];
         let currentUsdtRate = 0; 
-        let chkEstado = false; // Controle da seleção em massa
+        let chkEstado = false;
 
         function toggleTheme() {
             const b = document.body; b.classList.toggle('light-mode');
@@ -506,7 +508,6 @@
                 else if(o.quantidade <= 10) tagEstoque = `<br><span class="text-[9px] bg-[#0071e3] text-white px-2 py-0.5 rounded font-bold">ESTOQUE ${o.quantidade} UN</span>`;
                 else tagEstoque = `<br><span class="text-[9px] bg-[#32d74b] text-black px-2 py-0.5 rounded font-bold">ALTO ESTOQUE ${o.quantidade} UN</span>`;
                 
-                // INCLUSÃO DA CHECKBOX NA TABELA PARA AÇÕES EM MASSA
                 return `<tr>
                     <td class="text-center"><input type="checkbox" class="check-box chk-anuncio" value="${o.id}"></td>
                     <td><span class="block font-bold">${o.variacoes.produtos_mestre.nome}</span><span class="text-[10px] text-gray-400">${det}</span></td>
@@ -524,6 +525,22 @@
         function selecionarTodosAnuncios() {
             chkEstado = !chkEstado;
             document.querySelectorAll('.chk-anuncio').forEach(chk => chk.checked = chkEstado);
+        }
+
+        // Função Única para Ativar ou Remover o PIX em Massa
+        async function bulkPix(status) {
+            const ids = Array.from(document.querySelectorAll('.chk-anuncio:checked')).map(c => parseInt(c.value));
+            if(ids.length === 0) return alert("Selecione os anúncios marcando a caixinha ao lado deles.");
+            
+            const acaoStr = status ? "ATIVAR A TAG PIX" : "REMOVER A TAG PIX";
+            if(confirm(`Tem certeza que deseja ${acaoStr} em ${ids.length} anúncios?`)) {
+                const { error } = await _s.from('ofertas').update({ aceita_pix: status }).in('id', ids);
+                if(!error) {
+                    chkEstado = false;
+                    atualizarLista();
+                    alert("Ação concluída com sucesso!");
+                } else { alert("Erro ao atualizar a Tag PIX."); }
+            }
         }
 
         async function bulkPausar() {
