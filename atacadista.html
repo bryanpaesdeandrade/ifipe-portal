@@ -25,7 +25,7 @@
         .btn-edit { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
         .btn-del { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
         .hidden { display: none !important; }
-        .taxa-widget { background: #1c1c1e; border: 1px solid #38383a; border-radius: 12px; padding: 6px 15px; display: flex; align-items: center; gap: 15px; }
+        .taxa-widget { background: #1c1c1e; border: 1px solid #38383a; border-radius: 12px; padding: 8px 20px; display: flex; flex-direction: column; align-items: flex-start; }
     </style>
 </head>
 <body>
@@ -33,12 +33,12 @@
     <div id="loginSection" class="flex items-center justify-center min-h-screen px-4">
         <div class="apple-card max-w-[400px] text-center w-full">
             <h1 class="text-5xl font-black italic mb-2">iFipe</h1>
-            <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel do Anunciante</p>
+            <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Acesso Anunciante</p>
             <form onsubmit="realizarLoginAnunciante(event)">
-                <label class="block text-left text-[9px] uppercase text-gray-500 mb-1 font-black">Login / WhatsApp</label>
-                <input type="text" id="logWhats" class="apple-input" placeholder="Ex: TEXAS" required>
+                <label class="block text-left text-[9px] uppercase text-gray-500 mb-1 font-black">Login (Nome da Loja)</label>
+                <input type="text" id="logLoja" class="apple-input" placeholder="" required>
                 <label class="block text-left text-[9px] uppercase text-gray-500 mb-1 font-black">Senha</label>
-                <input type="password" id="logPass" class="apple-input" placeholder="••••••••" required>
+                <input type="password" id="logPass" class="apple-input" placeholder="" required>
                 <button type="submit" class="apple-button w-full mt-4">Entrar Agora</button>
             </form>
             <p id="loginMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase"></p>
@@ -61,7 +61,7 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button>
+                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair do Painel</button>
             </div>
         </div>
 
@@ -77,12 +77,11 @@
                 </div>
 
                 <div class="apple-card">
-                    <h2 class="text-sm font-black italic mb-4 uppercase">Novo Anúncio</h2>
+                    <h2 class="text-sm font-black italic mb-4 uppercase">Novo Registro</h2>
                     <form id="priceForm" onsubmit="salvarOferta(event)">
                         <select id="filtro_grupo" class="apple-input mb-2" onchange="popularProdutos()" required>
                             <option value="">Categoria...</option>
-                            <option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="5">IMAC</option>
-                            <option value="3">IPAD</option><option value="6">ACESSÓRIOS</option><option value="7">XIAOMI</option><option value="8">REALME</option>
+                            <option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option>
                         </select>
                         <select id="produto_id" class="apple-input mb-2" onchange="aoMudarProduto()" required></select>
                         <div id="gradeOpcoes"></div>
@@ -96,7 +95,7 @@
                             <input type="text" id="preco_brl" class="apple-input" placeholder="R$" oninput="mascararMoeda(this); limparPreco('brl')">
                             <input type="text" id="preco_usd" class="apple-input" placeholder="$" oninput="mascararMoeda(this); limparPreco('usd')">
                         </div>
-                        <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-4">Publicar</button>
+                        <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-4">Anunciar</button>
                     </form>
                 </div>
             </div>
@@ -111,7 +110,7 @@
                 </div>
 
                 <div class="apple-card">
-                    <h2 class="text-sm font-black italic uppercase mb-4">Minha Base de Dados</h2>
+                    <h2 class="text-sm font-black italic uppercase mb-4">Base de Dados Única</h2>
                     <div class="overflow-x-auto">
                         <table>
                             <thead>
@@ -165,27 +164,22 @@
             const token = localStorage.getItem('iFipe_Anunciante');
             if (token) {
                 const { data } = await _s.from('fornecedores').select('*').eq('id', token).maybeSingle();
-                if(data?.ativo) { 
-                    loja = data; 
-                    liberarDashboard(); 
-                } else { 
-                    localStorage.removeItem('iFipe_Anunciante');
-                }
+                if(data?.ativo) { loja = data; liberarDashboard(); } 
+                else { localStorage.removeItem('iFipe_Anunciante'); }
             }
         };
 
         async function realizarLoginAnunciante(e) {
             e.preventDefault();
-            const loginInput = document.getElementById('logWhats').value.trim();
+            const loginInput = document.getElementById('logLoja').value.trim();
             const loginSenha = document.getElementById('logPass').value.trim();
             const msg = document.getElementById('loginMsg');
 
             msg.innerText = "AUTENTICANDO...";
             
-            // Aqui ele busca pelo identificador (whatsapp) e senha
             const { data } = await _s.from('fornecedores')
                 .select('*')
-                .ilike('whatsapp', loginInput) // ilike ignora maiúsculo/minúsculo
+                .ilike('nome', loginInput) // Busca pelo nome da loja ignorando case
                 .eq('senha', loginSenha)
                 .maybeSingle();
 
@@ -195,10 +189,10 @@
                     loja = data;
                     liberarDashboard();
                 } else {
-                    msg.innerText = "CONTA INATIVA. FALE COM O MASTER.";
+                    msg.innerText = "CONTA INATIVA.";
                 }
             } else {
-                msg.innerText = "LOGIN OU SENHA INVÁLIDOS.";
+                msg.innerText = "LOJA OU SENHA INVÁLIDOS.";
             }
         }
 
@@ -216,8 +210,7 @@
                 _s.from('regioes').select('*').order('nome'), 
                 _s.from('variacoes').select('*') 
             ]);
-            produtosMestre = p.data; 
-            gradeVariacoes = v.data;
+            produtosMestre = p.data; gradeVariacoes = v.data;
             const regOptions = '<option value="">Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             document.getElementById('regiao_id').innerHTML = regOptions;
             document.getElementById('edit_regiao').innerHTML = regOptions;
@@ -297,7 +290,7 @@
         async function atualizarLista() {
             const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
             document.getElementById('listaAtivos').innerHTML = (data || []).map(o => `
-                <tr data-id="${o.id}">
+                <tr>
                     <td><input type="checkbox" class="offer-check" value="${o.id}" onchange="updateBulkBar()"></td>
                     <td><b>${o.variacoes.produtos_mestre.nome}</b><br><small>${o.variacoes.capacidade || ''} | ${o.cores_variadas ? 'MIXER COLORS' : o.variacoes.cor}</small></td>
                     <td class="text-center"><input type="number" class="mini-edit" value="${o.quantidade}" onblur="salvarRapido(${o.id}, 'quantidade', this.value)"></td>
@@ -317,8 +310,20 @@
             if (campo === 'preco') {
                 const { data: antiga } = await _s.from('ofertas').select('preco').eq('id', id).single();
                 let statusTag = null;
-                if (antiga && vFinal < antiga.preco) statusTag = 'BAIXOU DE PREÇO';
-                await _s.from('ofertas').update({ preco: vFinal, obs_preco: statusTag }).eq('id', id);
+                
+                // GATILHOS MENTAIS DE PREÇO
+                if (antiga && vFinal < antiga.preco) {
+                    statusTag = 'OPORTUNIDADE DE COMPRA'; // Gatilho de queda
+                } else if (antiga && vFinal > antiga.preco) {
+                    statusTag = 'PREÇO ATUALIZADO'; // Gatilho de subida
+                }
+
+                await _s.from('ofertas').update({ 
+                    preco: vFinal, 
+                    obs_preco: statusTag,
+                    data_alteracao_preco: new Date().toISOString(),
+                    preco_anterior: antiga.preco
+                }).eq('id', id);
             } else {
                 await _s.from('ofertas').update({ [campo]: vFinal }).eq('id', id);
             }
@@ -363,7 +368,7 @@
         }
 
         async function bulkDelete() {
-            if(!confirm("Excluir selecionados permanentemente?")) return;
+            if(!confirm("Excluir selecionados?")) return;
             const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => c.value);
             await _s.from('ofertas').delete().in('id', ids);
             atualizarLista(); updateBulkBar();
