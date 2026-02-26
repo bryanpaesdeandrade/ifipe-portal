@@ -56,7 +56,6 @@
         .apple-button:hover { background: #0071e3; color: #fff; }
         .link-nav { color: #0071e3; cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; display: block; margin-top: 15px; text-align: center;}
         
-        /* ESTILOS ESPECÍFICOS DA CALCULADORA VIP */
         .calc-screen { background: #0a0a0a; border: 2px solid #2c2c2e; border-radius: 16px; padding: 15px; text-align: right; margin-bottom: 15px; box-shadow: inset 0 2px 10px rgba(0,0,0,1); position: relative; }
         body.light-mode .calc-screen { background: #fff; border-color: #d2d2d7; box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); }
         .screen-label { position: absolute; top: 12px; left: 15px; font-size: 9px; color: #86868b; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; }
@@ -77,12 +76,14 @@
         .footer-juridico span:hover { color: #0071e3; }
         .footer-sep-bar { color: var(--border); font-size: 10px; }
 
-        /* A SOLUÇÃO BLINDADA DO SCROLL */
-        .modal-juridico { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 15px; }
-        .modal-body { background: var(--card); border: 1px solid var(--border); border-radius: 20px; max-width: 800px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        .modal-header { padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); flex: 0 0 auto; background: var(--card); }
-        .modal-scroll-area { padding: 20px 25px; overflow-y: auto; flex: 1 1 auto; min-height: 0; -webkit-overflow-scrolling: touch; }
-        .modal-text { font-size: 12px; line-height: 1.7; color: var(--text); white-space: pre-line; text-align: justify; }
+        /* ======================================================= */
+        /* MODAL BRUTO E À PROVA DE FALHAS (RESOLVE O SCROLL)      */
+        /* ======================================================= */
+        .modal-juridico { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); }
+        .modal-body { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card); border: 1px solid var(--border); width: 90%; max-width: 600px; border-radius: 16px; padding: 20px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .modal-scroll-area { height: 55vh; overflow-y: scroll; overflow-x: hidden; margin-top: 15px; padding-right: 10px; -webkit-overflow-scrolling: touch; }
+        .modal-text { font-size: 12px; line-height: 1.6; color: var(--text); white-space: pre-line; text-align: justify; }
 
         .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 5px 10px; border-radius: 50px; cursor: pointer; font-size: 11px; font-weight: 700; transition: 0.3s; flex-shrink: 0; }
 
@@ -188,11 +189,11 @@
         </div>
     </div>
 
-    <div id="modalJuridico" class="modal-juridico" onclick="fecharJuridico()">
-        <div class="modal-body" onclick="event.stopPropagation()">
+    <div id="modalJuridico" class="modal-juridico">
+        <div class="modal-body">
             <div class="modal-header">
-                <h2 id="modalTitulo" class="text-[12px] font-black uppercase text-blue-500"></h2>
-                <span class="cursor-pointer text-[10px] font-black text-gray-500 uppercase" onclick="fecharJuridico()">Fechar [x]</span>
+                <h2 id="modalTitulo" class="text-[14px] font-black uppercase text-blue-500"></h2>
+                <span class="cursor-pointer text-[12px] font-black text-gray-500 uppercase" onclick="fecharJuridico()">[X] FECHAR</span>
             </div>
             <div class="modal-scroll-area">
                 <div id="modalConteudo" class="modal-text"></div>
@@ -225,13 +226,11 @@
         function abrirJuridico(tipo) {
             document.getElementById('modalTitulo').innerText = textosJuridicos[tipo].titulo;
             document.getElementById('modalConteudo').innerText = textosJuridicos[tipo].texto;
-            document.getElementById('modalJuridico').style.display = 'flex';
-            document.body.style.overflow = 'hidden'; // Trava fundo
+            document.getElementById('modalJuridico').style.display = 'block';
         }
 
         function fecharJuridico() {
             document.getElementById('modalJuridico').style.display = 'none';
-            document.body.style.overflow = 'auto'; // Destrava fundo
         }
 
         function iniciarCambio() {
@@ -239,15 +238,12 @@
             socket.onmessage = (e) => {
                 currentUsdtRateIndex = parseFloat(JSON.parse(e.data).c);
                 
-                // Header Ticker
                 const el = document.getElementById('usdt_val');
                 if(el) el.innerText = `$ ${currentUsdtRateIndex.toFixed(4).replace('.',',')}`;
                 
-                // Info Box Ticker
                 const tic = document.getElementById('tickerIndex');
                 if(tic) tic.innerText = `R$ ${currentUsdtRateIndex.toFixed(4).replace('.',',')}`;
                 
-                // Recalcula pra mostrar a taxa do Oráculo mesmo que o campo esteja vazio
                 calcularImportacaoIndex();
             };
         }
@@ -256,10 +252,9 @@
             const inputVal = document.getElementById('calcUsdIndex').value.replace(',', '.');
             const usdInput = parseFloat(inputVal);
 
-            // Calcula a Taxa Efetiva independente do valor do input
             let taxaEfetiva = 0;
             if (currentUsdtRateIndex > 0) {
-                taxaEfetiva = currentUsdtRateIndex + 0.06; // Binance + Spread Oculto
+                taxaEfetiva = currentUsdtRateIndex + 0.06;
                 document.getElementById('calcTaxaEfetivaIndex').innerText = `R$ ${taxaEfetiva.toFixed(4).replace('.', ',')}`;
             }
 
@@ -268,7 +263,6 @@
                 return;
             }
 
-            // Calcula o custo final embutindo os 6% silenciosamente
             const subtotalBrl = usdInput * taxaEfetiva;
             const custoFinal = subtotalBrl * 1.06;
 
