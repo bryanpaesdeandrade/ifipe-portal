@@ -23,6 +23,11 @@
         .btn-edit { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
         .btn-del { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
         .hidden { display: none !important; }
+        /* INJEÇÃO DE ESTILOS NOVOS */
+        .mini-edit { background: transparent; border: 1px solid transparent; color: #32d74b; font-weight: 800; width: 80px; text-align: center; border-radius: 6px; padding: 4px; transition: 0.2s; }
+        .mini-edit:focus { border-color: #0071e3; background: #2c2c2e; outline: none; }
+        .mini-edit-qtd { width: 50px; color: #fff; }
+        .simulador-box { background: rgba(50, 215, 75, 0.05); border: 1px solid rgba(50, 215, 75, 0.3); border-radius: 15px; padding: 15px; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -56,9 +61,21 @@
     <div id="dashboardSection" class="hidden">
         <div class="user-bar">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <div class="text-[10px] font-black uppercase">LOJA: <span id="nomeLoja" class="text-blue-500 ml-1">...</span></div>
-                <div id="tickerBinance" class="text-[11px] font-mono text-gray-500">R$ --</div>
-                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button>
+                <div class="flex items-center gap-4">
+                    <div class="text-[10px] font-black uppercase">LOJA: <span id="nomeLoja" class="text-blue-500 ml-1">...</span></div>
+                    <button onclick="abrirConta()" class="text-[10px] text-gray-500 hover:text-white font-black uppercase">Minha Conta</button>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="text-right hidden md:block">
+                        <span class="text-[7px] text-gray-500 font-black uppercase block">BINANCE USDT/BRL</span>
+                        <div id="tickerBinance" class="text-[11px] font-mono font-bold text-gray-400">R$ --</div>
+                    </div>
+                    <div class="text-right bg-[#32d74b]/10 px-3 py-1 rounded-lg border border-[#32d74b]/20">
+                        <span class="text-[7px] text-[#32d74b] font-black uppercase block">COMPRAR USDT (TAXA VIP)</span>
+                        <div id="tVip" class="text-[13px] font-mono font-black text-[#32d74b]">R$ --</div>
+                    </div>
+                    <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button>
+                </div>
             </div>
         </div>
 
@@ -118,6 +135,22 @@
                         <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-4">Anunciar</button>
                     </form>
                 </div>
+
+                <div class="simulador-box">
+                    <h3 class="text-xs font-black uppercase text-green-500 italic mb-3">Simulador Compra USDT</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-[8px] text-gray-500 uppercase font-black">Quanto USDT quer comprar?</label>
+                            <input type="number" id="sim_usd" class="apple-input border-green-600/30" placeholder="Ex: 1000" oninput="calcSimulador()">
+                        </div>
+                        <div class="bg-black p-3 rounded-lg border border-[#38383a] text-center">
+                            <span class="text-[8px] text-gray-400 uppercase block mb-1">Valor a enviar em Reais</span>
+                            <span id="sim_result" class="text-lg font-mono font-black text-[#32d74b]">R$ 0,00</span>
+                        </div>
+                        <a id="btnZapCompra" href="#" target="_blank" class="apple-button bg-green-600 text-black block text-center font-black">Garantir Taxa no Zap</a>
+                    </div>
+                </div>
+
             </div>
 
             <div class="lg:col-span-3 space-y-4">
@@ -130,12 +163,30 @@
                     </div>
                 </div>
                 <div class="apple-card">
-                    <table>
-                        <thead><tr><th width="30"><input type="checkbox" onclick="toggleAll(this)"></th><th>Modelo / Variação</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
+                    <table style="overflow-x: auto; display: block; white-space: nowrap;">
+                        <thead><tr><th width="30"><input type="checkbox" onclick="toggleAll(this)"></th><th>Modelo / Variação</th><th class="text-center">Qtd (Clique)</th><th class="text-center">Preço (Clique)</th><th class="text-right">Ação</th></tr></thead>
                         <tbody id="listaAtivos"></tbody>
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="contaModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000] p-4">
+        <div class="apple-card max-w-[400px] w-full border-blue-500">
+            <h3 class="text-sm font-black uppercase mb-4 text-blue-500">Minha Conta VIP</h3>
+            <form onsubmit="salvarConta(event)">
+                <label class="text-[8px] text-gray-500 uppercase font-black">Nome da Loja</label>
+                <input type="text" id="c_nome" class="apple-input mb-3" required>
+                <label class="text-[8px] text-gray-500 uppercase font-black">WhatsApp (Apenas números)</label>
+                <input type="text" id="c_whats" class="apple-input mb-3" required>
+                <label class="text-[8px] text-gray-500 uppercase font-black">Nova Senha</label>
+                <input type="text" id="c_senha" class="apple-input mb-4" required>
+                <div class="flex gap-2">
+                    <button type="button" onclick="fecharConta()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
+                    <button type="submit" class="apple-button bg-blue-600 text-white w-2/3">Atualizar</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -174,7 +225,13 @@
             <form onsubmit="salvarBulkChanges(event)">
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <input type="text" id="bulk_preco" class="apple-input" placeholder="Novo Preço" oninput="mascararMoeda(this)">
-                    <select id="bulk_condicao" class="apple-input"><option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
+                    <select id="bulk_condicao" class="apple-input">
+                        <option value="">Manter Condição...</option>
+                        <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
+                        <option value="CPO">CPO</option><option value="AS IS +">AS IS +</option>
+                        <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
+                    </select>
+                    <input type="text" id="bulk_garantia" class="apple-input" placeholder="Nova Garantia (Opcional)">
                 </div>
                 <div class="flex gap-2 mt-8">
                     <button type="button" onclick="fecharBulkEdit()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
@@ -187,6 +244,7 @@
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let loja = null, produtosMestre = [], gradeVariacoes = [];
+        let taxaVipGlobal = 0; // INJEÇÃO: Variavel global para o simulador
 
         window.onload = async () => {
             const t = localStorage.getItem('iFipe_Anunciante');
@@ -203,12 +261,67 @@
 
         async function init() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            socket.onmessage = (e) => { document.getElementById('tickerBinance').innerText = `R$ ${parseFloat(JSON.parse(e.data).c).toFixed(4)}`; };
+            socket.onmessage = (e) => { 
+                const binVal = parseFloat(JSON.parse(e.data).c);
+                taxaVipGlobal = binVal + 0.07;
+                document.getElementById('tickerBinance').innerText = `R$ ${binVal.toFixed(4)}`; 
+                const tVipEl = document.getElementById('tVip');
+                if(tVipEl) tVipEl.innerText = `R$ ${taxaVipGlobal.toFixed(4)}`;
+                calcSimulador();
+            };
             const [p, r, v] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*') ]);
             produtosMestre = p.data; gradeVariacoes = v.data;
             document.getElementById('regiao_id').innerHTML = '<option value="" disabled selected>Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             atualizarLista();
         }
+
+        // INJEÇÃO: FUNÇÕES NOVAS (SIMULADOR, CONTA, EDIÇÃO RÁPIDA, SALVAR MASSA)
+        function calcSimulador() {
+            const usd = parseFloat(document.getElementById('sim_usd')?.value);
+            if(!usd || taxaVipGlobal === 0) return;
+            const res = usd * taxaVipGlobal;
+            document.getElementById('sim_result').innerText = res.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const msg = encodeURIComponent(`Olá! Quero comprar ${usd} USDT na taxa VIP de R$ ${taxaVipGlobal.toFixed(4)}.`);
+            document.getElementById('btnZapCompra').href = `https://wa.me/15616760652?text=${msg}`;
+        }
+
+        function abrirConta() {
+            document.getElementById('c_nome').value = loja.nome || '';
+            document.getElementById('c_whats').value = loja.whatsapp || '';
+            document.getElementById('c_senha').value = loja.senha || '';
+            document.getElementById('contaModal').classList.remove('hidden');
+        }
+        function fecharConta() { document.getElementById('contaModal').classList.add('hidden'); }
+        async function salvarConta(e) {
+            e.preventDefault();
+            const { data } = await _s.from('fornecedores').update({ nome: document.getElementById('c_nome').value, whatsapp: document.getElementById('c_whats').value, senha: document.getElementById('c_senha').value }).eq('id', loja.id).select().single();
+            if(data) { loja = data; document.getElementById('nomeLoja').innerText = loja.nome; }
+            alert("Dados atualizados!"); fecharConta();
+        }
+
+        async function salvarRapido(id, campo, valor) {
+            let v = (campo === 'preco') ? parsePreco(valor) : parseInt(valor);
+            if(isNaN(v)) return;
+            await _s.from('ofertas').update({ [campo]: v, data_alteracao_preco: new Date().toISOString() }).eq('id', id);
+        }
+
+        async function salvarBulkChanges(e) {
+            e.preventDefault();
+            const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value));
+            const newPreco = parsePreco(document.getElementById('bulk_preco').value);
+            const newCond = document.getElementById('bulk_condicao').value;
+            const newGar = document.getElementById('bulk_garantia').value;
+            let up = {};
+            if(newPreco > 0) up.preco = newPreco;
+            if(newCond) up.condicao = newCond;
+            if(newGar) up.garantia = newGar;
+            if(Object.keys(up).length && ids.length) {
+                up.data_alteracao_preco = new Date().toISOString();
+                await _s.from('ofertas').update(up).in('id', ids);
+                fecharBulkEdit(); atualizarLista(); alert("Massa atualizada!");
+            }
+        }
+        // FIM INJEÇÕES
 
         function popularProdutos() { document.getElementById('produto_id').innerHTML = '<option value="" disabled selected>Escolha o Modelo...</option>' + produtosMestre.filter(x => x.grupo_id == document.getElementById('filtro_grupo').value).map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); }
         function aoMudarProduto() {
@@ -252,12 +365,18 @@
 
         async function atualizarLista() {
             const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
+            // INJEÇÃO: ALTERAÇÃO DA RENDERIZAÇÃO DA TABELA PARA SUPORTAR EDIÇÃO DIRETA
             document.getElementById('listaAtivos').innerHTML = (data || []).map(o => `
-                <tr>
+                <tr data-id="${o.id}">
                     <td><input type="checkbox" class="offer-check" value="${o.id}"></td>
                     <td><span class="font-black text-blue-500">${o.variacoes.produtos_mestre.nome}</span><br><span class="text-[10px] text-gray-400 font-bold uppercase">${o.variacoes.capacidade} | ${o.cores_variadas ? '🟠 MIXER' : o.variacoes.cor}</span></td>
-                    <td class="text-center font-bold">${o.quantidade}</td>
-                    <td class="text-center font-bold text-green-500">${o.preco.toLocaleString('pt-BR',{style:'currency',currency:o.moeda})}</td>
+                    <td class="text-center">
+                        <input type="number" class="mini-edit mini-edit-qtd" value="${o.quantidade}" onblur="salvarRapido(${o.id}, 'quantidade', this.value)">
+                    </td>
+                    <td class="text-center">
+                        <input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapido(${o.id}, 'preco', this.value)">
+                        <span class="text-[8px] block opacity-50 uppercase">${o.moeda}</span>
+                    </td>
                     <td class="text-right flex justify-end gap-2"><span class="btn-acao btn-edit" onclick="abrirEdicaoCompleta(${o.id})">Editar</span><span class="btn-acao btn-del" onclick="excluirAnuncio(${o.id})">X</span></td>
                 </tr>
             `).join('');
