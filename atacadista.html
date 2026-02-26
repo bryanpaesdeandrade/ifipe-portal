@@ -20,11 +20,9 @@
         th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
         td { padding: 10px; border-bottom: 1px solid var(--input); font-size: 12px; }
         .mini-edit { background: transparent; border: 1px solid transparent; color: #32d74b; font-weight: bold; width: 85px; text-align: center; border-radius: 4px; padding: 4px; }
-        .mini-edit:focus { border-color: #0071e3; background: #2c2c2e; outline: none; }
         .btn-acao { font-weight: bold; cursor: pointer; font-size: 9px; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; display: inline-block; }
+        .btn-edit { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
         .btn-del { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
-        .taxa-widget { background: #1c1c1e; border: 1px solid #38383a; border-radius: 12px; padding: 8px 20px; display: flex; flex-direction: column; align-items: flex-start; }
-        .selo-verificado { background: #ffcc00; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 900; margin-left: 5px; }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -34,22 +32,22 @@
         <div class="apple-card max-w-[400px] text-center w-full">
             <h1 class="text-5xl font-black italic mb-2">iFipe</h1>
             <div id="loginForm">
-                <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel do Anunciante</p>
+                <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel Anunciante</p>
                 <form onsubmit="realizarLoginAnunciante(event)">
                     <input type="text" id="logLoja" class="apple-input mb-3" placeholder="Nome da Loja" required>
                     <input type="password" id="logPass" class="apple-input mb-4" placeholder="Senha" required>
                     <button type="submit" class="apple-button w-full">Entrar</button>
-                    <button type="button" onclick="toggleAuth()" class="text-[10px] text-gray-500 mt-6 block w-full text-center">Quero me cadastrar</button>
+                    <button type="button" onclick="toggleAuth()" class="text-[10px] text-gray-500 mt-6 block w-full">Quero me cadastrar</button>
                 </form>
             </div>
             <div id="registerForm" class="hidden">
                 <p class="text-[10px] font-bold uppercase text-green-500 mb-8 tracking-[0.4em]">Solicitar Cadastro</p>
                 <form onsubmit="registrarLojista(event)">
                     <input type="text" id="regNome" class="apple-input mb-2" placeholder="Nome da Loja" required>
-                    <input type="text" id="regWhats" class="apple-input mb-2" placeholder="WhatsApp (DDD+Número)" required>
+                    <input type="text" id="regWhats" class="apple-input mb-2" placeholder="WhatsApp" required>
                     <input type="password" id="regSenha" class="apple-input mb-4" placeholder="Crie uma Senha" required>
                     <button type="submit" class="apple-button w-full bg-green-600 text-white">Solicitar</button>
-                    <button type="button" onclick="toggleAuth()" class="text-[10px] text-gray-500 mt-6 block w-full text-center">Voltar</button>
+                    <button type="button" onclick="toggleAuth()" class="text-[10px] text-gray-500 mt-6 block w-full">Voltar</button>
                 </form>
             </div>
             <p id="authMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase"></p>
@@ -60,13 +58,10 @@
         <div class="user-bar">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <div class="text-[10px] font-black uppercase flex items-center">
-                        LOJA: <span id="nomeLoja" class="text-blue-500 ml-1">...</span>
-                        <span id="seloLoja" class="hidden selo-verificado">✔️ VERIFICADO</span>
-                    </div>
-                    <div class="taxa-widget">
-                        <span class="text-[8px] text-gray-500 font-black uppercase">Binance Real</span>
-                        <span id="tickerBinance" class="text-[11px] font-mono text-white">R$ 0,00</span>
+                    <div class="text-[10px] font-black uppercase flex items-center">LOJA: <span id="nomeLoja" class="text-blue-500 ml-1">...</span> <span id="seloLoja" class="hidden text-[#ffcc00] ml-2">✔️ VERIFICADO</span></div>
+                    <div class="bg-[#1c1c1e] px-4 py-1 border border-[#38383a] rounded-lg">
+                        <span class="text-[8px] text-gray-500 uppercase block">Binance</span>
+                        <span id="tickerBinance" class="text-[11px] font-mono">R$ 0,00</span>
                     </div>
                 </div>
                 <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black">SAIR</button>
@@ -74,57 +69,37 @@
         </div>
 
         <div class="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div class="lg:col-span-1 space-y-6">
+            <div class="lg:col-span-1">
                 <div class="apple-card">
-                    <h2 class="text-sm font-black italic mb-4 uppercase text-blue-500">Publicar Novo</h2>
+                    <h2 class="text-sm font-black italic mb-4 uppercase text-blue-500">Novo Anúncio</h2>
                     <form id="priceForm" onsubmit="salvarOferta(event)">
-                        <select id="filtro_grupo" class="apple-input mb-2" onchange="popularProdutos()" required>
-                            <option value="">Categoria...</option>
-                            <option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="3">IPAD</option>
-                        </select>
+                        <select id="filtro_grupo" class="apple-input mb-2" onchange="popularProdutos()" required><option value="">Categoria...</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option></select>
                         <select id="produto_id" class="apple-input mb-2" onchange="aoMudarProduto()" required></select>
                         <div id="gradeOpcoes"></div>
-                        
-                        <div class="grid grid-cols-1 gap-2 mt-2">
-                            <select id="condicao" class="apple-input" onchange="checarGarantia()" required>
-                                <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
-                                <option value="CPO">CPO</option><option value="AS IS +">AS IS +</option><option value="AS IS">AS IS</option>
-                                <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="GRADE B LEILAO">GRADE B LEILÃO</option>
-                                <option value="GRADE C LEILAO">GRADE C LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
-                            </select>
-                            <select id="saude_bateria" class="apple-input">
-                                <option value="">Saúde da Bateria...</option>
-                                <option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option>
-                                <option value="ACIMA DE 90%">ACIMA DE 90%</option><option value="ACIMA DE 95%">ACIMA DE 95%</option>
-                                <option value="BATERIA EM 100%">BATERIA EM 100%</option>
-                            </select>
-                        </div>
-
+                        <select id="condicao" class="apple-input mt-2" onchange="checarGarantia()"><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option></select>
+                        <select id="saude_bateria" class="apple-input mt-2"><option value="">Bateria...</option><option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option><option value="ACIMA DE 90%">ACIMA DE 90%</option><option value="ACIMA DE 95%">ACIMA DE 95%</option><option value="BATERIA EM 100%">BATERIA EM 100%</option></select>
                         <input type="number" id="quantidade" class="apple-input mt-2" placeholder="Qtd" min="0" required>
                         <input type="text" id="garantia" class="apple-input mt-2" placeholder="Garantia">
                         <select id="regiao_id" class="apple-input mt-2" required></select>
-                        
                         <div class="grid grid-cols-2 gap-2 mt-2">
                             <input type="text" id="preco_brl" class="apple-input" placeholder="R$" oninput="mascararMoeda(this); limparPreco('brl')">
                             <input type="text" id="preco_usd" class="apple-input" placeholder="$" oninput="mascararMoeda(this); limparPreco('usd')">
                         </div>
-
-                        <div class="mt-4 p-3 bg-[#2c2c2e] rounded-xl grid grid-cols-2 gap-2 border border-[#38383a]">
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_pix"> PIX</label>
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_usdt"> USDT</label>
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_boy"> MOTOBOY</label>
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_coleta"> COLETA</label>
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_nota"> NF</label>
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_proposta"> NEGOCIA QTD</label>
+                        <div class="mt-4 p-3 bg-[#2c2c2e] rounded-xl grid grid-cols-2 gap-2 text-[9px] font-black uppercase">
+                            <label class="flex items-center gap-2"><input type="checkbox" id="add_pix"> PIX</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" id="add_usdt"> USDT</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" id="add_boy"> MOTOBOY</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" id="add_nota"> NF</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" id="add_proposta"> NEGOCIA QTD</label>
                         </div>
-                        <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-4">Anunciar Agora</button>
+                        <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-4">Publicar</button>
                     </form>
                 </div>
             </div>
 
             <div class="lg:col-span-3 space-y-4">
                 <div class="bg-blue-600 p-4 rounded-2xl flex flex-wrap items-center justify-between shadow-lg gap-4">
-                    <span class="text-xs font-black text-white uppercase"><span id="bulkCount">0</span> Itens Selecionados</span>
+                    <span class="text-xs font-black text-white uppercase"><span id="bulkCount">0</span> Selecionados</span>
                     <div class="flex gap-2">
                         <button onclick="abrirBulkEdit()" class="bg-white text-blue-600 px-4 py-2 rounded-full text-[9px] font-black uppercase">Editar Massa</button>
                         <button onclick="bulkDuplicate()" class="bg-green-500 text-white px-4 py-2 rounded-full text-[9px] font-black uppercase">Duplicar</button>
@@ -136,7 +111,7 @@
                     <h2 class="text-sm font-black italic uppercase mb-4">Minha Base de Dados</h2>
                     <div class="overflow-x-auto">
                         <table>
-                            <thead><tr><th width="30"><input type="checkbox" id="masterCheck" onclick="toggleAll(this)"></th><th>Modelo / Variação</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
+                            <thead><tr><th width="30"><input type="checkbox" onclick="toggleAll(this)"></th><th>Produto / Cor</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
                             <tbody id="listaAtivos"></tbody>
                         </table>
                     </div>
@@ -145,25 +120,51 @@
         </div>
     </div>
 
-    <div id="bulkEditModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[1100] p-4 overflow-y-auto">
-        <div class="apple-card max-w-[650px] w-full border-green-500">
+    <div id="editModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000] p-4">
+        <div class="apple-card max-w-[500px] w-full border-blue-500 overflow-y-auto max-h-[90vh]">
+            <h3 class="text-sm font-black uppercase mb-4 text-blue-500">Ajustes da Oferta</h3>
+            <form onsubmit="salvarEdicaoCompleta(event)">
+                <input type="hidden" id="edit_id">
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Preço</label><input type="text" id="edit_preco" class="apple-input" oninput="mascararMoeda(this)"></div>
+                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Quantidade</label><input type="number" id="edit_qtd" class="apple-input"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Condição</label><select id="edit_cond" class="apple-input"><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option></select></div>
+                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Bateria</label><select id="edit_bat" class="apple-input"><option value="">N/A</option><option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option><option value="ACIMA DE 90%">ACIMA DE 90%</option><option value="ACIMA DE 95%">ACIMA DE 95%</option><option value="BATERIA EM 100%">BATERIA EM 100%</option></select></div>
+                </div>
+                <div><label class="text-[8px] text-gray-500 uppercase font-black">Garantia</label><input type="text" id="edit_gar" class="apple-input mb-3"></div>
+                <div class="p-4 bg-[#2c2c2e] rounded-xl grid grid-cols-2 gap-2 text-[9px] font-black uppercase mb-4">
+                    <label class="flex items-center gap-2"><input type="checkbox" id="edit_pix"> PIX</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="edit_usdt"> USDT</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="edit_boy"> MOTOBOY</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="edit_nota"> NF</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" id="edit_proposta"> NEGOCIA QTD</label>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="fecharModalEdit()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
+                    <button type="submit" class="apple-button bg-blue-600 text-white w-2/3">Salvar Mudanças</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="bulkEditModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[1100] p-4">
+        <div class="apple-card max-w-[600px] w-full border-green-500">
             <h3 class="text-lg font-black uppercase mb-4 text-green-500 text-center">Super Edição em Massa</h3>
             <form onsubmit="salvarBulkChanges(event)">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <select id="bulk_condicao" class="apple-input"><option value="">Alterar Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="GRADE A LEILAO">GRADE A LEILÃO</option></select>
-                    <input type="text" id="bulk_preco" class="apple-input" placeholder="Novo Preço único" oninput="mascararMoeda(this)">
-                    <input type="text" id="bulk_garantia" class="apple-input" placeholder="Garantia">
-                    <select id="bulk_regiao" class="apple-input"></select>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <input type="text" id="bulk_preco" class="apple-input" placeholder="Novo Preço" oninput="mascararMoeda(this)">
+                    <select id="bulk_condicao" class="apple-input"><option value="">Manter Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
                 </div>
-                <div class="mt-6 p-4 bg-[#2c2c2e] rounded-xl grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="mt-4 p-4 bg-[#2c2c2e] rounded-xl grid grid-cols-2 md:grid-cols-4 gap-4">
                     <select id="b_pix" class="apple-input text-[10px]"><option value="keep">PIX: MANTER</option><option value="true">ATIVAR</option><option value="false">DESATIVAR</option></select>
                     <select id="b_usdt" class="apple-input text-[10px]"><option value="keep">USDT: MANTER</option><option value="true">ATIVAR</option><option value="false">DESATIVAR</option></select>
-                    <select id="b_nota" class="apple-input text-[10px]"><option value="keep">NF: MANTER</option><option value="true">ATIVAR</option><option value="false">DESATIVAR</option></select>
                     <select id="b_proposta" class="apple-input text-[10px]"><option value="keep">NEGOCIA: MANTER</option><option value="true">ATIVAR</option><option value="false">DESATIVAR</option></select>
                 </div>
                 <div class="flex gap-2 mt-8">
                     <button type="button" onclick="fecharBulkEdit()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
-                    <button type="submit" class="apple-button bg-green-600 text-white w-2/3">Aplicar em todos</button>
+                    <button type="submit" class="apple-button bg-green-600 text-white w-2/3">Aplicar agora</button>
                 </div>
             </form>
         </div>
@@ -171,7 +172,7 @@
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let loja = null, produtosMestre = [], gradeVariacoes = [], suaTaxaFinal = 0;
+        let loja = null, produtosMestre = [], gradeVariacoes = [];
 
         window.onload = async () => {
             const t = localStorage.getItem('iFipe_Anunciante');
@@ -182,42 +183,31 @@
         };
 
         function toggleAuth() { document.getElementById('loginForm').classList.toggle('hidden'); document.getElementById('registerForm').classList.toggle('hidden'); }
-        async function realizarLoginAnunciante(e) { e.preventDefault(); const { data } = await _s.from('fornecedores').select('*').ilike('nome', document.getElementById('logLoja').value.trim()).eq('senha', document.getElementById('logPass').value).maybeSingle(); if (data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); loja = data; liberarDashboard(); } else { alert("Verifique sua loja ou aprovação."); } }
+        async function realizarLoginAnunciante(e) { e.preventDefault(); const { data } = await _s.from('fornecedores').select('*').ilike('nome', document.getElementById('logLoja').value.trim()).eq('senha', document.getElementById('logPass').value).maybeSingle(); if (data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); loja = data; liberarDashboard(); } else { alert("Acesso negado."); } }
         async function registrarLojista(e) { e.preventDefault(); await _s.from('fornecedores').insert([{ nome: document.getElementById('regNome').value, whatsapp: document.getElementById('regWhats').value, senha: document.getElementById('regSenha').value, ativo: false }]); alert("Solicitado!"); toggleAuth(); }
         function liberarDashboard() { document.getElementById('authSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden'); document.getElementById('nomeLoja').innerText = loja.nome; if(loja.verificado) document.getElementById('seloLoja').classList.remove('hidden'); init(); }
 
         async function init() {
-            iniciarTicker();
+            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+            socket.onmessage = (e) => { document.getElementById('tickerBinance').innerText = `R$ ${parseFloat(JSON.parse(e.data).c).toFixed(4)}`; };
             const [p, r, v] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*') ]);
             produtosMestre = p.data; gradeVariacoes = v.data;
-            const regOpts = r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
-            document.getElementById('regiao_id').innerHTML = '<option value="">Origem...</option>' + regOpts;
-            document.getElementById('bulk_regiao').innerHTML = '<option value="">Região...</option>' + regOpts;
+            document.getElementById('regiao_id').innerHTML = '<option value="">Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             atualizarLista();
         }
 
-        function iniciarTicker() {
-            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            socket.onmessage = (e) => { const r = parseFloat(JSON.parse(e.data).c); suaTaxaFinal = r + 0.07; document.getElementById('tickerBinance').innerText = `R$ ${r.toFixed(4)}`; };
-        }
-
-        function popularProdutos() {
-            const filtrados = produtosMestre.filter(x => x.grupo_id == document.getElementById('filtro_grupo').value);
-            document.getElementById('produto_id').innerHTML = '<option value="">Modelo...</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-        }
-
+        function popularProdutos() { document.getElementById('produto_id').innerHTML = '<option value="">Modelo...</option>' + produtosMestre.filter(x => x.grupo_id == document.getElementById('filtro_grupo').value).map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); }
         function aoMudarProduto() {
-            const pid = document.getElementById('produto_id').value;
-            const vars = gradeVariacoes.filter(x => x.produto_id == pid);
+            const vars = gradeVariacoes.filter(x => x.produto_id == document.getElementById('produto_id').value);
             const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
             const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
-            let h = '<div class="grid grid-cols-2 gap-2 mt-2">';
-            if(caps.length) h += `<select id="f_cap" class="apple-input">${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
-            if(cores.length) h += `<select id="f_cor" class="apple-input"><option value="MIXER COLORS">MIXER COLORS</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
-            document.getElementById('gradeOpcoes').innerHTML = h + '</div>';
+            document.getElementById('gradeOpcoes').innerHTML = `<div class="grid grid-cols-2 gap-2 mt-2">
+                <select id="f_cap" class="apple-input">${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+                <select id="f_cor" class="apple-input"><option value="MIXER COLORS">MIXER COLORS</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
+            </div>`;
         }
 
-        function checarGarantia() { const cond = document.getElementById('condicao').value, cat = document.getElementById('filtro_grupo').value, g = document.getElementById('garantia'); if(cond === 'Novo' && ['1','2','4','5'].includes(cat)) { g.value = "1 ANO APPLE"; g.readOnly = true; } else { g.value = ""; g.readOnly = false; } }
+        function checarGarantia() { const cond = document.getElementById('condicao').value, g = document.getElementById('garantia'); if(cond === 'Novo') { g.value = "1 ANO APPLE"; g.readOnly = true; } else { g.value = ""; g.readOnly = false; } }
         function mascararMoeda(input) { let v = input.value.replace(/\D/g, ''); if (!v) { input.value = ''; return; } v = (parseFloat(v) / 100).toFixed(2).replace('.', ','); input.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
         function parsePreco(v) { return v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0; }
         function limparPreco(t) { if(t==='brl')document.getElementById('preco_usd').value=''; else document.getElementById('preco_brl').value=''; }
@@ -233,10 +223,9 @@
                 fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value,
                 preco: pBrl || pUsd, moeda: pBrl > 0 ? 'BRL' : 'USD', quantidade: parseInt(document.getElementById('quantidade').value), 
                 condicao: document.getElementById('condicao').value, garantia: document.getElementById('garantia').value,
-                saude_bateria: document.getElementById('saude_bateria').value,
-                cores_variadas: cor === 'MIXER COLORS', aceita_pix: document.getElementById('add_pix').checked, 
-                aceita_usdt: document.getElementById('add_usdt').checked, tem_boy: document.getElementById('add_boy').checked,
-                aceita_coleta: document.getElementById('add_coleta').checked, emite_nota: document.getElementById('add_nota').checked,
+                saude_bateria: document.getElementById('saude_bateria').value, cores_variadas: cor === 'MIXER COLORS',
+                aceita_pix: document.getElementById('add_pix').checked, aceita_usdt: document.getElementById('add_usdt').checked,
+                tem_boy: document.getElementById('add_boy').checked, emite_nota: document.getElementById('add_nota').checked,
                 aceita_proposta: document.getElementById('add_proposta').checked, data_alteracao_preco: new Date().toISOString()
             }]);
             alert("Anunciado!"); atualizarLista(); e.target.reset();
@@ -245,55 +234,66 @@
         async function atualizarLista() {
             const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
             document.getElementById('listaAtivos').innerHTML = (data || []).map(o => `
-                <tr data-id="${o.id}">
+                <tr>
                     <td><input type="checkbox" class="offer-check" value="${o.id}" onchange="updateBulkCount()"></td>
-                    <td>
-                        <span class="font-black text-blue-500">${o.variacoes.produtos_mestre.nome}</span><br>
-                        <span class="text-[10px] text-gray-400 font-bold uppercase">
-                            ${o.variacoes.capacidade || ''} | ${o.cores_variadas ? '🟠 MIXER COLORS' : o.variacoes.cor} | ${o.saude_bateria || ''}
-                        </span>
-                    </td>
-                    <td class="text-center"><input type="number" class="mini-edit" value="${o.quantidade}" onblur="salvarRapido(${o.id}, 'quantidade', this.value)"></td>
-                    <td class="text-center"><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapido(${o.id}, 'preco', this.value)"></td>
-                    <td class="text-right"><span class="btn-acao btn-del" onclick="excluirAnuncio(${o.id})">Apagar</span></td>
+                    <td><span class="font-black text-blue-500">${o.variacoes.produtos_mestre.nome}</span><br><span class="text-[10px] text-gray-400 uppercase font-bold">${o.variacoes.capacidade || ''} | ${o.cores_variadas ? '🟠 MIXER' : o.variacoes.cor} | ${o.saude_bateria || ''}</span></td>
+                    <td class="text-center font-bold">${o.quantidade}</td>
+                    <td class="text-center font-bold text-green-500">${o.preco.toLocaleString('pt-BR',{style:'currency',currency:o.moeda})}</td>
+                    <td class="text-right flex justify-end gap-2"><span class="btn-acao btn-edit" onclick="abrirEdicaoCompleta(${o.id})">Editar</span><span class="btn-acao btn-del" onclick="excluirAnuncio(${o.id})">X</span></td>
                 </tr>
             `).join('');
             updateBulkCount();
         }
 
-        async function salvarRapido(id, campo, valor) {
-            let v = (campo === 'preco') ? parsePreco(valor) : parseInt(valor);
-            if (campo === 'preco') {
-                const { data: antiga } = await _s.from('ofertas').select('preco').eq('id', id).single();
-                let tag = (antiga && v < antiga.preco) ? 'OPORTUNIDADE DE COMPRA' : 'PREÇO ATUALIZADO';
-                await _s.from('ofertas').update({ preco: v, preco_anterior: antiga.preco, obs_preco: tag, data_alteracao_preco: new Date().toISOString() }).eq('id', id);
-            } else await _s.from('ofertas').update({ [campo]: v }).eq('id', id);
+        async function abrirEdicaoCompleta(id) {
+            const { data: o } = await _s.from('ofertas').select('*').eq('id', id).single();
+            document.getElementById('edit_id').value = o.id;
+            document.getElementById('edit_preco').value = o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2});
+            document.getElementById('edit_qtd').value = o.quantidade;
+            document.getElementById('edit_cond').value = o.condicao;
+            document.getElementById('edit_bat').value = o.saude_bateria || '';
+            document.getElementById('edit_gar').value = o.garantia || '';
+            document.getElementById('edit_pix').checked = o.aceita_pix;
+            document.getElementById('edit_usdt').checked = o.aceita_usdt;
+            document.getElementById('edit_boy').checked = o.tem_boy;
+            document.getElementById('edit_nota').checked = o.emite_nota;
+            document.getElementById('edit_proposta').checked = o.aceita_proposta;
+            document.getElementById('editModal').classList.remove('hidden');
         }
 
-        async function bulkDelete() { const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length || !confirm("Apagar selecionados?")) return; await _s.from('ofertas').delete().in('id', ids); atualizarLista(); }
-        async function bulkDuplicate() { const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length) return alert("Selecione!"); const { data } = await _s.from('ofertas').select('*').in('id', ids); const copias = data.map(o => { const { id, criado_em, ...resto } = o; return resto; }); await _s.from('ofertas').insert(copias); alert("Duplicados!"); atualizarLista(); }
+        async function salvarEdicaoCompleta(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit_id').value;
+            const newPreco = parsePreco(document.getElementById('edit_preco').value);
+            const { data: antiga } = await _s.from('ofertas').select('preco').eq('id', id).single();
+            let tag = (newPreco < antiga.preco) ? 'OPORTUNIDADE DE COMPRA' : 'PREÇO ATUALIZADO';
+
+            await _s.from('ofertas').update({
+                preco: newPreco, preco_anterior: antiga.preco, quantidade: parseInt(document.getElementById('edit_qtd').value),
+                condicao: document.getElementById('edit_cond').value, saude_bateria: document.getElementById('edit_bat').value,
+                garantia: document.getElementById('edit_gar').value, aceita_pix: document.getElementById('edit_pix').checked,
+                aceita_usdt: document.getElementById('edit_usdt').checked, tem_boy: document.getElementById('edit_boy').checked,
+                emite_nota: document.getElementById('edit_nota').checked, aceita_proposta: document.getElementById('edit_proposta').checked,
+                obs_preco: tag, data_alteracao_preco: new Date().toISOString()
+            }).eq('id', id);
+            fecharModalEdit(); atualizarLista();
+        }
+
+        async function bulkDuplicate() { 
+            const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value));
+            if(!ids.length) return alert("Selecione!");
+            const { data: originais } = await _s.from('ofertas').select('*').in('id', ids);
+            await _s.from('ofertas').insert(originais.map(o => { const { id, criado_em, ...resto } = o; return resto; }));
+            alert("Duplicados! Agora use o 'Editar' para mudar os detalhes das cópias."); atualizarLista();
+        }
+
+        async function bulkDelete() { const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length || !confirm("Apagar?")) return; await _s.from('ofertas').delete().in('id', ids); atualizarLista(); }
         function abrirBulkEdit() { if(!document.querySelectorAll('.offer-check:checked').length) return alert("Selecione!"); document.getElementById('bulkEditModal').classList.remove('hidden'); }
         function fecharBulkEdit() { document.getElementById('bulkEditModal').classList.add('hidden'); }
-        async function salvarBulkChanges(e) {
-            e.preventDefault();
-            const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value));
-            const newPreco = parsePreco(document.getElementById('bulk_preco').value);
-            const { data: atuais } = await _s.from('ofertas').select('id, preco').in('id', ids);
-            for (let item of atuais) {
-                let up = {};
-                if(newPreco > 0) { up.preco = newPreco; up.preco_anterior = item.preco; up.data_alteracao_preco = new Date().toISOString(); up.obs_preco = newPreco < item.preco ? 'OPORTUNIDADE DE COMPRA' : 'PREÇO ATUALIZADO'; }
-                if(document.getElementById('bulk_condicao').value) up.condicao = document.getElementById('bulk_condicao').value;
-                if(document.getElementById('bulk_regiao').value) up.regiao_id = document.getElementById('bulk_regiao').value;
-                if(document.getElementById('bulk_garantia').value) up.garantia = document.getElementById('bulk_garantia').value;
-                const m = { aceita_pix: 'b_pix', aceita_usdt: 'b_usdt', aceita_proposta: 'b_proposta', emite_nota: 'b_nota' };
-                for (let [key, id] of Object.entries(m)) { const val = document.getElementById(id).value; if(val !== 'keep') up[key] = (val === 'true'); }
-                await _s.from('ofertas').update(up).eq('id', item.id);
-            }
-            alert("Massa atualizada!"); fecharBulkEdit(); atualizarLista();
-        }
-
+        function fecharModalEdit() { document.getElementById('editModal').classList.add('hidden'); }
         function updateBulkCount() { document.getElementById('bulkCount').innerText = document.querySelectorAll('.offer-check:checked').length; }
         function toggleAll(master) { document.querySelectorAll('.offer-check').forEach(c => c.checked = master.checked); updateBulkCount(); }
+        async function excluirAnuncio(id) { if(confirm("Excluir?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
         function sairPainel() { localStorage.removeItem('iFipe_Anunciante'); window.location.reload(); }
     </script>
 </body>
