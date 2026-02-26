@@ -3,159 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Buscador VIP</title>
+    <title>iFipe - Painel do Anunciante</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --zap: #25D366; }
-        body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; overflow-x: hidden; }
-        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; }
-        .ticker-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; }
-        .ticker-label { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #86868b; }
-        .py-sim-bar { background: #1c1c1e; border-bottom: 2px solid #0071e3; padding: 15px; display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; }
-        .sim-input-group { display: flex; align-items: center; gap: 10px; background: #000; padding: 8px 15px; border-radius: 12px; border: 1px solid #38383a; }
-        .sim-input { background: transparent; border: none; color: #fff; font-weight: 800; width: 90px; outline: none; text-align: center; font-size: 16px; }
-        .main-grid { display: grid; grid-template-columns: 1fr; gap: 30px; padding: 20px; }
-        @media (min-width: 1024px) { .main-grid { grid-template-columns: 1fr 1fr; } }
-        .section-title { text-align: center; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; font-size: 14px; padding: 10px; border-radius: 8px; }
-        .bg-br { background: rgba(0, 113, 227, 0.1); color: #0071e3; }
-        .bg-int { background: rgba(50, 215, 75, 0.1); color: #32d74b; }
-        .sub-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
-        @media (min-width: 640px) { .sub-grid { grid-template-columns: 1fr 1fr; } }
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; position: relative; transition: 0.3s; display: flex; flex-direction: column; }
-        .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
-        .tag-status { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 50px; display: inline-block; margin-bottom: 5px; margin-right: 4px; }
-        .tag-oportunidade { background: #32d74b; color: #000; }
-        .tag-atualizado { background: #0071e3; color: #fff; }
-        .tag-menor { background: #ff3b30; color: #fff; }
-        .tag-estoque { background: #ffcc00; color: #000; }
-        .mini-tag { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 6px; border-radius: 6px; background: var(--input); color: #86868b; border: 1px solid var(--border); }
-        .mini-tag.active { color: #fff; border-color: #0071e3; background: rgba(0, 113, 227, 0.2); }
-        .price-text { font-size: 26px; font-weight: 900; letter-spacing: -0.05em; margin: 10px 0; }
-        .buy-button { background: var(--zap); color: #000 !important; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; display: block; text-align: center; text-decoration: none; font-size: 11px; text-transform: uppercase; transition: 0.3s; margin-top: auto; border: none; }
+        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; }
+        .user-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:10px 20px; position:sticky; top:0; z-index:100; }
+        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 13px; transition: 0.3s; }
+        .apple-input:focus { border-color: #0071e3; }
+        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 11px; transition: 0.3s; }
+        .apple-button:hover { background: #0071e3; color: #fff; }
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
+        td { padding: 10px; border-bottom: 1px solid var(--input); font-size: 12px; }
+        .mini-edit { background: transparent; border: 1px solid transparent; color: #32d74b; font-weight: bold; width: 85px; text-align: center; border-radius: 4px; padding: 4px; }
+        .mini-edit:focus { border-color: #0071e3; background: #2c2c2e; outline: none; }
+        .btn-acao { font-weight: bold; cursor: pointer; font-size: 9px; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; display: inline-block; }
+        .btn-del { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
+        .taxa-widget { background: #1c1c1e; border: 1px solid #38383a; border-radius: 12px; padding: 8px 20px; display: flex; flex-direction: column; align-items: flex-start; }
+        .btn-wpp { background: #25d366; color: #000; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 10px; transition: 0.3s; display: block; text-align: center; text-decoration: none; }
+        .selo-verificado { background: #ffcc00; color: #000; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 900; margin-left: 5px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <nav class="nav-bar">
-        <h1 class="text-2xl font-black italic m-0">iFipe</h1>
-        <div class="flex gap-6 items-center">
-            <div class="flex flex-col items-end"><span class="ticker-label">Binance Real</span><span id="tBinance" class="ticker-val text-white">R$ --</span></div>
-            <div class="flex flex-col items-end"><span class="ticker-label text-[#32d74b]">Taxa VIP Oráculo</span><span id="tVip" class="ticker-val text-[#32d74b]">R$ --</span></div>
-            <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
+    <div id="authSection" class="flex items-center justify-center min-h-screen px-4">
+        <div class="apple-card max-w-[400px] text-center w-full">
+            <h1 class="text-5xl font-black italic mb-2">iFipe</h1>
+            <div id="loginForm">
+                <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel Anunciante</p>
+                <form onsubmit="realizarLoginAnunciante(event)">
+                    <input type="text" id="logLoja" class="apple-input mb-3" placeholder="Nome da Loja" required>
+                    <input type="password" id="logPass" class="apple-input mb-4" placeholder="Senha" required>
+                    <button type="submit" class="apple-button w-full">Entrar</button>
+                    <button type="button" onclick="toggleAuth()" class="text-[10px] text-gray-500 mt-6 block w-full">Quero me cadastrar</button>
+                </form>
+            </div>
+            <div id="registerForm" class="hidden">
+                <p class="text-[10px] font-bold uppercase text-green-500 mb-8 tracking-[0.4em]">Solicitar Cadastro</p>
+                <form onsubmit="registrarLojista(event)">
+                    <input type="text" id="regNome" class="apple-input mb-2" placeholder="Nome da Loja" required>
+                    <input type="text" id="regWhats" class="apple-input mb-2" placeholder="WhatsApp" required>
+                    <input type="password" id="regSenha" class="apple-input mb-4" placeholder="Crie uma Senha" required>
+                    <button type="submit" class="apple-button w-full bg-green-600 text-white">Solicitar</button>
+                    <button type="button" onclick="toggleAuth()" class="text-[10px] text-gray-500 mt-6 block w-full">Voltar</button>
+                </form>
+            </div>
+            <p id="authMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase"></p>
         </div>
-    </nav>
+    </div>
 
-    <div class="py-sim-bar">
-        <div class="flex flex-col items-center">
-            <span class="text-[9px] font-black uppercase text-blue-500 mb-2">Simulador Paraguai ➔ Brasil (Custo SP)</span>
-            <div class="flex items-center gap-4">
-                <div class="sim-input-group"><span class="text-gray-500 font-black">$</span><input type="number" id="pyUsd" class="sim-input" placeholder="0" oninput="calcPy()"></div>
-                <span class="text-2xl font-black text-gray-700">➔</span>
-                <div class="bg-black px-6 py-2 rounded-xl border-2 border-[#32d74b] shadow-[0_0_15px_rgba(50,215,75,0.2)]"><span id="pyBrl" class="text-xl font-mono font-black text-[#32d74b]">R$ 0,00</span></div>
+    <div id="dashboardSection" class="hidden">
+        <div class="user-bar">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="text-[10px] font-black uppercase">LOJA: <span id="nomeLoja" class="text-blue-500">...</span> <span id="seloLoja" class="hidden selo-verificado">✔️ VERIFICADO</span></div>
+                    <div class="taxa-widget">
+                        <span class="text-[8px] text-gray-500 font-black uppercase">Binance Real</span>
+                        <span id="tickerBinance" class="text-[11px] font-mono text-white">R$ 0,00</span>
+                    </div>
+                    <div class="taxa-widget border-[#32d74b]">
+                        <span class="text-[8px] text-[#32d74b] font-black uppercase">Taxa VIP Oráculo</span>
+                        <span id="suaTaxaUsdt" class="text-[12px] font-mono font-black text-[#32d74b]">R$ --</span>
+                    </div>
+                </div>
+                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black">SAIR</button>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="lg:col-span-1 space-y-6">
+                <div class="apple-card border-[#32d74b]">
+                    <h3 class="text-xs font-black uppercase mb-4 text-[#32d74b]">Simulador USDT</h3>
+                    <input type="text" id="compraUsd" class="apple-input mb-4" placeholder="$ 0,00" oninput="mascararMoeda(this); calcularCompraUsdt()">
+                    <div class="p-4 bg-black rounded-xl border border-gray-800 mb-4 text-center">
+                        <span id="resultadoCompraBrl" class="text-xl font-black text-[#32d74b]">R$ 0,00</span>
+                    </div>
+                    <a href="https://wa.me/15616760652?text=Olá%20Oráculo%20venho%20através%20do%20iFipe%20e%20preciso%20comprar%20USDT" target="_blank" class="btn-wpp">Comprar agora</a>
+                </div>
+
+                <div class="apple-card">
+                    <h2 class="text-sm font-black italic mb-4 uppercase">Novo Anúncio</h2>
+                    <form id="priceForm" onsubmit="salvarOferta(event)">
+                        <select id="filtro_grupo" class="apple-input mb-2" onchange="popularProdutos()" required><option value="">Categoria...</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option></select>
+                        <select id="produto_id" class="apple-input mb-2" onchange="aoMudarProduto()" required></select>
+                        <div id="gradeOpcoes"></div>
+                        <select id="condicao" class="apple-input mt-2" onchange="checarGarantia()"><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="GRADE A LEILAO">GRADE A LEILÃO</option></select>
+                        <input type="number" id="quantidade" class="apple-input mt-2" placeholder="Qtd" min="0" required>
+                        <input type="text" id="garantia" class="apple-input mt-2" placeholder="Garantia">
+                        <select id="regiao_id" class="apple-input mt-2" required></select>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <input type="text" id="preco_brl" class="apple-input" placeholder="R$" oninput="mascararMoeda(this); limparPreco('brl')">
+                            <input type="text" id="preco_usd" class="apple-input" placeholder="$" oninput="mascararMoeda(this); limparPreco('usd')">
+                        </div>
+                        <div class="mt-4 p-3 bg-[#2c2c2e] rounded-xl grid grid-cols-2 gap-2 border border-[#38383a]">
+                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_pix"> PIX</label>
+                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_usdt"> USDT</label>
+                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_boy"> MOTOBOY</label>
+                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_nota"> NF</label>
+                        </div>
+                        <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-4">Publicar</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3 space-y-4">
+                <div class="bg-blue-600 p-4 rounded-2xl flex flex-wrap items-center justify-between shadow-lg gap-4">
+                    <span class="text-xs font-black text-white uppercase"><span id="bulkCount">0</span> Selecionados</span>
+                    <div class="flex gap-2">
+                        <button onclick="abrirBulkEdit()" class="bg-white text-blue-600 px-4 py-2 rounded-full text-[9px] font-black uppercase">Editar Massa</button>
+                        <button onclick="bulkDuplicate()" class="bg-green-500 text-white px-4 py-2 rounded-full text-[9px] font-black uppercase">Duplicar</button>
+                        <button onclick="bulkDelete()" class="bg-red-500 text-white px-4 py-2 rounded-full text-[9px] font-black uppercase">Apagar</button>
+                    </div>
+                </div>
+                <div class="apple-card">
+                    <h2 class="text-sm font-black italic uppercase mb-4">Minha Base de Dados (Cores Inclusas)</h2>
+                    <div class="overflow-x-auto">
+                        <table>
+                            <thead><tr><th width="30"><input type="checkbox" id="masterCheck" onclick="toggleAll(this)"></th><th>Modelo / Capacidade / Cor</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
+                            <tbody id="listaAtivos"></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <main class="max-w-[1550px] mx-auto pb-20">
-        <div class="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mt-4">
-            <select id="f_cat" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="popularAparelhos()"><option value="">Categoria...</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option></select>
-            <select id="f_prod" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Aparelho...</option></select>
-            <select id="f_cond" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
-            <select id="f_lojista" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Lojista...</option></select>
+    <div id="bulkEditModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[1100] p-4 overflow-y-auto">
+        <div class="apple-card max-w-[650px] w-full border-green-500 my-8">
+            <h3 class="text-lg font-black uppercase mb-4 text-green-500 text-center">Super Edição em Massa</h3>
+            <form onsubmit="salvarBulkChanges(event)">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <select id="bulk_condicao" class="apple-input"><option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
+                    <input type="text" id="bulk_preco" class="apple-input" placeholder="Preço único" oninput="mascararMoeda(this)">
+                    <input type="text" id="bulk_garantia" class="apple-input" placeholder="Garantia">
+                    <select id="bulk_regiao" class="apple-input"></select>
+                </div>
+                <div class="mt-6 p-4 bg-[#2c2c2e] rounded-xl grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <select id="b_pix" class="apple-input text-[10px]"><option value="keep">PIX: MANTER</option><option value="true">ATIVAR</option><option value="false">DESATIVAR</option></select>
+                    <select id="b_usdt" class="apple-input text-[10px]"><option value="keep">USDT: MANTER</option><option value="true">ATIVAR</option><option value="false">DESATIVAR</option></select>
+                </div>
+                <div class="flex gap-2 mt-8">
+                    <button type="button" onclick="fecharBulkEdit()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
+                    <button type="submit" class="apple-button bg-green-600 text-white w-2/3">Aplicar em todos</button>
+                </div>
+            </form>
         </div>
-
-        <div class="main-grid">
-            <div id="containerBrl">
-                <div class="section-title bg-br">Anúncios Brasil (Pagamento em Real)</div>
-                <div id="gridBrl" class="sub-grid"></div>
-            </div>
-            <div id="containerUsd">
-                <div class="section-title bg-int">Anúncios Internacionais (Dólar)</div>
-                <div id="gridUsd" class="sub-grid"></div>
-            </div>
-        </div>
-    </main>
+    </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let ofertasAtuais = [], todosProdutosMestre = [], vipRate = 0;
+        let loja = null, produtosMestre = [], gradeVariacoes = [], suaTaxaFinal = 0;
 
-        window.onload = async () => { if(!localStorage.getItem('iFipe_Token')) window.location.replace('index.html'); else init(); };
+        window.onload = async () => {
+            const t = localStorage.getItem('iFipe_Anunciante');
+            if (t) {
+                const { data } = await _s.from('fornecedores').select('*').eq('id', t).maybeSingle();
+                if(data?.ativo) { loja = data; liberarDashboard(); } else localStorage.removeItem('iFipe_Anunciante');
+            }
+        };
 
-        function iniciarTickers() {
-            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            socket.onmessage = (e) => {
-                const br = parseFloat(JSON.parse(e.data).c);
-                vipRate = br + 0.07;
-                document.getElementById('tBinance').innerText = `R$ ${br.toFixed(4)}`;
-                document.getElementById('tVip').innerText = `R$ ${vipRate.toFixed(4)}`;
-                calcPy();
-            };
-        }
-
-        function calcPy() {
-            const usd = parseFloat(document.getElementById('pyUsd').value);
-            if(!usd || vipRate === 0) { document.getElementById('pyBrl').innerText = "R$ 0,00"; return; }
-            document.getElementById('pyBrl').innerText = ((usd * vipRate) * 1.06).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        }
+        function toggleAuth() { document.getElementById('loginForm').classList.toggle('hidden'); document.getElementById('registerForm').classList.toggle('hidden'); }
+        async function realizarLoginAnunciante(e) { e.preventDefault(); const { data } = await _s.from('fornecedores').select('*').ilike('nome', document.getElementById('logLoja').value.trim()).eq('senha', document.getElementById('logPass').value).maybeSingle(); if (data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); loja = data; liberarDashboard(); } else { alert("Acesso negado."); } }
+        async function registrarLojista(e) { e.preventDefault(); await _s.from('fornecedores').insert([{ nome: document.getElementById('regNome').value, whatsapp: document.getElementById('regWhats').value, senha: document.getElementById('regSenha').value, ativo: false }]); alert("Solicitado!"); toggleAuth(); }
+        function liberarDashboard() { document.getElementById('authSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden'); document.getElementById('nomeLoja').innerText = loja.nome; if(loja.verificado) document.getElementById('seloLoja').classList.remove('hidden'); init(); }
 
         async function init() {
-            iniciarTickers();
-            const [p, f] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('fornecedores').select('*').eq('ativo', true) ]);
-            todosProdutosMestre = p.data;
-            document.getElementById('f_prod').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            carregarDados(); setInterval(carregarDados, 15000);
+            iniciarTicker();
+            const [p, r, v] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*') ]);
+            produtosMestre = p.data; gradeVariacoes = v.data;
+            const regOpts = r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            document.getElementById('regiao_id').innerHTML = '<option value="">Origem...</option>' + regOpts;
+            document.getElementById('bulk_regiao').innerHTML = '<option value="">Região...</option>' + regOpts;
+            atualizarLista();
         }
 
-        async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(*), variacoes(*, produtos_mestre(*)), regioes(*)');
-            ofertasAtuais = data || []; renderizarRanking();
+        function iniciarTicker() {
+            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+            socket.onmessage = (e) => { const r = parseFloat(JSON.parse(e.data).c); suaTaxaFinal = r + 0.07; document.getElementById('tickerBinance').innerText = `R$ ${r.toFixed(4)}`; document.getElementById('suaTaxaUsdt').innerText = `R$ ${suaTaxaFinal.toFixed(4)}`; };
         }
 
-        function sortLogic(a, b) {
-            const getW = (n) => { let m = (n||"").match(/iphone\s*(\d+)/); return (m ? parseInt(m[1])*10000 : 0) + (n.includes("pro max")?500:n.includes("pro")?400:0); };
-            let wA = getW(a.variacoes.produtos_mestre.nome), wB = getW(b.variacoes.produtos_mestre.nome);
-            if (wA !== wB) return wB - wA;
-            if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
-            return a.preco - b.preco;
+        function popularProdutos() {
+            const filtrados = produtosMestre.filter(x => x.grupo_id == document.getElementById('filtro_grupo').value);
+            document.getElementById('produto_id').innerHTML = '<option value="">Modelo...</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
         }
 
-        function renderizarRanking() {
-            const fCat = document.getElementById('f_cat').value, fP = document.getElementById('f_prod').value, fC = document.getElementById('f_cond').value;
-            let filtrados = ofertasAtuais.filter(o => o.quantidade > 0 && (!fCat || o.variacoes.produtos_mestre.grupo_id == fCat) && (!fP || o.variacoes.produtos_mestre.id == fP) && (!fC || o.condicao == fC));
-
-            let menores = {}; filtrados.forEach(o => { let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`; if(!menores[k] || o.preco < menores[k]) menores[k] = o.preco; });
-
-            const buildGrid = (lista) => lista.sort(sortLogic).map(o => {
-                const k = `${o.variacao_id}_${o.condicao}_${o.moeda}`;
-                let tG = ''; if(o.data_alteracao_preco && o.preco_anterior) {
-                    let d = (new Date() - new Date(o.data_alteracao_preco)) / 60000;
-                    if(o.preco < o.preco_anterior && d <= 30) tG = '<span class="tag-status tag-oportunidade">📉 OPORTUNIDADE</span>';
-                    else if (o.preco > o.preco_anterior && d <= 15) tG = '<span class="tag-status tag-atualizado">📈 ATUALIZADO</span>';
-                }
-                let tags = [
-                    o.preco === menores[k] ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '',
-                    o.quantidade <= 3 ? `<span class="tag-status tag-estoque">⚠️ ÚLTIMAS ${o.quantidade} UN</span>` : '',
-                    o.fornecedores.verificado ? '<span style="background:#ffcc00; color:#000;" class="tag-status">✔️ VERIFICADO</span>' : '',
-                    o.aceita_pix ? '<span class="mini-tag active">PIX</span>' : '',
-                    o.aceita_usdt ? '<span class="mini-tag active" style="color:#32d74b;border-color:#32d74b">USDT</span>' : ''
-                ].filter(Boolean).join(' ');
-
-                const pF = `${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR')}`;
-                return `<div class="product-card"><div>${tG} ${tags}</div><h2 class="text-lg font-black mt-2">${o.variacoes.produtos_mestre.nome}</h2><p class="text-[10px] text-gray-400 font-bold uppercase mb-3">${o.variacoes.capacidade} | ${o.cores_variadas ? '🟠 CORES VARIADAS' : o.variacoes.cor} | ${o.condicao}</p><div class="price-text ${o.moeda === 'USD' ? 'text-[#32d74b]' : 'text-white'}">${pF}</div><a href="https://wa.me/${o.fornecedores.whatsapp}" target="_blank" class="buy-button">Chamar no WhatsApp</a></div>`;
-            }).join('');
-
-            document.getElementById('gridBrl').innerHTML = buildGrid(filtrados.filter(o => o.moeda === 'BRL'));
-            document.getElementById('gridUsd').innerHTML = buildGrid(filtrados.filter(o => o.moeda === 'USD'));
-            document.getElementById('containerUsd').classList.toggle('hidden', !filtrados.some(o => o.moeda === 'USD'));
+        function aoMudarProduto() {
+            const pid = document.getElementById('produto_id').value;
+            const vars = gradeVariacoes.filter(x => x.produto_id == pid);
+            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
+            const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
+            let h = '<div class="grid grid-cols-2 gap-2 mt-2">';
+            if(caps.length) h += `<select id="f_cap" class="apple-input">${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
+            if(cores.length) h += `<select id="f_cor" class="apple-input"><option value="MIXER COLORS">MIXER COLORS</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
+            document.getElementById('gradeOpcoes').innerHTML = h + '</div>';
         }
 
-        function popularAparelhos() { let f = document.getElementById('f_cat').value ? todosProdutosMestre.filter(x => x.grupo_id == document.getElementById('f_cat').value) : todosProdutosMestre; document.getElementById('f_prod').innerHTML = '<option value="">Aparelho...</option>' + f.map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); renderizarRanking(); }
-        function logout() { localStorage.removeItem('iFipe_Token'); window.location.replace('index.html'); }
+        function checarGarantia() { const cond = document.getElementById('condicao').value, cat = document.getElementById('filtro_grupo').value, g = document.getElementById('garantia'); if(cond === 'Novo' && ['1','2','4','5'].includes(cat)) { g.value = "1 ANO APPLE"; g.readOnly = true; } else { g.value = ""; g.readOnly = false; } }
+        function mascararMoeda(input) { let v = input.value.replace(/\D/g, ''); if (!v) { input.value = ''; return; } v = (parseFloat(v) / 100).toFixed(2).replace('.', ','); input.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+        function parsePreco(v) { return v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0; }
+        function limparPreco(t) { if(t==='brl')document.getElementById('preco_usd').value=''; else document.getElementById('preco_brl').value=''; }
+
+        async function salvarOferta(e) {
+            e.preventDefault();
+            const pid = document.getElementById('produto_id').value, cap = document.getElementById('f_cap')?.value, cor = document.getElementById('f_cor')?.value;
+            let v = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && (cor === 'MIXER COLORS' || x.cor == cor));
+            if(!v) v = gradeVariacoes.find(x => x.produto_id == pid);
+
+            const pBrl = parsePreco(document.getElementById('preco_brl').value), pUsd = parsePreco(document.getElementById('preco_usd').value);
+            await _s.from('ofertas').insert([{
+                fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value,
+                preco: pBrl || pUsd, moeda: pBrl > 0 ? 'BRL' : 'USD', quantidade: parseInt(document.getElementById('quantidade').value), 
+                condicao: document.getElementById('condicao').value, garantia: document.getElementById('garantia').value,
+                cores_variadas: cor === 'MIXER COLORS', aceita_pix: document.getElementById('add_pix').checked, 
+                aceita_usdt: document.getElementById('add_usdt').checked, tem_boy: document.getElementById('add_boy').checked,
+                aceita_coleta: document.getElementById('add_coleta').checked, emite_nota: document.getElementById('add_nota').checked,
+                aceita_proposta: document.getElementById('add_proposta').checked, data_alteracao_preco: new Date().toISOString()
+            }]);
+            alert("Anunciado!"); atualizarLista(); e.target.reset();
+        }
+
+        async function atualizarLista() {
+            const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
+            document.getElementById('listaAtivos').innerHTML = (data || []).map(o => `
+                <tr data-id="${o.id}">
+                    <td><input type="checkbox" class="offer-check" value="${o.id}" onchange="updateBulkCount()"></td>
+                    <td>
+                        <span class="font-black text-blue-500">${o.variacoes.produtos_mestre.nome}</span><br>
+                        <span class="text-[10px] text-gray-400 uppercase font-bold">
+                            ${o.variacoes.capacidade || ''} | ${o.cores_variadas ? '<span class="text-orange-400">MIXER COLORS</span>' : o.variacoes.cor}
+                        </span>
+                    </td>
+                    <td class="text-center"><input type="number" class="mini-edit" value="${o.quantidade}" onblur="salvarRapido(${o.id}, 'quantidade', this.value)"></td>
+                    <td class="text-center"><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapido(${o.id}, 'preco', this.value)"></td>
+                    <td class="text-right flex justify-end gap-2"><span class="btn-acao btn-del" onclick="excluirAnuncio(${o.id})">Apagar</span></td>
+                </tr>
+            `).join('');
+            updateBulkCount();
+        }
+
+        async function salvarRapido(id, campo, valor) {
+            let v = (campo === 'preco') ? parsePreco(valor) : parseInt(valor);
+            if (campo === 'preco') {
+                const { data: antiga } = await _s.from('ofertas').select('preco').eq('id', id).single();
+                let tag = (antiga && v < antiga.preco) ? 'OPORTUNIDADE DE COMPRA' : 'PREÇO ATUALIZADO';
+                await _s.from('ofertas').update({ preco: v, preco_anterior: antiga.preco, obs_preco: tag, data_alteracao_preco: new Date().toISOString() }).eq('id', id);
+            } else await _s.from('ofertas').update({ [campo]: v }).eq('id', id);
+        }
+
+        async function bulkDelete() { const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length || !confirm("Apagar selecionados?")) return; await _s.from('ofertas').delete().in('id', ids); atualizarLista(); }
+        async function bulkDuplicate() { const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length) return alert("Selecione!"); const { data } = await _s.from('ofertas').select('*').in('id', ids); const copias = data.map(o => { const { id, criado_em, ...resto } = o; return resto; }); await _s.from('ofertas').insert(copias); alert("Duplicados!"); atualizarLista(); }
+        function abrirBulkEdit() { if(!document.querySelectorAll('.offer-check:checked').length) return alert("Selecione!"); document.getElementById('bulkEditModal').classList.remove('hidden'); }
+        function fecharBulkEdit() { document.getElementById('bulkEditModal').classList.add('hidden'); }
+        async function salvarBulkChanges(e) {
+            e.preventDefault();
+            const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value));
+            const newPreco = parsePreco(document.getElementById('bulk_preco').value);
+            const { data: atuais } = await _s.from('ofertas').select('id, preco').in('id', ids);
+            for (let item of atuais) {
+                let up = {};
+                if(newPreco > 0) { up.preco = newPreco; up.preco_anterior = item.preco; up.data_alteracao_preco = new Date().toISOString(); up.obs_preco = newPreco < item.preco ? 'OPORTUNIDADE DE COMPRA' : 'PREÇO ATUALIZADO'; }
+                if(document.getElementById('bulk_condicao').value) up.condicao = document.getElementById('bulk_condicao').value;
+                if(document.getElementById('bulk_regiao').value) up.regiao_id = document.getElementById('bulk_regiao').value;
+                if(document.getElementById('bulk_garantia').value) up.garantia = document.getElementById('bulk_garantia').value;
+                const m = { aceita_pix: 'b_pix', aceita_usdt: 'b_usdt' };
+                for (let [key, id] of Object.entries(m)) { const val = document.getElementById(id).value; if(val !== 'keep') up[key] = (val === 'true'); }
+                await _s.from('ofertas').update(up).eq('id', item.id);
+            }
+            alert("Massa atualizada!"); fecharBulkEdit(); atualizarLista();
+        }
+
+        function updateBulkCount() { document.getElementById('bulkCount').innerText = document.querySelectorAll('.offer-check:checked').length; }
+        function toggleAll(master) { document.querySelectorAll('.offer-check').forEach(c => c.checked = master.checked); updateBulkCount(); }
+        function calcularCompraUsdt() { const u = parsePreco(document.getElementById('compraUsd').value); document.getElementById('resultadoCompraBrl').innerText = u ? (u * suaTaxaFinal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : "R$ 0,00"; }
+        async function excluirAnuncio(id) { if(confirm("Excluir?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
+        function sairPainel() { localStorage.removeItem('iFipe_Anunciante'); window.location.reload(); }
     </script>
 </body>
 </html>
