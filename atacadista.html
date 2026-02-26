@@ -91,7 +91,7 @@
                             <span class="text-[8px] text-gray-400 uppercase block mb-1">Valor a enviar em Reais</span>
                             <span id="sim_result" class="text-lg font-mono font-black text-[#32d74b]">R$ 0,00</span>
                         </div>
-                        <a id="btnZapCompra" href="#" target="_blank" class="apple-button bg-green-600 text-black block text-center font-black">Garantir Taxa no Zap</a>
+                        <a id="btnZapCompra" href="https://wa.me/15616760652?text=Preciso%20comprar%20USDT%20vim%20atraves%20da%20iFipe" target="_blank" class="apple-button bg-green-600 text-black block text-center font-black">Garantir Taxa no Zap</a>
                     </div>
                 </div>
 
@@ -302,13 +302,21 @@
             atualizarLista();
         }
 
+        // FUNÇÃO DO SIMULADOR CORRIGIDA
         function calcSimulador() {
             const usd = parseFloat(document.getElementById('sim_usd')?.value);
-            if(!usd || taxaVipGlobal === 0) { document.getElementById('sim_result').innerText = "R$ 0,00"; return; }
+            const btnZap = document.getElementById('btnZapCompra');
+            
+            if(!usd || taxaVipGlobal === 0) { 
+                document.getElementById('sim_result').innerText = "R$ 0,00"; 
+                btnZap.href = `https://wa.me/15616760652?text=${encodeURIComponent("Preciso comprar USDT vim atraves da iFipe")}`;
+                return; 
+            }
+            
             const res = usd * taxaVipGlobal;
             document.getElementById('sim_result').innerText = res.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            const msg = encodeURIComponent(`Olá! Quero comprar ${usd} USDT na taxa VIP de R$ ${taxaVipGlobal.toFixed(4)}.`);
-            document.getElementById('btnZapCompra').href = `https://wa.me/15616760652?text=${msg}`;
+            const msg = encodeURIComponent(`Preciso comprar ${usd} USDT vim atraves da iFipe`);
+            btnZap.href = `https://wa.me/15616760652?text=${msg}`;
         }
 
         function abrirConta() {
@@ -323,6 +331,45 @@
             const { data } = await _s.from('fornecedores').update({ nome: document.getElementById('c_nome').value, whatsapp: document.getElementById('c_whats').value, senha: document.getElementById('c_senha').value }).eq('id', loja.id).select().single();
             if(data) { loja = data; document.getElementById('nomeLoja').innerText = loja.nome; }
             alert("Dados atualizados!"); fecharConta();
+        }
+
+        async function salvarRapido(id, campo, valor) {
+            let v = (campo === 'preco') ? parsePreco(valor) : parseInt(valor);
+            if(isNaN(v)) return;
+            await _s.from('ofertas').update({ [campo]: v, data_alteracao_preco: new Date().toISOString() }).eq('id', id);
+        }
+
+        async function salvarBulkChanges(e) {
+            e.preventDefault();
+            const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value));
+            const newPreco = parsePreco(document.getElementById('bulk_preco').value);
+            const newQtd = document.getElementById('bulk_qtd').value;
+            const newCond = document.getElementById('bulk_condicao').value;
+            const newBat = document.getElementById('bulk_bateria').value;
+            const newGar = document.getElementById('bulk_garantia').value;
+            const bPix = document.getElementById('bulk_pix').value;
+            const bUsdt = document.getElementById('bulk_usdt').value;
+            const bNota = document.getElementById('bulk_nota').value;
+            const bProp = document.getElementById('bulk_proposta').value;
+
+            let up = {};
+            if(newPreco > 0) up.preco = newPreco;
+            if(newQtd) up.quantidade = parseInt(newQtd);
+            if(newCond) up.condicao = newCond;
+            if(newBat) up.saude_bateria = newBat;
+            if(newGar) up.garantia = newGar;
+            if(bPix !== "") up.aceita_pix = bPix === "1";
+            if(bUsdt !== "") up.aceita_usdt = bUsdt === "1";
+            if(bNota !== "") up.emite_nota = bNota === "1";
+            if(bProp !== "") up.aceita_proposta = bProp === "1";
+
+            if(Object.keys(up).length && ids.length) {
+                up.data_alteracao_preco = new Date().toISOString();
+                await _s.from('ofertas').update(up).in('id', ids);
+                fecharBulkEdit(); atualizarLista(); alert("Massa atualizada!");
+            } else {
+                alert("Preencha ao menos um campo para editar.");
+            }
         }
 
         function popularProdutos() { document.getElementById('produto_id').innerHTML = '<option value="" disabled selected>Escolha o Modelo...</option>' + produtosMestre.filter(x => x.grupo_id == document.getElementById('filtro_grupo').value).map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); }
@@ -363,12 +410,6 @@
             }]);
             alert("Publicado!"); atualizarLista(); e.target.reset();
             document.getElementById('gradeOpcoes').innerHTML = '';
-        }
-
-        async function salvarRapido(id, campo, valor) {
-            let v = (campo === 'preco') ? parsePreco(valor) : parseInt(valor);
-            if(isNaN(v)) return;
-            await _s.from('ofertas').update({ [campo]: v, data_alteracao_preco: new Date().toISOString() }).eq('id', id);
         }
 
         async function atualizarLista() {
@@ -421,41 +462,6 @@
                 data_alteracao_preco: new Date().toISOString()
             }).eq('id', id);
             fecharModalEdit(); atualizarLista();
-        }
-
-        async function salvarBulkChanges(e) {
-            e.preventDefault();
-            const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value));
-            if(!ids.length) return;
-            
-            const newPreco = parsePreco(document.getElementById('bulk_preco').value);
-            const newQtd = document.getElementById('bulk_qtd').value;
-            const newCond = document.getElementById('bulk_condicao').value;
-            const newBat = document.getElementById('bulk_bateria').value;
-            const newGar = document.getElementById('bulk_garantia').value;
-            const bPix = document.getElementById('bulk_pix').value;
-            const bUsdt = document.getElementById('bulk_usdt').value;
-            const bNota = document.getElementById('bulk_nota').value;
-            const bProp = document.getElementById('bulk_proposta').value;
-
-            let up = {};
-            if(newPreco > 0) up.preco = newPreco;
-            if(newQtd) up.quantidade = parseInt(newQtd);
-            if(newCond) up.condicao = newCond;
-            if(newBat) up.saude_bateria = newBat;
-            if(newGar) up.garantia = newGar;
-            if(bPix !== "") up.aceita_pix = bPix === "1";
-            if(bUsdt !== "") up.aceita_usdt = bUsdt === "1";
-            if(bNota !== "") up.emite_nota = bNota === "1";
-            if(bProp !== "") up.aceita_proposta = bProp === "1";
-
-            if(Object.keys(up).length) {
-                up.data_alteracao_preco = new Date().toISOString();
-                await _s.from('ofertas').update(up).in('id', ids);
-                fecharBulkEdit(); atualizarLista(); alert("Edição em massa aplicada com sucesso!");
-            } else {
-                alert("Preencha ao menos um campo para editar.");
-            }
         }
 
         async function bulkDuplicate() { 
