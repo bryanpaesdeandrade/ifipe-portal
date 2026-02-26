@@ -14,18 +14,15 @@
         
         .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; }
         
-        /* Tickers */
         .ticker-container { display: flex; gap: 20px; align-items: center; }
         .ticker-box { display: flex; flex-direction: column; align-items: flex-end; }
         .ticker-label { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #86868b; }
         .ticker-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; }
 
-        /* Simulador PY */
         .py-sim-bar { background: #1c1c1e; border-bottom: 2px solid #0071e3; padding: 15px; display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; }
         .sim-input-group { display: flex; align-items: center; gap: 10px; background: #000; padding: 8px 15px; border-radius: 12px; border: 1px solid #38383a; }
         .sim-input { background: transparent; border: none; color: #fff; font-weight: 800; width: 90px; outline: none; text-align: center; font-size: 16px; }
 
-        /* Grids */
         .main-grid { display: grid; grid-template-columns: 1fr; gap: 30px; padding: 20px; }
         @media (min-width: 1024px) { .main-grid { grid-template-columns: 1fr 1fr; } }
         
@@ -36,7 +33,6 @@
         .sub-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
         @media (min-width: 640px) { .sub-grid { grid-template-columns: 1fr 1fr; } }
 
-        /* Card e Tags */
         .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; position: relative; transition: 0.3s; display: flex; flex-direction: column; }
         .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
         
@@ -50,11 +46,8 @@
         .mini-tag.active { color: #fff; border-color: #0071e3; background: rgba(0, 113, 227, 0.2); }
         
         .price-text { font-size: 26px; font-weight: 900; letter-spacing: -0.05em; margin: 10px 0; }
-        
-        /* BOTÃO WHATSAPP VERDE ZAP */
-        .buy-button { background: var(--zap); color: #000; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; display: block; text-align: center; text-decoration: none; font-size: 11px; text-transform: uppercase; transition: 0.3s; border: none; margin-top: auto; }
-        .buy-button:hover { filter: brightness(1.1); transform: scale(1.02); color: #000; }
-        
+        .buy-button { background: var(--zap); color: #000; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; display: block; text-align: center; text-decoration: none; font-size: 11px; text-transform: uppercase; transition: 0.3s; margin-top: auto; }
+        .buy-button:hover { filter: brightness(1.1); transform: scale(1.02); }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -160,12 +153,22 @@
             ofertasAtuais = data || []; renderizarRanking();
         }
 
+        function getModelWeight(name) {
+            const n = (name || "").toLowerCase();
+            let weight = 0;
+            const match = n.match(/iphone\s*(\d+)/);
+            if(match) weight += parseInt(match[1]) * 10000; // Multiplicador alto para o número (16 > 15)
+            if(n.includes("pro max")) weight += 500;
+            else if(n.includes("pro")) weight += 400;
+            else if(n.includes("plus")) weight += 300;
+            return weight;
+        }
+
         function sortLogic(a, b) {
-            const getW = (n) => { let m = (n||"").match(/iphone\s*(\d+)/); return (m ? parseInt(m[1])*1000 : 0) + (n.includes("pro max")?40:n.includes("pro")?30:0); };
-            let wA = getW(a.variacoes.produtos_mestre.nome), wB = getW(b.variacoes.produtos_mestre.nome);
-            if (wA !== wB) return wB - wA;
+            let wA = getModelWeight(a.variacoes.produtos_mestre.nome), wB = getModelWeight(b.variacoes.produtos_mestre.nome);
+            if (wA !== wB) return wB - wA; // Mais novo primeiro
             if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
-            return a.preco - b.preco;
+            return a.preco - b.preco; // Menor preço desempata
         }
 
         function renderizarRanking() {
@@ -181,7 +184,7 @@
                 (!fLoj || o.fornecedor_id == fLoj) && (!fCid || o.fornecedores.cidade == fCid)
             );
 
-            // LOGICA DE MENOR PREÇO (Calculada após todos os filtros)
+            // CÁLCULO DINÂMICO DE MENOR PREÇO POR GRUPO
             let menoresGlobal = {}; 
             filtrados.forEach(o => {
                 let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`;
@@ -191,21 +194,19 @@
             const listBrl = filtrados.filter(o => o.moeda === 'BRL').sort(sortLogic);
             const listUsd = filtrados.filter(o => o.moeda === 'USD').sort(sortLogic);
 
-            document.getElementById('containerUsd').classList.toggle('hidden', listUsd.length === 0);
-            document.querySelector('.main-grid').style.gridTemplateColumns = listUsd.length === 0 ? "1fr" : "";
-
             const renderCards = (lista) => lista.map(o => {
                 const k = `${o.variacao_id}_${o.condicao}_${o.moeda}`;
                 const eMenor = o.preco === menoresGlobal[k];
                 
-                // TAGS
-                let tagGatilho = o.obs_preco === 'OPORTUNIDADE DE COMPRA' ? '<span class="tag-status tag-oportunidade">🚀 OPORTUNIDADE</span>' : (o.obs_preco === 'PREÇO ATUALIZADO' ? '<span class="tag-status tag-atualizado">ℹ️ ATUALIZADO</span>' : '');
-                let tagMenor = eMenor ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
-                let tagEstoque = (o.quantidade > 0 && o.quantidade <= 3) ? `<span class="tag-status tag-estoque">⚠️ ÚLTIMAS ${o.quantidade} UN</span>` : '';
+                // TAGS GATILHO
+                let tGatilho = o.obs_preco === 'OPORTUNIDADE DE COMPRA' ? '<span class="tag-status tag-oportunidade">🚀 OPORTUNIDADE</span>' : (o.obs_preco === 'PREÇO ATUALIZADO' ? '<span class="tag-status tag-atualizado">ℹ️ ATUALIZADO</span>' : '');
+                let tMenor = eMenor ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
+                let tEstoque = (o.quantidade <= 3) ? `<span class="tag-status tag-estoque">⚠️ ÚLTIMAS ${o.quantidade} UN</span>` : '';
 
                 let txtCor = o.cores_variadas ? '<span class="text-orange-500 font-black">🟠 CORES VARIADAS</span>' : o.variacoes.cor;
+                let selo = o.fornecedores.verificado ? '<span style="background:#ffcc00; color:#000;" class="rounded px-1 py-0.5 text-[7px] font-black uppercase ml-1">✔️ Verificado</span>' : '';
                 
-                let tags = [
+                let molduras = [
                     o.garantia ? `<span class="mini-tag gar">🛡️ ${o.garantia}</span>` : '',
                     o.regioes ? `<span class="mini-tag active">${o.regioes.bandeira} ${o.regioes.nome}</span>` : '',
                     o.aceita_pix ? `<span class="mini-tag active">PIX</span>` : '',
@@ -216,16 +217,16 @@
                 ].filter(Boolean).join(' ');
 
                 const precoFmt = `${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR')}`;
-                const linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent('Olá! Vi no iFipe: ' + o.variacoes.produtos_mestre.nome + ' | ' + o.variacoes.capacidade + ' por ' + precoFmt)}`;
+                const linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent('Olá! Vi no iFipe: ' + o.variacoes.produtos_mestre.nome + ' por ' + precoFmt)}`;
 
                 return `
                 <div class="product-card">
-                    <div class="flex flex-wrap gap-1 mb-2">${tagGatilho} ${tagMenor} ${tagEstoque}</div>
+                    <div class="flex flex-wrap gap-1 mb-2">${tGatilho} ${tMenor} ${tEstoque}</div>
                     <h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2>
                     <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase mb-3">${o.variacoes.capacidade} | ${txtCor} | ${o.condicao}</p>
-                    <div class="flex flex-wrap gap-1.5 mb-3">${tags}</div>
+                    <div class="flex flex-wrap gap-1.5 mb-3">${molduras}</div>
                     <div class="mt-2 border-t border-[#38383a] pt-3">
-                        <p class="text-[9px] text-blue-400 font-black uppercase">LOJA: ${o.fornecedores.nome} ${o.fornecedores.verificado ? '✔️' : ''}</p>
+                        <p class="text-[9px] text-blue-400 font-black uppercase">LOJA: ${o.fornecedores.nome} ${selo}</p>
                         <div class="price-text ${o.moeda === 'USD' ? 'text-[#32d74b]' : 'text-white'}">${precoFmt}</div>
                     </div>
                     <a href="${linkWpp}" target="_blank" class="buy-button">Comprar Agora no WhatsApp</a>
@@ -234,6 +235,8 @@
 
             document.getElementById('gridBrl').innerHTML = renderCards(listBrl);
             document.getElementById('gridUsd').innerHTML = renderCards(listUsd);
+            document.getElementById('containerUsd').classList.toggle('hidden', listUsd.length === 0);
+            document.querySelector('.main-grid').style.gridTemplateColumns = listUsd.length === 0 ? "1fr" : "";
         }
 
         function popularAparelhos() {
