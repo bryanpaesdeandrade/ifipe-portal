@@ -10,130 +10,139 @@
     <style>
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
         body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; }
-        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; overflow-x: hidden; }
         
-        /* NOVO: Barra de Simulação VIP no Topo */
-        .vip-sim-bar { background: #1c1c1e; border-bottom: 1px solid #32d74b; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap; }
-        .sim-input { background: #000; border: 1px solid #38383a; border-radius: 8px; color: #32d74b; font-family: 'JetBrains Mono', monospace; font-weight: 800; padding: 5px 10px; width: 120px; text-align: center; outline: none; }
-        .sim-input:focus { border-color: #32d74b; }
+        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; }
+        
+        /* Tickers no Topo */
+        .ticker-container { display: flex; gap: 20px; align-items: center; }
+        .ticker-box { display: flex; flex-direction: column; align-items: flex-end; }
+        .ticker-label { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #86868b; }
+        .ticker-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; }
 
-        .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; }
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; transition: 0.3s; position: relative; }
+        /* Super Simulador Paraguai */
+        .py-sim-bar { background: #1c1c1e; border-bottom: 2px solid #0071e3; padding: 15px; display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; }
+        .sim-input-group { display: flex; align-items: center; gap: 10px; background: #000; padding: 8px 15px; border-radius: 12px; border: 1px solid #38383a; }
+        .sim-input { background: transparent; border: none; color: #fff; font-weight: 800; width: 90px; outline: none; text-align: center; font-size: 16px; }
+
+        /* Grid de Colunas Mestre */
+        .main-grid { display: grid; grid-template-columns: 1fr; gap: 30px; padding: 20px; }
+        @media (min-width: 1024px) { .main-grid { grid-template-columns: 1fr 1fr; } }
+        .section-title { text-align: center; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; font-size: 14px; padding: 10px; border-radius: 8px; }
+        .bg-br { background: rgba(0, 113, 227, 0.1); color: #0071e3; border: 1px solid rgba(0, 113, 227, 0.2); }
+        .bg-int { background: rgba(50, 215, 75, 0.1); color: #32d74b; border: 1px solid rgba(50, 215, 75, 0.2); }
+
+        .sub-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        @media (min-width: 640px) { .sub-grid { grid-template-columns: 1fr 1fr; } }
+
+        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; position: relative; transition: 0.3s; }
         .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
-        .tag-status { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 50px; letter-spacing: 0.05em; display: inline-block; margin-bottom: 3px; }
-        .tag-menor { background: #ff3b30; color: #fff; }
+        .tag-status { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 50px; display: inline-block; margin-bottom: 5px; }
         .tag-oportunidade { background: #32d74b; color: #000; }
         .tag-atualizado { background: #0071e3; color: #fff; }
-        .tag-poucas { background: #ffcc00; color: #000; }
+        .tag-menor { background: #ff3b30; color: #fff; }
         
-        .mini-tag { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 6px; border-radius: 6px; background: var(--input); color: #86868b; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; }
+        .mini-tag { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 6px; border-radius: 6px; background: var(--input); color: #86868b; border: 1px solid var(--border); }
         .mini-tag.active { color: #fff; border-color: #0071e3; background: rgba(0, 113, 227, 0.2); }
-        .mini-tag.usdt { color: #32d74b; border-color: #32d74b; background: rgba(50, 215, 75, 0.1); }
-        .mini-tag.bat { color: #32d74b; border-color: #32d74b; background: rgba(50, 215, 75, 0.1); }
-        .mini-tag.gar { color: #ffcc00; border-color: #ffcc00; background: rgba(255, 204, 0, 0.1); }
-        .mini-tag.nf { color: #5e5ce6; border-color: #5e5ce6; background: rgba(94, 92, 230, 0.1); }
-
-        .price-text { font-size: 26px; font-weight: 900; color: var(--text); letter-spacing: -0.05em; }
-        .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 12px; transition: 0.3s; letter-spacing: 0.05em; }
-        .buy-button:hover { background: #005bb5; }
+        .price-text { font-size: 24px; font-weight: 900; letter-spacing: -0.05em; }
+        .buy-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 10px; width: 100%; display: block; text-align: center; text-decoration: none; font-size: 10px; text-transform: uppercase; margin-top: 12px; transition: 0.3s; }
+        .buy-button:hover { background: #0071e3; color: #fff; }
         .hidden { display: none !important; }
-        .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 14px; font-weight: 700; }
-        .btn-wpp-float { position: fixed; bottom: 20px; right: 20px; background-color: #25d366; color: #fff; width: 60px; height: 60px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 5px 20px rgba(37,211,102,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; }
-        .btn-wpp-float svg { flex-shrink: 0; width: 30px; height: 30px; fill: #fff; }
-        .wpp-text { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
-        .btn-wpp-float:hover { width: 170px; padding-left: 18px; justify-content: flex-start; }
-        .btn-wpp-float:hover .wpp-text { opacity: 1; }
     </style>
 </head>
 <body>
 
     <nav class="nav-bar">
         <h1 class="text-2xl font-black italic m-0">iFipe</h1>
-        <div class="flex items-center gap-4">
-            <div class="flex flex-col items-end">
-                <span class="text-[8px] text-gray-500 font-black uppercase">Taxa VIP Oráculo</span>
-                <span class="text-[14px] font-black text-[#32d74b] font-mono" id="ticker">$ --</span>
+        <div class="ticker-container">
+            <div class="ticker-box">
+                <span class="ticker-label">Binance Real</span>
+                <span id="tBinance" class="ticker-val text-white">R$ 0,0000</span>
             </div>
-            <button onclick="toggleTheme()" id="themeBtn" class="theme-toggle">🌙 Modo</button>
-            <button onclick="abrirConta()" class="text-[10px] text-blue-400 font-black uppercase flex items-center gap-1">Conta</button>
+            <div class="ticker-box">
+                <span class="ticker-label text-[#32d74b]">Taxa VIP Oráculo</span>
+                <span id="tVip" class="ticker-val text-[#32d74b]">R$ 0,0000</span>
+            </div>
+            <button onclick="toggleTheme()" class="bg-[#2c2c2e] p-2 rounded-full text-xs">🌙</button>
             <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
         </div>
     </nav>
 
-    <div class="vip-sim-bar">
-        <span class="text-[10px] font-black uppercase text-gray-400">Simulador de Custo:</span>
-        <div class="flex items-center gap-2">
-            <span class="text-[12px] font-black text-gray-500">$</span>
-            <input type="number" id="quickUsd" class="sim-input" placeholder="Valor USD" oninput="calcularVipRapido()">
+    <div class="py-sim-bar">
+        <div class="flex flex-col items-center">
+            <span class="text-[9px] font-black uppercase text-blue-500 mb-2">Simulador Paraguai ➔ Brasil (Custo SP)</span>
+            <div class="flex items-center gap-4">
+                <div class="sim-input-group">
+                    <span class="text-gray-500 font-black">$</span>
+                    <input type="number" id="pyUsd" class="sim-input" placeholder="Preço PY" oninput="calcPy()">
+                </div>
+                <span class="text-2xl font-black text-gray-700">➔</span>
+                <div class="bg-black px-6 py-2 rounded-xl border-2 border-[#32d74b]">
+                    <span id="pyBrl" class="text-xl font-mono font-black text-[#32d74b]">R$ 0,00</span>
+                </div>
+            </div>
+            <span class="text-[8px] text-gray-500 mt-2 font-black uppercase">🔒 Câmbio VIP + Frete PY/SP Inclusos</span>
         </div>
-        <span class="text-white font-black">➔</span>
-        <div class="bg-black px-4 py-1 rounded-lg border border-gray-800">
-            <span id="quickResult" class="text-[14px] font-mono font-black text-[#32d74b]">R$ 0,00</span>
-        </div>
-        <span class="text-[8px] text-gray-500 uppercase font-black">Custo Final em SP</span>
     </div>
 
-    <main class="max-w-7xl mx-auto px-4 pb-20">
-        <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
-            <div><label class="block text-[8px] uppercase font-black text-blue-500 mb-1 text-center">1. Categoria</label><select id="f_cat" class="apple-input" onchange="popularAparelhos()"><option value="">Todas</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option></select></div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">2. Aparelho</label><select id="f_prod" class="apple-input" onchange="atualizarFiltrosCascata()"><option value="">Todos</option></select></div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Condição</label><select id="f_cond" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select></div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Memória</label><select id="f_cap" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cor</label><select id="f_cor" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Origem</label><select id="f_reg" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Atacadista</label><select id="f_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cidade</label><select id="f_cid" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+    <main class="max-w-[1400px] mx-auto pb-20">
+        <div class="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mt-4">
+            <select id="f_cat" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="popularAparelhos()"><option value="">Categoria...</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option></select>
+            <select id="f_prod" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Aparelho...</option></select>
+            <select id="f_cond" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
+            <select id="f_cap" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Memória...</option></select>
+            <select id="f_cor" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Cor...</option></select>
+            <select id="f_reg" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Origem...</option></select>
+            <select id="f_lojista" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Lojista...</option></select>
+            <select id="f_cid" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Cidade...</option></select>
         </div>
 
-        <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
-    </main>
+        <div class="main-grid">
+            
+            <div id="containerBrl">
+                <div class="section-title bg-br">Anúncios Brasil (Pagamento em Real)</div>
+                <div id="gridBrl" class="sub-grid"></div>
+            </div>
 
-    <a href="https://wa.me/556896003049?text=Olá%20venho%20do%20iFipe%20e%20preciso%20de%20suporte" target="_blank" class="btn-wpp-float">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592z"/></svg>
-        <span class="wpp-text">SUPORTE iFIPE</span>
-    </a>
+            <div id="containerUsd">
+                <div class="section-title bg-int">Anúncios Internacionais (Pagamento em Dólar)</div>
+                <div id="gridUsd" class="sub-grid"></div>
+            </div>
+
+        </div>
+    </main>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let ofertasAtuais = [], gradeVariacoes = [], clienteLogado = null, todosProdutosMestre = [], currentUsdtRate = 0, taxaVipEfetiva = 0;
-
-        function toggleTheme() {
-            const b = document.body; b.classList.toggle('light-mode');
-            localStorage.setItem('iFipe_Theme', b.classList.contains('light-mode') ? 'light' : 'dark');
-        }
+        let ofertasAtuais = [], gradeVariacoes = [], todosProdutosMestre = [], binanceRate = 0, vipRate = 0;
 
         window.onload = async () => {
-            if(localStorage.getItem('iFipe_Theme') === 'light') toggleTheme();
             const token = localStorage.getItem('iFipe_Token');
             if(!token) window.location.replace('index.html');
-            else {
-                const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
-                if(data) clienteLogado = data;
-                init();
-            }
+            else init();
         };
 
-        function iniciarTicker() {
+        function iniciarTickers() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (e) => {
-                currentUsdtRate = parseFloat(JSON.parse(e.data).c);
-                taxaVipEfetiva = currentUsdtRate + 0.07;
-                document.getElementById('ticker').innerText = `R$ ${taxaVipEfetiva.toFixed(4).replace('.',',')}`;
-                calcularVipRapido();
+                binanceRate = parseFloat(JSON.parse(e.data).c);
+                vipRate = binanceRate + 0.07;
+                document.getElementById('tBinance').innerText = `R$ ${binanceRate.toFixed(4).replace('.',',')}`;
+                document.getElementById('tVip').innerText = `R$ ${vipRate.toFixed(4).replace('.',',')}`;
+                calcPy();
             };
         }
 
-        function calcularVipRapido() {
-            const usd = parseFloat(document.getElementById('quickUsd').value);
-            if(!usd || taxaVipEfetiva === 0) { document.getElementById('quickResult').innerText = "R$ 0,00"; return; }
-            const final = (usd * taxaVipEfetiva) * 1.06; // Mantendo a margem de custo operacional de 6% do index
-            document.getElementById('quickResult').innerText = final.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        function calcPy() {
+            const usd = parseFloat(document.getElementById('pyUsd').value);
+            if(!usd || vipRate === 0) { document.getElementById('pyBrl').innerText = "R$ 0,00"; return; }
+            // Cálculo: (Dólar PY * Taxa VIP) + 6% Custo Brasil
+            const final = (usd * vipRate) * 1.06;
+            document.getElementById('pyBrl').innerText = final.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         async function init() {
-            iniciarTicker();
+            iniciarTickers();
             const [p, r, v, f] = await Promise.all([ 
                 _s.from('produtos_mestre').select('*').order('nome'), 
                 _s.from('regioes').select('*').order('nome'), 
@@ -162,11 +171,11 @@
             return weight;
         }
 
-        function sortOffers(a, b) {
+        function sortLogic(a, b) {
             let wA = getModelWeight(a.variacoes.produtos_mestre.nome), wB = getModelWeight(b.variacoes.produtos_mestre.nome);
-            if (wA !== wB) return wB - wA;
+            if (wA !== wB) return wB - wA; // Mais novo primeiro
             if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
-            return a.preco - b.preco;
+            return a.preco - b.preco; // Menor preço na cadeira da frente
         }
 
         function renderizarRanking() {
@@ -174,7 +183,6 @@
             const fCap = document.getElementById('f_cap').value, fCor = document.getElementById('f_cor').value, fReg = document.getElementById('f_reg').value;
             const fLoj = document.getElementById('f_lojista').value, fCid = document.getElementById('f_cid').value;
 
-            // REGRA 1: FILTRAR QUANTIDADE > 0 (ITENS PAUSADOS NÃO APARECEM)
             let filtrados = ofertasAtuais.filter(o => o.quantidade > 0 &&
                 (!fCat || o.variacoes.produtos_mestre.grupo_id == fCat) &&
                 (!fP || o.variacoes.produtos_mestre.id == fP) &&
@@ -186,76 +194,80 @@
                 (!fCid || o.fornecedores.cidade == fCid)
             );
 
-            const grid = document.getElementById('gridGeral');
-            if(!filtrados.length) { grid.innerHTML = '<p class="text-center col-span-full py-20 font-bold opacity-50 uppercase">Nenhuma oferta ativa no momento.</p>'; return; }
+            const listBrl = filtrados.filter(o => o.moeda === 'BRL').sort(sortLogic);
+            const listUsd = filtrados.filter(o => o.moeda === 'USD').sort(sortLogic);
 
-            // Identificar Menor Preço por Variação/Condição
-            let menores = {}; filtrados.forEach(o => {
-                let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`;
-                if(!menores[k] || o.preco < menores[k]) menores[k] = o.preco;
-            });
+            // Regra de Layout: Se USD for vazio, BR ocupa tudo
+            const mainGrid = document.querySelector('.main-grid');
+            if(listUsd.length === 0) {
+                mainGrid.style.gridTemplateColumns = "1fr";
+                document.getElementById('containerUsd').classList.add('hidden');
+            } else {
+                mainGrid.style.gridTemplateColumns = window.innerWidth >= 1024 ? "1fr 1fr" : "1fr";
+                document.getElementById('containerUsd').classList.remove('hidden');
+            }
 
-            grid.innerHTML = filtrados.sort(sortOffers).map(o => {
-                let moeda = o.moeda === 'USD' ? '$' : 'R$';
-                
-                // REGRA 2: GATILHOS MENTAIS DINÂMICOS
-                let tagGatilho = '';
-                if(o.obs_preco === 'OPORTUNIDADE DE COMPRA') tagGatilho = `<span class="tag-status tag-oportunidade">🚀 OPORTUNIDADE DE COMPRA</span>`;
-                else if(o.obs_preco === 'PREÇO ATUALIZADO') tagGatilho = `<span class="tag-status tag-atualizado">ℹ️ PREÇO ATUALIZADO</span>`;
-                
-                let tagMenor = o.preco === menores[`${o.variacao_id}_${o.condicao}_${o.moeda}`] ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
-                let tagEstoque = o.quantidade <= 3 ? `<span class="tag-status tag-poucas">ÚLTIMAS ${o.quantidade} UN</span>` : '';
+            document.getElementById('gridBrl').innerHTML = listBrl.map(o => cardHtml(o, listBrl)).join('');
+            document.getElementById('gridUsd').innerHTML = listUsd.map(o => cardHtml(o, listUsd)).join('');
+        }
 
-                // REGRA 3: LEI DO MIXER (CORES VARIADAS)
-                let txtCor = o.cores_variadas ? '<span class="text-orange-500">CORES VARIADAS (CONSULTAR)</span>' : o.variacoes.cor;
-                let detalhes = [o.variacoes.capacidade, txtCor, o.condicao].filter(Boolean).join(' | ');
+        function cardHtml(o, listaOrigem) {
+            // Identifica se é o menor preço daquela categoria/modelo na lista atual
+            const k = `${o.variacao_id}_${o.condicao}`;
+            const precos = listaOrigem.filter(x => `${x.variacao_id}_${x.condicao}` === k).map(x => x.preco);
+            const eMenor = o.preco === Math.min(...precos);
 
-                // MOLDURAS
-                let tags = [
-                    o.saude_bateria ? `<span class="mini-tag bat">🔋 ${o.saude_bateria.replace('BATERIA ','')}</span>` : '',
-                    o.garantia ? `<span class="mini-tag gar">🛡️ ${o.garantia}</span>` : '',
-                    o.regioes ? `<span class="mini-tag fab">${o.regioes.bandeira} ${o.regioes.nome}</span>` : '',
-                    o.aceita_pix ? `<span class="mini-tag active">PIX</span>` : '',
-                    o.aceita_usdt ? `<span class="mini-tag usdt">USDT</span>` : '',
-                    o.emite_nota ? `<span class="mini-tag nf">NF</span>` : '',
-                    o.aceita_proposta ? `<span class="mini-tag active">NEGOCIA QTD</span>` : '',
-                    o.tem_boy ? `<span class="mini-tag active">MOTOBOY</span>` : ''
-                ].filter(Boolean).join(' ');
+            let tagGatilho = '';
+            if(o.obs_preco === 'OPORTUNIDADE DE COMPRA') tagGatilho = `<span class="tag-status tag-oportunidade">🚀 OPORTUNIDADE</span>`;
+            else if(o.obs_preco === 'PREÇO ATUALIZADO') tagGatilho = `<span class="tag-status tag-atualizado">ℹ️ ATUALIZADO</span>`;
+            
+            let tagMenor = eMenor ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
+            let txtCor = o.cores_variadas ? '<span class="text-orange-500 font-black">CORES VARIADAS</span>' : o.variacoes.cor;
+            
+            let tags = [
+                o.garantia ? `<span class="mini-tag gar">🛡️ ${o.garantia}</span>` : '',
+                o.regioes ? `<span class="mini-tag fab">${o.regioes.bandeira} ${o.regioes.nome}</span>` : '',
+                o.aceita_pix ? `<span class="mini-tag active">PIX</span>` : '',
+                o.aceita_usdt ? `<span class="mini-tag active" style="color:#32d74b;border-color:#32d74b">USDT</span>` : '',
+                o.emite_nota ? `<span class="mini-tag active" style="color:#5e5ce6;border-color:#5e5ce6">NF</span>` : '',
+                o.aceita_proposta ? `<span class="mini-tag active">NEGOCIA QTD</span>` : '',
+                o.tem_boy ? `<span class="mini-tag active">MOTOBOY</span>` : ''
+            ].filter(Boolean).join(' ');
 
-                let precoFmt = `${moeda} ${o.preco.toLocaleString('pt-BR')}`;
-                let linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent('Olá! Vi seu anúncio no iFipe: ' + o.variacoes.produtos_mestre.nome + ' | ' + detalhes + ' por ' + precoFmt)}`;
+            const moeda = o.moeda === 'USD' ? '$' : 'R$';
+            const precoFmt = `${moeda} ${o.preco.toLocaleString('pt-BR')}`;
+            const linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent('Olá! Encontrei no iFipe: ' + o.variacoes.produtos_mestre.nome + ' por ' + precoFmt)}`;
 
-                return `
-                <div class="product-card">
-                    <div class="flex flex-wrap gap-1 mb-2">${tagGatilho} ${tagMenor} ${tagEstoque}</div>
-                    <h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase mb-3">${detalhes}</p>
-                    <div class="flex flex-wrap gap-1.5 mb-3">${tags}</div>
-                    <div class="mt-2 border-t border-[#38383a] pt-3">
-                        <p class="text-[9px] text-blue-400 font-black uppercase">LOJA: ${o.fornecedores.nome} ${o.fornecedores.verificado ? '✔️' : ''}</p>
-                        <p class="text-[8px] text-gray-500 uppercase mb-1">${o.fornecedores.cidade} | ${o.fornecedores.pais || 'Brasil'}</p>
-                        <div class="price-text">${precoFmt}</div>
-                    </div>
-                    <a href="${linkWpp}" target="_blank" class="buy-button">Chamar no WhatsApp</a>
-                </div>`;
-            }).join('');
+            return `
+            <div class="product-card">
+                <div class="flex flex-wrap gap-1 mb-2">${tagGatilho} ${tagMenor}</div>
+                <h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2>
+                <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase mb-3">${o.variacoes.capacidade} | ${txtCor} | ${o.condicao}</p>
+                <div class="flex flex-wrap gap-1.5 mb-3">${tags}</div>
+                <div class="mt-2 border-t border-[#38383a] pt-3">
+                    <p class="text-[9px] text-blue-400 font-black uppercase">LOJA: ${o.fornecedores.nome} ${o.fornecedores.verificado ? '✔️' : ''}</p>
+                    <div class="price-text ${o.moeda === 'USD' ? 'text-[#32d74b]' : 'text-white'}">${precoFmt}</div>
+                </div>
+                <a href="${linkWpp}" target="_blank" class="buy-button">WhatsApp</a>
+            </div>`;
         }
 
         function popularAparelhos() {
             const catId = document.getElementById('f_cat').value;
             const filtrados = catId ? todosProdutosMestre.filter(x => x.grupo_id == catId) : todosProdutosMestre;
-            document.getElementById('f_prod').innerHTML = '<option value="">Todos</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('f_prod').innerHTML = '<option value="">Aparelho...</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             atualizarFiltrosCascata();
         }
 
         function atualizarFiltrosCascata() {
             const pid = document.getElementById('f_prod').value;
             const vars = pid ? gradeVariacoes.filter(x => x.produto_id == pid) : gradeVariacoes;
-            document.getElementById('f_cap').innerHTML = '<option value="">Todas</option>' + [...new Set(vars.map(x => x.capacidade).filter(Boolean))].map(c => `<option value="${c}">${c}</option>`).join('');
-            document.getElementById('f_cor').innerHTML = '<option value="">Todas</option>' + [...new Set(vars.map(x => x.cor).filter(Boolean))].map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('f_cap').innerHTML = '<option value="">Memória...</option>' + [...new Set(vars.map(x => x.capacidade).filter(Boolean))].map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('f_cor').innerHTML = '<option value="">Cor...</option>' + [...new Set(vars.map(x => x.cor).filter(Boolean))].map(c => `<option value="${c}">${c}</option>`).join('');
             renderizarRanking();
         }
 
+        function toggleTheme() { document.body.classList.toggle('light-mode'); }
         function logout() { localStorage.removeItem('iFipe_Token'); window.location.replace('index.html'); }
     </script>
 </body>
