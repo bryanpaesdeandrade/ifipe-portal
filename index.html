@@ -34,6 +34,7 @@
         }
         
         .responsive-grid { display: flex; flex-direction: column; align-items: center; gap: 25px; width: 100%; }
+        
         .item-login { order: 1; width: 100%; max-width: 360px; }
         .item-calc { order: 2; width: 100%; max-width: 360px; }
         .item-banner { order: 3; width: 100%; max-width: 300px; }
@@ -75,7 +76,6 @@
         .footer-juridico span:hover { color: #0071e3; }
         .footer-sep-bar { color: var(--border); font-size: 10px; }
 
-        /* MODAL JURIDICO REFORÇADO */
         .modal-juridico { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); overflow-y: auto; padding: 20px; }
         .modal-body { background: var(--card); border: 1px solid var(--border); border-radius: 16px; max-width: 600px; margin: 30px auto; padding: 25px; position: relative; }
         .modal-btn-fechar { background: #ff3b30; color: white; font-weight: 900; text-transform: uppercase; padding: 12px; width: 100%; border-radius: 10px; text-align: center; cursor: pointer; margin-bottom: 20px; font-size: 12px; }
@@ -109,7 +109,7 @@
         <div class="responsive-grid">
             <div class="apple-card item-calc flex flex-col justify-between">
                 <div class="text-center mb-5">
-                    <h2 class="text-lg font-black italic">CALCULADORA VIP IMPORTACAO IPHONE</h2>
+                    <h2 class="text-lg font-black italic uppercase">CALCULADORA VIP IMPORTACAO IPHONE</h2>
                     <p class="text-[9px] text-blue-500 font-black uppercase mt-2 tracking-widest leading-relaxed">
                         Coloque o preço do iPhone em Dólar e saiba o preço entregue em BR
                     </p>
@@ -120,7 +120,7 @@
                 </div>
                 <div class="calc-input-box">
                     <span class="input-currency">$</span>
-                    <input type="number" id="calcUsdIndex" class="calc-input-vip" placeholder="Custo no PY (USD)" oninput="calcularImportacaoIndex()">
+                    <input type="number" id="calcUsdIndex" class="calc-input-vip" placeholder="Custo no PY (USD)" oninput="calcularImportacaoIndex()" min="0">
                 </div>
                 <div class="locked-rules">
                     <div class="rule-row">
@@ -229,10 +229,22 @@
         }
 
         function calcularImportacaoIndex() {
-            const usdInput = parseFloat(document.getElementById('calcUsdIndex').value.replace(',', '.'));
+            const elInput = document.getElementById('calcUsdIndex');
+            let usdInput = parseFloat(elInput.value.replace(',', '.'));
+
+            // TRAVA: Se for negativo, reseta para 0
+            if (usdInput < 0) {
+                usdInput = 0;
+                elInput.value = 0;
+            }
+
             let taxaEfetiva = currentUsdtRateIndex > 0 ? currentUsdtRateIndex + 0.07 : 0; 
             if (taxaEfetiva > 0) document.getElementById('calcTaxaEfetivaIndex').innerText = `R$ ${taxaEfetiva.toFixed(4).replace('.', ',')}`;
-            if(isNaN(usdInput) || currentUsdtRateIndex === 0) { document.getElementById('calcResultIndex').innerText = "R$ 0,00"; return; }
+            
+            if(isNaN(usdInput) || currentUsdtRateIndex === 0 || usdInput === 0) { 
+                document.getElementById('calcResultIndex').innerText = "R$ 0,00"; 
+                return; 
+            }
             const custoFinal = (usdInput * taxaEfetiva) * 1.06;
             document.getElementById('calcResultIndex').innerText = custoFinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
