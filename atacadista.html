@@ -24,7 +24,6 @@
         .battery-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 8px; margin-bottom: 15px;}
         .battery-pill { padding: 10px; border-radius: 10px; background: var(--input); border: 1px solid var(--border); cursor: pointer; font-size: 9px; font-weight: 900; text-transform: uppercase; text-align: center; color: #86868b; transition: 0.2s; }
         .battery-pill.active { background: #32d74b !important; color: #000 !important; border-color: #32d74b !important; }
-        .mini-input { background: var(--input); border: 1px solid var(--border); border-radius: 8px; padding: 6px; width: 85px; color: var(--text); text-align: center; font-weight: bold; font-family: 'JetBrains Mono', monospace; }
         .btn-acao { font-weight: bold; cursor: pointer; font-size: 10px; text-transform: uppercase; padding: 6px 10px; border-radius: 6px; display: inline-block; }
         .btn-del { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
         .hidden { display: none !important; }
@@ -60,7 +59,7 @@
                 <span class="block text-[9px] text-gray-500 font-black uppercase">Custo Final BR (R$)</span>
                 <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3]">R$ 0,00</div>
             </div>
-            <input type="number" id="calcUsd" class="apple-input text-center text-xl font-black" placeholder="Custo no PY (USD)" oninput="calcularImportacao()" min="0">
+            <input type="text" id="calcUsd" class="apple-input text-center text-xl font-black" placeholder="Custo no PY (USD)" oninput="mascararMoeda(this); calcularImportacao()">
             <div class="bg-black/40 border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase text-gray-500 text-left">
                 <div class="flex justify-between border-b border-[#2c2c2e] pb-2 mb-2">
                     <span>Taxa Binance</span><span id="tickerCalc" class="text-[#32d74b]">R$ --</span>
@@ -123,8 +122,8 @@
                     <select id="regiao_id" class="apple-input" required></select>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <input type="number" id="preco_brl" class="apple-input" placeholder="Preço R$" min="1" step="0.01" oninput="limparPreco('brl')">
-                        <input type="number" id="preco_usd" class="apple-input" placeholder="Preço $" min="1" step="0.01" oninput="limparPreco('usd')">
+                        <input type="text" id="preco_brl" class="apple-input" placeholder="Preço R$" oninput="mascararMoeda(this); limparPreco('brl')">
+                        <input type="text" id="preco_usd" class="apple-input" placeholder="Preço $" oninput="mascararMoeda(this); limparPreco('usd')">
                     </div>
 
                     <div class="mt-4 p-4 border border-[#38383a] rounded-xl bg-[#2c2c2e]">
@@ -214,31 +213,44 @@
             document.getElementById('boxBateria').classList.toggle('hidden', cond === 'Novo');
         }
 
+        // Função para aplicar máscara de moeda (Ex: 7.999,00)
+        function mascararMoeda(input) {
+            let v = input.value.replace(/\D/g, ''); // Remove tudo que não for número (impede negativo)
+            if (v === '') { input.value = ''; return; }
+            v = (parseFloat(v) / 100).toFixed(2).replace('.', ',');
+            v = v.replace(/\B(?=(\d{3})+(?!\d))/g, "."); // Adiciona o ponto de milhar
+            input.value = v;
+        }
+
+        // Converte a string (7.999,00) de volta para float (7999.00) para o banco de dados
+        function parsePreco(valorFormatado) {
+            if (!valorFormatado) return 0;
+            return parseFloat(valorFormatado.replace(/\./g, '').replace(',', '.'));
+        }
+
+        function limparPreco(t) {
+            if(t === 'brl') document.getElementById('preco_usd').value = ''; 
+            else document.getElementById('preco_brl').value = '';
+        }
+
         async function salvarOferta(e) {
             e.preventDefault();
             const pid = document.getElementById('produto_id').value;
             const corSel = document.getElementById('f_cor')?.value;
             const capSel = document.getElementById('f_cap')?.value;
             
-            // 1. TENTA ACHAR A VARIAÇÃO EXATA
             let v = gradeVariacoes.find(x => 
                 x.produto_id == pid && 
                 (!capSel || x.capacidade === capSel) && 
                 (!corSel || corSel === 'MIXER COLORS' || x.cor === corSel)
             );
             
-            // 2. SALVA-VIDAS: SE NÃO ACHAR (EX: MIXER COLORS), PEGA A PRIMEIRA VARIAÇÃO DAQUELE PRODUTO
-            if (!v) {
-                v = gradeVariacoes.find(x => x.produto_id == pid);
-            }
-
-            if (!v) {
-                alert("Erro Interno: Variação não encontrada no banco de dados.");
-                return;
-            }
+            if (!v) { v = gradeVariacoes.find(x => x.produto_id == pid); }
+            if (!v) { alert("Erro Interno: Produto não encontrado."); return; }
             
-            const pBrl = parseFloat(document.getElementById('preco_brl').value || 0);
-            const pUsd = parseFloat(document.getElementById('preco_usd').value || 0);
+            // Aqui ele limpa a máscara antes de checar/salvar
+            const pBrl = parsePreco(document.getElementById('preco_brl').value);
+            const pUsd = parsePreco(document.getElementById('preco_usd').value);
             const qtd = parseInt(document.getElementById('quantidade').value || 0);
 
             if(qtd <= 0 || (pBrl <= 0 && pUsd <= 0)) { 
@@ -246,7 +258,6 @@
                 return; 
             }
 
-            // 3. CAÇADOR DE ERROS: AGORA O SISTEMA AVISA SE O BANCO RECUSAR
             const { error } = await _s.from('ofertas').insert([{
                 fornecedor_id: loja.id, 
                 variacao_id: v.id, 
@@ -267,12 +278,12 @@
             }]);
 
             if (error) {
-                console.error("Erro do Supabase:", error);
-                alert("Erro ao gravar no banco: " + error.message);
+                console.error("Erro Supabase:", error);
+                alert("Falha ao salvar: " + error.message);
                 return;
             }
 
-            alert("Anúncio Gravado com Sucesso!"); 
+            alert("Anúncio publicado com sucesso!"); 
             atualizarLista(); 
             e.target.reset(); 
             document.getElementById('gradeOpcoes').innerHTML = '';
@@ -281,7 +292,7 @@
 
         async function atualizarLista() {
             const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
-            document.getElementById('listaAtivos').innerHTML = (data || []).map(o => `<tr><td><b>${o.variacoes.produtos_mestre.nome}</b><br><small>${o.variacoes.capacidade || ''} | ${o.cores_variadas ? 'MIXER COLORS' : o.variacoes.cor}</small></td><td>${o.quantidade}</td><td>${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR')}</td><td><span class="btn-acao btn-del" onclick="excluirAnuncio(${o.id})">APAGAR</span></td></tr>`).join('');
+            document.getElementById('listaAtivos').innerHTML = (data || []).map(o => `<tr><td><b>${o.variacoes.produtos_mestre.nome}</b><br><small>${o.variacoes.capacidade || ''} | ${o.cores_variadas ? 'MIXER COLORS' : o.variacoes.cor}</small></td><td>${o.quantidade}</td><td>${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td><td><span class="btn-acao btn-del" onclick="excluirAnuncio(${o.id})">APAGAR</span></td></tr>`).join('');
         }
 
         async function excluirAnuncio(id) { if(confirm("Apagar anúncio?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
@@ -298,7 +309,7 @@
         function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
         function calcularImportacao() {
             const el = document.getElementById('calcUsd');
-            let usd = parseFloat(el.value || 0);
+            let usd = parsePreco(el.value);
             let taxaEfetiva = currentUsdtRate > 0 ? currentUsdtRate + 0.07 : 0;
             document.getElementById('calcTaxaEfetiva').innerText = `R$ ${taxaEfetiva.toFixed(4).replace('.', ',')}`;
             if(usd <= 0 || currentUsdtRate === 0) { document.getElementById('calcResult').innerText = "R$ 0,00"; return; }
@@ -306,7 +317,6 @@
         }
         function sairPainel() { localStorage.removeItem('iFipe_Anunciante'); window.location.href = 'index.html'; }
         function setBat(v) { document.getElementById('saude_bateria').value = v; document.querySelectorAll('.b-new').forEach(p => p.classList.toggle('active', p.getAttribute('data-val') === v)); }
-        function limparPreco(t) { if(t==='brl')document.getElementById('preco_usd').value=''; else document.getElementById('preco_brl').value=''; }
     </script>
 </body>
 </html>
