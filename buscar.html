@@ -14,7 +14,6 @@
         
         .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; }
         
-        .ticker-container { display: flex; gap: 20px; align-items: center; }
         .ticker-box { display: flex; flex-direction: column; align-items: flex-end; }
         .ticker-label { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #86868b; }
         .ticker-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; }
@@ -46,7 +45,7 @@
         .mini-tag.active { color: #fff; border-color: #0071e3; background: rgba(0, 113, 227, 0.2); }
         
         .price-text { font-size: 26px; font-weight: 900; letter-spacing: -0.05em; margin: 10px 0; }
-        .buy-button { background: var(--zap); color: #000; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; display: block; text-align: center; text-decoration: none; font-size: 11px; text-transform: uppercase; transition: 0.3s; margin-top: auto; }
+        .buy-button { background: var(--zap); color: #000 !important; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; display: block; text-align: center; text-decoration: none; font-size: 11px; text-transform: uppercase; transition: 0.3s; margin-top: auto; border: none; }
         .buy-button:hover { filter: brightness(1.1); transform: scale(1.02); }
         .hidden { display: none !important; }
     </style>
@@ -55,7 +54,7 @@
 
     <nav class="nav-bar">
         <h1 class="text-2xl font-black italic m-0">iFipe</h1>
-        <div class="ticker-container">
+        <div class="flex gap-6 items-center">
             <div class="ticker-box">
                 <span class="ticker-label">Binance Real</span>
                 <span id="tBinance" class="ticker-val text-white">R$ --</span>
@@ -64,7 +63,6 @@
                 <span class="ticker-label text-[#32d74b]">Taxa VIP Oráculo</span>
                 <span id="tVip" class="ticker-val text-[#32d74b]">R$ --</span>
             </div>
-            <button onclick="toggleTheme()" class="bg-[#2c2c2e] p-2 rounded-full text-xs">🌙</button>
             <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
         </div>
     </nav>
@@ -82,11 +80,11 @@
         </div>
     </div>
 
-    <main class="max-w-[1500px] mx-auto pb-20">
+    <main class="max-w-[1550px] mx-auto pb-20">
         <div class="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mt-4">
-            <select id="f_cat" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="popularAparelhos()"><option value="">Categoria...</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option></select>
+            <select id="f_cat" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="popularAparelhos()"><option value="">Categoria...</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="3">IPAD</option></select>
             <select id="f_prod" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Aparelho...</option></select>
-            <select id="f_cond" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
+            <select id="f_cond" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="GRADE A LEILAO">GRADE A LEILÃO</option></select>
             <select id="f_cap" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Memória...</option></select>
             <select id="f_cor" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Cor...</option></select>
             <select id="f_reg" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Origem...</option></select>
@@ -110,10 +108,7 @@
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let ofertasAtuais = [], gradeVariacoes = [], todosProdutosMestre = [], vipRate = 0;
 
-        window.onload = async () => {
-            const token = localStorage.getItem('iFipe_Token');
-            if(!token) window.location.replace('index.html'); else init();
-        };
+        window.onload = async () => { if(!localStorage.getItem('iFipe_Token')) window.location.replace('index.html'); else init(); };
 
         function iniciarTickers() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
@@ -145,7 +140,7 @@
             document.getElementById('f_reg').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('f_cid').innerHTML += [...new Set(f.data.map(x => x.cidade).filter(Boolean))].sort().map(c => `<option value="${c}">${c}</option>`).join('');
-            carregarDados(); setInterval(carregarDados, 10000);
+            carregarDados(); setInterval(carregarDados, 15000);
         }
 
         async function carregarDados() {
@@ -157,18 +152,16 @@
             const n = (name || "").toLowerCase();
             let weight = 0;
             const match = n.match(/iphone\s*(\d+)/);
-            if(match) weight += parseInt(match[1]) * 10000; // Multiplicador alto para o número (16 > 15)
-            if(n.includes("pro max")) weight += 500;
-            else if(n.includes("pro")) weight += 400;
-            else if(n.includes("plus")) weight += 300;
+            if(match) weight += parseInt(match[1]) * 10000;
+            if(n.includes("pro max")) weight += 500; else if(n.includes("pro")) weight += 400; else if(n.includes("plus")) weight += 300;
             return weight;
         }
 
         function sortLogic(a, b) {
             let wA = getModelWeight(a.variacoes.produtos_mestre.nome), wB = getModelWeight(b.variacoes.produtos_mestre.nome);
-            if (wA !== wB) return wB - wA; // Mais novo primeiro
+            if (wA !== wB) return wB - wA;
             if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
-            return a.preco - b.preco; // Menor preço desempata
+            return a.preco - b.preco;
         }
 
         function renderizarRanking() {
@@ -184,69 +177,67 @@
                 (!fLoj || o.fornecedor_id == fLoj) && (!fCid || o.fornecedores.cidade == fCid)
             );
 
-            // CÁLCULO DINÂMICO DE MENOR PREÇO POR GRUPO
-            let menoresGlobal = {}; 
+            let menores = {}; 
             filtrados.forEach(o => {
                 let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`;
-                if(!menoresGlobal[k] || o.preco < menoresGlobal[k]) menoresGlobal[k] = o.preco;
+                if(!menores[k] || o.preco < menores[k]) menores[k] = o.preco;
             });
 
             const listBrl = filtrados.filter(o => o.moeda === 'BRL').sort(sortLogic);
             const listUsd = filtrados.filter(o => o.moeda === 'USD').sort(sortLogic);
 
-            const renderCards = (lista) => lista.map(o => {
+            const buildGrid = (lista) => lista.map(o => {
                 const k = `${o.variacao_id}_${o.condicao}_${o.moeda}`;
-                const eMenor = o.preco === menoresGlobal[k];
                 
-                // TAGS GATILHO
-                let tGatilho = o.obs_preco === 'OPORTUNIDADE DE COMPRA' ? '<span class="tag-status tag-oportunidade">🚀 OPORTUNIDADE</span>' : (o.obs_preco === 'PREÇO ATUALIZADO' ? '<span class="tag-status tag-atualizado">ℹ️ ATUALIZADO</span>' : '');
-                let tMenor = eMenor ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
-                let tEstoque = (o.quantidade <= 3) ? `<span class="tag-status tag-estoque">⚠️ ÚLTIMAS ${o.quantidade} UN</span>` : '';
+                // MOTOR DE TAGS POR RELÓGIO (15/30 MIN)
+                let tGatilho = '';
+                if(o.data_alteracao_preco && o.preco_anterior) {
+                    let diffMin = (new Date() - new Date(o.data_alteracao_preco)) / 60000;
+                    if(o.preco < o.preco_anterior && diffMin <= 30) tGatilho = '<span class="tag-status tag-oportunidade">📉 OPORTUNIDADE</span>';
+                    else if (o.preco > o.preco_anterior && diffMin <= 15) tGatilho = '<span class="tag-status tag-atualizado">📈 ATUALIZADO</span>';
+                }
 
+                let tMenor = (o.preco === menores[k]) ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
+                let tEstoque = (o.quantidade <= 3) ? `<span class="tag-status tag-estoque">⚠️ ÚLTIMAS ${o.quantidade} UN</span>` : '';
                 let txtCor = o.cores_variadas ? '<span class="text-orange-500 font-black">🟠 CORES VARIADAS</span>' : o.variacoes.cor;
                 let selo = o.fornecedores.verificado ? '<span style="background:#ffcc00; color:#000;" class="rounded px-1 py-0.5 text-[7px] font-black uppercase ml-1">✔️ Verificado</span>' : '';
                 
-                let molduras = [
+                let tags = [
                     o.garantia ? `<span class="mini-tag gar">🛡️ ${o.garantia}</span>` : '',
                     o.regioes ? `<span class="mini-tag active">${o.regioes.bandeira} ${o.regioes.nome}</span>` : '',
                     o.aceita_pix ? `<span class="mini-tag active">PIX</span>` : '',
                     o.aceita_usdt ? `<span class="mini-tag active" style="color:#32d74b;border-color:#32d74b">USDT</span>` : '',
                     o.emite_nota ? `<span class="mini-tag active" style="color:#5e5ce6;border-color:#5e5ce6">NF</span>` : '',
-                    o.aceita_proposta ? `<span class="mini-tag active">NEGOCIA QTD</span>` : '',
                     o.tem_boy ? `<span class="mini-tag active">MOTOBOY</span>` : ''
                 ].filter(Boolean).join(' ');
 
                 const precoFmt = `${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR')}`;
-                const linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent('Olá! Vi no iFipe: ' + o.variacoes.produtos_mestre.nome + ' por ' + precoFmt)}`;
-
                 return `
                 <div class="product-card">
                     <div class="flex flex-wrap gap-1 mb-2">${tGatilho} ${tMenor} ${tEstoque}</div>
                     <h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2>
                     <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase mb-3">${o.variacoes.capacidade} | ${txtCor} | ${o.condicao}</p>
-                    <div class="flex flex-wrap gap-1.5 mb-3">${molduras}</div>
+                    <div class="flex flex-wrap gap-1.5 mb-3">${tags}</div>
                     <div class="mt-2 border-t border-[#38383a] pt-3">
                         <p class="text-[9px] text-blue-400 font-black uppercase">LOJA: ${o.fornecedores.nome} ${selo}</p>
                         <div class="price-text ${o.moeda === 'USD' ? 'text-[#32d74b]' : 'text-white'}">${precoFmt}</div>
                     </div>
-                    <a href="${linkWpp}" target="_blank" class="buy-button">Comprar Agora no WhatsApp</a>
+                    <a href="https://wa.me/${o.fornecedores.whatsapp}?text=Vi%20no%20iFipe:%20${o.variacoes.produtos_mestre.nome}%20por%20${precoFmt}" target="_blank" class="buy-button">Comprar Agora no WhatsApp</a>
                 </div>`;
             }).join('');
 
-            document.getElementById('gridBrl').innerHTML = renderCards(listBrl);
-            document.getElementById('gridUsd').innerHTML = renderCards(listUsd);
+            document.getElementById('gridBrl').innerHTML = buildGrid(listBrl);
+            document.getElementById('gridUsd').innerHTML = buildGrid(listUsd);
             document.getElementById('containerUsd').classList.toggle('hidden', listUsd.length === 0);
             document.querySelector('.main-grid').style.gridTemplateColumns = listUsd.length === 0 ? "1fr" : "";
         }
 
         function popularAparelhos() {
-            const catId = document.getElementById('f_cat').value;
-            const filtrados = catId ? todosProdutosMestre.filter(x => x.grupo_id == catId) : todosProdutosMestre;
+            const filtrados = document.getElementById('f_cat').value ? todosProdutosMestre.filter(x => x.grupo_id == document.getElementById('f_cat').value) : todosProdutosMestre;
             document.getElementById('f_prod').innerHTML = '<option value="">Aparelho...</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             renderizarRanking();
         }
 
-        function toggleTheme() { document.body.classList.toggle('light-mode'); }
         function logout() { localStorage.removeItem('iFipe_Token'); window.location.replace('index.html'); }
     </script>
 </body>
