@@ -24,7 +24,6 @@
         .btn-acao { font-weight: bold; cursor: pointer; font-size: 9px; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; display: inline-block; }
         .btn-edit { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
         .btn-del { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
-        .hidden { display: none !important; }
         .taxa-widget { background: #1c1c1e; border: 1px solid #38383a; border-radius: 12px; padding: 8px 20px; display: flex; flex-direction: column; align-items: flex-start; }
         .btn-wpp { background: #25d366; color: #000; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 10px; transition: 0.3s; display: block; text-align: center; text-decoration: none; }
         .btn-wpp:hover { background: #1eb954; color: #fff; }
@@ -63,7 +62,7 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button>
+                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair do Painel</button>
             </div>
         </div>
 
@@ -84,8 +83,7 @@
                     <form id="priceForm" onsubmit="salvarOferta(event)">
                         <select id="filtro_grupo" class="apple-input mb-2" onchange="popularProdutos()" required>
                             <option value="">Categoria...</option>
-                            <option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="5">IMAC</option>
-                            <option value="3">IPAD</option><option value="6">ACESSÓRIOS</option><option value="7">XIAOMI</option><option value="8">REALME</option>
+                            <option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option>
                         </select>
                         <select id="produto_id" class="apple-input mb-2" onchange="aoMudarProduto()" required></select>
                         <div id="gradeOpcoes"></div>
@@ -105,11 +103,12 @@
             </div>
 
             <div class="lg:col-span-3 space-y-4">
-                <div id="bulkBar" class="hidden bg-blue-600 p-4 rounded-2xl flex items-center justify-between shadow-lg">
+                <div id="bulkBar" class="bg-blue-600 p-4 rounded-2xl flex flex-wrap items-center justify-between shadow-lg gap-4">
                     <span class="text-xs font-black text-white uppercase"><span id="bulkCount">0</span> Selecionados</span>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 flex-wrap">
                         <button onclick="abrirBulkEdit()" class="bg-white text-blue-600 px-4 py-2 rounded-full text-[9px] font-black uppercase">Editar Todos</button>
-                        <button onclick="bulkDelete()" class="bg-red-500 text-white px-4 py-2 rounded-full text-[9px] font-black uppercase">Apagar</button>
+                        <button onclick="bulkDuplicate()" class="bg-green-500 text-white px-4 py-2 rounded-full text-[9px] font-black uppercase">Duplicar</button>
+                        <button onclick="bulkDelete()" class="bg-red-500 text-white px-4 py-2 rounded-full text-[9px] font-black uppercase">Apagar Selecionados</button>
                     </div>
                 </div>
 
@@ -134,6 +133,39 @@
         </div>
     </div>
 
+    <div id="bulkEditModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[1100] p-4 overflow-y-auto">
+        <div class="apple-card max-w-[600px] w-full border-green-500 my-8">
+            <h3 class="text-lg font-black uppercase mb-2 text-green-500">Super Edição em Massa</h3>
+            <p class="text-[10px] text-gray-400 mb-6 uppercase">Atenção: Os campos preenchidos serão aplicados em TODOS os anúncios marcados.</p>
+            
+            <form onsubmit="salvarBulkChanges(event)">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="text-[9px] uppercase text-gray-500 font-black">Nova Condição</label><select id="bulk_condicao" class="apple-input"><option value="">-- Manter Original --</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select></div>
+                    <div><label class="text-[9px] uppercase text-gray-500 font-black">Nova Origem</label><select id="bulk_regiao" class="apple-input"></select></div>
+                    <div><label class="text-[9px] uppercase text-gray-500 font-black">Preço Único (Opcional)</label><input type="text" id="bulk_preco" class="apple-input" placeholder="0,00" oninput="mascararMoeda(this)"></div>
+                    <div><label class="text-[9px] uppercase text-gray-500 font-black">Garantia</label><input type="text" id="bulk_garantia" class="apple-input" placeholder="Ex: 1 Ano Apple"></div>
+                </div>
+
+                <div class="mt-6 p-4 bg-[#2c2c2e] rounded-xl">
+                    <label class="text-blue-400 text-[10px] font-black uppercase mb-4 block">Ativar Molduras de Negócio</label>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="bulk_pix"> PIX</label>
+                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="bulk_usdt"> USDT</label>
+                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="bulk_coleta"> COLETA</label>
+                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="bulk_boy"> MOTOBOY</label>
+                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="bulk_nota"> NOTA FISCAL</label>
+                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="bulk_proposta"> NEGOCIA QTD</label>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mt-8">
+                    <button type="button" onclick="fecharBulkEdit()" class="apple-button bg-gray-600 text-white w-1/3">Cancelar</button>
+                    <button type="submit" class="apple-button bg-green-600 text-white w-2/3">Aplicar em todos agora</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="editModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[1000] p-4">
         <div class="apple-card max-w-[500px] w-full border-blue-500">
             <h3 class="text-sm font-black uppercase mb-4">Ajustes da Oferta</h3>
@@ -146,42 +178,17 @@
                 <div class="mt-4 p-4 bg-[#2c2c2e] rounded-xl">
                     <label class="text-blue-400 text-[9px] font-black uppercase">Molduras</label>
                     <div class="grid grid-cols-2 gap-3 mt-2">
-                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="edit_pix"> ACEITA PIX</label>
-                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="edit_usdt"> ACEITA USDT</label>
-                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="edit_coleta"> ACEITA COLETA</label>
+                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="edit_pix"> PIX</label>
+                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="edit_usdt"> USDT</label>
+                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="edit_coleta"> COLETA</label>
                         <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="edit_boy"> TEM MOTOBOY</label>
+                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="edit_nota"> NOTA FISCAL</label>
+                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="edit_proposta"> NEGOCIA QTD</label>
                     </div>
                 </div>
                 <div class="flex gap-2 mt-6">
                     <button type="button" onclick="fecharModalEdicao()" class="apple-button bg-gray-600 text-white">Sair</button>
                     <button type="submit" class="apple-button bg-blue-600 text-white">Salvar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="bulkEditModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[1100] p-4">
-        <div class="apple-card max-w-[500px] w-full border-green-500">
-            <h3 class="text-sm font-black uppercase mb-2 text-green-500">Edição em Massa</h3>
-            <p class="text-[10px] text-gray-400 mb-4 uppercase">Alterando <span id="bulkEditCountLabel" class="text-white font-black">0</span> itens selecionados.</p>
-            <form onsubmit="salvarBulkChanges(event)">
-                <div class="grid grid-cols-2 gap-4">
-                    <div><label class="text-[9px] uppercase text-gray-500">Condição</label><select id="bulk_condicao" class="apple-input"><option value="">-- Não Alterar --</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select></div>
-                    <div><label class="text-[9px] uppercase text-gray-500">Origem</label><select id="bulk_regiao" class="apple-input"></select></div>
-                </div>
-                <div><label class="text-[9px] uppercase text-gray-500">Garantia</label><input type="text" id="bulk_garantia" class="apple-input" placeholder="Manter atual"></div>
-                <div class="mt-4 p-4 bg-[#2c2c2e] rounded-xl">
-                    <label class="text-green-400 text-[9px] font-black uppercase">Molduras (Aplicar em todos)</label>
-                    <div class="grid grid-cols-2 gap-3 mt-2">
-                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="bulk_pix"> ACEITA PIX</label>
-                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="bulk_usdt"> ACEITA USDT</label>
-                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="bulk_coleta"> ACEITA COLETA</label>
-                        <label class="text-[10px] flex items-center gap-2"><input type="checkbox" id="bulk_boy"> TEM MOTOBOY</label>
-                    </div>
-                </div>
-                <div class="flex gap-2 mt-6">
-                    <button type="button" onclick="fecharBulkEdit()" class="apple-button bg-gray-600 text-white">Cancelar</button>
-                    <button type="submit" class="apple-button bg-green-600 text-white">Aplicar em Massa</button>
                 </div>
             </form>
         </div>
@@ -229,7 +236,7 @@
             const regOptions = '<option value="">Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             document.getElementById('regiao_id').innerHTML = regOptions;
             document.getElementById('edit_regiao').innerHTML = regOptions;
-            document.getElementById('bulk_regiao').innerHTML = '<option value="">-- Não Alterar --</option>' + regOptions;
+            document.getElementById('bulk_regiao').innerHTML = '<option value="">-- Manter Original --</option>' + regOptions;
             atualizarLista();
         }
 
@@ -304,7 +311,7 @@
             const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
             document.getElementById('listaAtivos').innerHTML = (data || []).map(o => `
                 <tr data-id="${o.id}">
-                    <td><input type="checkbox" class="offer-check" value="${o.id}" onchange="updateBulkBar()"></td>
+                    <td><input type="checkbox" class="offer-check" value="${o.id}" onchange="updateBulkCount()"></td>
                     <td><b>${o.variacoes.produtos_mestre.nome}</b><br><small>${o.variacoes.capacidade || ''} | ${o.cores_variadas ? 'MIXER COLORS' : o.variacoes.cor}</small></td>
                     <td class="text-center"><input type="number" class="mini-edit" value="${o.quantidade}" onblur="salvarRapido(${o.id}, 'quantidade', this.value)"></td>
                     <td class="text-center"><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapido(${o.id}, 'preco', this.value)"></td>
@@ -316,7 +323,7 @@
                     </td>
                 </tr>
             `).join('');
-            updateBulkBar();
+            updateBulkCount();
         }
 
         async function excluirAnuncio(id) {
@@ -344,6 +351,8 @@
             document.getElementById('edit_usdt').checked = o.aceita_usdt;
             document.getElementById('edit_coleta').checked = o.aceita_coleta;
             document.getElementById('edit_boy').checked = o.tem_boy;
+            document.getElementById('edit_nota').checked = o.emite_nota;
+            document.getElementById('edit_proposta').checked = o.aceita_proposta;
             document.getElementById('editModal').classList.remove('hidden');
         }
 
@@ -354,32 +363,52 @@
             await _s.from('ofertas').update({
                 garantia: document.getElementById('edit_garantia').value,
                 regiao_id: document.getElementById('edit_regiao').value,
-                aceita_pix: document.getElementById('edit_pix').checked, aceita_usdt: document.getElementById('edit_usdt').checked,
-                aceita_coleta: document.getElementById('edit_coleta').checked, tem_boy: document.getElementById('edit_boy').checked
+                aceita_pix: document.getElementById('edit_pix').checked, 
+                aceita_usdt: document.getElementById('edit_usdt').checked,
+                aceita_coleta: document.getElementById('edit_coleta').checked, 
+                tem_boy: document.getElementById('edit_boy').checked,
+                emite_nota: document.getElementById('edit_nota').checked,
+                aceita_proposta: document.getElementById('edit_proposta').checked
             }).eq('id', document.getElementById('edit_id').value);
             fecharModalEdicao(); atualizarLista();
         }
 
-        function updateBulkBar() {
-            const selected = document.querySelectorAll('.offer-check:checked').length;
-            document.getElementById('bulkCount').innerText = selected;
-            document.getElementById('bulkBar').classList.toggle('hidden', selected === 0);
+        function updateBulkCount() {
+            const count = document.querySelectorAll('.offer-check:checked').length;
+            document.getElementById('bulkCount').innerText = count;
         }
 
         function toggleAll(master) {
             document.querySelectorAll('.offer-check').forEach(c => c.checked = master.checked);
-            updateBulkBar();
+            updateBulkCount();
         }
 
         async function bulkDelete() {
-            if(!confirm("Excluir selecionados?")) return;
             const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => c.value);
+            if(!ids.length) return alert("Selecione os anúncios!");
+            if(!confirm(`Apagar permanentemente ${ids.length} itens?`)) return;
             await _s.from('ofertas').delete().in('id', ids);
             atualizarLista();
         }
 
+        async function bulkDuplicate() {
+            const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => c.value);
+            if(!ids.length) return alert("Selecione os anúncios para duplicar!");
+            if(!confirm(`Duplicar os ${ids.length} itens selecionados?`)) return;
+            
+            const { data: originais } = await _s.from('ofertas').select('*').in('id', ids);
+            const copias = originais.map(o => {
+                const { id, criado_em, ...resto } = o;
+                return resto;
+            });
+
+            const { error } = await _s.from('ofertas').insert(copias);
+            if(error) alert(error.message); else { alert("Itens duplicados com sucesso!"); atualizarLista(); }
+        }
+
         function abrirBulkEdit() {
             const count = document.querySelectorAll('.offer-check:checked').length;
+            if(!count) return alert("Selecione os anúncios!");
             document.getElementById('bulkEditCountLabel').innerText = count;
             document.getElementById('bulkEditModal').classList.remove('hidden');
         }
@@ -390,16 +419,25 @@
             e.preventDefault();
             const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => c.value);
             let up = {};
+            
             const cond = document.getElementById('bulk_condicao').value;
             const reg = document.getElementById('bulk_regiao').value;
             const gar = document.getElementById('bulk_garantia').value;
+            const preco = parsePreco(document.getElementById('bulk_preco').value);
+
             if(cond) up.condicao = cond;
             if(reg) up.regiao_id = reg;
             if(gar) up.garantia = gar;
+            if(preco > 0) up.preco = preco;
+
+            // Aplica as molduras (Estado do checkbox do modal vira regra para todos)
             up.aceita_pix = document.getElementById('bulk_pix').checked;
             up.aceita_usdt = document.getElementById('bulk_usdt').checked;
             up.aceita_coleta = document.getElementById('bulk_coleta').checked;
             up.tem_boy = document.getElementById('bulk_boy').checked;
+            up.emite_nota = document.getElementById('bulk_nota').checked;
+            up.aceita_proposta = document.getElementById('bulk_proposta').checked;
+
             const { error } = await _s.from('ofertas').update(up).in('id', ids);
             if(error) alert(error.message); else { alert("Alterações aplicadas!"); fecharBulkEdit(); atualizarLista(); }
         }
