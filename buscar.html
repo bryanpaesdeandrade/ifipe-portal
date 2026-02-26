@@ -8,26 +8,27 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
+        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --zap: #25D366; }
         body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
         body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; overflow-x: hidden; }
         
         .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; }
         
-        /* Tickers no Topo */
+        /* Tickers */
         .ticker-container { display: flex; gap: 20px; align-items: center; }
         .ticker-box { display: flex; flex-direction: column; align-items: flex-end; }
         .ticker-label { font-size: 7px; font-weight: 900; text-transform: uppercase; color: #86868b; }
         .ticker-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 800; }
 
-        /* Super Simulador Paraguai */
+        /* Simulador PY */
         .py-sim-bar { background: #1c1c1e; border-bottom: 2px solid #0071e3; padding: 15px; display: flex; justify-content: center; align-items: center; gap: 20px; flex-wrap: wrap; }
         .sim-input-group { display: flex; align-items: center; gap: 10px; background: #000; padding: 8px 15px; border-radius: 12px; border: 1px solid #38383a; }
         .sim-input { background: transparent; border: none; color: #fff; font-weight: 800; width: 90px; outline: none; text-align: center; font-size: 16px; }
 
-        /* Grid de Colunas Mestre */
+        /* Grids */
         .main-grid { display: grid; grid-template-columns: 1fr; gap: 30px; padding: 20px; }
         @media (min-width: 1024px) { .main-grid { grid-template-columns: 1fr 1fr; } }
+        
         .section-title { text-align: center; font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; font-size: 14px; padding: 10px; border-radius: 8px; }
         .bg-br { background: rgba(0, 113, 227, 0.1); color: #0071e3; border: 1px solid rgba(0, 113, 227, 0.2); }
         .bg-int { background: rgba(50, 215, 75, 0.1); color: #32d74b; border: 1px solid rgba(50, 215, 75, 0.2); }
@@ -35,18 +36,25 @@
         .sub-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
         @media (min-width: 640px) { .sub-grid { grid-template-columns: 1fr 1fr; } }
 
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; position: relative; transition: 0.3s; }
+        /* Card e Tags */
+        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; position: relative; transition: 0.3s; display: flex; flex-direction: column; }
         .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
-        .tag-status { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 50px; display: inline-block; margin-bottom: 5px; }
+        
+        .tag-status { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 50px; display: inline-block; margin-bottom: 5px; margin-right: 4px; }
         .tag-oportunidade { background: #32d74b; color: #000; }
         .tag-atualizado { background: #0071e3; color: #fff; }
         .tag-menor { background: #ff3b30; color: #fff; }
+        .tag-estoque { background: #ffcc00; color: #000; }
         
         .mini-tag { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 6px; border-radius: 6px; background: var(--input); color: #86868b; border: 1px solid var(--border); }
         .mini-tag.active { color: #fff; border-color: #0071e3; background: rgba(0, 113, 227, 0.2); }
-        .price-text { font-size: 24px; font-weight: 900; letter-spacing: -0.05em; }
-        .buy-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 10px; width: 100%; display: block; text-align: center; text-decoration: none; font-size: 10px; text-transform: uppercase; margin-top: 12px; transition: 0.3s; }
-        .buy-button:hover { background: #0071e3; color: #fff; }
+        
+        .price-text { font-size: 26px; font-weight: 900; letter-spacing: -0.05em; margin: 10px 0; }
+        
+        /* BOTÃO WHATSAPP VERDE ZAP */
+        .buy-button { background: var(--zap); color: #000; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; display: block; text-align: center; text-decoration: none; font-size: 11px; text-transform: uppercase; transition: 0.3s; border: none; margin-top: auto; }
+        .buy-button:hover { filter: brightness(1.1); transform: scale(1.02); color: #000; }
+        
         .hidden { display: none !important; }
     </style>
 </head>
@@ -57,11 +65,11 @@
         <div class="ticker-container">
             <div class="ticker-box">
                 <span class="ticker-label">Binance Real</span>
-                <span id="tBinance" class="ticker-val text-white">R$ 0,0000</span>
+                <span id="tBinance" class="ticker-val text-white">R$ --</span>
             </div>
             <div class="ticker-box">
                 <span class="ticker-label text-[#32d74b]">Taxa VIP Oráculo</span>
-                <span id="tVip" class="ticker-val text-[#32d74b]">R$ 0,0000</span>
+                <span id="tVip" class="ticker-val text-[#32d74b]">R$ --</span>
             </div>
             <button onclick="toggleTheme()" class="bg-[#2c2c2e] p-2 rounded-full text-xs">🌙</button>
             <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
@@ -72,20 +80,16 @@
         <div class="flex flex-col items-center">
             <span class="text-[9px] font-black uppercase text-blue-500 mb-2">Simulador Paraguai ➔ Brasil (Custo SP)</span>
             <div class="flex items-center gap-4">
-                <div class="sim-input-group">
-                    <span class="text-gray-500 font-black">$</span>
-                    <input type="number" id="pyUsd" class="sim-input" placeholder="Preço PY" oninput="calcPy()">
-                </div>
+                <div class="sim-input-group"><span class="text-gray-500 font-black">$</span><input type="number" id="pyUsd" class="sim-input" placeholder="0" oninput="calcPy()"></div>
                 <span class="text-2xl font-black text-gray-700">➔</span>
-                <div class="bg-black px-6 py-2 rounded-xl border-2 border-[#32d74b]">
+                <div class="bg-black px-6 py-2 rounded-xl border-2 border-[#32d74b] shadow-[0_0_15px_rgba(50,215,75,0.2)]">
                     <span id="pyBrl" class="text-xl font-mono font-black text-[#32d74b]">R$ 0,00</span>
                 </div>
             </div>
-            <span class="text-[8px] text-gray-500 mt-2 font-black uppercase">🔒 Câmbio VIP + Frete PY/SP Inclusos</span>
         </div>
     </div>
 
-    <main class="max-w-[1400px] mx-auto pb-20">
+    <main class="max-w-[1500px] mx-auto pb-20">
         <div class="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mt-4">
             <select id="f_cat" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="popularAparelhos()"><option value="">Categoria...</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option></select>
             <select id="f_prod" class="apple-input bg-[#1c1c1e] p-3 rounded-xl text-xs border border-[#38383a]" onchange="renderizarRanking()"><option value="">Aparelho...</option></select>
@@ -98,36 +102,32 @@
         </div>
 
         <div class="main-grid">
-            
             <div id="containerBrl">
-                <div class="section-title bg-br">Anúncios Brasil (Pagamento em Real)</div>
+                <div class="section-title bg-br">Anúncios Brasil (Real)</div>
                 <div id="gridBrl" class="sub-grid"></div>
             </div>
-
             <div id="containerUsd">
-                <div class="section-title bg-int">Anúncios Internacionais (Pagamento em Dólar)</div>
+                <div class="section-title bg-int">Anúncios Internacionais (Dólar)</div>
                 <div id="gridUsd" class="sub-grid"></div>
             </div>
-
         </div>
     </main>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let ofertasAtuais = [], gradeVariacoes = [], todosProdutosMestre = [], binanceRate = 0, vipRate = 0;
+        let ofertasAtuais = [], gradeVariacoes = [], todosProdutosMestre = [], vipRate = 0;
 
         window.onload = async () => {
             const token = localStorage.getItem('iFipe_Token');
-            if(!token) window.location.replace('index.html');
-            else init();
+            if(!token) window.location.replace('index.html'); else init();
         };
 
         function iniciarTickers() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (e) => {
-                binanceRate = parseFloat(JSON.parse(e.data).c);
-                vipRate = binanceRate + 0.07;
-                document.getElementById('tBinance').innerText = `R$ ${binanceRate.toFixed(4).replace('.',',')}`;
+                const br = parseFloat(JSON.parse(e.data).c);
+                vipRate = br + 0.07;
+                document.getElementById('tBinance').innerText = `R$ ${br.toFixed(4).replace('.',',')}`;
                 document.getElementById('tVip').innerText = `R$ ${vipRate.toFixed(4).replace('.',',')}`;
                 calcPy();
             };
@@ -136,9 +136,7 @@
         function calcPy() {
             const usd = parseFloat(document.getElementById('pyUsd').value);
             if(!usd || vipRate === 0) { document.getElementById('pyBrl').innerText = "R$ 0,00"; return; }
-            // Cálculo: (Dólar PY * Taxa VIP) + 6% Custo Brasil
-            const final = (usd * vipRate) * 1.06;
-            document.getElementById('pyBrl').innerText = final.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('pyBrl').innerText = ((usd * vipRate) * 1.06).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         async function init() {
@@ -147,35 +145,27 @@
                 _s.from('produtos_mestre').select('*').order('nome'), 
                 _s.from('regioes').select('*').order('nome'), 
                 _s.from('variacoes').select('*'), 
-                _s.from('fornecedores').select('id, nome, cidade, pais, verificado').eq('ativo', true) 
+                _s.from('fornecedores').select('*').eq('ativo', true) 
             ]);
             todosProdutosMestre = p.data; gradeVariacoes = v.data;
             document.getElementById('f_prod').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('f_reg').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('f_cid').innerHTML += [...new Set(f.data.map(x => x.cidade))].sort().map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('f_cid').innerHTML += [...new Set(f.data.map(x => x.cidade).filter(Boolean))].sort().map(c => `<option value="${c}">${c}</option>`).join('');
             carregarDados(); setInterval(carregarDados, 10000);
         }
 
         async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira)');
+            const { data } = await _s.from('ofertas').select('*, fornecedores(*), variacoes(*, produtos_mestre(*)), regioes(*)');
             ofertasAtuais = data || []; renderizarRanking();
         }
 
-        function getModelWeight(name) {
-            let n = (name || "").toLowerCase();
-            let weight = 0;
-            let match = n.match(/iphone\s*(\d+)/);
-            if(match) weight += parseInt(match[1]) * 1000;
-            if(n.includes("pro max")) weight += 40; else if(n.includes("pro")) weight += 30;
-            return weight;
-        }
-
         function sortLogic(a, b) {
-            let wA = getModelWeight(a.variacoes.produtos_mestre.nome), wB = getModelWeight(b.variacoes.produtos_mestre.nome);
-            if (wA !== wB) return wB - wA; // Mais novo primeiro
+            const getW = (n) => { let m = (n||"").match(/iphone\s*(\d+)/); return (m ? parseInt(m[1])*1000 : 0) + (n.includes("pro max")?40:n.includes("pro")?30:0); };
+            let wA = getW(a.variacoes.produtos_mestre.nome), wB = getW(b.variacoes.produtos_mestre.nome);
+            if (wA !== wB) return wB - wA;
             if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
-            return a.preco - b.preco; // Menor preço na cadeira da frente
+            return a.preco - b.preco;
         }
 
         function renderizarRanking() {
@@ -186,84 +176,70 @@
             let filtrados = ofertasAtuais.filter(o => o.quantidade > 0 &&
                 (!fCat || o.variacoes.produtos_mestre.grupo_id == fCat) &&
                 (!fP || o.variacoes.produtos_mestre.id == fP) &&
-                (!fC || o.condicao == fC) &&
-                (!fCap || o.variacoes.capacidade == fCap) &&
-                (!fCor || o.variacoes.cor == fCor) &&
-                (!fReg || o.regiao_id == fReg) &&
-                (!fLoj || o.fornecedor_id == fLoj) &&
-                (!fCid || o.fornecedores.cidade == fCid)
+                (!fC || o.condicao == fC) && (!fCap || o.variacoes.capacidade == fCap) &&
+                (!fCor || o.variacoes.cor == fCor) && (!fReg || o.regiao_id == fReg) &&
+                (!fLoj || o.fornecedor_id == fLoj) && (!fCid || o.fornecedores.cidade == fCid)
             );
+
+            // LOGICA DE MENOR PREÇO (Calculada após todos os filtros)
+            let menoresGlobal = {}; 
+            filtrados.forEach(o => {
+                let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`;
+                if(!menoresGlobal[k] || o.preco < menoresGlobal[k]) menoresGlobal[k] = o.preco;
+            });
 
             const listBrl = filtrados.filter(o => o.moeda === 'BRL').sort(sortLogic);
             const listUsd = filtrados.filter(o => o.moeda === 'USD').sort(sortLogic);
 
-            // Regra de Layout: Se USD for vazio, BR ocupa tudo
-            const mainGrid = document.querySelector('.main-grid');
-            if(listUsd.length === 0) {
-                mainGrid.style.gridTemplateColumns = "1fr";
-                document.getElementById('containerUsd').classList.add('hidden');
-            } else {
-                mainGrid.style.gridTemplateColumns = window.innerWidth >= 1024 ? "1fr 1fr" : "1fr";
-                document.getElementById('containerUsd').classList.remove('hidden');
-            }
+            document.getElementById('containerUsd').classList.toggle('hidden', listUsd.length === 0);
+            document.querySelector('.main-grid').style.gridTemplateColumns = listUsd.length === 0 ? "1fr" : "";
 
-            document.getElementById('gridBrl').innerHTML = listBrl.map(o => cardHtml(o, listBrl)).join('');
-            document.getElementById('gridUsd').innerHTML = listUsd.map(o => cardHtml(o, listUsd)).join('');
-        }
+            const renderCards = (lista) => lista.map(o => {
+                const k = `${o.variacao_id}_${o.condicao}_${o.moeda}`;
+                const eMenor = o.preco === menoresGlobal[k];
+                
+                // TAGS
+                let tagGatilho = o.obs_preco === 'OPORTUNIDADE DE COMPRA' ? '<span class="tag-status tag-oportunidade">🚀 OPORTUNIDADE</span>' : (o.obs_preco === 'PREÇO ATUALIZADO' ? '<span class="tag-status tag-atualizado">ℹ️ ATUALIZADO</span>' : '');
+                let tagMenor = eMenor ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
+                let tagEstoque = (o.quantidade > 0 && o.quantidade <= 3) ? `<span class="tag-status tag-estoque">⚠️ ÚLTIMAS ${o.quantidade} UN</span>` : '';
 
-        function cardHtml(o, listaOrigem) {
-            // Identifica se é o menor preço daquela categoria/modelo na lista atual
-            const k = `${o.variacao_id}_${o.condicao}`;
-            const precos = listaOrigem.filter(x => `${x.variacao_id}_${x.condicao}` === k).map(x => x.preco);
-            const eMenor = o.preco === Math.min(...precos);
+                let txtCor = o.cores_variadas ? '<span class="text-orange-500 font-black">🟠 CORES VARIADAS</span>' : o.variacoes.cor;
+                
+                let tags = [
+                    o.garantia ? `<span class="mini-tag gar">🛡️ ${o.garantia}</span>` : '',
+                    o.regioes ? `<span class="mini-tag active">${o.regioes.bandeira} ${o.regioes.nome}</span>` : '',
+                    o.aceita_pix ? `<span class="mini-tag active">PIX</span>` : '',
+                    o.aceita_usdt ? `<span class="mini-tag active" style="color:#32d74b;border-color:#32d74b">USDT</span>` : '',
+                    o.emite_nota ? `<span class="mini-tag active" style="color:#5e5ce6;border-color:#5e5ce6">NF</span>` : '',
+                    o.aceita_proposta ? `<span class="mini-tag active">NEGOCIA QTD</span>` : '',
+                    o.tem_boy ? `<span class="mini-tag active">MOTOBOY</span>` : ''
+                ].filter(Boolean).join(' ');
 
-            let tagGatilho = '';
-            if(o.obs_preco === 'OPORTUNIDADE DE COMPRA') tagGatilho = `<span class="tag-status tag-oportunidade">🚀 OPORTUNIDADE</span>`;
-            else if(o.obs_preco === 'PREÇO ATUALIZADO') tagGatilho = `<span class="tag-status tag-atualizado">ℹ️ ATUALIZADO</span>`;
-            
-            let tagMenor = eMenor ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
-            let txtCor = o.cores_variadas ? '<span class="text-orange-500 font-black">CORES VARIADAS</span>' : o.variacoes.cor;
-            
-            let tags = [
-                o.garantia ? `<span class="mini-tag gar">🛡️ ${o.garantia}</span>` : '',
-                o.regioes ? `<span class="mini-tag fab">${o.regioes.bandeira} ${o.regioes.nome}</span>` : '',
-                o.aceita_pix ? `<span class="mini-tag active">PIX</span>` : '',
-                o.aceita_usdt ? `<span class="mini-tag active" style="color:#32d74b;border-color:#32d74b">USDT</span>` : '',
-                o.emite_nota ? `<span class="mini-tag active" style="color:#5e5ce6;border-color:#5e5ce6">NF</span>` : '',
-                o.aceita_proposta ? `<span class="mini-tag active">NEGOCIA QTD</span>` : '',
-                o.tem_boy ? `<span class="mini-tag active">MOTOBOY</span>` : ''
-            ].filter(Boolean).join(' ');
+                const precoFmt = `${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR')}`;
+                const linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent('Olá! Vi no iFipe: ' + o.variacoes.produtos_mestre.nome + ' | ' + o.variacoes.capacidade + ' por ' + precoFmt)}`;
 
-            const moeda = o.moeda === 'USD' ? '$' : 'R$';
-            const precoFmt = `${moeda} ${o.preco.toLocaleString('pt-BR')}`;
-            const linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent('Olá! Encontrei no iFipe: ' + o.variacoes.produtos_mestre.nome + ' por ' + precoFmt)}`;
+                return `
+                <div class="product-card">
+                    <div class="flex flex-wrap gap-1 mb-2">${tagGatilho} ${tagMenor} ${tagEstoque}</div>
+                    <h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2>
+                    <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase mb-3">${o.variacoes.capacidade} | ${txtCor} | ${o.condicao}</p>
+                    <div class="flex flex-wrap gap-1.5 mb-3">${tags}</div>
+                    <div class="mt-2 border-t border-[#38383a] pt-3">
+                        <p class="text-[9px] text-blue-400 font-black uppercase">LOJA: ${o.fornecedores.nome} ${o.fornecedores.verificado ? '✔️' : ''}</p>
+                        <div class="price-text ${o.moeda === 'USD' ? 'text-[#32d74b]' : 'text-white'}">${precoFmt}</div>
+                    </div>
+                    <a href="${linkWpp}" target="_blank" class="buy-button">Comprar Agora no WhatsApp</a>
+                </div>`;
+            }).join('');
 
-            return `
-            <div class="product-card">
-                <div class="flex flex-wrap gap-1 mb-2">${tagGatilho} ${tagMenor}</div>
-                <h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2>
-                <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase mb-3">${o.variacoes.capacidade} | ${txtCor} | ${o.condicao}</p>
-                <div class="flex flex-wrap gap-1.5 mb-3">${tags}</div>
-                <div class="mt-2 border-t border-[#38383a] pt-3">
-                    <p class="text-[9px] text-blue-400 font-black uppercase">LOJA: ${o.fornecedores.nome} ${o.fornecedores.verificado ? '✔️' : ''}</p>
-                    <div class="price-text ${o.moeda === 'USD' ? 'text-[#32d74b]' : 'text-white'}">${precoFmt}</div>
-                </div>
-                <a href="${linkWpp}" target="_blank" class="buy-button">WhatsApp</a>
-            </div>`;
+            document.getElementById('gridBrl').innerHTML = renderCards(listBrl);
+            document.getElementById('gridUsd').innerHTML = renderCards(listUsd);
         }
 
         function popularAparelhos() {
             const catId = document.getElementById('f_cat').value;
             const filtrados = catId ? todosProdutosMestre.filter(x => x.grupo_id == catId) : todosProdutosMestre;
             document.getElementById('f_prod').innerHTML = '<option value="">Aparelho...</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            atualizarFiltrosCascata();
-        }
-
-        function atualizarFiltrosCascata() {
-            const pid = document.getElementById('f_prod').value;
-            const vars = pid ? gradeVariacoes.filter(x => x.produto_id == pid) : gradeVariacoes;
-            document.getElementById('f_cap').innerHTML = '<option value="">Memória...</option>' + [...new Set(vars.map(x => x.capacidade).filter(Boolean))].map(c => `<option value="${c}">${c}</option>`).join('');
-            document.getElementById('f_cor').innerHTML = '<option value="">Cor...</option>' + [...new Set(vars.map(x => x.cor).filter(Boolean))].map(c => `<option value="${c}">${c}</option>`).join('');
             renderizarRanking();
         }
 
