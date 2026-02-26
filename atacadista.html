@@ -9,142 +9,109 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
-        body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; }
-        .user-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 20px; position:sticky; top:0; z-index:100; }
-        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 2rem; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 12px; padding: 14px; width: 100%; color: var(--text); outline: none; margin-bottom: 1rem; font-size: 14px; transition: 0.3s; }
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; }
+        .user-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:10px 20px; position:sticky; top:0; z-index:100; }
+        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 13px; transition: 0.3s; }
         .apple-input:focus { border-color: #0071e3; }
-        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 16px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 13px; transition: 0.3s; }
+        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 11px; transition: 0.3s; }
         .apple-button:hover { background: #0071e3; color: #fff; }
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-        th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 12px; text-align: left; border-bottom: 1px solid var(--border); letter-spacing: 0.1em; }
-        td { padding: 14px 12px; border-bottom: 1px solid var(--input); font-size: 13px; }
-        label { display: block; text-transform: uppercase; font-size: 10px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.1em; }
-        .battery-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 8px; margin-bottom: 15px;}
-        .battery-pill { padding: 10px; border-radius: 10px; background: var(--input); border: 1px solid var(--border); cursor: pointer; font-size: 9px; font-weight: 900; text-transform: uppercase; text-align: center; color: #86868b; transition: 0.2s; }
-        .battery-pill.active { background: #32d74b !important; color: #000 !important; border-color: #32d74b !important; }
-        .btn-acao { font-weight: bold; cursor: pointer; font-size: 10px; text-transform: uppercase; padding: 6px 10px; border-radius: 6px; display: inline-block; }
+        table { width: 100%; border-collapse: collapse; }
+        th { font-size: 10px; color: #86868b; text-transform: uppercase; padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
+        td { padding: 10px; border-bottom: 1px solid var(--input); font-size: 12px; }
+        .mini-edit { background: transparent; border: 1px solid transparent; color: #32d74b; font-weight: bold; width: 70px; text-align: center; border-radius: 4px; padding: 2px; }
+        .mini-edit:focus { border-color: #0071e3; background: #1c1c1e; outline: none; }
+        .btn-acao { font-weight: bold; cursor: pointer; font-size: 9px; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; }
+        .btn-edit { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
         .btn-del { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
         .hidden { display: none !important; }
-        .btn-calc-float { position: fixed; bottom: 20px; left: 20px; background-color: #0071e3; color: #fff; width: 60px; height: 60px; border-radius: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 20px rgba(0,113,227,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; border: none; cursor: pointer; }
-        .calc-text { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
-        .btn-calc-float:hover { width: 170px; padding-left: 18px; justify-content: flex-start; }
-        .btn-calc-float:hover .calc-text { opacity: 1; }
+        .taxa-widget { background: #1c1c1e; border: 1px solid #32d74b; border-radius: 8px; padding: 5px 12px; display: flex; align-items: center; gap: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="contaModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[500] px-4">
-        <div class="apple-card w-full max-w-[400px]">
-            <h3 class="font-bold text-[14px] text-blue-500 mb-4 uppercase tracking-widest">Minha Conta</h3>
-            <form onsubmit="salvarConta(event)">
-                <label>WhatsApp da Loja</label>
-                <input type="text" id="conta_whats" class="apple-input" placeholder="Ex: 11999999999">
-                <label>Nova Senha</label>
-                <input type="password" id="conta_senha" class="apple-input" placeholder="••••••••">
-                <div class="flex gap-2 mt-4">
-                    <button type="button" onclick="fecharConta()" class="apple-button bg-gray-600 text-white w-1/3">Voltar</button>
-                    <button type="submit" class="apple-button bg-blue-600 text-white w-2/3">Atualizar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="calcModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[2000] px-4">
-        <div class="w-full max-w-[380px] bg-[#1c1c1e] border-2 border-[#38383a] rounded-3xl p-6 shadow-2xl relative text-white text-center">
-            <button onclick="fecharCalc()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl">×</button>
-            <h2 class="text-sm font-black italic uppercase mb-2">CALCULADORA VIP IMPORTACAO IPHONE</h2>
-            <div class="bg-[#0a0a0a] border-2 border-[#2c2c2e] rounded-2xl p-4 text-right mb-4">
-                <span class="block text-[9px] text-gray-500 font-black uppercase">Custo Final BR (R$)</span>
-                <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3]">R$ 0,00</div>
-            </div>
-            <input type="text" id="calcUsd" class="apple-input text-center text-xl font-black" placeholder="Custo no PY (USD)" oninput="mascararMoeda(this); calcularImportacao()">
-            <div class="bg-black/40 border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase text-gray-500 text-left">
-                <div class="flex justify-between border-b border-[#2c2c2e] pb-2 mb-2">
-                    <span>Taxa Binance</span><span id="tickerCalc" class="text-[#32d74b]">R$ --</span>
-                </div>
-                <p class="mb-2">Oráculo pagando sua nota sua taxa será <span id="calcTaxaEfetiva" class="text-[#32d74b] font-mono">R$ --</span></p>
-                <div class="text-[#0071e3] font-black text-center mt-2">🔒 FRETE PY X BR INCLUSO</div>
-            </div>
-        </div>
-    </div>
-
     <div class="user-bar">
-        <div class="max-w-7xl mx-auto flex justify-between items-center w-full">
-            <div class="text-[11px] font-black uppercase">LOJA: <span id="nomeLoja" class="text-blue-500">...</span></div>
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <div class="text-[10px] font-black uppercase">LOJA: <span id="nomeLoja" class="text-blue-500">...</span></div>
+                <div class="taxa-widget">
+                    <span class="text-[9px] font-black uppercase text-gray-400">Taxa USDT VIP</span>
+                    <span id="suaTaxaUsdt" class="text-[12px] font-mono font-black text-[#32d74b]">R$ --</span>
+                </div>
+            </div>
             <div class="flex gap-4">
-                <button onclick="abrirConta()" class="text-[10px] text-blue-400 font-black uppercase hover:text-white transition">Minha Conta</button>
-                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase hover:text-red-400 transition">Sair do Painel</button>
+                <button onclick="abrirConta()" class="text-[10px] text-blue-400 font-black uppercase">Minha Conta</button>
+                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button>
             </div>
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-1">
+    <div class="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        <div class="lg:col-span-1 space-y-6">
+            
+            <div class="apple-card border-[#32d74b]">
+                <h3 class="text-xs font-black uppercase mb-4 text-[#32d74b]">Comprar USDT (Simulador)</h3>
+                <label class="text-[9px]">Valor em Dólar (USD)</label>
+                <input type="text" id="compraUsd" class="apple-input mb-4" placeholder="$ 0,00" oninput="mascararMoeda(this); calcularCompraUsdt()">
+                <div class="p-3 bg-black rounded-xl border border-gray-800">
+                    <span class="block text-[8px] text-gray-500 uppercase">Você envia em Reais:</span>
+                    <span id="resultadoCompraBrl" class="text-lg font-black text-[#32d74b]">R$ 0,00</span>
+                </div>
+                <button class="apple-button mt-4 bg-[#32d74b] text-black">Solicitar via WhatsApp</button>
+            </div>
+
             <div class="apple-card">
-                <h2 class="text-xl font-black italic mb-6 uppercase">Novo Anúncio</h2>
+                <h2 class="text-sm font-black italic mb-4 uppercase">Novo Registro</h2>
                 <form id="priceForm" onsubmit="salvarOferta(event)">
-                    <label>Categoria</label>
-                    <select id="filtro_grupo" class="apple-input" onchange="popularProdutos()" required>
-                        <option value="">Selecione...</option>
-                        <option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="3">IPAD</option>
-                        <option value="4">MACBOOK</option><option value="5">IMAC</option><option value="6">ACESSÓRIOS</option>
-                        <option value="7">XIAOMI</option><option value="8">REALME</option>
+                    <select id="filtro_grupo" class="apple-input mb-2" onchange="popularProdutos()" required>
+                        <option value="">Categoria...</option>
+                        <option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="5">IMAC</option>
+                        <option value="3">IPAD</option><option value="6">ACESSÓRIOS</option><option value="7">XIAOMI</option><option value="8">REALME</option>
                     </select>
-                    
-                    <label>Modelo</label>
-                    <select id="produto_id" class="apple-input" onchange="aoMudarProduto()" required></select>
-                    
+                    <select id="produto_id" class="apple-input mb-2" onchange="aoMudarProduto()" required></select>
                     <div id="gradeOpcoes"></div>
-
-                    <div class="grid grid-cols-2 gap-4 mt-4">
-                        <div><label>Condição</label><select id="condicao" class="apple-input" onchange="checarGarantia()"><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select></div>
-                        <div><label>Estoque</label><input type="number" id="quantidade" class="apple-input" placeholder="0" min="1" required></div>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <select id="condicao" class="apple-input" onchange="checarGarantia()"><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
+                        <input type="number" id="quantidade" class="apple-input" placeholder="Qtd" min="0">
                     </div>
-
-                    <div id="boxBateria" class="hidden mb-4">
-                        <label class="text-green-500 font-black text-[9px]">Saúde da Bateria</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div class="battery-pill b-new" data-val="BATERIA ABAIXO DE 85%" onclick="setBat('BATERIA ABAIXO DE 85%')">ABAIXO DE 85%</div>
-                            <div class="battery-pill b-new" data-val="BATERIA ACIMA DE 85%" onclick="setBat('BATERIA ACIMA DE 85%')">ACIMA DE 85%</div>
-                            <div class="battery-pill b-new" data-val="BATERIA ACIMA DE 90%" onclick="setBat('BATERIA ACIMA DE 90%')">ACIMA DE 90%</div>
-                            <div class="battery-pill b-new" data-val="BATERIA ACIMA DE 95%" onclick="setBat('BATERIA ACIMA DE 95%')">ACIMA DE 95%</div>
-                            <div class="battery-pill b-new" style="grid-column: span 2;" data-val="BATERIA EM 100%" onclick="setBat('BATERIA EM 100%')">BATERIA EM 100%</div>
-                        </div>
-                        <input type="hidden" id="saude_bateria">
+                    <input type="text" id="garantia" class="apple-input mt-2" placeholder="Garantia">
+                    <select id="regiao_id" class="apple-input mb-2" required></select>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="preco_brl" class="apple-input" placeholder="R$" oninput="mascararMoeda(this); limparPreco('brl')">
+                        <input type="text" id="preco_usd" class="apple-input" placeholder="$" oninput="mascararMoeda(this); limparPreco('usd')">
                     </div>
-
-                    <label>Garantia</label>
-                    <input type="text" id="garantia" class="apple-input" placeholder="Ex: 1 Ano Apple">
-
-                    <label>Origem</label>
-                    <select id="regiao_id" class="apple-input" required></select>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="preco_brl" class="apple-input" placeholder="Preço R$" oninput="mascararMoeda(this); limparPreco('brl')">
-                        <input type="text" id="preco_usd" class="apple-input" placeholder="Preço $" oninput="mascararMoeda(this); limparPreco('usd')">
-                    </div>
-
-                    <div class="mt-4 p-4 border border-[#38383a] rounded-xl bg-[#2c2c2e]">
-                        <label class="text-blue-400">Molduras</label>
-                        <div class="grid grid-cols-2 gap-2 text-[8px] font-black">
-                            <label><input type="checkbox" id="obs_coleta"> COLETA</label><label><input type="checkbox" id="obs_boy"> MOTOBOY</label>
-                            <label><input type="checkbox" id="obs_usdt"> USDT</label><label><input type="checkbox" id="obs_pix"> PIX</label>
-                            <label><input type="checkbox" id="obs_nota"> NF</label><label><input type="checkbox" id="obs_proposta"> NEGOCIA QTD</label>
-                        </div>
-                    </div>
-                    <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-6">Anunciar Agora</button>
+                    <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-4">Publicar</button>
                 </form>
             </div>
         </div>
 
-        <div class="lg:col-span-2">
+        <div class="lg:col-span-3 space-y-4">
+            
+            <div id="bulkBar" class="hidden bg-blue-600 p-4 rounded-2xl flex items-center justify-between">
+                <span class="text-xs font-black text-white"><span id="bulkCount">0</span> ITENS SELECIONADOS</span>
+                <div class="flex gap-2">
+                    <button onclick="bulkEdit()" class="bg-white text-blue-600 px-4 py-2 rounded-full text-[10px] font-black uppercase">Editar Selecionados</button>
+                    <button onclick="bulkDelete()" class="bg-red-500 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase">Apagar Tudo</button>
+                </div>
+            </div>
+
             <div class="apple-card">
-                <h2 class="text-xl font-black italic mb-6 uppercase">Meus Anúncios Ativos</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-black italic uppercase">Minha Base de Dados Única</h2>
+                    <div class="text-[10px] text-gray-500">Estoque 0 pausa o anúncio automaticamente.</div>
+                </div>
                 <div class="overflow-x-auto">
                     <table>
-                        <thead><tr><th>Produto</th><th>Qtd</th><th>Preço</th><th>Ação</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" onclick="toggleAll(this)"></th>
+                                <th>Produto</th>
+                                <th class="text-center">Qtd</th>
+                                <th class="text-center">Preço</th>
+                                <th class="text-right">Ações</th>
+                            </tr>
+                        </thead>
                         <tbody id="listaAtivos"></tbody>
                     </table>
                 </div>
@@ -152,13 +119,35 @@
         </div>
     </div>
 
-    <button onclick="abrirCalc()" class="btn-calc-float">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/></svg>
-    </button>
+    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[1000] p-4">
+        <div class="apple-card max-w-[500px] w-full border-blue-500">
+            <h3 class="text-sm font-black uppercase mb-4">Editar Configurações da Oferta</h3>
+            <form id="editForm" onsubmit="atualizarOfertaCompleta(event)">
+                <input type="hidden" id="edit_id">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-[9px]">Garantia</label><input type="text" id="edit_garantia" class="apple-input"></div>
+                    <div><label class="text-[9px]">Origem</label><select id="edit_regiao" class="apple-input"></select></div>
+                </div>
+                <div class="mt-4 p-4 bg-[#2c2c2e] rounded-xl">
+                    <label class="text-blue-400 text-[10px] font-black uppercase">Molduras Ativas</label>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <label class="text-[10px]"><input type="checkbox" id="edit_pix"> PIX</label>
+                        <label class="text-[10px]"><input type="checkbox" id="edit_usdt"> USDT</label>
+                        <label class="text-[10px]"><input type="checkbox" id="edit_coleta"> COLETA</label>
+                        <label class="text-[10px]"><input type="checkbox" id="edit_boy"> MOTOBOY</label>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-6">
+                    <button type="button" onclick="fecharModalEdicao()" class="apple-button bg-gray-600 text-white">Cancelar</button>
+                    <button type="submit" class="apple-button bg-blue-600 text-white">Salvar Mudanças</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let loja = null, produtosMestre = [], gradeVariacoes = [], currentUsdtRate = 0;
+        let loja = null, produtosMestre = [], gradeVariacoes = [], currentUsdtRate = 0, suaTaxaFinal = 0;
 
         window.onload = async () => {
             const token = localStorage.getItem('iFipe_Anunciante');
@@ -172,7 +161,9 @@
             iniciarTicker();
             const [p, r, v] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*') ]);
             produtosMestre = p.data; gradeVariacoes = v.data;
-            document.getElementById('regiao_id').innerHTML = '<option value="">Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            const regOptions = '<option value="">Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            document.getElementById('regiao_id').innerHTML = regOptions;
+            document.getElementById('edit_regiao').innerHTML = regOptions;
             atualizarLista();
         }
 
@@ -180,9 +171,16 @@
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (e) => {
                 currentUsdtRate = parseFloat(JSON.parse(e.data).c);
-                document.getElementById('tickerCalc').innerText = `R$ ${currentUsdtRate.toFixed(4).replace('.',',')}`;
-                calcularImportacao();
+                suaTaxaFinal = currentUsdtRate + 0.07;
+                document.getElementById('suaTaxaUsdt').innerText = `R$ ${suaTaxaFinal.toFixed(4).replace('.',',')}`;
+                calcularCompraUsdt();
             };
+        }
+
+        function calcularCompraUsdt() {
+            const usd = parsePreco(document.getElementById('compraUsd').value);
+            if(!usd || suaTaxaFinal === 0) { document.getElementById('resultadoCompraBrl').innerText = "R$ 0,00"; return; }
+            document.getElementById('resultadoCompraBrl').innerText = (usd * suaTaxaFinal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         function popularProdutos() {
@@ -197,12 +195,9 @@
             const vars = gradeVariacoes.filter(x => x.produto_id == pid);
             const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
             const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
-            
-            let html = '<div class="grid grid-cols-1 gap-1 mt-4">';
-            if(caps.length) html += `<label>Capacidade</label><select id="f_cap" class="apple-input">${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
-            if(cores.length) {
-                html += `<label>Cor</label><select id="f_cor" class="apple-input"><option value="MIXER COLORS">MIXER COLORS (Cores Variadas)</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
-            }
+            let html = '<div class="grid grid-cols-1 gap-1 mt-2">';
+            if(caps.length) html += `<select id="f_cap" class="apple-input">${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
+            if(cores.length) html += `<select id="f_cor" class="apple-input"><option value="MIXER COLORS">MIXER COLORS</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select>`;
             document.getElementById('gradeOpcoes').innerHTML = html + '</div>';
         }
 
@@ -210,7 +205,6 @@
             const cat = document.getElementById('filtro_grupo').value, cond = document.getElementById('condicao').value, g = document.getElementById('garantia');
             if(['1','2','4','5'].includes(cat) && cond === 'Novo') { g.value = "1 ANO APPLE"; g.readOnly = true; } 
             else { g.value = ""; g.readOnly = false; }
-            document.getElementById('boxBateria').classList.toggle('hidden', cond === 'Novo');
         }
 
         function mascararMoeda(input) {
@@ -221,99 +215,94 @@
             input.value = v;
         }
 
-        function parsePreco(valorFormatado) {
-            if (!valorFormatado) return 0;
-            return parseFloat(valorFormatado.replace(/\./g, '').replace(',', '.'));
-        }
-
-        function limparPreco(t) {
-            if(t === 'brl') document.getElementById('preco_usd').value = ''; 
-            else document.getElementById('preco_brl').value = '';
-        }
+        function parsePreco(v) { return v ? parseFloat(v.replace(/\./g, '').replace(',', '.')) : 0; }
+        function limparPreco(t) { if(t==='brl')document.getElementById('preco_usd').value=''; else document.getElementById('preco_brl').value=''; }
 
         async function salvarOferta(e) {
             e.preventDefault();
-            const pid = document.getElementById('produto_id').value;
-            const corSel = document.getElementById('f_cor')?.value;
-            const capSel = document.getElementById('f_cap')?.value;
+            const pid = document.getElementById('produto_id').value, corSel = document.getElementById('f_cor')?.value;
+            let v = gradeVariacoes.find(x => x.produto_id == pid && (!corSel || corSel === 'MIXER COLORS' || x.cor === corSel));
+            if (!v) v = gradeVariacoes.find(x => x.produto_id == pid);
             
-            let v = gradeVariacoes.find(x => 
-                x.produto_id == pid && 
-                (!capSel || x.capacidade === capSel) && 
-                (!corSel || corSel === 'MIXER COLORS' || x.cor === corSel)
-            );
-            
-            if (!v) { v = gradeVariacoes.find(x => x.produto_id == pid); }
-            if (!v) { alert("Erro Interno: Produto não encontrado."); return; }
-            
-            const pBrl = parsePreco(document.getElementById('preco_brl').value);
-            const pUsd = parsePreco(document.getElementById('preco_usd').value);
+            const pBrl = parsePreco(document.getElementById('preco_brl').value), pUsd = parsePreco(document.getElementById('preco_usd').value);
             const qtd = parseInt(document.getElementById('quantidade').value || 0);
 
-            if(qtd <= 0 || (pBrl <= 0 && pUsd <= 0)) { 
-                alert("Atenção: A quantidade e o preço devem ser maiores que zero!"); 
-                return; 
-            }
-
             const { error } = await _s.from('ofertas').insert([{
-                fornecedor_id: loja.id, 
-                variacao_id: v.id, 
-                regiao_id: document.getElementById('regiao_id').value,
-                preco: pBrl > 0 ? pBrl : pUsd, 
-                moeda: pBrl > 0 ? 'BRL' : 'USD', 
-                quantidade: qtd, 
-                condicao: document.getElementById('condicao').value,
-                saude_bateria: document.getElementById('saude_bateria').value || null, 
-                garantia: document.getElementById('garantia').value || null,
-                aceita_coleta: document.getElementById('obs_coleta').checked, 
-                tem_boy: document.getElementById('obs_boy').checked,
-                aceita_usdt: document.getElementById('obs_usdt').checked, 
-                aceita_pix: document.getElementById('obs_pix').checked,
-                emite_nota: document.getElementById('obs_nota').checked, 
-                aceita_proposta: document.getElementById('obs_proposta').checked,
+                fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value,
+                preco: pBrl > 0 ? pBrl : pUsd, moeda: pBrl > 0 ? 'BRL' : 'USD', quantidade: qtd, 
+                condicao: document.getElementById('condicao').value, garantia: document.getElementById('garantia').value,
                 cores_variadas: corSel === 'MIXER COLORS'
             }]);
-
-            if (error) {
-                console.error("Erro Supabase:", error);
-                alert("Falha ao salvar: " + error.message);
-                return;
-            }
-
-            alert("Anúncio publicado com sucesso!"); 
-            atualizarLista(); 
-            e.target.reset(); 
-            document.getElementById('gradeOpcoes').innerHTML = '';
-            checarGarantia();
+            if(error) alert(error.message); else { alert("Publicado!"); atualizarLista(); e.target.reset(); }
         }
 
         async function atualizarLista() {
             const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
-            document.getElementById('listaAtivos').innerHTML = (data || []).map(o => `<tr><td><b>${o.variacoes.produtos_mestre.nome}</b><br><small>${o.variacoes.capacidade || ''} | ${o.cores_variadas ? 'MIXER COLORS' : o.variacoes.cor}</small></td><td>${o.quantidade}</td><td>${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td><td><span class="btn-acao btn-del" onclick="excluirAnuncio(${o.id})">APAGAR</span></td></tr>`).join('');
+            document.getElementById('listaAtivos').innerHTML = (data || []).map(o => `
+                <tr data-id="${o.id}">
+                    <td><input type="checkbox" class="offer-check" value="${o.id}" onchange="updateBulkBar()"></td>
+                    <td><b>${o.variacoes.produtos_mestre.nome}</b><br><small>${o.variacoes.capacidade || ''} | ${o.cores_variadas ? 'MIXER COLORS' : o.variacoes.cor}</small></td>
+                    <td class="text-center"><input type="number" class="mini-edit" value="${o.quantidade}" onblur="salvarRapido(${o.id}, 'quantidade', this.value)"></td>
+                    <td class="text-center"><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapido(${o.id}, 'preco', this.value)"></td>
+                    <td class="text-right flex justify-end gap-2">
+                        <span class="btn-acao btn-edit" onclick="abrirEdicaoCompleta(${JSON.stringify(o).replace(/"/g, '&quot;')})">Editar</span>
+                        <span class="btn-acao btn-del" onclick="excluirAnuncio(${o.id})">X</span>
+                    </td>
+                </tr>
+            `).join('');
         }
 
-        async function excluirAnuncio(id) { if(confirm("Apagar anúncio?")) { await _s.from('ofertas').delete().eq('id', id); atualizarLista(); } }
-        function abrirConta() { document.getElementById('contaModal').classList.remove('hidden'); document.getElementById('conta_whats').value = loja.whatsapp; }
-        function fecharConta() { document.getElementById('contaModal').classList.add('hidden'); }
-        async function salvarConta(e) {
+        async function salvarRapido(id, campo, valor) {
+            let vFinal = (campo === 'preco') ? parsePreco(valor) : parseInt(valor);
+            await _s.from('ofertas').update({ [campo]: vFinal }).eq('id', id);
+        }
+
+        function abrirEdicaoCompleta(o) {
+            document.getElementById('edit_id').value = o.id;
+            document.getElementById('edit_garantia').value = o.garantia || '';
+            document.getElementById('edit_regiao').value = o.regiao_id;
+            document.getElementById('edit_pix').checked = o.aceita_pix;
+            document.getElementById('edit_usdt').checked = o.aceita_usdt;
+            document.getElementById('edit_coleta').checked = o.aceita_coleta;
+            document.getElementById('edit_boy').checked = o.tem_boy;
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function fecharModalEdicao() { document.getElementById('editModal').classList.add('hidden'); }
+
+        async function atualizarOfertaCompleta(e) {
             e.preventDefault();
-            const up = { whatsapp: document.getElementById('conta_whats').value };
-            if(document.getElementById('conta_senha').value) up.senha = document.getElementById('conta_senha').value;
-            await _s.from('fornecedores').update(up).eq('id', loja.id);
-            alert("Conta atualizada com sucesso!"); fecharConta();
+            const id = document.getElementById('edit_id').value;
+            await _s.from('ofertas').update({
+                garantia: document.getElementById('edit_garantia').value,
+                regiao_id: document.getElementById('edit_regiao').value,
+                aceita_pix: document.getElementById('edit_pix').checked,
+                aceita_usdt: document.getElementById('edit_usdt').checked,
+                aceita_coleta: document.getElementById('edit_coleta').checked,
+                tem_boy: document.getElementById('edit_boy').checked
+            }).eq('id', id);
+            fecharModalEdicao(); atualizarLista();
         }
-        function abrirCalc() { document.getElementById('calcModal').classList.remove('hidden'); }
-        function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
-        function calcularImportacao() {
-            const el = document.getElementById('calcUsd');
-            let usd = parsePreco(el.value);
-            let taxaEfetiva = currentUsdtRate > 0 ? currentUsdtRate + 0.07 : 0;
-            document.getElementById('calcTaxaEfetiva').innerText = `R$ ${taxaEfetiva.toFixed(4).replace('.', ',')}`;
-            if(usd <= 0 || currentUsdtRate === 0) { document.getElementById('calcResult').innerText = "R$ 0,00"; return; }
-            document.getElementById('calcResult').innerText = ((usd * taxaEfetiva) * 1.06).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        function updateBulkBar() {
+            const selected = document.querySelectorAll('.offer-check:checked').length;
+            document.getElementById('bulkCount').innerText = selected;
+            document.getElementById('bulkBar').classList.toggle('hidden', selected === 0);
         }
+
+        function toggleAll(master) {
+            document.querySelectorAll('.offer-check').forEach(c => c.checked = master.checked);
+            updateBulkBar();
+        }
+
+        async function bulkDelete() {
+            if(!confirm("Apagar todos selecionados?")) return;
+            const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => c.value);
+            await _s.from('ofertas').delete().in('id', ids);
+            atualizarLista(); updateBulkBar();
+        }
+
         function sairPainel() { localStorage.removeItem('iFipe_Anunciante'); window.location.href = 'index.html'; }
-        function setBat(v) { document.getElementById('saude_bateria').value = v; document.querySelectorAll('.b-new').forEach(p => p.classList.toggle('active', p.getAttribute('data-val') === v)); }
     </script>
 </body>
 </html>
