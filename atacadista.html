@@ -23,6 +23,13 @@
         .btn-edit { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
         .btn-del { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
         .hidden { display: none !important; }
+        
+        /* Novas Classes para Edição Direta */
+        .mini-edit { background: transparent; border: 1px solid transparent; color: #32d74b; font-weight: 800; width: 90px; text-align: center; border-radius: 6px; padding: 4px; transition: 0.2s; }
+        .mini-edit:focus { border-color: #0071e3; background: #2c2c2e; outline: none; }
+        .mini-edit-qtd { width: 60px; color: #fff; }
+        
+        .simulador-box { background: #000; border: 1px solid #38383a; border-radius: 15px; padding: 15px; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -57,8 +64,13 @@
         <div class="user-bar">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <div class="text-[10px] font-black uppercase">LOJA: <span id="nomeLoja" class="text-blue-500 ml-1">...</span></div>
-                <div id="tickerBinance" class="text-[11px] font-mono text-gray-500">R$ --</div>
-                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button>
+                <div class="flex items-center gap-4">
+                    <div class="text-right">
+                        <span class="text-[8px] text-gray-500 font-black uppercase block">Comprar USDT com Taxa VIP</span>
+                        <div id="tickerBinance" class="text-[12px] font-mono text-[#32d74b] font-black italic">R$ --</div>
+                    </div>
+                    <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button>
+                </div>
             </div>
         </div>
 
@@ -117,6 +129,16 @@
                         </div>
                         <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-4">Anunciar</button>
                     </form>
+
+                    <div class="simulador-box mt-6">
+                        <p class="text-[10px] font-black uppercase text-green-500 mb-3 tracking-widest">Simulador Compra USDT</p>
+                        <input type="number" id="sim_brl" class="apple-input mb-2" placeholder="Eu envio (R$)" oninput="calcSimulador()">
+                        <div class="bg-[#1c1c1e] p-3 rounded-lg border border-[#38383a] text-center mb-3">
+                            <span class="text-[8px] text-gray-500 uppercase block">Eu recebo</span>
+                            <span id="sim_result" class="text-lg font-mono font-black text-[#32d74b]">0.00 USDT</span>
+                        </div>
+                        <a id="btnZapCompra" href="#" target="_blank" class="apple-button bg-green-600 text-white block text-center">Chamar Oráculo</a>
+                    </div>
                 </div>
             </div>
 
@@ -131,7 +153,7 @@
                 </div>
                 <div class="apple-card">
                     <table>
-                        <thead><tr><th width="30"><input type="checkbox" onclick="toggleAll(this)"></th><th>Modelo / Variação</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
+                        <thead><tr><th width="30"><input type="checkbox" onclick="toggleAll(this)"></th><th>Modelo / Variação</th><th class="text-center">Qtd (Editar)</th><th class="text-center">Preço (Editar)</th><th class="text-right">Ação</th></tr></thead>
                         <tbody id="listaAtivos"></tbody>
                     </table>
                 </div>
@@ -141,25 +163,20 @@
 
     <div id="editModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000] p-4">
         <div class="apple-card max-w-[500px] w-full border-blue-500">
-            <h3 class="text-sm font-black uppercase mb-4 text-blue-500">Editar Detalhes do Anúncio</h3>
+            <h3 class="text-sm font-black uppercase mb-4 text-blue-500">Ajustar Anúncio</h3>
             <form onsubmit="salvarEdicaoCompleta(event)">
                 <input type="hidden" id="edit_id">
                 <input type="hidden" id="edit_produto_id">
                 <input type="hidden" id="edit_capacidade">
-                
                 <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Preço</label><input type="text" id="edit_preco" class="apple-input" oninput="mascararMoeda(this)"></div>
                     <div><label class="text-[8px] text-gray-500 uppercase font-black">Cor</label><select id="edit_cor" class="apple-input"></select></div>
-                </div>
-                <div class="grid grid-cols-2 gap-3 mb-3">
                     <div><label class="text-[8px] text-gray-500 uppercase font-black">Condição</label><select id="edit_cond" class="apple-input" onchange="checarGarantiaModal()">
-                        <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="AS IS">AS IS</option>
+                        <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
+                        <option value="CPO">CPO</option><option value="AS IS">AS IS</option>
                         <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
                     </select></div>
-                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Qtd</label><input type="number" id="edit_qtd" class="apple-input"></div>
                 </div>
                 <div><label class="text-[8px] text-gray-500 uppercase font-black">Garantia</label><input type="text" id="edit_gar" class="apple-input mb-3"></div>
-                
                 <div class="flex gap-2">
                     <button type="button" onclick="fecharModalEdit()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
                     <button type="submit" class="apple-button bg-blue-600 text-white w-2/3">Salvar</button>
@@ -168,25 +185,9 @@
         </div>
     </div>
 
-    <div id="bulkEditModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[1100] p-4">
-        <div class="apple-card max-w-[600px] w-full border-green-500">
-            <h3 class="text-lg font-black uppercase mb-4 text-green-500 text-center">Editar Selecionados</h3>
-            <form onsubmit="salvarBulkChanges(event)">
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <input type="text" id="bulk_preco" class="apple-input" placeholder="Novo Preço" oninput="mascararMoeda(this)">
-                    <select id="bulk_condicao" class="apple-input"><option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
-                </div>
-                <div class="flex gap-2 mt-8">
-                    <button type="button" onclick="fecharBulkEdit()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
-                    <button type="submit" class="apple-button bg-green-600 text-white w-2/3">Aplicar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let loja = null, produtosMestre = [], gradeVariacoes = [];
+        let loja = null, produtosMestre = [], gradeVariacoes = [], taxaVipGlobal = 0;
 
         window.onload = async () => {
             const t = localStorage.getItem('iFipe_Anunciante');
@@ -203,13 +204,43 @@
 
         async function init() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            socket.onmessage = (e) => { document.getElementById('tickerBinance').innerText = `R$ ${parseFloat(JSON.parse(e.data).c).toFixed(4)}`; };
+            socket.onmessage = (e) => { 
+                const raw = parseFloat(JSON.parse(e.data).c);
+                taxaVipGlobal = raw + 0.07;
+                document.getElementById('tickerBinance').innerText = `R$ ${taxaVipGlobal.toFixed(4)}`; 
+                calcSimulador();
+            };
             const [p, r, v] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*') ]);
             produtosMestre = p.data; gradeVariacoes = v.data;
             document.getElementById('regiao_id').innerHTML = '<option value="" disabled selected>Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             atualizarLista();
         }
 
+        // --- FUNÇÕES DE EDIÇÃO DIRETA NA TABELA ---
+        async function salvarRapido(id, campo, valor) {
+            let v = (campo === 'preco') ? parsePreco(valor) : parseInt(valor);
+            if(isNaN(v)) return;
+            
+            const { error } = await _s.from('ofertas').update({ [campo]: v, data_alteracao_preco: new Date().toISOString() }).eq('id', id);
+            if(!error) {
+                console.log(`Atualizado: ${campo}`);
+                // Feedback visual rápido
+                const tr = document.querySelector(`tr[data-id="${id}"]`);
+                tr.style.backgroundColor = 'rgba(50, 215, 75, 0.1)';
+                setTimeout(() => tr.style.backgroundColor = 'transparent', 500);
+            }
+        }
+
+        function calcSimulador() {
+            const brl = parseFloat(document.getElementById('sim_brl').value);
+            if(!brl || taxaVipGlobal === 0) return;
+            const res = brl / taxaVipGlobal;
+            document.getElementById('sim_result').innerText = `${res.toFixed(2)} USDT`;
+            const msg = encodeURIComponent(`Olá! Quero comprar ${res.toFixed(2)} USDT na taxa VIP de R$ ${taxaVipGlobal.toFixed(4)} do iFipe.`);
+            document.getElementById('btnZapCompra').href = `https://wa.me/15616760652?text=${msg}`;
+        }
+
+        // --- FUNÇÕES PADRÃO (PRESERVADAS) ---
         function popularProdutos() { document.getElementById('produto_id').innerHTML = '<option value="" disabled selected>Escolha o Modelo...</option>' + produtosMestre.filter(x => x.grupo_id == document.getElementById('filtro_grupo').value).map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); }
         function aoMudarProduto() {
             const vars = gradeVariacoes.filter(x => x.produto_id == document.getElementById('produto_id').value);
@@ -221,15 +252,8 @@
             </div>`;
         }
 
-        function checarGarantia() { 
-            const cond = document.getElementById('condicao').value, g = document.getElementById('garantia'), cat = document.getElementById('filtro_grupo').value;
-            if(cond === 'Novo' && ['1','2','4','5'].includes(cat)) { g.value = "1 ANO GARANTIA APPLE"; g.readOnly = true; } else { g.readOnly = false; } 
-        }
-
-        function checarGarantiaModal() {
-            const cond = document.getElementById('edit_cond').value, g = document.getElementById('edit_gar'), prod = produtosMestre.find(p => p.id == document.getElementById('edit_produto_id').value);
-            if(cond === 'Novo' && prod && ['1','2','4','5'].includes(prod.grupo_id.toString())) { g.value = "1 ANO GARANTIA APPLE"; g.readOnly = true; } else { g.readOnly = false; }
-        }
+        function checarGarantia() { const cond = document.getElementById('condicao').value, g = document.getElementById('garantia'), cat = document.getElementById('filtro_grupo').value; if(cond === 'Novo' && ['1','2','4','5'].includes(cat)) { g.value = "1 ANO GARANTIA APPLE"; g.readOnly = true; } else { g.readOnly = false; } }
+        function checarGarantiaModal() { const cond = document.getElementById('edit_cond').value, g = document.getElementById('edit_gar'), prod = produtosMestre.find(p => p.id == document.getElementById('edit_produto_id').value); if(cond === 'Novo' && prod && ['1','2','4','5'].includes(prod.grupo_id.toString())) { g.value = "1 ANO GARANTIA APPLE"; g.readOnly = true; } else { g.readOnly = false; } }
 
         async function salvarOferta(e) {
             e.preventDefault();
@@ -246,19 +270,26 @@
                 emite_nota: document.getElementById('add_nota').checked, aceita_proposta: document.getElementById('add_proposta').checked, 
                 data_alteracao_preco: new Date().toISOString()
             }]);
-            alert("Publicado!"); atualizarLista(); e.target.reset();
-            document.getElementById('gradeOpcoes').innerHTML = '';
+            alert("Publicado!"); atualizarLista(); e.target.reset(); document.getElementById('gradeOpcoes').innerHTML = '';
         }
 
         async function atualizarLista() {
             const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*))').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
             document.getElementById('listaAtivos').innerHTML = (data || []).map(o => `
-                <tr>
+                <tr data-id="${o.id}">
                     <td><input type="checkbox" class="offer-check" value="${o.id}"></td>
                     <td><span class="font-black text-blue-500">${o.variacoes.produtos_mestre.nome}</span><br><span class="text-[10px] text-gray-400 font-bold uppercase">${o.variacoes.capacidade} | ${o.cores_variadas ? '🟠 MIXER' : o.variacoes.cor}</span></td>
-                    <td class="text-center font-bold">${o.quantidade}</td>
-                    <td class="text-center font-bold text-green-500">${o.preco.toLocaleString('pt-BR',{style:'currency',currency:o.moeda})}</td>
-                    <td class="text-right flex justify-end gap-2"><span class="btn-acao btn-edit" onclick="abrirEdicaoCompleta(${o.id})">Editar</span><span class="btn-acao btn-del" onclick="excluirAnuncio(${o.id})">X</span></td>
+                    <td class="text-center">
+                        <input type="number" class="mini-edit mini-edit-qtd" value="${o.quantidade}" onblur="salvarRapido(${o.id}, 'quantidade', this.value)">
+                    </td>
+                    <td class="text-center">
+                        <input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapido(${o.id}, 'preco', this.value)">
+                        <span class="text-[8px] block opacity-50">${o.moeda}</span>
+                    </td>
+                    <td class="text-right flex justify-end gap-2">
+                        <span class="btn-acao btn-edit" onclick="abrirEdicaoCompleta(${o.id})">Outros</span>
+                        <span class="btn-acao btn-del" onclick="excluirAnuncio(${o.id})">X</span>
+                    </td>
                 </tr>
             `).join('');
             updateBulkCount();
@@ -269,8 +300,6 @@
             document.getElementById('edit_id').value = o.id;
             document.getElementById('edit_produto_id').value = o.variacoes.produto_id;
             document.getElementById('edit_capacidade').value = o.variacoes.capacidade;
-            document.getElementById('edit_preco').value = o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2});
-            document.getElementById('edit_qtd').value = o.quantidade;
             document.getElementById('edit_cond').value = o.condicao;
             document.getElementById('edit_gar').value = o.garantia || '';
             const coresDisp = gradeVariacoes.filter(v => v.produto_id == o.variacoes.produto_id && v.capacidade == o.variacoes.capacidade);
@@ -284,11 +313,7 @@
             const id = document.getElementById('edit_id').value;
             const corSel = document.getElementById('edit_cor').value;
             const v = gradeVariacoes.find(x => x.produto_id == document.getElementById('edit_produto_id').value && x.capacidade == document.getElementById('edit_capacidade').value && x.cor == corSel);
-            const { data: antiga } = await _s.from('ofertas').select('preco').eq('id', id).single();
             await _s.from('ofertas').update({
-                preco: parsePreco(document.getElementById('edit_preco').value),
-                preco_anterior: antiga.preco,
-                quantidade: parseInt(document.getElementById('edit_qtd').value),
                 condicao: document.getElementById('edit_cond').value,
                 garantia: document.getElementById('edit_gar').value,
                 variacao_id: v.id,
@@ -297,17 +322,8 @@
             fecharModalEdit(); atualizarLista();
         }
 
-        async function bulkDuplicate() { 
-            const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value));
-            if(!ids.length) return alert("Selecione!");
-            const { data: originais } = await _s.from('ofertas').select('*').in('id', ids);
-            await _s.from('ofertas').insert(originais.map(o => { const { id, criado_em, ...resto } = o; return resto; }));
-            atualizarLista();
-        }
-
+        async function bulkDuplicate() { const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length) return; const { data } = await _s.from('ofertas').select('*').in('id', ids); await _s.from('ofertas').insert(data.map(o => { const { id, criado_em, ...resto } = o; return resto; })); atualizarLista(); }
         async function bulkDelete() { const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length || !confirm("Apagar?")) return; await _s.from('ofertas').delete().in('id', ids); atualizarLista(); }
-        function abrirBulkEdit() { if(!document.querySelectorAll('.offer-check:checked').length) return alert("Selecione!"); document.getElementById('bulkEditModal').classList.remove('hidden'); }
-        function fecharBulkEdit() { document.getElementById('bulkEditModal').classList.add('hidden'); }
         function fecharModalEdit() { document.getElementById('editModal').classList.add('hidden'); }
         function parsePreco(v) { return v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0; }
         function mascararMoeda(input) { let v = input.value.replace(/\D/g, ''); if (!v) { input.value = ''; return; } v = (parseFloat(v) / 100).toFixed(2).replace('.', ','); input.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
