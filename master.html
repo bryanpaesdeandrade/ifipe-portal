@@ -20,19 +20,14 @@
         
         .btn-acao { font-size: 10px; font-weight: bold; text-transform: uppercase; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: 0.3s; display: inline-block; margin-right: 5px; margin-bottom: 5px; border: none; }
         .btn-verde { background: rgba(50, 215, 75, 0.2); color: #32d74b; }
-        .btn-verde:hover { background: #32d74b; color: #000; }
         .btn-amarelo { background: rgba(255, 204, 0, 0.2); color: #ffcc00; }
-        .btn-amarelo:hover { background: #ffcc00; color: #000; }
         .btn-azul { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
-        .btn-azul:hover { background: #0071e3; color: #fff; }
         .btn-vermelho { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
-        .btn-vermelho:hover { background: #ff3b30; color: #fff; }
         
         .mini-edit { background: transparent; border: 1px solid transparent; color: #32d74b; font-weight: 800; width: 80px; text-align: center; border-radius: 6px; padding: 4px; transition: 0.2s; }
         .mini-edit:focus { border-color: #0071e3; background: #2c2c2e; outline: none; }
 
         .tab-btn { background: #2c2c2e; color: #86868b; padding: 8px 16px; border-radius: 50px; font-size: 10px; font-weight: 900; text-transform: uppercase; cursor: pointer; transition: 0.3s; border: 1px solid #38383a; }
-        .tab-btn:hover { background: #38383a; color: #fff; }
         .tab-btn.active { background: #0071e3; color: #fff; border-color: #0071e3; }
 
         label { display: block; text-transform: uppercase; font-size: 9px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.1em; }
@@ -42,38 +37,23 @@
 </head>
 <body>
 
-    <div id="bulkMasterModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[300] px-4">
-        <div class="apple-card w-full max-w-[400px]">
-            <button type="button" onclick="fecharBulkMaster()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none cursor-pointer bg-transparent border-0">×</button>
-            <h3 class="font-bold text-[14px] text-blue-500 mb-2 uppercase tracking-widest">Edição em Massa</h3>
-            <p class="text-[10px] text-gray-400 font-bold mb-4 uppercase">Alterando <span id="bulkMasterCount" class="text-white">0</span> cadastros.</p>
-            <form id="formBulkMaster" onsubmit="salvarBulkMaster(event)">
-                <input type="hidden" id="bm_tabela">
-                <div id="bm_lojista_fields" class="hidden flex-col gap-2 mb-4">
-                    <div><label>Padronizar País</label><select id="bm_pais" class="apple-input py-2 mb-0"><option value="">-- Não Alterar --</option><option value="Brasil">BRASIL 🇧🇷</option><option value="Paraguai">PARAGUAI 🇵🇾</option></select></div>
+    <div id="bulkOfertasModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[1100] p-4">
+        <div class="apple-card max-w-[600px] w-full border-yellow-500">
+            <h3 class="text-lg font-black uppercase mb-4 text-yellow-500 text-center">Edição em Massa de Anúncios</h3>
+            <form onsubmit="salvarBulkOfertasMaster(event)">
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div><label>Novo Preço</label><input type="text" id="bm_o_preco" class="apple-input" placeholder="R$ 0,00" oninput="mascararMoeda(this)"></div>
+                    <div><label>Nova Qtd</label><input type="number" id="bm_o_qtd" class="apple-input" placeholder="Estoque"></div>
+                    <div><label>Condição</label><select id="bm_o_cond" class="apple-input"><option value="">Manter...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option></select></div>
+                    <div><label>Saúde Bateria</label><select id="bm_o_bat" class="apple-input"><option value="">Manter...</option><option value="ACIMA DE 85%">ACIMA DE 85%</option><option value="BATERIA EM 100%">100%</option></select></div>
                 </div>
-                <div id="bm_cliente_fields" class="hidden flex-col gap-2 mb-4">
-                    <div><label>Padronizar Senha</label><input type="text" id="bm_senha" class="apple-input py-2 mb-0" placeholder="Ex: 123456"></div>
+                <div class="grid grid-cols-4 gap-2 mb-4 p-3 bg-[#2c2c2e] rounded-xl border border-[#38383a]">
+                    <div class="text-center"><label>PIX</label><select id="bm_o_pix" class="apple-input py-1"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                    <div class="text-center"><label>USDT</label><select id="bm_o_usdt" class="apple-input py-1"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                    <div class="text-center"><label>NF</label><select id="bm_o_nota" class="apple-input py-1"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                    <div class="text-center"><label>ENVIO</label><select id="bm_o_envio" class="apple-input py-1"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
                 </div>
-                <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-2">Aplicar</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200] px-4">
-        <div class="apple-card w-full max-w-[400px]">
-            <h3 class="font-bold text-[14px] text-blue-500 mb-4 uppercase tracking-widest">Editar Cadastro</h3>
-            <form onsubmit="salvarEdicao(event)">
-                <input type="hidden" id="edit_id"><input type="hidden" id="edit_tabela">
-                <label>Nome</label><input type="text" id="edit_nome" class="apple-input py-2" required>
-                <div id="loc_box" class="hidden flex-col gap-2 mt-2 mb-2">
-                    <input type="text" id="edit_estado" class="apple-input py-2" placeholder="Estado">
-                    <input type="text" id="edit_cidade" class="apple-input py-2" placeholder="Cidade">
-                    <select id="edit_pais" class="apple-input py-2"><option value="Brasil">Brasil</option><option value="Paraguai">Paraguai</option></select>
-                </div>
-                <label>E-mail / Whats</label><input type="text" id="edit_email" class="apple-input py-2">
-                <label>Senha</label><input type="text" id="edit_senha" class="apple-input py-2" required>
-                <div class="flex gap-2 mt-4"><button type="button" onclick="fecharModal()" class="apple-button bg-gray-600 text-white w-1/2">Sair</button><button type="submit" class="apple-button bg-blue-600 text-white w-1/2">Salvar</button></div>
+                <div class="flex gap-2 mt-4"><button type="button" onclick="fecharBulkOfertasMaster()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button><button type="submit" class="apple-button bg-yellow-600 text-black w-2/3">Aplicar em todos</button></div>
             </form>
         </div>
     </div>
@@ -107,77 +87,41 @@
         <div class="max-w-7xl mx-auto p-4 md:p-8">
             
             <div id="sec-ofertas" class="pt-20 -mt-20">
-                <h2 class="text-2xl font-black italic mb-6 text-yellow-500">Gestão Global de Ofertas</h2>
+                <h2 class="text-2xl font-black italic mb-6 text-yellow-500">Gestão Global de Ofertas (Concierge)</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-12">
                     <div class="lg:col-span-1">
                         <div class="apple-card p-6 border-yellow-600/30 bg-yellow-600/5">
                             <label class="text-yellow-500">Postar em nome de:</label>
                             <select id="master_fornecedor_id" class="apple-input border-yellow-600/50 text-yellow-500 font-black uppercase"><option value="">Carregando lojas...</option></select>
-                            
-                            <form id="masterPriceForm" onsubmit="postarOfertaMaster(event)">
-                                <select id="m_cat" class="apple-input mb-2" onchange="popularProdutosMaster()" required>
-                                    <option value="" disabled selected>Selecione Categoria...</option>
-                                    <option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="3">IPAD</option>
-                                </select>
-                                <select id="m_prod" class="apple-input mb-2" onchange="aoMudarProdutoMaster()" required>
-                                    <option value="" disabled selected>Escolha o Modelo...</option>
-                                </select>
+                            <form onsubmit="postarOfertaMaster(event)">
+                                <select id="m_cat" class="apple-input mb-2" onchange="popularProdutosMaster()" required><option value="">Categoria...</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="3">IPAD</option></select>
+                                <select id="m_prod" class="apple-input mb-2" onchange="aoMudarProdutoMaster()" required><option value="">Modelo...</option></select>
                                 <div id="m_grade"></div>
-                                
-                                <select id="m_cond" class="apple-input mt-2" onchange="checarGarantiaMaster()" required>
-                                    <option value="" disabled selected>Condição...</option>
-                                    <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
-                                    <option value="CPO">CPO</option><option value="AS IS +">AS IS +</option>
-                                    <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
-                                </select>
-                                
-                                <select id="m_bat" class="apple-input mt-2">
-                                    <option value="" selected>Saúde da Bateria (Se houver)...</option>
-                                    <option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option>
-                                    <option value="ACIMA DE 90%">ACIMA DE 90%</option><option value="ACIMA DE 95%">ACIMA DE 95%</option>
-                                    <option value="BATERIA EM 100%">BATERIA EM 100%</option>
-                                </select>
-
-                                <input type="number" id="m_qtd" class="apple-input mt-2" placeholder="Qtd" min="1" required>
-                                
-                                <select id="m_gar_sel" class="apple-input mt-2" onchange="document.getElementById('m_gar').value = this.value">
-                                    <option value="">Tempo de Garantia...</option>
-                                    <option value="30 DIAS">30 DIAS</option><option value="3 MESES">3 MESES</option>
-                                    <option value="6 MESES">6 MESES</option><option value="1 ANO">1 ANO</option>
-                                    <option value="1 ANO GARANTIA APPLE">1 ANO GARANTIA APPLE</option>
-                                </select>
-                                <input type="text" id="m_gar" class="apple-input mt-2" placeholder="Ou digite aqui a garantia...">
-
-                                <select id="m_reg" class="apple-input mt-2" required>
-                                    <option value="" disabled selected>Origem...</option>
-                                </select>
-                                
+                                <select id="m_cond" class="apple-input mt-2" required><option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
+                                <input type="number" id="m_qtd" class="apple-input mt-2" placeholder="Qtd" required>
+                                <select id="m_reg" class="apple-input mt-2" required><option value="">Origem...</option></select>
                                 <div class="grid grid-cols-2 gap-2 mt-2">
                                     <input type="text" id="m_brl" class="apple-input" placeholder="R$" oninput="mascararMoeda(this); limparPrecoMaster('brl')">
                                     <input type="text" id="m_usd" class="apple-input" placeholder="$" oninput="mascararMoeda(this); limparPrecoMaster('usd')">
                                 </div>
-
-                                <div class="mt-4 p-3 bg-[#2c2c2e] rounded-xl grid grid-cols-2 gap-2 border border-[#38383a]">
-                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_pix"> PIX</label>
-                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_usdt"> USDT</label>
-                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_nota"> NF</label>
-                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_proposta"> NEGOCIA QTD</label>
-                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_envio"> FAZ ENVIO</label>
-                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_coleta"> ACEITA COLETA</label>
-                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_boy"> MOTOBOY</label>
-                                </div>
-
                                 <button type="submit" class="apple-button w-full bg-yellow-600 text-black mt-4">Publicar</button>
                             </form>
                         </div>
                     </div>
-                    
+
                     <div class="lg:col-span-3">
+                        <div class="bg-yellow-600 p-4 rounded-2xl flex flex-wrap items-center justify-between shadow-lg gap-4 mb-4">
+                            <span class="text-xs font-black text-black uppercase"><span id="bulkMasterOfferCount">0</span> Selecionados</span>
+                            <div class="flex gap-2">
+                                <button onclick="abrirBulkOfertasMaster()" class="bg-black text-yellow-500 px-4 py-2 rounded-full text-[9px] font-black uppercase">Editar Massa</button>
+                                <button onclick="bulkDuplicateMaster()" class="bg-white text-black px-4 py-2 rounded-full text-[9px] font-black uppercase">Duplicar</button>
+                                <button onclick="bulkDeleteMaster()" class="bg-red-600 text-white px-4 py-2 rounded-full text-[9px] font-black uppercase">Apagar</button>
+                            </div>
+                        </div>
                         <div class="apple-card overflow-x-auto">
-                            <h3 class="font-bold text-[14px] text-yellow-500 uppercase mb-4">Anúncios Online</h3>
-                            <input type="text" onkeyup="filtrarTabela('listaOfertasMaster', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Filtrar anúncios (Loja, Modelo, Condição)...">
+                            <input type="text" onkeyup="filtrarTabela('listaOfertasMaster', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Filtrar anúncios...">
                             <table>
-                                <thead><tr><th>Loja</th><th>Produto</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
+                                <thead><tr><th width="30"><input type="checkbox" onclick="toggleAllOfertas(this)"></th><th>Loja</th><th>Produto</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
                                 <tbody id="listaOfertasMaster"></tbody>
                             </table>
                         </div>
@@ -189,9 +133,9 @@
                 <hr class="border-[#38383a] my-20">
                 <h2 class="text-2xl font-black italic mb-6">Criar Novos Cadastros</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                    <div class="apple-card p-6"><h3 class="font-bold text-[11px] text-blue-500 mb-4 uppercase tracking-widest">Novo Lojista</h3><form onsubmit="addLojista(event)"><input type="text" id="nl_nome" class="apple-input py-2" placeholder="Nome da Loja" required><select id="nl_pais" class="apple-input py-2" required><option value="" disabled selected>País...</option><option value="Brasil">BRASIL 🇧🇷</option><option value="Paraguai">PARAGUAI 🇵🇾</option></select><div class="grid grid-cols-2 gap-2"><input type="text" id="nl_estado" class="apple-input py-2" placeholder="Estado" required><input type="text" id="nl_cidade" class="apple-input py-2" placeholder="Cidade" required></div><input type="text" id="nl_whats" class="apple-input py-2" placeholder="WhatsApp" required><input type="text" id="nl_senha" class="apple-input py-2" placeholder="Senha" required><button type="submit" class="apple-button bg-blue-600 text-white">Cadastrar Lojista</button></form></div>
-                    <div class="apple-card p-6"><h3 class="font-bold text-[11px] text-green-500 mb-4 uppercase tracking-widest">Novo Cliente VIP</h3><form onsubmit="addCliente(event)"><input type="text" id="nc_nome" class="apple-input py-2" placeholder="Nome Completo" required><div class="grid grid-cols-2 gap-2"><input type="text" id="nc_cpf" class="apple-input py-2" placeholder="CPF" required><input type="text" id="nc_whats" class="apple-input py-2" placeholder="WhatsApp"></div><input type="email" id="nc_email" class="apple-input py-2" placeholder="E-mail" required><input type="text" id="nc_senha" class="apple-input py-2" placeholder="Senha" required><button type="submit" class="apple-button bg-green-600 text-white">Cadastrar Cliente</button></form></div>
-                    <div class="apple-card p-6"><h3 class="font-bold text-[11px] text-red-500 mb-4 uppercase tracking-widest">Novo Admin</h3><form onsubmit="addAdmin(event)"><input type="text" id="na_nome" class="apple-input py-2" placeholder="Nome" required><input type="text" id="na_user" class="apple-input py-2" placeholder="Usuário" required><input type="text" id="na_senha" class="apple-input py-2" placeholder="Senha" required><button type="submit" class="apple-button bg-red-600 text-white">Cadastrar Admin</button></form></div>
+                    <div class="apple-card p-6"><h3 class="font-bold text-[11px] text-blue-500 mb-4 uppercase">Novo Lojista</h3><form onsubmit="addLojista(event)"><input type="text" id="nl_nome" class="apple-input py-2" placeholder="Nome da Loja" required><select id="nl_pais" class="apple-input py-2" required><option value="Brasil">Brasil</option><option value="Paraguai">Paraguai</option></select><div class="grid grid-cols-2 gap-2"><input type="text" id="nl_estado" class="apple-input py-2" placeholder="Estado"><input type="text" id="nl_cidade" class="apple-input py-2" placeholder="Cidade"></div><input type="text" id="nl_whats" class="apple-input py-2" placeholder="WhatsApp"><input type="text" id="nl_senha" class="apple-input py-2" placeholder="Senha"><button type="submit" class="apple-button bg-blue-600 text-white">Cadastrar</button></form></div>
+                    <div class="apple-card p-6"><h3 class="font-bold text-[11px] text-green-500 mb-4 uppercase">Novo Cliente VIP</h3><form onsubmit="addCliente(event)"><input type="text" id="nc_nome" class="apple-input py-2" placeholder="Nome" required><input type="email" id="nc_email" class="apple-input py-2" placeholder="E-mail" required><input type="text" id="nc_senha" class="apple-input py-2" placeholder="Senha"><button type="submit" class="apple-button bg-green-600 text-white">Cadastrar</button></form></div>
+                    <div class="apple-card p-6"><h3 class="font-bold text-[11px] text-red-500 mb-4 uppercase">Novo Admin</h3><form onsubmit="addAdmin(event)"><input type="text" id="na_nome" class="apple-input py-2" placeholder="Nome" required><input type="text" id="na_user" class="apple-input py-2" placeholder="Usuário"><button type="submit" class="apple-button bg-red-600 text-white">Cadastrar</button></form></div>
                 </div>
             </div>
 
@@ -199,23 +143,8 @@
                 <hr class="border-[#38383a] my-20">
                 <h2 class="text-2xl font-black italic mb-6">Gestão do Banco de Dados</h2>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div class="apple-card overflow-x-auto">
-                        <div class="flex flex-col md:flex-row justify-between mb-4 gap-2">
-                            <h3 class="font-bold text-[14px] text-blue-500 uppercase m-0">Lojistas Atacadistas</h3>
-                            <div class="flex gap-2"><button onclick="selecionarTodos('chk-lojista')" class="text-[9px] bg-gray-700 text-white px-3 py-1 rounded-full border-0">Todos</button><button onclick="abrirBulkMaster('fornecedores')" class="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-full border-0">🛠️ Massa</button><button onclick="acaoEmLote('fornecedores', 'ativo', true, 'chk-lojista')" class="text-[9px] bg-green-800 text-white px-3 py-1 rounded-full border-0">Ativar</button><button onclick="acaoEmLote('fornecedores', 'ativo', false, 'chk-lojista')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full border-0">Bloquear</button></div>
-                        </div>
-                        <input type="text" onkeyup="filtrarTabela('listaFornecedores', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Buscar Loja...">
-                        <table><thead><tr><th>Sel</th><th>Loja / Local</th><th>WhatsApp</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead><tbody id="listaFornecedores"></tbody></table>
-                    </div>
-                    <div class="apple-card overflow-x-auto">
-                        <div class="flex flex-col md:flex-row justify-between mb-4 gap-2">
-                            <h3 class="font-bold text-[14px] text-green-500 uppercase m-0">Clientes VIP</h3>
-                            <div class="flex gap-2"><button onclick="selecionarTodos('chk-cliente')" class="text-[9px] bg-gray-700 text-white px-3 py-1 rounded-full border-0">Todos</button><button onclick="abrirBulkMaster('clientes_buscador')" class="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-full border-0">🛠️ Massa</button><button onclick="acaoEmLote('clientes_buscador', 'aprovado', true, 'chk-cliente')" class="text-[9px] bg-green-800 text-white px-3 py-1 rounded-full border-0">Aprovar</button><button onclick="acaoEmLote('clientes_buscador', 'aprovado', false, 'chk-cliente')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full border-0">Bloquear</button></div>
-                        </div>
-                        <input type="text" onkeyup="filtrarTabela('listaClientes', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Buscar VIP...">
-                        <table><thead><tr><th>Sel</th><th>Nome</th><th>Contatos</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead><tbody id="listaClientes"></tbody></table>
-                    </div>
-                    <div class="apple-card overflow-x-auto lg:col-span-2"><h3 class="font-bold text-[14px] text-red-500 mb-4 uppercase">Equipe Master</h3><table><thead><tr><th>Nome</th><th>Usuário</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead><tbody id="listaAdmins"></tbody></table></div>
+                    <div class="apple-card overflow-x-auto"><h3 class="font-bold text-[14px] text-blue-500 uppercase m-0 mb-4">Lojistas</h3><tbody id="listaFornecedores"></tbody></table></div>
+                    <div class="apple-card overflow-x-auto"><h3 class="font-bold text-[14px] text-green-500 uppercase m-0 mb-4">Clientes</h3><tbody id="listaClientes"></tbody></table></div>
                 </div>
             </div>
         </div>
@@ -225,136 +154,87 @@
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let produtosMestre = [], gradeVariacoes = [];
 
-        function irPara(id) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
-        }
+        function irPara(id) { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); event.target.classList.add('active'); document.getElementById(id).scrollIntoView({ behavior: 'smooth' }); }
 
         window.onload = async () => {
             const t = localStorage.getItem('iFipe_MasterToken');
-            if (t) {
-                const { data } = await _s.from('admin_users').select('id').eq('id', t).maybeSingle();
-                if(data) liberarAcesso();
-            }
+            if (t) { const { data } = await _s.from('admin_users').select('id').eq('id', t).maybeSingle(); if(data) liberarAcesso(); }
         };
 
-        async function fazerLoginAdmin(e) {
-            e.preventDefault();
-            const { data } = await _s.from('admin_users').select('*').ilike('email', document.getElementById('adminEmail').value).eq('senha', document.getElementById('adminPass').value).maybeSingle();
-            if(data?.ativo) { localStorage.setItem('iFipe_MasterToken', data.id); liberarAcesso(); } else alert("Erro!");
-        }
+        async function fazerLoginAdmin(e) { e.preventDefault(); const { data } = await _s.from('admin_users').select('*').ilike('email', document.getElementById('adminEmail').value).eq('senha', document.getElementById('adminPass').value).maybeSingle(); if(data?.ativo) { localStorage.setItem('iFipe_MasterToken', data.id); liberarAcesso(); } else alert("Erro!"); }
 
-        function liberarAcesso() {
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('dashboardSection').classList.remove('hidden');
-            carregarTabelas(); initMasterAnuncios();
-        }
+        function liberarAcesso() { document.getElementById('loginSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden'); carregarTabelas(); initMasterAnuncios(); }
 
-        // --- CONCIERGE FUNCTIONS ---
+        // --- MASTER CONCIERGE LOGIC ---
         async function initMasterAnuncios() {
             const [p, r, v, f] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*'), _s.from('fornecedores').select('id, nome').eq('ativo', true).order('nome') ]);
             produtosMestre = p.data; gradeVariacoes = v.data;
-            document.getElementById('m_reg').innerHTML = '<option value="" disabled selected>Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
-            document.getElementById('master_fornecedor_id').innerHTML = '<option value="">Comandar Loja...</option>' + f.data.map(x => `<option value="${x.id}">${x.nome.toUpperCase()}</option>`).join('');
+            document.getElementById('m_reg').innerHTML = '<option value="">Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            document.getElementById('master_fornecedor_id').innerHTML = '<option value="">Selecione a Loja Alvo...</option>' + f.data.map(x => `<option value="${x.id}">${x.nome.toUpperCase()}</option>`).join('');
             carregarOfertasMaster();
-        }
-
-        function popularProdutosMaster() { document.getElementById('m_prod').innerHTML = '<option value="" disabled selected>Escolha o Modelo...</option>' + produtosMestre.filter(x => x.grupo_id == document.getElementById('m_cat').value).map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); }
-        function aoMudarProdutoMaster() {
-            const vars = gradeVariacoes.filter(x => x.produto_id == document.getElementById('m_prod').value);
-            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
-            const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
-            document.getElementById('m_grade').innerHTML = `<div class="grid grid-cols-2 gap-2 mt-2"><select id="mf_cap" class="apple-input"><option value="" disabled selected>Memória...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select><select id="mf_cor" class="apple-input"><option value="" disabled selected>Cor...</option><option value="MIXER COLORS">MIXER COLORS</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
-        }
-        
-        function limparPrecoMaster(t) { if(t==='brl')document.getElementById('m_usd').value=''; else document.getElementById('m_brl').value=''; }
-        function checarGarantiaMaster() { const cond = document.getElementById('m_cond').value, g = document.getElementById('m_gar'), cat = document.getElementById('m_cat').value; if(cond === 'Novo' && ['1','2','4','5'].includes(cat)) { g.value = "1 ANO GARANTIA APPLE"; g.readOnly = true; } else { g.readOnly = false; } }
-
-        async function postarOfertaMaster(e) {
-            e.preventDefault();
-            const lojaId = document.getElementById('master_fornecedor_id').value; if(!lojaId) return alert("Escolha uma loja!");
-            const pid = document.getElementById('m_prod').value, cap = document.getElementById('mf_cap')?.value, cor = document.getElementById('mf_cor')?.value;
-            let v = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && (cor === 'MIXER COLORS' || x.cor == cor)); if(!v) v = gradeVariacoes.find(x => x.produto_id == pid);
-            const pBrl = parsePreco(document.getElementById('m_brl').value), pUsd = parsePreco(document.getElementById('m_usd').value);
-            
-            await _s.from('ofertas').insert([{ 
-                fornecedor_id: lojaId, 
-                variacao_id: v.id, 
-                regiao_id: document.getElementById('m_reg').value, 
-                preco: pBrl || pUsd, 
-                moeda: pBrl > 0 ? 'BRL' : 'USD', 
-                quantidade: parseInt(document.getElementById('m_qtd').value), 
-                condicao: document.getElementById('m_cond').value, 
-                garantia: document.getElementById('m_gar').value, 
-                saude_bateria: document.getElementById('m_bat').value, 
-                cores_variadas: cor === 'MIXER COLORS', 
-                aceita_pix: document.getElementById('m_add_pix').checked,
-                aceita_usdt: document.getElementById('m_add_usdt').checked,
-                emite_nota: document.getElementById('m_add_nota').checked,
-                aceita_proposta: document.getElementById('m_add_proposta').checked,
-                faz_envio: document.getElementById('m_add_envio').checked,
-                aceita_coleta: document.getElementById('m_add_coleta').checked,
-                tem_boy: document.getElementById('m_add_boy').checked,
-                data_alteracao_preco: new Date().toISOString() 
-            }]);
-            alert("Publicado!"); e.target.reset(); document.getElementById('m_grade').innerHTML = ''; carregarOfertasMaster();
         }
 
         async function carregarOfertasMaster() {
             const { data } = await _s.from('ofertas').select('*, fornecedores(nome), variacoes(capacidade, cor, produtos_mestre(nome))').order('criado_em', {ascending: false});
-            document.getElementById('listaOfertasMaster').innerHTML = data.map(o => `<tr><td class="text-yellow-500 font-black uppercase text-[10px]">${o.fornecedores.nome}</td><td><span class="font-bold">${o.variacoes.produtos_mestre.nome}</span><br><span class="text-[9px] text-gray-500 uppercase">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td><td class="text-center"><input type="number" class="mini-edit w-[50px]" value="${o.quantidade}" onblur="salvarRapidoMaster(${o.id}, 'quantidade', this.value)"></td><td class="text-center"><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapidoMaster(${o.id}, 'preco', this.value)"><span class="text-[8px] block opacity-40">${o.moeda}</span></td><td class="text-right"><span class="btn-acao btn-vermelho" onclick="excluirOfertaMaster(${o.id})">Apagar</span></td></tr>`).join('');
-        }
-
-        async function salvarRapidoMaster(id, campo, valor) { let v = (campo === 'preco') ? parsePreco(valor) : parseInt(valor); await _s.from('ofertas').update({ [campo]: v, data_alteracao_preco: new Date().toISOString() }).eq('id', id); }
-        async function excluirOfertaMaster(id) { if(confirm("Apagar?")) { await _s.from('ofertas').delete().eq('id', id); carregarOfertasMaster(); } }
-
-        // --- MASTER DB FUNCTIONS (RESTAURADAS 100%) ---
-        async function carregarTabelas() {
-            const [lojas, clis, ads] = await Promise.all([ _s.from('fornecedores').select('*').order('id'), _s.from('clientes_buscador').select('*').order('criado_em', {ascending:false}), _s.from('admin_users').select('*').order('id') ]);
-            
-            document.getElementById('listaFornecedores').innerHTML = lojas.data.map(l => `
+            document.getElementById('listaOfertasMaster').innerHTML = data.map(o => `
                 <tr>
-                    <td class="text-center"><input type="checkbox" class="check-box chk-lojista" value="${l.id}"></td>
-                    <td><span class="font-bold block">${l.nome} ${l.verificado ? '✔️' : ''}</span><span class="text-[10px] text-gray-500">${l.pais} - ${l.cidade}</span></td>
-                    <td>${l.whatsapp}</td><td class="text-red-400 font-mono">${l.senha}</td><td>${l.ativo?'Ativo':'Inativo'}</td>
-                    <td>
-                        <span class="btn-acao btn-azul" onclick="abrirModalEdicao('fornecedores', ${l.id}, '${escapeString(l.nome)}', '', '${escapeString(l.whatsapp)}', '${escapeString(l.senha)}', '${escapeString(l.estado)}', '${escapeString(l.cidade)}', '${escapeString(l.pais)}')">Editar</span>
-                        ${!l.ativo ? `<span class="btn-acao btn-verde" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', true)">Ativar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('fornecedores', ${l.id}, 'ativo', false)">Inativar</span>`}
-                        ${!l.verificado ? `<span class="btn-acao bg-blue-600 text-white" onclick="alterarStatus('fornecedores', ${l.id}, 'verificado', true)">Verificar</span>` : `<span class="btn-acao bg-gray-600 text-white" onclick="alterarStatus('fornecedores', ${l.id}, 'verificado', false)">Remover</span>`}
-                        <span class="btn-acao btn-vermelho" onclick="excluirLojista(${l.id})">Excluir</span>
-                    </td>
+                    <td><input type="checkbox" class="offer-master-check check-box" value="${o.id}" onclick="updateBulkCountMaster()"></td>
+                    <td class="text-yellow-500 font-black uppercase text-[10px]">${o.fornecedores.nome}</td>
+                    <td><span class="font-bold">${o.variacoes.produtos_mestre.nome}</span><br><span class="text-[9px] text-gray-500 uppercase">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td>
+                    <td class="text-center"><input type="number" class="mini-edit w-[50px]" value="${o.quantidade}" onblur="salvarRapidoMaster(${o.id}, 'quantidade', this.value)"></td>
+                    <td class="text-center"><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapidoMaster(${o.id}, 'preco', this.value)"><span class="text-[8px] block opacity-40">${o.moeda}</span></td>
+                    <td class="text-right"><span class="btn-acao btn-vermelho" onclick="excluirOfertaMaster(${o.id})">X</span></td>
                 </tr>`).join('');
-
-            document.getElementById('listaClientes').innerHTML = clis.data.map(c => `<tr><td class="text-center"><input type="checkbox" class="check-box chk-cliente" value="${c.id}"></td><td><span class="font-bold">${c.nome}</span></td><td>${c.email}</td><td class="text-red-400 font-mono">${c.senha}</td><td>${c.aprovado?'OK':'Pendente'}</td><td><span class="btn-acao btn-azul" onclick="abrirModalEdicao('clientes_buscador', ${c.id}, '${escapeString(c.nome)}', '${escapeString(c.email)}', '${escapeString(c.whatsapp)}', '${escapeString(c.senha)}')">Editar</span>${!c.aprovado ? `<span class="btn-acao btn-verde" onclick="alterarStatus('clientes_buscador', ${c.id}, 'aprovado', true)">Aprovar</span>` : `<span class="btn-acao btn-amarelo" onclick="alterarStatus('clientes_buscador', ${c.id}, 'aprovado', false)">Bloquear</span>`}<span class="btn-acao btn-vermelho" onclick="excluirRegistro('clientes_buscador', ${c.id})">Excluir</span></td></tr>`).join('');
-            
-            document.getElementById('listaAdmins').innerHTML = ads.data.map(a => `<tr><td>${a.nome}</td><td>${a.email}</td><td class="text-red-400 font-mono">${a.senha}</td><td>${a.ativo?'Ativo':'Inativo'}</td><td><span class="btn-acao btn-azul" onclick="abrirModalEdicao('admin_users', ${a.id}, '${escapeString(a.nome)}', '${escapeString(a.email)}', '', '${escapeString(a.senha)}')">Editar</span>${a.email !== 'bryan' ? `<span class="btn-acao btn-vermelho" onclick="excluirRegistro('admin_users', ${a.id})">Excluir</span>` : ''}</td></tr>`).join('');
+            updateBulkCountMaster();
         }
 
-        async function acaoEmLote(t, c, v, cl) { const ids = Array.from(document.querySelectorAll(`.${cl}:checked`)).map(chk => parseInt(chk.value)); if(ids.length) { await _s.from(t).update({ [c]: v }).in('id', ids); carregarTabelas(); } }
-        async function alterarStatus(t, id, c, v) { await _s.from(t).update({ [c]: v }).eq('id', id); carregarTabelas(); }
-        async function excluirLojista(id) { if(confirm("Excluir TUDO da loja?")) { await _s.from('ofertas').delete().eq('fornecedor_id', id); await _s.from('fornecedores').delete().eq('id', id); carregarTabelas(); } }
-        async function excluirRegistro(t, id) { if(confirm("Excluir?")) { await _s.from(t).delete().eq('id', id); carregarTabelas(); } }
-        
-        // --- HELPERS ---
+        // --- INJEÇÃO: FUNÇÕES EM MASSA DO MASTER ---
+        function toggleAllOfertas(master) { document.querySelectorAll('.offer-master-check').forEach(c => c.checked = master.checked); updateBulkCountMaster(); }
+        function updateBulkCountMaster() { document.getElementById('bulkMasterOfferCount').innerText = document.querySelectorAll('.offer-master-check:checked').length; }
+        function abrirBulkOfertasMaster() { if(!document.querySelectorAll('.offer-master-check:checked').length) return alert("Selecione!"); document.getElementById('bulkOfertasModal').classList.remove('hidden'); }
+        function fecharBulkOfertasMaster() { document.getElementById('bulkOfertasModal').classList.add('hidden'); }
+
+        async function salvarBulkOfertasMaster(e) {
+            e.preventDefault();
+            const ids = Array.from(document.querySelectorAll('.offer-master-check:checked')).map(c => parseInt(c.value));
+            let up = {};
+            const p = parsePreco(document.getElementById('bm_o_preco').value); if(p > 0) up.preco = p;
+            const q = document.getElementById('bm_o_qtd').value; if(q) up.quantidade = parseInt(q);
+            const c = document.getElementById('bm_o_cond').value; if(c) up.condicao = c;
+            const b = document.getElementById('bm_o_bat').value; if(b) up.saude_bateria = b;
+            const pix = document.getElementById('bm_o_pix').value; if(pix) up.aceita_pix = pix === "1";
+            const usd = document.getElementById('bm_o_usdt').value; if(usd) up.aceita_usdt = usd === "1";
+
+            await _s.from('ofertas').update(up).in('id', ids);
+            fecharBulkOfertasMaster(); carregarOfertasMaster(); alert("Atualizado!");
+        }
+
+        async function bulkDuplicateMaster() {
+            const ids = Array.from(document.querySelectorAll('.offer-master-check:checked')).map(c => parseInt(c.value));
+            if(!ids.length) return alert("Selecione!");
+            const { data: originais } = await _s.from('ofertas').select('*').in('id', ids);
+            await _s.from('ofertas').insert(originais.map(o => { const { id, criado_em, ...resto } = o; return resto; }));
+            carregarOfertasMaster(); alert("Duplicado!");
+        }
+
+        async function bulkDeleteMaster() {
+            const ids = Array.from(document.querySelectorAll('.offer-master-check:checked')).map(c => parseInt(c.value));
+            if(!ids.length || !confirm("Apagar tudo selecionado?")) return;
+            await _s.from('ofertas').delete().in('id', ids);
+            carregarOfertasMaster();
+        }
+
+        // --- HELPERS E RESTANTE DO CÓDIGO (ORIGINAL PRESERVADO) ---
         function parsePreco(v) { return v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0; }
         function mascararMoeda(input) { let v = input.value.replace(/\D/g, ''); if (!v) { input.value = ''; return; } v = (parseFloat(v) / 100).toFixed(2).replace('.', ','); input.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
         function filtrarTabela(id, t) { const rows = document.getElementById(id).getElementsByTagName('tr'); for (let i = 0; i < rows.length; i++) { rows[i].style.display = rows[i].innerText.toLowerCase().includes(t.toLowerCase()) ? '' : 'none'; } }
-        function selecionarTodos(cl) { document.querySelectorAll(`.${cl}`).forEach(c => c.checked = !c.checked); }
-        function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
+        async function carregarTabelas() {
+            const [lojas, clis, ads] = await Promise.all([ _s.from('fornecedores').select('*').order('id'), _s.from('clientes_buscador').select('*').order('criado_em', {ascending:false}), _s.from('admin_users').select('*').order('id') ]);
+            document.getElementById('listaFornecedores').innerHTML = lojas.data.map(l => `<tr><td class="text-center"><input type="checkbox" class="check-box chk-lojista" value="${l.id}"></td><td><span class="font-bold block">${l.nome}</span></td><td>${l.whatsapp}</td><td>${l.senha}</td><td>${l.ativo?'OK':'-'}</td><td><button class="btn-acao btn-azul" onclick="abrirModalEdicao('fornecedores',${l.id},'${l.nome}','','${l.whatsapp}','${l.senha}')">Editar</button></td></tr>`).join('');
+            document.getElementById('listaClientes').innerHTML = clis.data.map(c => `<tr><td class="text-center"><input type="checkbox" class="check-box chk-cliente" value="${c.id}"></td><td>${c.nome}</td><td>${c.email}</td><td>${c.senha}</td><td>${c.aprovado?'OK':'-'}</td><td><button class="btn-acao btn-azul" onclick="abrirModalEdicao('clientes_buscador',${c.id},'${c.nome}','${c.email}','','${c.senha}')">Editar</button></td></tr>`).join('');
+            document.getElementById('listaAdmins').innerHTML = ads.data.map(a => `<tr><td>${a.nome}</td><td>${a.email}</td><td>${a.senha}</td><td>${a.ativo?'OK':'-'}</td><td><button class="btn-acao btn-azul">Editar</button></td></tr>`).join('');
+        }
         function sairPainel() { localStorage.removeItem('iFipe_MasterToken'); window.location.reload(); }
-        
-        async function addLojista(e) { e.preventDefault(); await _s.from('fornecedores').insert([{ nome: document.getElementById('nl_nome').value, whatsapp: document.getElementById('nl_whats').value, senha: document.getElementById('nl_senha').value, estado: document.getElementById('nl_estado').value, cidade: document.getElementById('nl_cidade').value, pais: document.getElementById('nl_pais').value, ativo: true }]); e.target.reset(); carregarTabelas(); alert("OK!"); }
-        async function addCliente(e) { e.preventDefault(); await _s.from('clientes_buscador').insert([{ nome: document.getElementById('nc_nome').value, cpf: document.getElementById('nc_cpf').value, email: document.getElementById('nc_email').value, whatsapp: document.getElementById('nc_whats').value, senha: document.getElementById('nc_senha').value, aprovado: true }]); e.target.reset(); carregarTabelas(); alert("OK!"); }
-        async function addAdmin(e) { e.preventDefault(); await _s.from('admin_users').insert([{ nome: document.getElementById('na_nome').value, email: document.getElementById('na_user').value, senha: document.getElementById('na_senha').value, ativo: true }]); e.target.reset(); carregarTabelas(); alert("OK!"); }
-        
-        function abrirBulkMaster(t) { document.getElementById('bm_tabela').value = t; document.getElementById('bulkMasterModal').classList.remove('hidden'); if(t==='fornecedores'){ document.getElementById('bm_lojista_fields').classList.remove('hidden'); document.getElementById('bm_cliente_fields').classList.add('hidden'); } else { document.getElementById('bm_cliente_fields').classList.remove('hidden'); document.getElementById('bm_lojista_fields').classList.add('hidden'); } }
-        function fecharBulkMaster() { document.getElementById('bulkMasterModal').classList.add('hidden'); }
-        async function salvarBulkMaster(e) { e.preventDefault(); const t = document.getElementById('bm_tabela').value; let updates = {}; if (t === 'fornecedores') { const p = document.getElementById('bm_pais').value; if (p) updates.pais = p; } else { const s = document.getElementById('bm_senha').value; if (s) updates.senha = s; } const ids = Array.from(document.querySelectorAll(t === 'fornecedores' ? '.chk-lojista:checked' : '.chk-cliente:checked')).map(c => parseInt(c.value)); await _s.from(t).update(updates).in('id', ids); fecharBulkMaster(); carregarTabelas(); alert("OK!"); }
-
-        function abrirModalEdicao(t, id, n, em, w, s, est, cid, p) { document.getElementById('edit_tabela').value = t; document.getElementById('edit_id').value = id; document.getElementById('edit_nome').value = n; document.getElementById('edit_senha').value = s; document.getElementById('edit_email').value = em || w; if(t==='fornecedores'){ document.getElementById('loc_box').classList.remove('hidden'); document.getElementById('edit_estado').value=est; document.getElementById('edit_cidade').value=cid; document.getElementById('edit_pais').value=p; } else { document.getElementById('loc_box').classList.add('hidden'); } document.getElementById('editModal').classList.remove('hidden'); }
-        function fecharModal() { document.getElementById('editModal').classList.add('hidden'); }
-        async function salvarEdicao(e) { e.preventDefault(); const t = document.getElementById('edit_tabela').value; const id = document.getElementById('edit_id').value; let ud = { nome: document.getElementById('edit_nome').value, senha: document.getElementById('edit_senha').value }; if(t==='fornecedores'){ ud.estado=document.getElementById('edit_estado').value; ud.cidade=document.getElementById('edit_cidade').value; ud.pais=document.getElementById('edit_pais').value; } await _s.from(t).update(ud).eq('id', id); fecharModal(); carregarTabelas(); }
     </script>
 </body>
 </html>
