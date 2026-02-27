@@ -20,9 +20,13 @@
         
         .btn-acao { font-size: 10px; font-weight: bold; text-transform: uppercase; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: 0.3s; display: inline-block; margin-right: 5px; margin-bottom: 5px; border: none; }
         .btn-verde { background: rgba(50, 215, 75, 0.2); color: #32d74b; }
+        .btn-verde:hover { background: #32d74b; color: #000; }
         .btn-amarelo { background: rgba(255, 204, 0, 0.2); color: #ffcc00; }
+        .btn-amarelo:hover { background: #ffcc00; color: #000; }
         .btn-azul { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
+        .btn-azul:hover { background: #0071e3; color: #fff; }
         .btn-vermelho { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
+        .btn-vermelho:hover { background: #ff3b30; color: #fff; }
         
         .mini-edit { background: transparent; border: 1px solid transparent; color: #32d74b; font-weight: 800; width: 80px; text-align: center; border-radius: 6px; padding: 4px; transition: 0.2s; }
         .mini-edit:focus { border-color: #0071e3; background: #2c2c2e; outline: none; }
@@ -109,25 +113,69 @@
                         <div class="apple-card p-6 border-yellow-600/30 bg-yellow-600/5">
                             <label class="text-yellow-500">Postar em nome de:</label>
                             <select id="master_fornecedor_id" class="apple-input border-yellow-600/50 text-yellow-500 font-black uppercase"><option value="">Carregando lojas...</option></select>
-                            <form onsubmit="postarOfertaMaster(event)">
-                                <select id="m_cat" class="apple-input mb-2" onchange="popularProdutosMaster()" required><option value="">Categoria...</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="3">IPAD</option></select>
-                                <select id="m_prod" class="apple-input mb-2" onchange="aoMudarProdutoMaster()" required><option value="">Modelo...</option></select>
+                            
+                            <form id="masterPriceForm" onsubmit="postarOfertaMaster(event)">
+                                <select id="m_cat" class="apple-input mb-2" onchange="popularProdutosMaster()" required>
+                                    <option value="" disabled selected>Selecione Categoria...</option>
+                                    <option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="3">IPAD</option>
+                                </select>
+                                <select id="m_prod" class="apple-input mb-2" onchange="aoMudarProdutoMaster()" required>
+                                    <option value="" disabled selected>Escolha o Modelo...</option>
+                                </select>
                                 <div id="m_grade"></div>
-                                <select id="m_cond" class="apple-input mt-2" required><option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option></select>
-                                <input type="number" id="m_qtd" class="apple-input mt-2" placeholder="Qtd" required>
-                                <select id="m_reg" class="apple-input mt-2" required><option value="">Origem...</option></select>
+                                
+                                <select id="m_cond" class="apple-input mt-2" onchange="checarGarantiaMaster()" required>
+                                    <option value="" disabled selected>Condição...</option>
+                                    <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
+                                    <option value="CPO">CPO</option><option value="AS IS +">AS IS +</option>
+                                    <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
+                                </select>
+                                
+                                <select id="m_bat" class="apple-input mt-2">
+                                    <option value="" selected>Saúde da Bateria (Se houver)...</option>
+                                    <option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option>
+                                    <option value="ACIMA DE 90%">ACIMA DE 90%</option><option value="ACIMA DE 95%">ACIMA DE 95%</option>
+                                    <option value="BATERIA EM 100%">BATERIA EM 100%</option>
+                                </select>
+
+                                <input type="number" id="m_qtd" class="apple-input mt-2" placeholder="Qtd" min="1" required>
+                                
+                                <select id="m_gar_sel" class="apple-input mt-2" onchange="document.getElementById('m_gar').value = this.value">
+                                    <option value="">Tempo de Garantia...</option>
+                                    <option value="30 DIAS">30 DIAS</option><option value="3 MESES">3 MESES</option>
+                                    <option value="6 MESES">6 MESES</option><option value="1 ANO">1 ANO</option>
+                                    <option value="1 ANO GARANTIA APPLE">1 ANO GARANTIA APPLE</option>
+                                </select>
+                                <input type="text" id="m_gar" class="apple-input mt-2" placeholder="Ou digite aqui a garantia...">
+
+                                <select id="m_reg" class="apple-input mt-2" required>
+                                    <option value="" disabled selected>Origem...</option>
+                                </select>
+                                
                                 <div class="grid grid-cols-2 gap-2 mt-2">
-                                    <input type="text" id="m_brl" class="apple-input" placeholder="R$" oninput="mascararMoeda(this)">
-                                    <input type="text" id="m_usd" class="apple-input" placeholder="$" oninput="mascararMoeda(this)">
+                                    <input type="text" id="m_brl" class="apple-input" placeholder="R$" oninput="mascararMoeda(this); limparPrecoMaster('brl')">
+                                    <input type="text" id="m_usd" class="apple-input" placeholder="$" oninput="mascararMoeda(this); limparPrecoMaster('usd')">
                                 </div>
+
+                                <div class="mt-4 p-3 bg-[#2c2c2e] rounded-xl grid grid-cols-2 gap-2 border border-[#38383a]">
+                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_pix"> PIX</label>
+                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_usdt"> USDT</label>
+                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_nota"> NF</label>
+                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_proposta"> NEGOCIA QTD</label>
+                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_envio"> FAZ ENVIO</label>
+                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_coleta"> ACEITA COLETA</label>
+                                    <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_add_boy"> MOTOBOY</label>
+                                </div>
+
                                 <button type="submit" class="apple-button w-full bg-yellow-600 text-black mt-4">Publicar</button>
                             </form>
                         </div>
                     </div>
+                    
                     <div class="lg:col-span-3">
                         <div class="apple-card overflow-x-auto">
                             <h3 class="font-bold text-[14px] text-yellow-500 uppercase mb-4">Anúncios Online</h3>
-                            <input type="text" onkeyup="filtrarTabela('listaOfertasMaster', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Filtrar anúncios...">
+                            <input type="text" onkeyup="filtrarTabela('listaOfertasMaster', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Filtrar anúncios (Loja, Modelo, Condição)...">
                             <table>
                                 <thead><tr><th>Loja</th><th>Produto</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
                                 <tbody id="listaOfertasMaster"></tbody>
@@ -207,18 +255,21 @@
         async function initMasterAnuncios() {
             const [p, r, v, f] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*'), _s.from('fornecedores').select('id, nome').eq('ativo', true).order('nome') ]);
             produtosMestre = p.data; gradeVariacoes = v.data;
-            document.getElementById('m_reg').innerHTML = '<option value="">Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            document.getElementById('m_reg').innerHTML = '<option value="" disabled selected>Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             document.getElementById('master_fornecedor_id').innerHTML = '<option value="">Comandar Loja...</option>' + f.data.map(x => `<option value="${x.id}">${x.nome.toUpperCase()}</option>`).join('');
             carregarOfertasMaster();
         }
 
-        function popularProdutosMaster() { document.getElementById('m_prod').innerHTML = '<option value="">Modelo...</option>' + produtosMestre.filter(x => x.grupo_id == document.getElementById('m_cat').value).map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); }
+        function popularProdutosMaster() { document.getElementById('m_prod').innerHTML = '<option value="" disabled selected>Escolha o Modelo...</option>' + produtosMestre.filter(x => x.grupo_id == document.getElementById('m_cat').value).map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); }
         function aoMudarProdutoMaster() {
             const vars = gradeVariacoes.filter(x => x.produto_id == document.getElementById('m_prod').value);
             const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
             const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
-            document.getElementById('m_grade').innerHTML = `<div class="grid grid-cols-2 gap-2 mt-2"><select id="mf_cap" class="apple-input py-2 mb-0"><option value="">Memória...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select><select id="mf_cor" class="apple-input py-2 mb-0"><option value="">Cor...</option><option value="MIXER COLORS">MIXER COLORS</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
+            document.getElementById('m_grade').innerHTML = `<div class="grid grid-cols-2 gap-2 mt-2"><select id="mf_cap" class="apple-input"><option value="" disabled selected>Memória...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select><select id="mf_cor" class="apple-input"><option value="" disabled selected>Cor...</option><option value="MIXER COLORS">MIXER COLORS</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
         }
+        
+        function limparPrecoMaster(t) { if(t==='brl')document.getElementById('m_usd').value=''; else document.getElementById('m_brl').value=''; }
+        function checarGarantiaMaster() { const cond = document.getElementById('m_cond').value, g = document.getElementById('m_gar'), cat = document.getElementById('m_cat').value; if(cond === 'Novo' && ['1','2','4','5'].includes(cat)) { g.value = "1 ANO GARANTIA APPLE"; g.readOnly = true; } else { g.readOnly = false; } }
 
         async function postarOfertaMaster(e) {
             e.preventDefault();
@@ -226,8 +277,28 @@
             const pid = document.getElementById('m_prod').value, cap = document.getElementById('mf_cap')?.value, cor = document.getElementById('mf_cor')?.value;
             let v = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && (cor === 'MIXER COLORS' || x.cor == cor)); if(!v) v = gradeVariacoes.find(x => x.produto_id == pid);
             const pBrl = parsePreco(document.getElementById('m_brl').value), pUsd = parsePreco(document.getElementById('m_usd').value);
-            await _s.from('ofertas').insert([{ fornecedor_id: lojaId, variacao_id: v.id, regiao_id: document.getElementById('m_reg').value, preco: pBrl || pUsd, moeda: pBrl > 0 ? 'BRL' : 'USD', quantidade: parseInt(document.getElementById('m_qtd').value), condicao: document.getElementById('m_cond').value, cores_variadas: cor === 'MIXER COLORS', data_alteracao_preco: new Date().toISOString() }]);
-            alert("Publicado!"); carregarOfertasMaster();
+            
+            await _s.from('ofertas').insert([{ 
+                fornecedor_id: lojaId, 
+                variacao_id: v.id, 
+                regiao_id: document.getElementById('m_reg').value, 
+                preco: pBrl || pUsd, 
+                moeda: pBrl > 0 ? 'BRL' : 'USD', 
+                quantidade: parseInt(document.getElementById('m_qtd').value), 
+                condicao: document.getElementById('m_cond').value, 
+                garantia: document.getElementById('m_gar').value, 
+                saude_bateria: document.getElementById('m_bat').value, 
+                cores_variadas: cor === 'MIXER COLORS', 
+                aceita_pix: document.getElementById('m_add_pix').checked,
+                aceita_usdt: document.getElementById('m_add_usdt').checked,
+                emite_nota: document.getElementById('m_add_nota').checked,
+                aceita_proposta: document.getElementById('m_add_proposta').checked,
+                faz_envio: document.getElementById('m_add_envio').checked,
+                aceita_coleta: document.getElementById('m_add_coleta').checked,
+                tem_boy: document.getElementById('m_add_boy').checked,
+                data_alteracao_preco: new Date().toISOString() 
+            }]);
+            alert("Publicado!"); e.target.reset(); document.getElementById('m_grade').innerHTML = ''; carregarOfertasMaster();
         }
 
         async function carregarOfertasMaster() {
