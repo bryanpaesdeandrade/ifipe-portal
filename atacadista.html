@@ -63,6 +63,18 @@
                 <form onsubmit="registrarLojista(event)">
                     <input type="text" id="regNome" class="apple-input mb-2" placeholder="Nome da Loja" required>
                     <input type="text" id="regWhats" class="apple-input mb-2" placeholder="WhatsApp" required>
+                    
+                    <select id="regPaisAta" class="apple-input mb-2" required onchange="mudarPais('regPaisAta', 'regEstadoAta', 'regCidadeAta')">
+                        <option value="" disabled selected>País Sede...</option>
+                        <option value="Brasil">BRASIL</option>
+                        <option value="Paraguai">PARAGUAI</option>
+                        <option value="Dubai">DUBAI</option>
+                        <option value="Estados Unidos">EUA</option>
+                    </select>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <div><select id="regEstadoAta" class="apple-input mb-0" required disabled><option value="">Estado...</option></select></div>
+                        <div><select id="regCidadeAta" class="apple-input mb-0" required disabled><option value="">Cidade...</option></select></div>
+                    </div>
                     <input type="password" id="regSenha" class="apple-input mb-4" placeholder="Crie uma Senha" required>
                     <button type="submit" class="apple-button w-full bg-green-600 text-white">Solicitar</button>
                     <button type="button" onclick="toggleAuth()" class="text-[10px] text-gray-500 mt-6 block w-full text-center font-bold">Voltar</button>
@@ -190,8 +202,7 @@
                 <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">Responder Perguntas</h3>
                 <p id="perguntaProdutoNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
             </div>
-            <div id="listaAtendimento" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2 custom-scroll">
-                </div>
+            <div id="listaAtendimento" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2 custom-scroll"></div>
             <form onsubmit="salvarResposta(event)" class="mt-auto border-t border-[#38383a] pt-4">
                 <input type="hidden" id="atendimento_oferta_id">
                 <textarea id="atendimento_texto" class="apple-input w-full h-[70px] resize-none mb-2 text-[11px]" placeholder="Digite sua resposta oficial como lojista..." required></textarea>
@@ -235,9 +246,7 @@
         <div class="apple-card max-w-[500px] w-full border-blue-500">
             <h3 class="text-sm font-black uppercase mb-4 text-blue-500">Editar Detalhes do Anúncio</h3>
             <form onsubmit="salvarEdicaoCompleta(event)">
-                <input type="hidden" id="edit_id">
-                <input type="hidden" id="edit_produto_id">
-                <input type="hidden" id="edit_capacidade">
+                <input type="hidden" id="edit_id"><input type="hidden" id="edit_produto_id"><input type="hidden" id="edit_capacidade">
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <div><label class="text-[8px] text-gray-500 uppercase font-black">Preço</label><input type="text" id="edit_preco" class="apple-input" oninput="mascararMoeda(this)"></div>
                     <div><label class="text-[8px] text-gray-500 uppercase font-black">Cor</label><select id="edit_cor" class="apple-input"></select></div>
@@ -311,8 +320,62 @@
 
         function toggleAuth() { document.getElementById('loginForm').classList.toggle('hidden'); document.getElementById('registerForm').classList.toggle('hidden'); }
         async function realizarLoginAnunciante(e) { e.preventDefault(); const { data } = await _s.from('fornecedores').select('*').ilike('nome', document.getElementById('logLoja').value.trim()).eq('senha', document.getElementById('logPass').value).maybeSingle(); if (data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); loja = data; liberarDashboard(); } else { alert("Verifique sua loja."); } }
-        async function registrarLojista(e) { e.preventDefault(); await _s.from('fornecedores').insert([{ nome: document.getElementById('regNome').value, whatsapp: document.getElementById('regWhats').value, senha: document.getElementById('regSenha').value, ativo: false }]); alert("Solicitado!"); toggleAuth(); }
+        
+        async function registrarLojista(e) { 
+            e.preventDefault(); 
+            await _s.from('fornecedores').insert([{ 
+                nome: document.getElementById('regNome').value, whatsapp: document.getElementById('regWhats').value, senha: document.getElementById('regSenha').value, 
+                pais: document.getElementById('regPaisAta').value, estado: document.getElementById('regEstadoAta').value, cidade: document.getElementById('regCidadeAta').value, ativo: false 
+            }]); 
+            alert("Solicitado!"); toggleAuth(); 
+        }
+        
         function liberarDashboard() { document.getElementById('authSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden'); document.getElementById('nomeLoja').innerText = loja.nome; init(); }
+
+        // --- INJEÇÃO DAS FUNÇÕES DO IBGE ---
+        async function carregarEstados(idSelect) {
+            const select = document.getElementById(idSelect);
+            if(!select || select.tagName !== 'SELECT') return;
+            select.innerHTML = '<option value="" disabled selected>Carregando...</option>';
+            try {
+                const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+                const estados = await res.json();
+                select.innerHTML = '<option value="" disabled selected>Selecione o Estado...</option>';
+                estados.forEach(e => { select.innerHTML += `<option value="${e.sigla}">${e.nome}</option>`; });
+                select.disabled = false;
+            } catch(e) { select.innerHTML = '<option value="">Erro ao carregar</option>'; }
+        }
+
+        async function carregarCidades(uf, idSelect) {
+            const select = document.getElementById(idSelect);
+            if(!select || select.tagName !== 'SELECT') return;
+            select.innerHTML = '<option value="" disabled selected>Carregando...</option>';
+            try {
+                const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
+                const cidades = await res.json();
+                select.innerHTML = '<option value="" disabled selected>Selecione a Cidade...</option>';
+                cidades.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; });
+                select.disabled = false;
+            } catch(e) { select.innerHTML = '<option value="">Erro ao carregar</option>'; }
+        }
+
+        function mudarPais(idPais, idEstado, idCidade) {
+            const pais = document.getElementById(idPais).value;
+            const elEst = document.getElementById(idEstado);
+            const elCid = document.getElementById(idCidade);
+            const divEst = elEst.parentElement;
+            const divCid = elCid.parentElement;
+            const cName = elEst.className;
+            
+            if (pais === 'Brasil') {
+                divEst.innerHTML = `<select id="${idEstado}" class="${cName}" required onchange="carregarCidades(this.value, '${idCidade}')"><option value="">Estado...</option></select>`;
+                divCid.innerHTML = `<select id="${idCidade}" class="${cName}" required disabled><option value="">Cidade...</option></select>`;
+                carregarEstados(idEstado);
+            } else {
+                divEst.innerHTML = `<input type="text" id="${idEstado}" class="${cName}" placeholder="Estado / Distrito" required>`;
+                divCid.innerHTML = `<input type="text" id="${idCidade}" class="${cName}" placeholder="Cidade" required>`;
+            }
+        }
 
         async function init() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
@@ -331,155 +394,26 @@
             atualizarLista();
         }
 
-        // --- CENTRAL DE ATENDIMENTO (PERGUNTAS) ---
-        async function abrirModalPerguntas(ofertaId, nomeProd) {
-            document.getElementById('atendimento_oferta_id').value = ofertaId;
-            document.getElementById('perguntaProdutoNome').innerText = nomeProd;
-            document.getElementById('perguntasModal').classList.remove('hidden');
-            await carregarPerguntas(ofertaId);
-        }
-
+        // --- CÓDIGO ORIGINAL INTACTO ABAIXO ---
+        async function abrirModalPerguntas(ofertaId, nomeProd) { document.getElementById('atendimento_oferta_id').value = ofertaId; document.getElementById('perguntaProdutoNome').innerText = nomeProd; document.getElementById('perguntasModal').classList.remove('hidden'); await carregarPerguntas(ofertaId); }
         function fecharModalPerguntas() { document.getElementById('perguntasModal').classList.add('hidden'); }
-
-        async function carregarPerguntas(ofertaId) {
-            const div = document.getElementById('listaAtendimento');
-            div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Buscando mensagens...</p>';
-            const { data } = await _s.from('comentarios').select('*').eq('oferta_id', ofertaId).order('criado_em', { ascending: true });
-            if(!data || data.length === 0) {
-                div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Nenhuma pergunta recebida.</p>';
-                return;
-            }
-            div.innerHTML = data.map(c => `
-                <div class="p-3 rounded-xl border border-[#38383a] ${c.is_vendedor ? 'bg-blue-900/20 ml-6' : 'bg-[#2c2c2e] mr-6'}">
-                    <div class="flex justify-between items-center mb-1.5">
-                        <span class="text-[9px] font-black uppercase ${c.is_vendedor ? 'text-blue-400' : 'text-gray-400'}">
-                            ${c.is_vendedor ? 'Sua Resposta Oficial' : 'Usuário Privado'}
-                        </span>
-                        <button onclick="excluirMensagem(${c.id}, ${ofertaId})" class="text-[7px] text-red-500 font-black uppercase">[ Apagar ]</button>
-                    </div>
-                    <p class="text-[11px] text-gray-300 font-bold leading-relaxed">${c.texto}</p>
-                </div>
-            `).join('');
-            div.scrollTop = div.scrollHeight;
-        }
-
-        async function salvarResposta(e) {
-            e.preventDefault();
-            const id = document.getElementById('atendimento_oferta_id').value;
-            const txt = document.getElementById('atendimento_texto').value;
-            if(!txt.trim()) return;
-            const { error } = await _s.from('comentarios').insert([{ oferta_id: id, autor_nome: loja.nome, texto: txt, is_vendedor: true }]);
-            if(!error) { document.getElementById('atendimento_texto').value = ''; await carregarPerguntas(id); atualizarLista(); }
-        }
-
-        async function excluirMensagem(id, ofertaId) {
-            if(!confirm("Deseja apagar esta mensagem permanentemente?")) return;
-            await _s.from('comentarios').delete().eq('id', id);
-            await carregarPerguntas(ofertaId); atualizarLista();
-        }
-
+        async function carregarPerguntas(ofertaId) { const div = document.getElementById('listaAtendimento'); div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Buscando mensagens...</p>'; const { data } = await _s.from('comentarios').select('*').eq('oferta_id', ofertaId).order('criado_em', { ascending: true }); if(!data || data.length === 0) { div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Nenhuma pergunta recebida.</p>'; return; } div.innerHTML = data.map(c => `<div class="p-3 rounded-xl border border-[#38383a] ${c.is_vendedor ? 'bg-blue-900/20 ml-6' : 'bg-[#2c2c2e] mr-6'}"><div class="flex justify-between items-center mb-1.5"><span class="text-[9px] font-black uppercase ${c.is_vendedor ? 'text-blue-400' : 'text-gray-400'}">${c.is_vendedor ? 'Sua Resposta Oficial' : 'Usuário Privado'}</span><button onclick="excluirMensagem(${c.id}, ${ofertaId})" class="text-[7px] text-red-500 font-black uppercase">[ Apagar ]</button></div><p class="text-[11px] text-gray-300 font-bold leading-relaxed">${c.texto}</p></div>`).join(''); div.scrollTop = div.scrollHeight; }
+        async function salvarResposta(e) { e.preventDefault(); const id = document.getElementById('atendimento_oferta_id').value; const txt = document.getElementById('atendimento_texto').value; if(!txt.trim()) return; const { error } = await _s.from('comentarios').insert([{ oferta_id: id, autor_nome: loja.nome, texto: txt, is_vendedor: true }]); if(!error) { document.getElementById('atendimento_texto').value = ''; await carregarPerguntas(id); atualizarLista(); } }
+        async function excluirMensagem(id, ofertaId) { if(!confirm("Deseja apagar esta mensagem permanentemente?")) return; await _s.from('comentarios').delete().eq('id', id); await carregarPerguntas(ofertaId); atualizarLista(); }
         function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
-        function executarCalc() {
-            const usd = parseFloat(document.getElementById('calcUsdInput')?.value);
-            if(!usd || taxaVipGlobal === 0) { document.getElementById('calcResult').innerText = "R$ 0,00"; return; }
-            const res = (usd * taxaVipGlobal) * 1.06;
-            document.getElementById('calcResult').innerText = res.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        }
-
-        function calcSimulador() {
-            const usd = parseFloat(document.getElementById('sim_usd')?.value);
-            const btnZap = document.getElementById('btnZapCompra');
-            if(!usd || taxaVipGlobal === 0) { document.getElementById('sim_result').innerText = "R$ 0,00"; btnZap.href = `https://wa.me/15616760652?text=${encodeURIComponent("Preciso comprar USDT vim atraves da iFipe")}`; return; }
-            const res = usd * taxaVipGlobal;
-            document.getElementById('sim_result').innerText = res.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            const msg = encodeURIComponent(`Preciso comprar ${usd} USDT vim atraves da iFipe`);
-            btnZap.href = `https://wa.me/15616760652?text=${msg}`;
-        }
-
+        function executarCalc() { const usd = parseFloat(document.getElementById('calcUsdInput')?.value); if(!usd || taxaVipGlobal === 0) { document.getElementById('calcResult').innerText = "R$ 0,00"; return; } const res = (usd * taxaVipGlobal) * 1.06; document.getElementById('calcResult').innerText = res.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+        function calcSimulador() { const usd = parseFloat(document.getElementById('sim_usd')?.value); const btnZap = document.getElementById('btnZapCompra'); if(!usd || taxaVipGlobal === 0) { document.getElementById('sim_result').innerText = "R$ 0,00"; btnZap.href = `https://wa.me/15616760652?text=${encodeURIComponent("Preciso comprar USDT vim atraves da iFipe")}`; return; } const res = usd * taxaVipGlobal; document.getElementById('sim_result').innerText = res.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); const msg = encodeURIComponent(`Preciso comprar ${usd} USDT vim atraves da iFipe`); btnZap.href = `https://wa.me/15616760652?text=${msg}`; }
         function abrirConta() { document.getElementById('c_nome').value = loja.nome || ''; document.getElementById('c_whats').value = loja.whatsapp || ''; document.getElementById('c_senha').value = loja.senha || ''; document.getElementById('contaModal').classList.remove('hidden'); }
         function fecharConta() { document.getElementById('contaModal').classList.add('hidden'); }
         async function salvarConta(e) { e.preventDefault(); const { data } = await _s.from('fornecedores').update({ nome: document.getElementById('c_nome').value, whatsapp: document.getElementById('c_whats').value, senha: document.getElementById('c_senha').value }).eq('id', loja.id).select().single(); if(data) { loja = data; document.getElementById('nomeLoja').innerText = loja.nome; } alert("Dados atualizados!"); fecharConta(); }
         async function salvarRapido(id, campo, valor) { let v = (campo === 'preco') ? parsePreco(valor) : parseInt(valor); if(isNaN(v)) return; await _s.from('ofertas').update({ [campo]: v, data_alteracao_preco: new Date().toISOString() }).eq('id', id); }
-
-        async function salvarBulkChanges(e) {
-            e.preventDefault();
-            const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value));
-            if(!ids.length) return;
-            const newPreco = parsePreco(document.getElementById('bulk_preco').value);
-            const newQtd = document.getElementById('bulk_qtd').value;
-            const newCond = document.getElementById('bulk_condicao').value;
-            const newBat = document.getElementById('bulk_bateria').value;
-            const newGar = document.getElementById('bulk_garantia').value;
-            const bPix = document.getElementById('bulk_pix').value;
-            const bUsdt = document.getElementById('bulk_usdt').value;
-            const bNota = document.getElementById('bulk_nota').value;
-            const bProp = document.getElementById('bulk_proposta').value;
-            const bEnvio = document.getElementById('bulk_envio').value;
-            const bColeta = document.getElementById('bulk_coleta').value;
-            const bBoy = document.getElementById('bulk_boy').value;
-            let up = {};
-            if(newPreco > 0) up.preco = newPreco;
-            if(newQtd) up.quantidade = parseInt(newQtd);
-            if(newCond) up.condicao = newCond;
-            if(newBat) up.saude_bateria = newBat;
-            if(newGar) up.garantia = newGar;
-            if(bPix !== "") up.aceita_pix = bPix === "1";
-            if(bUsdt !== "") up.aceita_usdt = bUsdt === "1";
-            if(bNota !== "") up.emite_nota = bNota === "1";
-            if(bProp !== "") up.aceita_proposta = bProp === "1";
-            if(bEnvio !== "") up.faz_envio = bEnvio === "1";
-            if(bColeta !== "") up.aceita_coleta = bColeta === "1";
-            if(bBoy !== "") up.tem_boy = bBoy === "1";
-            if(Object.keys(up).length && ids.length) { up.data_alteracao_preco = new Date().toISOString(); await _s.from('ofertas').update(up).in('id', ids); fecharBulkEdit(); atualizarLista(); alert("Massa atualizada!"); }
-        }
-
+        async function salvarBulkChanges(e) { e.preventDefault(); const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length) return; const newPreco = parsePreco(document.getElementById('bulk_preco').value); const newQtd = document.getElementById('bulk_qtd').value; const newCond = document.getElementById('bulk_condicao').value; const newBat = document.getElementById('bulk_bateria').value; const newGar = document.getElementById('bulk_garantia').value; const bPix = document.getElementById('bulk_pix').value; const bUsdt = document.getElementById('bulk_usdt').value; const bNota = document.getElementById('bulk_nota').value; const bProp = document.getElementById('bulk_proposta').value; const bEnvio = document.getElementById('bulk_envio').value; const bColeta = document.getElementById('bulk_coleta').value; const bBoy = document.getElementById('bulk_boy').value; let up = {}; if(newPreco > 0) up.preco = newPreco; if(newQtd) up.quantidade = parseInt(newQtd); if(newCond) up.condicao = newCond; if(newBat) up.saude_bateria = newBat; if(newGar) up.garantia = newGar; if(bPix !== "") up.aceita_pix = bPix === "1"; if(bUsdt !== "") up.aceita_usdt = bUsdt === "1"; if(bNota !== "") up.emite_nota = bNota === "1"; if(bProp !== "") up.aceita_proposta = bProp === "1"; if(bEnvio !== "") up.faz_envio = bEnvio === "1"; if(bColeta !== "") up.aceita_coleta = bColeta === "1"; if(bBoy !== "") up.tem_boy = bBoy === "1"; if(Object.keys(up).length && ids.length) { up.data_alteracao_preco = new Date().toISOString(); await _s.from('ofertas').update(up).in('id', ids); fecharBulkEdit(); atualizarLista(); alert("Massa atualizada!"); } }
         function popularProdutos() { document.getElementById('produto_id').innerHTML = '<option value="" disabled selected>Escolha o Modelo...</option>' + produtosMestre.filter(x => x.grupo_id == document.getElementById('filtro_grupo').value).map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); }
-        function aoMudarProduto() {
-            const vars = gradeVariacoes.filter(x => x.produto_id == document.getElementById('produto_id').value);
-            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
-            const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
-            document.getElementById('gradeOpcoes').innerHTML = `<div class="grid grid-cols-2 gap-2 mt-2"><select id="f_cap" class="apple-input"><option value="" disabled selected>Memória...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select><select id="f_cor" class="apple-input"><option value="" disabled selected>Cor...</option><option value="MIXER COLORS">MIXER COLORS</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`;
-        }
-
+        function aoMudarProduto() { const vars = gradeVariacoes.filter(x => x.produto_id == document.getElementById('produto_id').value); const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))]; document.getElementById('gradeOpcoes').innerHTML = `<div class="grid grid-cols-2 gap-2 mt-2"><select id="f_cap" class="apple-input"><option value="" disabled selected>Memória...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select><select id="f_cor" class="apple-input"><option value="" disabled selected>Cor...</option><option value="MIXER COLORS">MIXER COLORS</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`; }
         function checarGarantia() { const cond = document.getElementById('condicao').value, g = document.getElementById('garantia'), cat = document.getElementById('filtro_grupo').value; if(cond === 'Novo' && ['1','2','4','5'].includes(cat)) { g.value = "1 ANO GARANTIA APPLE"; g.readOnly = true; } else { g.readOnly = false; } }
         function checarGarantiaModal() { const cond = document.getElementById('edit_cond').value, g = document.getElementById('edit_gar'), prod = produtosMestre.find(p => p.id == document.getElementById('edit_produto_id').value); if(cond === 'Novo' && prod && ['1','2','4','5'].includes(prod.grupo_id.toString())) { g.value = "1 ANO GARANTIA APPLE"; g.readOnly = true; } else { g.readOnly = false; } }
-
-        async function salvarOferta(e) {
-            e.preventDefault();
-            const pid = document.getElementById('produto_id').value, cap = document.getElementById('f_cap')?.value, cor = document.getElementById('f_cor')?.value;
-            let v = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && (cor === 'MIXER COLORS' || x.cor == cor));
-            if(!v) v = gradeVariacoes.find(x => x.produto_id == pid);
-            const pBrl = parsePreco(document.getElementById('preco_brl').value), pUsd = parsePreco(document.getElementById('preco_usd').value);
-            await _s.from('ofertas').insert([{ fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value, preco: pBrl || pUsd, moeda: pBrl > 0 ? 'BRL' : 'USD', quantidade: parseInt(document.getElementById('quantidade').value), condicao: document.getElementById('condicao').value, garantia: document.getElementById('garantia').value, saude_bateria: document.getElementById('saude_bateria').value, cores_variadas: cor === 'MIXER COLORS', aceita_pix: document.getElementById('add_pix').checked, aceita_usdt: document.getElementById('add_usdt').checked, emite_nota: document.getElementById('add_nota').checked, aceita_proposta: document.getElementById('add_proposta').checked, faz_envio: document.getElementById('add_envio').checked, aceita_coleta: document.getElementById('add_coleta').checked, tem_boy: document.getElementById('add_boy').checked, data_alteracao_preco: new Date().toISOString() }]);
-            alert("Publicado!"); atualizarLista(); e.target.reset(); document.getElementById('gradeOpcoes').innerHTML = '';
-        }
-
-        async function atualizarLista() {
-            // INJEÇÃO: Fetch agora puxa os comentários para o contador
-            const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), comentarios(id)').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
-            document.getElementById('listaAtivos').innerHTML = (data || []).map(o => `
-                <tr data-id="${o.id}">
-                    <td><input type="checkbox" class="offer-check" value="${o.id}"></td>
-                    <td>
-                        <span class="font-black text-blue-500">${o.variacoes.produtos_mestre.nome}</span><br>
-                        <span class="text-[10px] text-gray-400 font-bold uppercase">${o.variacoes.capacidade} | ${o.cores_variadas ? '🟠 MIXER' : o.variacoes.cor}</span><br>
-                        <button onclick="abrirModalPerguntas(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="text-[9px] font-black text-yellow-500 uppercase mt-1 hover:underline">
-                            💬 Perguntas (${o.comentarios ? o.comentarios.length : 0})
-                        </button>
-                    </td>
-                    <td class="text-center">
-                        <input type="number" class="mini-edit mini-edit-qtd" value="${o.quantidade}" onblur="salvarRapido(${o.id}, 'quantidade', this.value)">
-                    </td>
-                    <td class="text-center">
-                        <input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapido(${o.id}, 'preco', this.value)">
-                        <span class="text-[8px] block opacity-50 uppercase">${o.moeda}</span>
-                    </td>
-                    <td class="text-right flex justify-end gap-2 mt-2"><span class="btn-acao btn-edit" onclick="abrirEdicaoCompleta(${o.id})">Editar</span><span class="btn-acao btn-del" onclick="excluirAnuncio(${o.id})">X</span></td>
-                </tr>
-            `).join('');
-            updateBulkCount();
-        }
-
+        async function salvarOferta(e) { e.preventDefault(); const pid = document.getElementById('produto_id').value, cap = document.getElementById('f_cap')?.value, cor = document.getElementById('f_cor')?.value; let v = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && (cor === 'MIXER COLORS' || x.cor == cor)); if(!v) v = gradeVariacoes.find(x => x.produto_id == pid); const pBrl = parsePreco(document.getElementById('preco_brl').value), pUsd = parsePreco(document.getElementById('preco_usd').value); await _s.from('ofertas').insert([{ fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value, preco: pBrl || pUsd, moeda: pBrl > 0 ? 'BRL' : 'USD', quantidade: parseInt(document.getElementById('quantidade').value), condicao: document.getElementById('condicao').value, garantia: document.getElementById('garantia').value, saude_bateria: document.getElementById('saude_bateria').value, cores_variadas: cor === 'MIXER COLORS', aceita_pix: document.getElementById('add_pix').checked, aceita_usdt: document.getElementById('add_usdt').checked, emite_nota: document.getElementById('add_nota').checked, aceita_proposta: document.getElementById('add_proposta').checked, faz_envio: document.getElementById('add_envio').checked, aceita_coleta: document.getElementById('add_coleta').checked, tem_boy: document.getElementById('add_boy').checked, data_alteracao_preco: new Date().toISOString() }]); alert("Publicado!"); atualizarLista(); e.target.reset(); document.getElementById('gradeOpcoes').innerHTML = ''; }
+        async function atualizarLista() { const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), comentarios(id)').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false}); document.getElementById('listaAtivos').innerHTML = (data || []).map(o => `<tr data-id="${o.id}"><td><input type="checkbox" class="offer-check" value="${o.id}"></td><td><span class="font-black text-blue-500">${o.variacoes.produtos_mestre.nome}</span><br><span class="text-[10px] text-gray-400 font-bold uppercase">${o.variacoes.capacidade} | ${o.cores_variadas ? '🟠 MIXER' : o.variacoes.cor}</span><br><button onclick="abrirModalPerguntas(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="text-[9px] font-black text-yellow-500 uppercase mt-1 hover:underline">💬 Perguntas (${o.comentarios ? o.comentarios.length : 0})</button></td><td class="text-center"><input type="number" class="mini-edit mini-edit-qtd" value="${o.quantidade}" onblur="salvarRapido(${o.id}, 'quantidade', this.value)"></td><td class="text-center"><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapido(${o.id}, 'preco', this.value)"><span class="text-[8px] block opacity-50 uppercase">${o.moeda}</span></td><td class="text-right flex justify-end gap-2 mt-2"><span class="btn-acao btn-edit" onclick="abrirEdicaoCompleta(${o.id})">Editar</span><span class="btn-acao btn-del" onclick="excluirAnuncio(${o.id})">X</span></td></tr>`).join(''); updateBulkCount(); }
         async function abrirEdicaoCompleta(id) { const { data: o } = await _s.from('ofertas').select('*, variacoes(*)').eq('id', id).single(); document.getElementById('edit_id').value = o.id; document.getElementById('edit_produto_id').value = o.variacoes.produto_id; document.getElementById('edit_capacidade').value = o.variacoes.capacidade; document.getElementById('edit_preco').value = o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2}); document.getElementById('edit_qtd').value = o.quantidade; document.getElementById('edit_cond').value = o.condicao; document.getElementById('edit_gar').value = o.garantia || ''; const coresDisp = gradeVariacoes.filter(v => v.produto_id == o.variacoes.produto_id && v.capacidade == o.variacoes.capacidade); document.getElementById('edit_cor').innerHTML = coresDisp.map(v => `<option value="${v.cor}" ${v.cor == o.variacoes.cor ? 'selected' : ''}>${v.cor}</option>`).join(''); document.getElementById('editModal').classList.remove('hidden'); checarGarantiaModal(); }
         async function salvarEdicaoCompleta(e) { e.preventDefault(); const id = document.getElementById('edit_id').value; const corSel = document.getElementById('edit_cor').value; const v = gradeVariacoes.find(x => x.produto_id == document.getElementById('edit_produto_id').value && x.capacidade == document.getElementById('edit_capacidade').value && x.cor == corSel); const { data: antiga } = await _s.from('ofertas').select('preco').eq('id', id).single(); await _s.from('ofertas').update({ preco: parsePreco(document.getElementById('edit_preco').value), preco_anterior: antiga.preco, quantidade: parseInt(document.getElementById('edit_qtd').value), condicao: document.getElementById('edit_cond').value, garantia: document.getElementById('edit_gar').value, variacao_id: v.id, data_alteracao_preco: new Date().toISOString() }).eq('id', id); fecharModalEdit(); atualizarLista(); }
         async function bulkDuplicate() { const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length) return alert("Selecione!"); const { data: originais } = await _s.from('ofertas').select('*').in('id', ids); await _s.from('ofertas').insert(originais.map(o => { const { id, criado_em, ...resto } = o; return resto; })); atualizarLista(); }
