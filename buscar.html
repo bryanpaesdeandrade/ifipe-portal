@@ -61,7 +61,6 @@
         .btn-alerta-card:hover { background: rgba(255, 204, 0, 0.2); border-color: #ffcc00; }
         .btn-alerta-card svg { width: 12px; height: 12px; fill: #ffcc00; }
 
-        /* INJEÇÃO: ESTILOS DO AUTOCOMPLETAR DA BUSCA */
         .search-suggestion-item { padding: 12px 20px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-weight: 900; font-size: 13px; text-transform: uppercase; transition: 0.2s; color: #1d1d1f; }
         .search-suggestion-item:hover { background-color: #f5f5f7; color: #0071e3; }
         .search-suggestion-item:last-child { border-bottom: none; }
@@ -200,7 +199,7 @@
         <div class="relative w-full max-w-3xl mx-auto mb-6 z-[150]">
             <div class="flex items-center bg-white border-4 border-[#0071e3] rounded-full overflow-hidden shadow-2xl transition-all hover:shadow-[0_0_20px_rgba(0,113,227,0.4)]">
                 <input type="text" id="buscaTexto" class="w-full bg-white text-black px-6 py-4 outline-none font-black uppercase text-sm placeholder-gray-400" 
-                       placeholder="QUAL APARELHO VOCÊ ESTÁ BUSCANDO?" 
+                       placeholder="Encontre o melhor preço" 
                        oninput="mostrarSugestoes(this.value)" 
                        onkeydown="if(event.key === 'Enter') { document.getElementById('sugestoesBusca').classList.add('hidden'); renderizarRanking(); }">
                 
@@ -211,8 +210,9 @@
                 </button>
             </div>
             <div id="sugestoesBusca" class="hidden absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-[300px] overflow-y-auto z-[200]">
-                </div>
+            </div>
         </div>
+
         <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6 mt-0">
             <div>
                 <label class="block text-[8px] uppercase font-black text-blue-500 mb-1 text-center">1. Categoria</label>
@@ -269,7 +269,6 @@
             if (window.scrollY > 300) { btn.classList.add('show'); } else { btn.classList.remove('show'); }
         });
 
-        // INJEÇÃO: FECHAR SUGESTÕES CLICANDO FORA
         document.addEventListener('click', function(e) {
             if(!e.target.closest('#buscaTexto') && !e.target.closest('#sugestoesBusca')) {
                 document.getElementById('sugestoesBusca')?.classList.add('hidden');
@@ -384,12 +383,11 @@
         function abrirSininho() { document.getElementById('sininhoModal').classList.remove('hidden'); processarNotificacoesSininho(); }
         function fecharSininho() { document.getElementById('sininhoModal').classList.add('hidden'); }
 
-        // --- INJEÇÃO: LÓGICA DO AUTOCOMPLETAR DA BUSCA ESCRITA ---
         function mostrarSugestoes(termo) {
             const div = document.getElementById('sugestoesBusca');
             if (!termo || termo.length < 2) { 
                 div.classList.add('hidden'); 
-                renderizarRanking(); // Filtra em tempo real ao apagar
+                renderizarRanking(); 
                 return; 
             }
             
@@ -398,7 +396,7 @@
             
             if (matches.length === 0) { 
                 div.classList.add('hidden'); 
-                renderizarRanking(); // Filtra em tempo real ao digitar
+                renderizarRanking(); 
                 return; 
             }
             
@@ -408,7 +406,7 @@
                 </div>
             `).join('');
             div.classList.remove('hidden');
-            renderizarRanking(); // Filtra em tempo real ao digitar
+            renderizarRanking(); 
         }
 
         function selecionarSugestao(nome) {
@@ -416,7 +414,6 @@
             document.getElementById('sugestoesBusca').classList.add('hidden');
             renderizarRanking();
         }
-        // -----------------------------------------------------------
 
         function popularAparelhos() { const catId = document.getElementById('f_cat').value; const filtrados = catId ? todosProdutosMestre.filter(x => x.grupo_id == catId) : todosProdutosMestre; document.getElementById('f_prod').innerHTML = '<option value="">Todos</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); atualizarFiltrosCascata(); }
         function atualizarFiltrosCascata() { const pid = document.getElementById('f_prod').value; const vars = pid ? gradeVariacoes.filter(x => x.produto_id == pid) : gradeVariacoes; const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))]; document.getElementById('f_cap').innerHTML = '<option value="">Todas</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join(''); document.getElementById('f_cor').innerHTML = '<option value="">Todas</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join(''); renderizarRanking(); }
@@ -460,12 +457,9 @@
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
         function renderizarRanking() {
-            // INJEÇÃO: CAPTURA O TEXTO DIGITADO NA BUSCA MESTRA
             const fTexto = document.getElementById('buscaTexto') ? document.getElementById('buscaTexto').value.toLowerCase() : '';
-            
             const fCat = document.getElementById('f_cat').value; const fP = document.getElementById('f_prod').value; const fC = document.getElementById('f_cond').value; const fCap = document.getElementById('f_cap').value; const fCor = document.getElementById('f_cor').value; const fReg = document.getElementById('f_reg').value; const fLoj = document.getElementById('f_lojista').value; const fCid = document.getElementById('f_cid').value;
             
-            // INJEÇÃO: ADICIONADA A CONDIÇÃO DE FILTRO POR TEXTO (!fTexto || ...)
             let filtrados = ofertasAtuais.filter(o => o.quantidade > 0 && (!fTexto || o.variacoes.produtos_mestre.nome.toLowerCase().includes(fTexto) || (o.variacoes.cor && o.variacoes.cor.toLowerCase().includes(fTexto))) && (!fCat || o.variacoes.produtos_mestre.grupo_id == fCat) && (!fP || o.variacoes.produtos_mestre.id == fP) && (!fC || o.condicao == fC) && (!fCap || o.variacoes.capacidade == fCap) && (!fCor || o.variacoes.cor == fCor) && (!fReg || o.regiao_id == fReg) && (!fLoj || o.fornecedor_id == fLoj) && (!fCid || o.fornecedores.cidade == fCid));
             
             const grid = document.getElementById('gridGeral');
