@@ -45,7 +45,6 @@
         .btn-calc-float:hover { width: 130px; padding-left: 12px; justify-content: flex-start; }
         .btn-calc-float:hover .calc-text { opacity: 1; }
         
-        /* SCROLLBAR CUSTOMIZADO PARA COMENTÁRIOS */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #0071e3; border-radius: 10px; }
@@ -181,9 +180,6 @@
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let ofertasAtuais = []; let gradeVariacoes = []; let clienteLogado = null; let todosProdutosMestre = [];
         let currentUsdtRate = 0; 
-        
-        // INJEÇÃO: Memória local para os comentários e curtidas não quebrarem o layout
-        let comentariosMocados = {};
 
         function toggleTheme() {
             const b = document.body; b.classList.toggle('light-mode');
@@ -407,7 +403,6 @@
                 let msgTexto = `Olá tudo bem! encontrei seu anuncio de um ${o.variacoes.produtos_mestre.nome} | ${detalhes} pelo valor de ${precoFormatado} \n\nVENHO PELO *https://ifipe.com.br/*`;
                 let linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(msgTexto)}`;
 
-                // INJEÇÃO: BARRA DE ENGAJAMENTO
                 return `
                 <div class="product-card flex flex-col">
                     <div class="flex flex-wrap gap-1 mb-2">${tagAlteracao} ${tagEstoque} ${tagMenor}</div>
@@ -424,7 +419,7 @@
                     <div class="flex justify-between items-center pt-3 pb-1 border-t border-[#38383a] text-gray-400 mt-2">
                         <button onclick="toggleLike(this)" class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest hover:text-red-500 transition-colors"><span class="text-sm">🤍</span> Curtir</button>
                         <button onclick="abrirComentarios(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest hover:text-blue-500 transition-colors"><span class="text-sm">💬</span> Comentar</button>
-                        <button onclick="shareOffer('${o.variacoes.produtos_mestre.nome}', '${detalhes}', '${precoFormatado}', '${linkWpp}')" class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest hover:text-green-500 transition-colors"><span class="text-sm">↗️</span> Enviar</button>
+                        <button onclick="shareOffer('${o.variacoes.produtos_mestre.nome}', '${detalhes}', '${precoFormatado}', '${linkWpp}')" class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest hover:text-green-500 transition-colors"><span class="text-sm">↗️</span> Compartilhar</button>
                     </div>
 
                     <a href="${linkWpp}" target="_blank" class="buy-button mt-0">Comprar agora no WhatsApp</a>
@@ -432,7 +427,7 @@
             }).join('');
         }
 
-        // INJEÇÃO: FUNÇÕES DE ENGAJAMENTO (Curtir, Compartilhar, Comentar)
+        // FUNÇÕES DE ENGAJAMENTO
         function toggleLike(btn) {
             let icone = btn.querySelector('span');
             if(icone.innerText === '🤍') { icone.innerText = '❤️'; btn.classList.add('text-red-500'); } 
@@ -448,11 +443,12 @@
             }
         }
 
-        function abrirComentarios(ofertaId, nomeProduto) {
+        // INTEGRAÇÃO REAL COM SUPABASE (COMENTÁRIOS)
+        async function abrirComentarios(ofertaId, nomeProduto) {
             document.getElementById('comentario_oferta_id').value = ofertaId;
             document.getElementById('comentarioProdutoNome').innerText = nomeProduto;
-            renderizarComentarios(ofertaId);
             document.getElementById('comentarioModal').classList.remove('hidden');
+            await carregarComentarios(ofertaId);
         }
 
         function fecharComentarios() {
@@ -460,37 +456,62 @@
             document.getElementById('comentario_texto').value = '';
         }
 
-        function postarComentario(e) {
-            e.preventDefault();
-            const ofertaId = document.getElementById('comentario_oferta_id').value;
-            const texto = document.getElementById('comentario_texto').value;
-            
-            if(!comentariosMocados[ofertaId]) comentariosMocados[ofertaId] = [];
-            
-            comentariosMocados[ofertaId].push({
-                texto: texto, data: new Date().toLocaleDateString('pt-BR', {hour: '2-digit', minute:'2-digit'})
-            });
-            
-            document.getElementById('comentario_texto').value = '';
-            renderizarComentarios(ofertaId);
-        }
-
-        function renderizarComentarios(ofertaId) {
+        async function carregarComentarios(ofertaId) {
             const div = document.getElementById('listaComentarios');
-            const lista = comentariosMocados[ofertaId] || [];
-            if(lista.length === 0) {
+            div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Carregando...</p>';
+            
+            const { data, error } = await _s.from('comentarios').select('*').eq('oferta_id', ofertaId).order('criado_em', { ascending: true });
+            
+            if(error || !data || data.length === 0) {
                 div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Ninguém comentou ainda. Seja o primeiro!</p>';
                 return;
             }
-            div.innerHTML = lista.map(c => `
+            
+            div.innerHTML = data.map(c => {
+                let dataFormatada = new Date(c.criado_em).toLocaleDateString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                return `
                 <div class="bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a]">
                     <div class="flex justify-between items-center mb-1.5">
-                        <span class="text-[9px] font-black text-blue-400 uppercase tracking-widest">Usuário VIP</span>
-                        <span class="text-[7px] text-gray-500 uppercase font-bold">${c.data}</span>
+                        <span class="text-[9px] font-black text-blue-400 uppercase tracking-widest">${c.autor_nome}</span>
+                        <span class="text-[7px] text-gray-500 uppercase font-bold">${dataFormatada}</span>
                     </div>
                     <p class="text-[11px] text-gray-300 font-bold leading-relaxed">${c.texto}</p>
                 </div>
-            `).join('');
+                `;
+            }).join('');
+            
+            div.scrollTop = div.scrollHeight;
+        }
+
+        async function postarComentario(e) {
+            e.preventDefault();
+            const ofertaId = document.getElementById('comentario_oferta_id').value;
+            const texto = document.getElementById('comentario_texto').value;
+            const btnSubmit = e.target.querySelector('button[type="submit"]');
+            
+            if(!texto.trim()) return;
+            
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "Enviando...";
+            
+            let autor = (clienteLogado && clienteLogado.whatsapp) ? clienteLogado.whatsapp : "Usuário Privado";
+            
+            const { error } = await _s.from('comentarios').insert([{
+                oferta_id: ofertaId,
+                autor_nome: autor,
+                texto: texto
+            }]);
+            
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = "Comentar agora";
+            
+            if(!error) {
+                document.getElementById('comentario_texto').value = '';
+                await carregarComentarios(ofertaId);
+            } else {
+                alert("Erro ao postar comentário. Verifique a conexão.");
+                console.error(error);
+            }
         }
 
         function logout() { localStorage.removeItem('iFipe_Token'); window.location.replace('index.html'); }
