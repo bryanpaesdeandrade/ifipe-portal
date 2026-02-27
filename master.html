@@ -252,6 +252,7 @@
                                 <div><select id="nl_estado" class="apple-input py-2" required disabled><option value="">Estado...</option></select></div>
                                 <div><select id="nl_cidade" class="apple-input py-2" required disabled><option value="">Cidade...</option></select></div>
                             </div>
+
                             <input type="text" id="nl_whats" class="apple-input py-2 mt-2" placeholder="WhatsApp" required>
                             <input type="text" id="nl_senha" class="apple-input py-2" placeholder="Senha de Acesso" required>
                             <button type="submit" class="apple-button bg-blue-600 text-white hover:bg-blue-500 border-0">Cadastrar Lojista</button>
@@ -276,6 +277,7 @@
                                 <div><select id="nc_estado" class="apple-input py-2 mb-0" required disabled><option value="">Estado...</option></select></div>
                                 <div><select id="nc_cidade" class="apple-input py-2 mb-0" required disabled><option value="">Cidade...</option></select></div>
                             </div>
+
                             <input type="email" id="nc_email" class="apple-input py-2" placeholder="E-mail" required>
                             <input type="text" id="nc_senha" class="apple-input py-2" placeholder="Senha" required>
                             <button type="submit" class="apple-button bg-green-600 text-white hover:bg-green-500 border-0">Cadastrar Cliente</button>
@@ -310,7 +312,15 @@
                                 <button onclick="acaoEmLote('fornecedores', 'ativo', false, 'chk-lojista')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest border-0">Inativar</button>
                             </div>
                         </div>
-                        <input type="text" onkeyup="filtrarTabela('listaFornecedores', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Buscar Loja, Whats, País ou Cidade...">
+                        
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="buscaLojista" onkeyup="aplicarFiltrosMaster('listaFornecedores', 'buscaLojista', 'statusLojista')" class="apple-input py-2 text-[11px] mb-0" placeholder="🔍 Buscar Loja, Whats, País ou Cidade...">
+                            <select id="statusLojista" onchange="aplicarFiltrosMaster('listaFornecedores', 'buscaLojista', 'statusLojista')" class="apple-input py-2 text-[11px] mb-0 w-[120px]">
+                                <option value="todos">Status...</option>
+                                <option value="ativo">Ativos</option>
+                                <option value="inativo">Inativos</option>
+                            </select>
+                        </div>
                         <table>
                             <thead><tr><th>Sel</th><th>Loja / Local</th><th>WhatsApp</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
                             <tbody id="listaFornecedores"></tbody>
@@ -327,7 +337,15 @@
                                 <button onclick="acaoEmLote('clientes_buscador', 'aprovado', false, 'chk-cliente')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase tracking-widest border-0">Bloquear</button>
                             </div>
                         </div>
-                        <input type="text" onkeyup="filtrarTabela('listaClientes', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Buscar Nome, Email ou Status...">
+
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="buscaCliente" onkeyup="aplicarFiltrosMaster('listaClientes', 'buscaCliente', 'statusCliente')" class="apple-input py-2 text-[11px] mb-0" placeholder="🔍 Buscar Nome ou Email...">
+                            <select id="statusCliente" onchange="aplicarFiltrosMaster('listaClientes', 'buscaCliente', 'statusCliente')" class="apple-input py-2 text-[11px] mb-0 w-[120px]">
+                                <option value="todos">Status...</option>
+                                <option value="aprovado">Aprovados</option>
+                                <option value="pendente">Pendentes</option>
+                            </select>
+                        </div>
                         <table>
                             <thead><tr><th>Sel</th><th>Nome</th><th>Contatos</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead>
                             <tbody id="listaClientes"></tbody>
@@ -351,26 +369,14 @@
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let produtosMestre = [], gradeVariacoes = [];
 
-        function irPara(id, btn) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
-            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
-        }
-
-        window.onload = async () => {
-            const token = localStorage.getItem('iFipe_MasterToken');
-            if (token) {
-                const { data } = await _s.from('admin_users').select('id').eq('id', token).maybeSingle();
-                if(data) { liberarAcesso(); } else { localStorage.removeItem('iFipe_MasterToken'); }
-            }
-        };
+        function irPara(id, btn) { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); document.getElementById(id).scrollIntoView({ behavior: 'smooth' }); }
+        window.onload = async () => { const token = localStorage.getItem('iFipe_MasterToken'); if (token) { const { data } = await _s.from('admin_users').select('id').eq('id', token).maybeSingle(); if(data) { liberarAcesso(); } else { localStorage.removeItem('iFipe_MasterToken'); } } };
 
         async function fazerLoginAdmin(event) {
             event.preventDefault(); 
             const e = document.getElementById('adminEmail').value.trim();
             const p = document.getElementById('adminPass').value.trim();
             const m = document.getElementById('loginMsg');
-            
             m.innerText = "VERIFICANDO..."; m.style.color = "#fff";
             const { data } = await _s.from('admin_users').select('*').ilike('email', e).eq('senha', p).maybeSingle();
             if(data && data.ativo) { localStorage.setItem('iFipe_MasterToken', data.id); liberarAcesso(); } 
@@ -400,8 +406,7 @@
                             <span class="btn-acao btn-vermelho" onclick="excluirLojista(${l.id})">Excluir</span>
                         </div>
                     </td>
-                </tr>
-            `).join('');
+                </tr>`).join('');
 
             const { data: clientes } = await _s.from('clientes_buscador').select('*').order('criado_em', {ascending: false});
             document.getElementById('listaClientes').innerHTML = clientes.map(c => `
@@ -418,8 +423,7 @@
                             <span class="btn-acao btn-vermelho" onclick="excluirRegistro('clientes_buscador', ${c.id})">Excluir</span>
                         </div>
                     </td>
-                </tr>
-            `).join('');
+                </tr>`).join('');
 
             const { data: admins } = await _s.from('admin_users').select('*').order('id', {ascending: true});
             document.getElementById('listaAdmins').innerHTML = admins.map(a => `
@@ -435,17 +439,15 @@
                             ${a.email !== 'bryan' ? `<span class="btn-acao btn-vermelho" onclick="excluirRegistro('admin_users', ${a.id})">Excluir</span>` : '<span class="text-[9px] text-gray-500">Master</span>'}
                         </div>
                     </td>
-                </tr>
-            `).join('');
+                </tr>`).join('');
+
+            // Refiltra caso o admin tenha digitado/selecionado algo e atualizado a tabela
+            if(document.getElementById('buscaLojista')) aplicarFiltrosMaster('listaFornecedores', 'buscaLojista', 'statusLojista');
+            if(document.getElementById('buscaCliente')) aplicarFiltrosMaster('listaClientes', 'buscaCliente', 'statusCliente');
         }
 
         async function initMasterAnuncios() {
-            const [p, r, v, f] = await Promise.all([ 
-                _s.from('produtos_mestre').select('*').order('nome'), 
-                _s.from('regioes').select('*').order('nome'), 
-                _s.from('variacoes').select('*'),
-                _s.from('fornecedores').select('id, nome').eq('ativo', true).order('nome')
-            ]);
+            const [p, r, v, f] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*'), _s.from('fornecedores').select('id, nome').eq('ativo', true).order('nome') ]);
             produtosMestre = p.data; gradeVariacoes = v.data;
             document.getElementById('m_reg').innerHTML = '<option value="" disabled selected>Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             document.getElementById('master_fornecedor_id').innerHTML = '<option value="">Selecione a Loja Alvo...</option>' + f.data.map(x => `<option value="${x.id}">${x.nome.toUpperCase()}</option>`).join('');
@@ -453,81 +455,41 @@
         }
 
         function popularProdutosMaster() { document.getElementById('m_prod').innerHTML = '<option value="" disabled selected>Modelo...</option>' + produtosMestre.filter(x => x.grupo_id == document.getElementById('m_cat').value).map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); }
-        function aoMudarProdutoMaster() {
-            const vars = gradeVariacoes.filter(x => x.produto_id == document.getElementById('m_prod').value);
-            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
-            const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
-            document.getElementById('m_grade').innerHTML = `
-                <div class="grid grid-cols-2 gap-2 mt-2">
-                    <select id="mf_cap" class="apple-input mb-0"><option value="">Memória...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
-                    <select id="mf_cor" class="apple-input mb-0"><option value="">Cor...</option><option value="MIXER COLORS">MIXER COLORS</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select>
-                </div>
-            `;
-        }
-        
+        function aoMudarProdutoMaster() { const vars = gradeVariacoes.filter(x => x.produto_id == document.getElementById('m_prod').value); const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))]; document.getElementById('m_grade').innerHTML = `<div class="grid grid-cols-2 gap-2 mt-2"><select id="mf_cap" class="apple-input mb-0"><option value="">Memória...</option>${caps.map(c => `<option value="${c}">${c}</option>`).join('')}</select><select id="mf_cor" class="apple-input mb-0"><option value="">Cor...</option><option value="MIXER COLORS">MIXER COLORS</option>${cores.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>`; }
         function limparPrecoMaster(t) { if(t==='brl') document.getElementById('m_usd').value=''; else document.getElementById('m_brl').value=''; }
 
         async function postarOfertaMaster(e) {
-            e.preventDefault();
-            const lojaId = document.getElementById('master_fornecedor_id').value;
-            if(!lojaId) return alert("Selecione para qual loja deseja publicar!");
+            e.preventDefault(); const lojaId = document.getElementById('master_fornecedor_id').value; if(!lojaId) return alert("Selecione a loja!");
             const pid = document.getElementById('m_prod').value, cap = document.getElementById('mf_cap')?.value, cor = document.getElementById('mf_cor')?.value;
-            let v = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && (cor === 'MIXER COLORS' || x.cor == cor));
-            if(!v) v = gradeVariacoes.find(x => x.produto_id == pid);
+            let v = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && (cor === 'MIXER COLORS' || x.cor == cor)); if(!v) v = gradeVariacoes.find(x => x.produto_id == pid);
             const pBrl = parsePreco(document.getElementById('m_brl').value), pUsd = parsePreco(document.getElementById('m_usd').value);
-            
-            await _s.from('ofertas').insert([{ 
-                fornecedor_id: lojaId, variacao_id: v.id, regiao_id: document.getElementById('m_reg').value, preco: pBrl || pUsd, moeda: pBrl > 0 ? 'BRL' : 'USD', 
-                quantidade: parseInt(document.getElementById('m_qtd').value), condicao: document.getElementById('m_cond').value, garantia: document.getElementById('m_gar').value, 
-                saude_bateria: document.getElementById('m_bat').value, cores_variadas: cor === 'MIXER COLORS', aceita_pix: document.getElementById('m_add_pix').checked,
-                aceita_usdt: document.getElementById('m_add_usdt').checked, emite_nota: document.getElementById('m_add_nota').checked, aceita_proposta: document.getElementById('m_add_proposta').checked,
-                faz_envio: document.getElementById('m_add_envio').checked, aceita_coleta: document.getElementById('m_add_coleta').checked, tem_boy: document.getElementById('m_add_boy').checked,
-                data_alteracao_preco: new Date().toISOString() 
-            }]);
-            alert("Anúncio Publicado com Sucesso!"); carregarOfertasMaster();
+            await _s.from('ofertas').insert([{ fornecedor_id: lojaId, variacao_id: v.id, regiao_id: document.getElementById('m_reg').value, preco: pBrl || pUsd, moeda: pBrl > 0 ? 'BRL' : 'USD', quantidade: parseInt(document.getElementById('m_qtd').value), condicao: document.getElementById('m_cond').value, garantia: document.getElementById('m_gar').value, saude_bateria: document.getElementById('m_bat').value, cores_variadas: cor === 'MIXER COLORS', aceita_pix: document.getElementById('m_add_pix').checked, aceita_usdt: document.getElementById('m_add_usdt').checked, emite_nota: document.getElementById('m_add_nota').checked, aceita_proposta: document.getElementById('m_add_proposta').checked, faz_envio: document.getElementById('m_add_envio').checked, aceita_coleta: document.getElementById('m_add_coleta').checked, tem_boy: document.getElementById('m_add_boy').checked, data_alteracao_preco: new Date().toISOString() }]);
+            alert("Publicado!"); carregarOfertasMaster();
         }
 
         async function carregarOfertasMaster() {
             const { data } = await _s.from('ofertas').select('*, fornecedores(nome), variacoes(capacidade, cor, produtos_mestre(nome))').order('criado_em', {ascending: false});
-            document.getElementById('listaOfertasMaster').innerHTML = data.map(o => `
-                <tr>
-                    <td class="text-center"><input type="checkbox" class="offer-master-check check-box" value="${o.id}" onclick="updateBulkCountMaster()"></td>
-                    <td class="text-yellow-500 font-black uppercase text-[10px]">${o.fornecedores.nome}</td>
-                    <td><span class="font-bold block">${o.variacoes.produtos_mestre.nome}</span><span class="text-[9px] text-gray-500 uppercase">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td>
-                    <td class="text-center"><input type="number" class="mini-edit w-[50px]" value="${o.quantidade}" onblur="salvarRapidoMaster(${o.id}, 'quantidade', this.value)"></td>
-                    <td class="text-center"><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapidoMaster(${o.id}, 'preco', this.value)"><span class="text-[8px] block opacity-40">${o.moeda}</span></td>
-                    <td class="text-right"><span class="btn-acao btn-vermelho" onclick="excluirOfertaMaster(${o.id})">Apagar</span></td>
-                </tr>
-            `).join('');
+            document.getElementById('listaOfertasMaster').innerHTML = data.map(o => `<tr><td class="text-center"><input type="checkbox" class="offer-master-check check-box" value="${o.id}" onclick="updateBulkCountMaster()"></td><td class="text-yellow-500 font-black uppercase text-[10px]">${o.fornecedores.nome}</td><td><span class="font-bold block">${o.variacoes.produtos_mestre.nome}</span><span class="text-[9px] text-gray-500 uppercase">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td><td class="text-center"><input type="number" class="mini-edit w-[50px]" value="${o.quantidade}" onblur="salvarRapidoMaster(${o.id}, 'quantidade', this.value)"></td><td class="text-center"><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapidoMaster(${o.id}, 'preco', this.value)"><span class="text-[8px] block opacity-40">${o.moeda}</span></td><td class="text-right"><span class="btn-acao btn-vermelho" onclick="excluirOfertaMaster(${o.id})">Apagar</span></td></tr>`).join('');
             updateBulkCountMaster();
         }
 
         async function salvarRapidoMaster(id, campo, valor) { let v = (campo === 'preco') ? parsePreco(valor) : parseInt(valor); await _s.from('ofertas').update({ [campo]: v, data_alteracao_preco: new Date().toISOString() }).eq('id', id); }
-        async function excluirOfertaMaster(id) { if(confirm("Apagar anúncio definitivamente?")) { await _s.from('ofertas').delete().eq('id', id); carregarOfertasMaster(); } }
+        async function excluirOfertaMaster(id) { if(confirm("Apagar anúncio?")) { await _s.from('ofertas').delete().eq('id', id); carregarOfertasMaster(); } }
         function toggleAllOfertas(master) { document.querySelectorAll('.offer-master-check').forEach(c => c.checked = master.checked); updateBulkCountMaster(); }
         function updateBulkCountMaster() { document.getElementById('bulkMasterOfferCount').innerText = document.querySelectorAll('.offer-master-check:checked').length; }
         
-        function abrirBulkOfertasMaster() { if(document.querySelectorAll('.offer-master-check:checked').length === 0) return alert("Selecione os anúncios primeiro!"); document.getElementById('bulkOfertasModal').classList.remove('hidden'); }
+        function abrirBulkOfertasMaster() { if(document.querySelectorAll('.offer-master-check:checked').length === 0) return alert("Selecione!"); document.getElementById('bulkOfertasModal').classList.remove('hidden'); }
         function fecharBulkOfertasMaster() { document.getElementById('bulkOfertasModal').classList.add('hidden'); }
         
         async function salvarBulkOfertasMaster(e) {
-            e.preventDefault();
-            const ids = Array.from(document.querySelectorAll('.offer-master-check:checked')).map(c => parseInt(c.value));
-            let up = {};
+            e.preventDefault(); const ids = Array.from(document.querySelectorAll('.offer-master-check:checked')).map(c => parseInt(c.value)); let up = {};
             const p = parsePreco(document.getElementById('bm_o_preco').value); if(p > 0) up.preco = p;
             const q = document.getElementById('bm_o_qtd').value; if(q) up.quantidade = parseInt(q);
             const c = document.getElementById('bm_o_cond').value; if(c) up.condicao = c;
             const b = document.getElementById('bm_o_bat').value; if(b) up.saude_bateria = b;
             const g = document.getElementById('bm_o_gar').value; if(g) up.garantia = g;
-            
             const cor = document.getElementById('bm_o_cor').value.trim();
-            if(cor) {
-                const { data: ofertaExemplo } = await _s.from('ofertas').select('variacoes(produto_id, capacidade)').eq('id', ids[0]).single();
-                if(ofertaExemplo && ofertaExemplo.variacoes) {
-                    const { data: novaV } = await _s.from('variacoes').select('id').eq('produto_id', ofertaExemplo.variacoes.produto_id).eq('capacidade', ofertaExemplo.variacoes.capacidade).ilike('cor', cor).maybeSingle();
-                    if(novaV) { up.variacao_id = novaV.id; up.cores_variadas = (cor.toUpperCase() === 'MIXER COLORS'); } else { alert(`Cor '${cor}' não encontrada.`); }
-                }
-            }
+            if(cor) { const { data: ofertaExemplo } = await _s.from('ofertas').select('variacoes(produto_id, capacidade)').eq('id', ids[0]).single(); if(ofertaExemplo && ofertaExemplo.variacoes) { const { data: novaV } = await _s.from('variacoes').select('id').eq('produto_id', ofertaExemplo.variacoes.produto_id).eq('capacidade', ofertaExemplo.variacoes.capacidade).ilike('cor', cor).maybeSingle(); if(novaV) { up.variacao_id = novaV.id; up.cores_variadas = (cor.toUpperCase() === 'MIXER COLORS'); } else { alert(`Cor '${cor}' não encontrada.`); } } }
             const pix = document.getElementById('bm_o_pix').value; if(pix !== "") up.aceita_pix = (pix === "1");
             const usd = document.getElementById('bm_o_usdt').value; if(usd !== "") up.aceita_usdt = (usd === "1");
             const nota = document.getElementById('bm_o_nota').value; if(nota !== "") up.emite_nota = (nota === "1");
@@ -535,99 +497,66 @@
             const env = document.getElementById('bm_o_envio').value; if(env !== "") up.faz_envio = (env === "1");
             const col = document.getElementById('bm_o_coleta').value; if(col !== "") up.aceita_coleta = (col === "1");
             const boy = document.getElementById('bm_o_boy').value; if(boy !== "") up.tem_boy = (boy === "1");
-            if(Object.keys(up).length > 0) { up.data_alteracao_preco = new Date().toISOString(); await _s.from('ofertas').update(up).in('id', ids); alert("Anúncios atualizados em massa!"); }
+            if(Object.keys(up).length > 0) { up.data_alteracao_preco = new Date().toISOString(); await _s.from('ofertas').update(up).in('id', ids); alert("Massa OK!"); }
             fecharBulkOfertasMaster(); carregarOfertasMaster(); 
         }
 
-        async function bulkDuplicateMaster() { const ids = Array.from(document.querySelectorAll('.offer-master-check:checked')).map(c => parseInt(c.value)); if(ids.length === 0) return alert("Selecione para duplicar!"); const { data: ori } = await _s.from('ofertas').select('*').in('id', ids); await _s.from('ofertas').insert(ori.map(o => { const { id, criado_em, ...rest } = o; return rest; })); alert("Duplicados com sucesso!"); carregarOfertasMaster(); }
-        async function bulkDeleteMaster() { const ids = Array.from(document.querySelectorAll('.offer-master-check:checked')).map(c => parseInt(c.value)); if(ids.length > 0 && confirm("Apagar definitivamente?")) { await _s.from('ofertas').delete().in('id', ids); carregarOfertasMaster(); } }
+        async function bulkDuplicateMaster() { const ids = Array.from(document.querySelectorAll('.offer-master-check:checked')).map(c => parseInt(c.value)); if(ids.length === 0) return alert("Selecione!"); const { data: ori } = await _s.from('ofertas').select('*').in('id', ids); await _s.from('ofertas').insert(ori.map(o => { const { id, criado_em, ...rest } = o; return rest; })); alert("Duplicados!"); carregarOfertasMaster(); }
+        async function bulkDeleteMaster() { const ids = Array.from(document.querySelectorAll('.offer-master-check:checked')).map(c => parseInt(c.value)); if(ids.length > 0 && confirm("Apagar?")) { await _s.from('ofertas').delete().in('id', ids); carregarOfertasMaster(); } }
 
+        // --- FILTRO INTELIGENTE PARA MASTER (INJEÇÃO) ---
         function filtrarTabela(tabelaId, termo) { const linhas = document.getElementById(tabelaId).getElementsByTagName('tr'); for (let i = 0; i < linhas.length; i++) { linhas[i].style.display = linhas[i].innerText.toLowerCase().includes(termo.toLowerCase()) ? '' : 'none'; } }
+        
+        function aplicarFiltrosMaster(tabelaId, inputBuscaId, selectStatusId) {
+            const termo = document.getElementById(inputBuscaId).value.toLowerCase();
+            const statusVal = document.getElementById(selectStatusId).value;
+            const linhas = document.getElementById(tabelaId).getElementsByTagName('tr');
+            
+            for (let i = 0; i < linhas.length; i++) {
+                const textoLinha = linhas[i].innerText.toLowerCase();
+                const colStatus = linhas[i].cells[4].innerText.toLowerCase().trim(); // A coluna Status é sempre a 4
+                
+                let matchTexto = textoLinha.includes(termo);
+                let matchStatus = true;
+                
+                if (statusVal !== 'todos') {
+                    matchStatus = (colStatus === statusVal);
+                }
+                
+                linhas[i].style.display = (matchTexto && matchStatus) ? '' : 'none';
+            }
+        }
+        // --------------------------------------------------
+
         let checkboxesEstado = {}; 
         function selecionarTodos(classeCheck) { checkboxesEstado[classeCheck] = !checkboxesEstado[classeCheck]; document.querySelectorAll(`.${classeCheck}`).forEach(chk => { if(chk.closest('tr').style.display !== 'none') chk.checked = checkboxesEstado[classeCheck]; }); }
-        async function acaoEmLote(tabela, coluna, valor, classeCheck) { const ids = Array.from(document.querySelectorAll(`.${classeCheck}:checked`)).map(chk => parseInt(chk.value)); if(ids.length === 0) return alert("Nenhum item selecionado."); if(confirm(`Tem certeza que deseja executar a ação em ${ids.length} itens?`)) { await _s.from(tabela).update({ [coluna]: valor }).in('id', ids); carregarTabelas(); } }
+        async function acaoEmLote(tabela, coluna, valor, classeCheck) { const ids = Array.from(document.querySelectorAll(`.${classeCheck}:checked`)).map(chk => parseInt(chk.value)); if(ids.length === 0) return alert("Nada selecionado."); if(confirm(`Confirmar ação?`)) { await _s.from(tabela).update({ [coluna]: valor }).in('id', ids); carregarTabelas(); } }
 
-        function abrirBulkMaster(tabela) {
-            const ids = Array.from(document.querySelectorAll(`.${tabela === 'fornecedores' ? 'chk-lojista' : 'chk-cliente'}:checked`));
-            if(ids.length === 0) return alert("Selecione os cadastros na tabela.");
-            document.getElementById('bm_tabela').value = tabela;
-            document.getElementById('bulkMasterCount').innerText = ids.length;
-            if(tabela === 'fornecedores') { document.getElementById('bm_lojista_fields').classList.remove('hidden'); document.getElementById('bm_cliente_fields').classList.add('hidden'); } 
-            else { document.getElementById('bm_cliente_fields').classList.remove('hidden'); document.getElementById('bm_lojista_fields').classList.add('hidden'); }
-            document.getElementById('bulkMasterModal').classList.remove('hidden');
-        }
-
+        function abrirBulkMaster(tabela) { const ids = Array.from(document.querySelectorAll(`.${tabela === 'fornecedores' ? 'chk-lojista' : 'chk-cliente'}:checked`)); if(ids.length === 0) return alert("Selecione na tabela."); document.getElementById('bm_tabela').value = tabela; document.getElementById('bulkMasterCount').innerText = ids.length; if(tabela === 'fornecedores') { document.getElementById('bm_lojista_fields').classList.remove('hidden'); document.getElementById('bm_cliente_fields').classList.add('hidden'); } else { document.getElementById('bm_cliente_fields').classList.remove('hidden'); document.getElementById('bm_lojista_fields').classList.add('hidden'); } document.getElementById('bulkMasterModal').classList.remove('hidden'); }
         function fecharBulkMaster() { document.getElementById('bulkMasterModal').classList.add('hidden'); document.getElementById('formBulkMaster').reset(); }
 
-        async function salvarBulkMaster(e) {
-            e.preventDefault();
-            const t = document.getElementById('bm_tabela').value;
-            const ids = Array.from(document.querySelectorAll(`.${t === 'fornecedores' ? 'chk-lojista' : 'chk-cliente'}:checked`)).map(c => parseInt(c.value));
-            let updates = {};
-            if (t === 'fornecedores') {
-                const pais = document.getElementById('bm_pais').value, est = document.getElementById('bm_estado').value.trim(), cid = document.getElementById('bm_cidade').value.trim();
-                if (pais) updates.pais = pais; if (est) updates.estado = est; if (cid) updates.cidade = cid;
-            } else { const s = document.getElementById('bm_senha').value.trim(); if (s) updates.senha = s; }
-            if(Object.keys(updates).length === 0) return alert("Preencha ao menos um campo.");
-            await _s.from(t).update(updates).in('id', ids);
-            fecharBulkMaster(); carregarTabelas(); alert("Sucesso!");
-        }
+        async function salvarBulkMaster(e) { e.preventDefault(); const t = document.getElementById('bm_tabela').value; const ids = Array.from(document.querySelectorAll(`.${t === 'fornecedores' ? 'chk-lojista' : 'chk-cliente'}:checked`)).map(c => parseInt(c.value)); let updates = {}; if (t === 'fornecedores') { const pais = document.getElementById('bm_pais').value, est = document.getElementById('bm_estado').value.trim(), cid = document.getElementById('bm_cidade').value.trim(); if (pais) updates.pais = pais; if (est) updates.estado = est; if (cid) updates.cidade = cid; } else { const s = document.getElementById('bm_senha').value.trim(); if (s) updates.senha = s; } if(Object.keys(updates).length === 0) return alert("Preencha ao menos um campo."); await _s.from(t).update(updates).in('id', ids); fecharBulkMaster(); carregarTabelas(); alert("Sucesso!"); }
 
         async function abrirModalEdicao(tabela, id, nome, email, whats, senha, estado, cidade, pais) {
-            document.getElementById('edit_tabela').value = tabela; document.getElementById('edit_id').value = id;
-            document.getElementById('edit_nome').value = nome || ''; document.getElementById('edit_email').value = email || '';
-            document.getElementById('edit_whats').value = whats || ''; document.getElementById('edit_senha').value = senha || '';
+            document.getElementById('edit_tabela').value = tabela; document.getElementById('edit_id').value = id; document.getElementById('edit_nome').value = nome || ''; document.getElementById('edit_email').value = email || ''; document.getElementById('edit_whats').value = whats || ''; document.getElementById('edit_senha').value = senha || '';
             if(tabela === 'fornecedores') {
-                document.getElementById('edit_pais').value = pais || 'Brasil';
-                mudarPais('edit_pais', 'edit_estado', 'edit_cidade', false);
-                if((pais || 'Brasil') === 'Brasil') {
-                    await carregarEstados('edit_estado');
-                    document.getElementById('edit_estado').value = estado || '';
-                    if(estado) { await carregarCidades(estado, 'edit_cidade'); document.getElementById('edit_cidade').value = cidade || ''; }
-                } else {
-                    document.getElementById('edit_estado').value = estado || '';
-                    document.getElementById('edit_cidade').value = cidade || '';
-                }
-                document.getElementById('edit_email').style.display = 'none'; document.getElementById('label_email').style.display = 'none';
-                document.getElementById('edit_whats').style.display = 'block'; document.getElementById('label_whats').style.display = 'block';
-                document.getElementById('loc_box').classList.remove('hidden'); document.getElementById('loc_box').classList.add('flex');
+                document.getElementById('edit_pais').value = pais || 'Brasil'; mudarPais('edit_pais', 'edit_estado', 'edit_cidade', false); if((pais || 'Brasil') === 'Brasil') { await carregarEstados('edit_estado'); document.getElementById('edit_estado').value = estado || ''; if(estado) { await carregarCidades(estado, 'edit_cidade'); document.getElementById('edit_cidade').value = cidade || ''; } } else { document.getElementById('edit_estado').value = estado || ''; document.getElementById('edit_cidade').value = cidade || ''; }
+                document.getElementById('edit_email').style.display = 'none'; document.getElementById('label_email').style.display = 'none'; document.getElementById('edit_whats').style.display = 'block'; document.getElementById('label_whats').style.display = 'block'; document.getElementById('loc_box').classList.remove('hidden'); document.getElementById('loc_box').classList.add('flex');
             } else if(tabela === 'admin_users') {
-                document.getElementById('edit_email').style.display = 'block'; document.getElementById('label_email').style.display = 'block';
-                document.getElementById('edit_whats').style.display = 'none'; document.getElementById('label_whats').style.display = 'none';
-                document.getElementById('loc_box').classList.add('hidden'); document.getElementById('loc_box').classList.remove('flex');
+                document.getElementById('edit_email').style.display = 'block'; document.getElementById('label_email').style.display = 'block'; document.getElementById('edit_whats').style.display = 'none'; document.getElementById('label_whats').style.display = 'none'; document.getElementById('loc_box').classList.add('hidden'); document.getElementById('loc_box').classList.remove('flex');
             } else {
-                document.getElementById('edit_email').style.display = 'block'; document.getElementById('label_email').style.display = 'block';
-                document.getElementById('edit_whats').style.display = 'block'; document.getElementById('label_whats').style.display = 'block';
-                document.getElementById('loc_box').classList.add('hidden'); document.getElementById('loc_box').classList.remove('flex');
+                document.getElementById('edit_email').style.display = 'block'; document.getElementById('label_email').style.display = 'block'; document.getElementById('edit_whats').style.display = 'block'; document.getElementById('label_whats').style.display = 'block'; document.getElementById('loc_box').classList.add('hidden'); document.getElementById('loc_box').classList.remove('flex');
             }
             document.getElementById('editModal').classList.remove('hidden');
         }
 
         function fecharModal() { document.getElementById('editModal').classList.add('hidden'); }
-
-        async function salvarEdicao(e) {
-            e.preventDefault();
-            const t = document.getElementById('edit_tabela').value, id = document.getElementById('edit_id').value;
-            let ud = { nome: document.getElementById('edit_nome').value, senha: document.getElementById('edit_senha').value };
-            if(t === 'fornecedores') { ud.whatsapp = document.getElementById('edit_whats').value; ud.estado = document.getElementById('edit_estado').value; ud.cidade = document.getElementById('edit_cidade').value; ud.pais = document.getElementById('edit_pais').value; } 
-            else if (t === 'admin_users') { ud.email = document.getElementById('edit_email').value; } 
-            else if (t === 'clientes_buscador') { ud.email = document.getElementById('edit_email').value; ud.whatsapp = document.getElementById('edit_whats').value; }
-            await _s.from(t).update(ud).eq('id', id); fecharModal(); carregarTabelas();
-        }
+        async function salvarEdicao(e) { e.preventDefault(); const t = document.getElementById('edit_tabela').value, id = document.getElementById('edit_id').value; let ud = { nome: document.getElementById('edit_nome').value, senha: document.getElementById('edit_senha').value }; if(t === 'fornecedores') { ud.whatsapp = document.getElementById('edit_whats').value; ud.estado = document.getElementById('edit_estado').value; ud.cidade = document.getElementById('edit_cidade').value; ud.pais = document.getElementById('edit_pais').value; } else if (t === 'admin_users') { ud.email = document.getElementById('edit_email').value; } else if (t === 'clientes_buscador') { ud.email = document.getElementById('edit_email').value; ud.whatsapp = document.getElementById('edit_whats').value; } await _s.from(t).update(ud).eq('id', id); fecharModal(); carregarTabelas(); }
 
         async function addLojista(e) { e.preventDefault(); await _s.from('fornecedores').insert([{ nome: document.getElementById('nl_nome').value, whatsapp: document.getElementById('nl_whats').value, senha: document.getElementById('nl_senha').value, estado: document.getElementById('nl_estado').value, cidade: document.getElementById('nl_cidade').value, pais: document.getElementById('nl_pais').value, ativo: true }]); e.target.reset(); carregarTabelas(); alert("Lojista criado!"); }
-        
-        async function addCliente(e) { 
-            e.preventDefault(); 
-            await _s.from('clientes_buscador').insert([{ 
-                nome: document.getElementById('nc_nome').value, cpf: document.getElementById('nc_cpf').value.replace(/\D/g,''), 
-                email: document.getElementById('nc_email').value, whatsapp: document.getElementById('nc_whats').value, senha: document.getElementById('nc_senha').value, 
-                pais: document.getElementById('nc_pais').value, estado: document.getElementById('nc_estado').value, cidade: document.getElementById('nc_cidade').value, aprovado: true 
-            }]); 
-            e.target.reset(); carregarTabelas(); alert("Cliente criado!"); 
-        }
-
+        async function addCliente(e) { e.preventDefault(); await _s.from('clientes_buscador').insert([{ nome: document.getElementById('nc_nome').value, cpf: document.getElementById('nc_cpf').value.replace(/\D/g,''), email: document.getElementById('nc_email').value, whatsapp: document.getElementById('nc_whats').value, senha: document.getElementById('nc_senha').value, pais: document.getElementById('nc_pais').value, estado: document.getElementById('nc_estado').value, cidade: document.getElementById('nc_cidade').value, aprovado: true }]); e.target.reset(); carregarTabelas(); alert("Cliente criado!"); }
         async function addAdmin(e) { e.preventDefault(); await _s.from('admin_users').insert([{ nome: document.getElementById('na_nome').value, email: document.getElementById('na_user').value.trim(), senha: document.getElementById('na_senha').value, cargo: 'STAFF', ativo: true }]); e.target.reset(); carregarTabelas(); alert("Admin criado!"); }
+        
         async function alterarStatus(t, id, c, v) { await _s.from(t).update({ [c]: v }).eq('id', id); carregarTabelas(); }
         async function excluirRegistro(t, id) { if(confirm("Excluir DEFINITIVAMENTE?")) { await _s.from(t).delete().eq('id', id); carregarTabelas(); } }
         async function excluirLojista(id) { if(confirm("Excluir este Lojista apagará TODOS os anúncios dele. Confirma?")) { await _s.from('ofertas').delete().eq('fornecedor_id', id); await _s.from('fornecedores').delete().eq('id', id); carregarTabelas(); } }
@@ -636,51 +565,9 @@
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
         // --- INJEÇÃO IBGE ---
-        async function carregarEstados(idSelect) {
-            const select = document.getElementById(idSelect);
-            if(!select || select.tagName !== 'SELECT') return;
-            select.innerHTML = '<option value="" disabled selected>Carregando...</option>';
-            try {
-                const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
-                const estados = await res.json();
-                select.innerHTML = '<option value="" disabled selected>Selecione o Estado...</option>';
-                estados.forEach(e => { select.innerHTML += `<option value="${e.sigla}">${e.nome}</option>`; });
-                select.disabled = false;
-            } catch(e) { select.innerHTML = '<option value="">Erro ao carregar</option>'; }
-        }
-
-        async function carregarCidades(uf, idSelect) {
-            const select = document.getElementById(idSelect);
-            if(!select || select.tagName !== 'SELECT') return;
-            select.innerHTML = '<option value="" disabled selected>Carregando...</option>';
-            try {
-                const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
-                const cidades = await res.json();
-                select.innerHTML = '<option value="" disabled selected>Selecione a Cidade...</option>';
-                cidades.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; });
-                select.disabled = false;
-            } catch(e) { select.innerHTML = '<option value="">Erro ao carregar</option>'; }
-        }
-
-        function mudarPais(idPais, idEstado, idCidade, isReq = true) {
-            const reqStr = isReq ? 'required' : '';
-            const pais = document.getElementById(idPais).value;
-            const elEst = document.getElementById(idEstado);
-            const elCid = document.getElementById(idCidade);
-            if(!elEst || !elCid) return;
-            const divEst = elEst.parentElement;
-            const divCid = elCid.parentElement;
-            const cName = elEst.className;
-            
-            if (pais === 'Brasil') {
-                divEst.innerHTML = `<select id="${idEstado}" class="${cName}" ${reqStr} onchange="carregarCidades(this.value, '${idCidade}')"><option value="">Estado...</option></select>`;
-                divCid.innerHTML = `<select id="${idCidade}" class="${cName}" ${reqStr} disabled><option value="">Cidade...</option></select>`;
-                carregarEstados(idEstado);
-            } else {
-                divEst.innerHTML = `<input type="text" id="${idEstado}" class="${cName}" placeholder="Estado / Distrito" ${reqStr}>`;
-                divCid.innerHTML = `<input type="text" id="${idCidade}" class="${cName}" placeholder="Cidade" ${reqStr}>`;
-            }
-        }
+        async function carregarEstados(idSelect) { const select = document.getElementById(idSelect); if(!select || select.tagName !== 'SELECT') return; select.innerHTML = '<option value="" disabled selected>Carregando...</option>'; try { const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome'); const estados = await res.json(); select.innerHTML = '<option value="" disabled selected>Selecione o Estado...</option>'; estados.forEach(e => { select.innerHTML += `<option value="${e.sigla}">${e.nome}</option>`; }); select.disabled = false; } catch(e) { select.innerHTML = '<option value="">Erro</option>'; } }
+        async function carregarCidades(uf, idSelect) { const select = document.getElementById(idSelect); if(!select || select.tagName !== 'SELECT') return; select.innerHTML = '<option value="" disabled selected>Carregando...</option>'; try { const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`); const cidades = await res.json(); select.innerHTML = '<option value="" disabled selected>Selecione a Cidade...</option>'; cidades.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); select.disabled = false; } catch(e) { select.innerHTML = '<option value="">Erro</option>'; } }
+        function mudarPais(idPais, idEstado, idCidade, isReq = true) { const reqStr = isReq ? 'required' : ''; const pais = document.getElementById(idPais).value; const elEst = document.getElementById(idEstado); const elCid = document.getElementById(idCidade); if(!elEst || !elCid) return; const divEst = elEst.parentElement; const divCid = elCid.parentElement; const cName = elEst.className; if (pais === 'Brasil') { divEst.innerHTML = `<select id="${idEstado}" class="${cName}" ${reqStr} onchange="carregarCidades(this.value, '${idCidade}')"><option value="">Estado...</option></select>`; divCid.innerHTML = `<select id="${idCidade}" class="${cName}" ${reqStr} disabled><option value="">Cidade...</option></select>`; carregarEstados(idEstado); } else { divEst.innerHTML = `<input type="text" id="${idEstado}" class="${cName}" placeholder="Estado / Distrito" ${reqStr}>`; divCid.innerHTML = `<input type="text" id="${idCidade}" class="${cName}" placeholder="Cidade" ${reqStr}>`; } }
     </script>
 </body>
 </html>
