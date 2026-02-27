@@ -155,6 +155,18 @@
                     <input type="text" id="regCpf" class="apple-input" placeholder="CPF" required>
                     <input type="email" id="regEmail" class="apple-input" placeholder="E-MAIL OFICIAL" required>
                     <input type="text" id="regWhats" class="apple-input" placeholder="WHATSAPP" required>
+                    
+                    <select id="regPais" class="apple-input" required onchange="mudarPais('regPais', 'regEstado', 'regCidade')">
+                        <option value="" disabled selected>SELECIONE O PAÍS...</option>
+                        <option value="Brasil">BRASIL</option>
+                        <option value="Paraguai">PARAGUAI</option>
+                        <option value="Estados Unidos">ESTADOS UNIDOS</option>
+                        <option value="Dubai">DUBAI</option>
+                    </select>
+                    <div class="grid grid-cols-2 gap-2 mb-[0.8rem]">
+                        <div><select id="regEstado" class="apple-input mb-0" required disabled><option value="">ESTADO...</option></select></div>
+                        <div><select id="regCidade" class="apple-input mb-0" required disabled><option value="">CIDADE...</option></select></div>
+                    </div>
                     <input type="password" id="regPass" class="apple-input" placeholder="CRIAR SENHA" required>
                     <button type="submit" class="apple-button mt-2 border border-white">ENVIAR SOLICITAÇÃO</button>
                     <span class="link-nav" onclick="toggleForm()">VOLTAR AO LOGIN</span>
@@ -232,7 +244,6 @@
             const elInput = document.getElementById('calcUsdIndex');
             let usdInput = parseFloat(elInput.value.replace(',', '.'));
 
-            // TRAVA: Se for negativo, reseta para 0
             if (usdInput < 0) {
                 usdInput = 0;
                 elInput.value = 0;
@@ -271,9 +282,55 @@
             const { error } = await _s.from('clientes_buscador').insert([{ 
                 nome: document.getElementById('regNome').value, cpf: document.getElementById('regCpf').value.replace(/\D/g,''),
                 email: document.getElementById('regEmail').value, whatsapp: document.getElementById('regWhats').value,
-                senha: document.getElementById('regPass').value, aprovado: false
+                senha: document.getElementById('regPass').value, aprovado: false,
+                pais: document.getElementById('regPais').value, estado: document.getElementById('regEstado').value, cidade: document.getElementById('regCidade').value
             }]);
-            if(!error) { alert("SOLICITAÇÃO ENVIADA!"); toggleForm(); } else alert("ERRO AO SOLICITAR.");
+            if(!error) { alert("SOLICITAÇÃO ENVIADA!"); toggleForm(); } else alert("ERRO AO SOLICITAR. Verifique as colunas no Supabase.");
+        }
+
+        // --- FUNÇÕES IBGE ---
+        async function carregarEstados(idSelect) {
+            const select = document.getElementById(idSelect);
+            if(!select || select.tagName !== 'SELECT') return;
+            select.innerHTML = '<option value="" disabled selected>Carregando...</option>';
+            try {
+                const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+                const estados = await res.json();
+                select.innerHTML = '<option value="" disabled selected>Selecione o Estado...</option>';
+                estados.forEach(e => { select.innerHTML += `<option value="${e.sigla}">${e.nome}</option>`; });
+                select.disabled = false;
+            } catch(e) { select.innerHTML = '<option value="">Erro ao carregar</option>'; }
+        }
+
+        async function carregarCidades(uf, idSelect) {
+            const select = document.getElementById(idSelect);
+            if(!select || select.tagName !== 'SELECT') return;
+            select.innerHTML = '<option value="" disabled selected>Carregando...</option>';
+            try {
+                const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
+                const cidades = await res.json();
+                select.innerHTML = '<option value="" disabled selected>Selecione a Cidade...</option>';
+                cidades.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; });
+                select.disabled = false;
+            } catch(e) { select.innerHTML = '<option value="">Erro ao carregar</option>'; }
+        }
+
+        function mudarPais(idPais, idEstado, idCidade) {
+            const pais = document.getElementById(idPais).value;
+            const elEst = document.getElementById(idEstado);
+            const elCid = document.getElementById(idCidade);
+            const divEst = elEst.parentElement;
+            const divCid = elCid.parentElement;
+            const cName = elEst.className;
+            
+            if (pais === 'Brasil') {
+                divEst.innerHTML = `<select id="${idEstado}" class="${cName}" required onchange="carregarCidades(this.value, '${idCidade}')"><option value="">Estado...</option></select>`;
+                divCid.innerHTML = `<select id="${idCidade}" class="${cName}" required disabled><option value="">Cidade...</option></select>`;
+                carregarEstados(idEstado);
+            } else {
+                divEst.innerHTML = `<input type="text" id="${idEstado}" class="${cName}" placeholder="Estado / Distrito" required>`;
+                divCid.innerHTML = `<input type="text" id="${idCidade}" class="${cName}" placeholder="Cidade" required>`;
+            }
         }
     </script>
 </body>
