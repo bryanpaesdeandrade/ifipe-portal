@@ -44,7 +44,6 @@
         .calc-text { font-size: 10px; font-weight: 900; text-transform: uppercase; margin-left: 8px; opacity: 0; transition: 0.3s; }
         .btn-calc-float:hover { width: 130px; padding-left: 12px; justify-content: flex-start; }
         .btn-calc-float:hover .calc-text { opacity: 1; }
-        
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #0071e3; border-radius: 10px; }
@@ -103,7 +102,7 @@
         <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-[#38383a] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
             <button onclick="fecharComentarios()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
             <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">Mural de Depoimentos VIP</h3>
+                <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">Perguntas sobre a Oferta</h3>
                 <p id="comentarioProdutoNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
             </div>
             
@@ -112,8 +111,8 @@
 
             <form onsubmit="postarComentario(event)" class="mt-auto border-t border-[#38383a] pt-4">
                 <input type="hidden" id="comentario_oferta_id">
-                <textarea id="comentario_texto" class="apple-input w-full h-[60px] resize-none mb-2 text-[11px]" placeholder="Deixe seu depoimento sobre o atendimento ou produto desta loja..." required></textarea>
-                <button type="submit" class="bg-blue-600 text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-blue-700">Postar Depoimento</button>
+                <textarea id="comentario_texto" class="apple-input w-full h-[60px] resize-none mb-2 text-[11px]" placeholder="Faça uma pergunta sobre este aparelho (estoque, detalhes, envio)..." required></textarea>
+                <button type="submit" class="bg-blue-600 text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-blue-700">Enviar Pergunta</button>
             </form>
         </div>
     </div>
@@ -394,8 +393,8 @@
                         <div class="price-text mb-3">${precoFormatado}</div>
                     </div>
                     <div class="flex justify-between items-center pt-3 pb-1 border-t border-[#38383a] text-gray-400 mt-2">
-                        <button onclick="toggleLike(this)" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors">Recomendo Loja 🤩</button>
-                        <button onclick="abrirComentarios(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors">Depoimento (${countComentarios})</button>
+                        <button onclick="toggleLike(this)" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors">Curtir oferta</button>
+                        <button onclick="abrirComentarios(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors">Perguntas (${countComentarios})</button>
                         <button onclick="shareOffer('${o.variacoes.produtos_mestre.nome}', '${detalhes}', '${precoFormatado}', '${linkWpp}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-green-500 transition-colors">Compartilhar</button>
                     </div>
                     <a href="${linkWpp}" target="_blank" class="buy-button mt-0">Comprar agora no WhatsApp</a>
@@ -428,14 +427,13 @@
             div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Carregando...</p>';
             const { data, error } = await _s.from('comentarios').select('*').eq('oferta_id', ofertaId).order('criado_em', { ascending: true });
             if(error || !data || data.length === 0) {
-                div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Nenhum depoimento ainda.</p>';
+                div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Nenhuma pergunta ainda.</p>';
                 return;
             }
             div.innerHTML = data.map(c => {
                 let dataFormatada = new Date(c.criado_em).toLocaleDateString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-                // Lógica de Privacidade e Exclusão
                 let isMeu = (clienteLogado && c.autor_nome === clienteLogado.whatsapp);
-                let btnDel = isMeu ? `<button onclick="excluirDepoimento(${c.id}, ${ofertaId})" class="text-[7px] text-red-500 font-black uppercase ml-2">[ Apagar meu depoimento ]</button>` : '';
+                let btnDel = isMeu ? `<button onclick="excluirDepoimento(${c.id}, ${ofertaId})" class="text-[7px] text-red-500 font-black uppercase ml-2">[ Apagar minha pergunta ]</button>` : '';
                 return `
                 <div class="bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a]">
                     <div class="flex justify-between items-center mb-1.5">
@@ -449,7 +447,7 @@
         }
 
         async function excluirDepoimento(id, ofertaId) {
-            if(!confirm("Deseja apagar seu depoimento definitivamente?")) return;
+            if(!confirm("Deseja apagar sua pergunta definitivamente?")) return;
             const { error } = await _s.from('comentarios').delete().eq('id', id);
             if(!error) { await carregarComentarios(ofertaId); carregarDados(); }
         }
@@ -463,7 +461,7 @@
             btnSubmit.disabled = true; btnSubmit.innerText = "Enviando...";
             let autor = (clienteLogado && clienteLogado.whatsapp) ? clienteLogado.whatsapp : "Usuário Privado";
             const { error } = await _s.from('comentarios').insert([{ oferta_id: ofertaId, autor_nome: autor, texto: texto }]);
-            btnSubmit.disabled = false; btnSubmit.innerText = "Postar Depoimento";
+            btnSubmit.disabled = false; btnSubmit.innerText = "Enviar Pergunta";
             if(!error) { document.getElementById('comentario_texto').value = ''; await carregarComentarios(ofertaId); carregarDados(); }
         }
 
