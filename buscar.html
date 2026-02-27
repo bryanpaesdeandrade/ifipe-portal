@@ -34,14 +34,11 @@
         .buy-button:hover { background: #005bb5; }
         .hidden { display: none !important; }
         .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 14px; font-weight: 700; }
-        
-        /* Ajuste Cirúrgico: Botões Retráteis agora relativos e menores para caber no Topo */
         .btn-wpp-float { background-color: #25d366; color: #fff; width: 36px; height: 36px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 5px 20px rgba(37,211,102,0.4); transition: width 0.3s ease; overflow: hidden; white-space: nowrap; }
         .btn-wpp-float svg { flex-shrink: 0; width: 18px; height: 18px; fill: #fff; }
         .wpp-text { font-size: 10px; font-weight: 900; text-transform: uppercase; margin-left: 8px; opacity: 0; transition: 0.3s; }
         .btn-wpp-float:hover { width: 130px; padding-left: 12px; justify-content: flex-start; }
         .btn-wpp-float:hover .wpp-text { opacity: 1; }
-        
         .btn-calc-float { background-color: #0071e3; color: #fff; width: 36px; height: 36px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 5px 20px rgba(0,113,227,0.4); transition: width 0.3s ease; overflow: hidden; white-space: nowrap; cursor: pointer; border: none; }
         .btn-calc-float svg { flex-shrink: 0; width: 16px; height: 16px; fill: #fff; }
         .calc-text { font-size: 10px; font-weight: 900; text-transform: uppercase; margin-left: 8px; opacity: 0; transition: 0.3s; }
@@ -247,7 +244,6 @@
             carregarDados(); setInterval(carregarDados, 5000);
         }
 
-        // INTEGRAÇÃO DA CATEGORIA SEM QUEBRAR O CÓDIGO
         function popularAparelhos() {
             const catId = document.getElementById('f_cat').value;
             const filtrados = catId ? todosProdutosMestre.filter(x => x.grupo_id == catId) : todosProdutosMestre;
@@ -281,11 +277,29 @@
             return weight;
         }
 
-        // REGRA DAS CADEIRAS: HIERARQUIA, CONDIÇÃO E SEMPRE ORDENADO PELO MENOR PREÇO
+        // INJEÇÃO: FUNÇÃO DE PESO PARA A MEMÓRIA
+        function getCapWeight(cap) {
+            if(!cap) return 0;
+            let c = cap.toUpperCase();
+            if(c.includes('2TB')) return 6000;
+            if(c.includes('1TB')) return 5000;
+            if(c.includes('512')) return 4000;
+            if(c.includes('256')) return 3000;
+            if(c.includes('128')) return 2000;
+            if(c.includes('64')) return 1000;
+            return 0;
+        }
+
+        // REGRA DAS CADEIRAS: HIERARQUIA, MEMÓRIA, CONDIÇÃO E SEMPRE ORDENADO PELO MENOR PREÇO
         function sortOffers(a, b) {
             let wA = getModelWeight(a.variacoes.produtos_mestre.nome);
             let wB = getModelWeight(b.variacoes.produtos_mestre.nome);
             if (wA !== wB) return wB - wA; 
+            
+            // INJEÇÃO: APLICAÇÃO DO PESO DA MEMÓRIA
+            let capA = getCapWeight(a.variacoes.capacidade);
+            let capB = getCapWeight(b.variacoes.capacidade);
+            if (capA !== capB) return capB - capA;
 
             if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
             if (a.condicao !== 'Novo' && b.condicao === 'Novo') return 1;
@@ -349,7 +363,6 @@
                 let moeda = o.moeda === 'USD' ? '$' : 'R$';
                 let menorPreco = menores[`${o.variacao_id}_${o.condicao}_${o.moeda}`];
                 
-                // REGRA DAS TAGS: 15 MIN PARA ALTA E 30 PARA QUEDA
                 let tagAlteracao = '';
                 if(o.data_alteracao_preco && o.preco_anterior) {
                     let minsPassados = (new Date() - new Date(o.data_alteracao_preco)) / 60000;
@@ -364,7 +377,6 @@
                 let tagEstoque = o.quantidade <= 3 ? `<span class="tag-status tag-poucas">APENAS ${o.quantidade} UN</span>` : (o.quantidade <= 10 ? `<span class="tag-status tag-muitas">ESTOQUE ${o.quantidade} UN</span>` : `<span class="tag-status tag-estoque-alto">ALTO ESTOQUE ${o.quantidade} UN</span>`);
                 let detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ');
                 
-                // AJUSTE: BATERIA CLARA SEM SINAIS
                 let txtBat = o.saude_bateria ? o.saude_bateria.replace('BATERIA ', '') : '';
                 let t_bat = txtBat ? `<span class="mini-tag bat">🔋 ${txtBat}</span>` : '';
                 let t_gar = o.garantia ? `<span class="mini-tag gar">🛡️ GAR: ${o.garantia}</span>` : '';
@@ -377,7 +389,6 @@
                 let t_pix = o.aceita_pix ? `<span class="mini-tag pix">💠 PIX</span>` : ''; 
                 let t_not = o.emite_nota ? `<span class="mini-tag active">NF</span>` : ''; 
                 let t_env = o.faz_envio ? `<span class="mini-tag active">Envio</span>` : ''; 
-                // AJUSTE: NEGOCIA QTD NO LUGAR DE LOTE
                 let t_pro = o.aceita_proposta ? `<span class="mini-tag lote">🤝 Negocia Qtd</span>` : '';
                 
                 let tagsStr = [t_bat, t_gar, t_fab, t_col, t_boy, t_usd, t_pix, t_not, t_env, t_pro].filter(Boolean).join(' ');
