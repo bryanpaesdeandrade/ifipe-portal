@@ -14,8 +14,11 @@
         .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
         .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
         .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; }
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 15px; transition: 0.3s; position: relative; }
+        
+        /* AQUI: AJUSTE ESTÉTICO GERAL DO CARD PARA FICAR MAIS COMPACTO */
+        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px; transition: 0.3s; position: relative; }
         .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
+
         .tag-status { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 50px; letter-spacing: 0.05em; display: inline-block; margin-bottom: 3px; }
         .tag-menor { background: #ff3b30; color: #fff; }
         .tag-poucas { background: #ffcc00; color: #000; }
@@ -30,7 +33,9 @@
         .mini-tag.fab { color: #d2d2d7; border-color: #86868b; background: rgba(134, 134, 139, 0.1); }
         .mini-tag.pix { color: #32bcad; border-color: #32bcad; background: rgba(50, 188, 173, 0.1); }
         .price-text { font-size: 26px; font-weight: 900; color: var(--text); letter-spacing: -0.05em; }
-        .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 12px; transition: 0.3s; letter-spacing: 0.05em; }
+        
+        /* AQUI: AJUSTE DO BOTÃO COMPRAR (MAIS ESPAÇO ACIMA) */
+        .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 16px; transition: 0.3s; letter-spacing: 0.05em; }
         .buy-button:hover { background: #005bb5; }
         .hidden { display: none !important; }
         .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 14px; font-weight: 700; }
@@ -46,6 +51,10 @@
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #0071e3; border-radius: 10px; }
+
+        /* EFEITO DE PULSO AO CURTIR */
+        @keyframes likePulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .like-anim { animation: likePulse 0.3s ease-in-out; }
     </style>
 </head>
 <body>
@@ -197,16 +206,11 @@
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (e) => {
                 currentUsdtRate = parseFloat(JSON.parse(e.data).c);
-                
-                // CALCULA A TAXA ORÁCULO AQUI (+0,07)
                 let finalOraculoRate = currentUsdtRate + 0.07;
-                
                 const el = document.getElementById('ticker');
                 if(el) el.innerText = `R$ ${currentUsdtRate.toFixed(4).replace('.',',')}`;
-                
                 const oraculoEl = document.getElementById('oraculoRate');
                 if(oraculoEl) oraculoEl.innerText = `R$ ${finalOraculoRate.toFixed(4).replace('.',',')}`;
-
                 const tic = document.getElementById('tickerCalc');
                 if(tic) tic.innerText = `R$ ${currentUsdtRate.toFixed(4).replace('.',',')}`;
                 calcularImportacao();
@@ -220,7 +224,7 @@
             const usdInput = parseFloat(inputVal);
             let taxaEfetiva = 0;
             if (currentUsdtRate > 0) {
-                taxaEfetiva = currentUsdtRate + 0.07; // Taxa ajustada para +0.07 no calculo final
+                taxaEfetiva = currentUsdtRate + 0.07; 
                 document.getElementById('calcTaxaEfetiva').innerText = `R$ ${taxaEfetiva.toFixed(4).replace('.', ',')}`;
             }
             if(isNaN(usdInput) || currentUsdtRate === 0) { document.getElementById('calcResult').innerText = "R$ 0,00"; return; }
@@ -323,38 +327,48 @@
                 let msgTexto = `Olá tudo bem! encontrei seu anuncio de um ${o.variacoes.produtos_mestre.nome} | ${detalhes} pelo valor de ${precoFormatado} \n\nVENHO PELO *https://ifipe.com.br/*`;
                 let linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(msgTexto)}`;
 
-                // AQUI: NOVA LÓGICA DE BANDEIRA E DESTAQUE DE LOCAL
                 let paisLoja = o.fornecedores.pais || 'Brasil';
                 let bandeiraLoja = paisLoja.toLowerCase().includes('paraguai') ? '🇵🇾' : (paisLoja.toLowerCase().includes('eua') || paisLoja.toLowerCase().includes('estados unidos') ? '🇺🇸' : (paisLoja.toLowerCase().includes('dubai') ? '🇦🇪' : '🇧🇷'));
-                
                 let localDestaque = `
-                    <div class="flex items-center gap-1.5 mb-2 mt-1">
+                    <div class="flex items-center gap-1.5 mb-1.5 mt-0.5">
                         <span class="text-sm">${bandeiraLoja}</span>
-                        <span class="text-[10px] text-white font-black uppercase tracking-widest bg-[#2c2c2e] border border-[#38383a] px-2 py-0.5 rounded-md">${o.cidade || o.fornecedores.cidade} - ${paisLoja}</span>
+                        <span class="text-[9px] text-white font-black uppercase tracking-widest bg-[#2c2c2e] border border-[#38383a] px-2 py-0.5 rounded-md">${o.cidade || o.fornecedores.cidade} - ${paisLoja}</span>
                     </div>`;
 
                 return `
                 <div class="product-card flex flex-col">
-                    <div class="flex flex-wrap gap-1 mb-2">${tagAlteracao} ${tagEstoque} ${tagMenor}</div>
-                    <h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-[10px] text-gray-300 font-bold mt-1 uppercase tracking-wide mb-3">${detalhes}</p>
-                    <div class="flex flex-wrap gap-1.5 mb-3">${tagsStr}</div>
-                    <div class="mt-auto border-t border-[#38383a] pt-3">
-                        <p class="text-[9px] text-blue-400 font-black uppercase tracking-widest mb-1">LOJA: ${o.fornecedores.nome} ${selo}</p>
+                    <div class="flex flex-wrap gap-1 mb-1.5">${tagAlteracao} ${tagEstoque} ${tagMenor}</div>
+                    <h2 class="text-lg font-black leading-tight mb-0.5">${o.variacoes.produtos_mestre.nome}</h2>
+                    <p class="text-[9px] text-gray-300 font-bold mt-0.5 uppercase tracking-wide mb-2">${detalhes}</p>
+                    <div class="flex flex-wrap gap-1 mb-2">${tagsStr}</div>
+                    <div class="mt-auto border-t border-[#38383a] pt-2">
+                        <p class="text-[8px] text-blue-400 font-black uppercase tracking-widest mb-0.5">LOJA: ${o.fornecedores.nome} ${selo}</p>
                         ${localDestaque}
-                        <div class="price-text mb-3">${precoFormatado}</div>
+                        <div class="price-text mb-2">${precoFormatado}</div>
                     </div>
-                    <div class="flex justify-between items-center pt-3 pb-1 border-t border-[#38383a] text-gray-400 mt-2">
-                        <button onclick="toggleLike(this)" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors">Curtir oferta</button>
+                    <div class="flex justify-between items-center pt-2 pb-1 border-t border-[#38383a] text-gray-400 mt-1">
+                        <button onclick="toggleLike(this)" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors like-btn">
+                            <span>Curtir ❤️</span>
+                        </button>
                         <button onclick="abrirComentarios(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors">Perguntas</button>
                         <button onclick="shareOffer('${o.variacoes.produtos_mestre.nome}', '${detalhes}', '${precoFormatado}', '${linkWpp}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-green-500 transition-colors">Compartilhar</button>
                     </div>
-                    <a href="${linkWpp}" target="_blank" class="buy-button mt-0">Comprar agora no WhatsApp</a>
+                    <a href="${linkWpp}" target="_blank" class="buy-button mt-4">Comprar agora no WhatsApp</a>
                 </div>`;
             }).join('');
         }
 
-        function toggleLike(btn) { btn.classList.toggle('text-blue-500'); }
+        function toggleLike(btn) {
+            btn.classList.toggle('text-blue-500');
+            btn.classList.add('like-anim');
+            const span = btn.querySelector('span');
+            if(btn.classList.contains('text-blue-500')) {
+                span.innerText = "Curtido ❤️";
+            } else {
+                span.innerText = "Curtir ❤️";
+            }
+            setTimeout(() => btn.classList.remove('like-anim'), 300);
+        }
 
         function shareOffer(nome, detalhes, preco, link) {
             const texto = `🔥 Olha essa oferta no iFipe!\n\n📱 ${nome}\n📋 ${detalhes}\n💰 ${preco}\n\nFale direto com o Lojista:\n👉 ${link}`;
