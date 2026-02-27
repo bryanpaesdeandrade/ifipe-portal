@@ -44,6 +44,11 @@
         .calc-text { font-size: 10px; font-weight: 900; text-transform: uppercase; margin-left: 8px; opacity: 0; transition: 0.3s; }
         .btn-calc-float:hover { width: 130px; padding-left: 12px; justify-content: flex-start; }
         .btn-calc-float:hover .calc-text { opacity: 1; }
+        
+        /* SCROLLBAR CUSTOMIZADO PARA COMENTÁRIOS */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #0071e3; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -91,6 +96,25 @@
                     <button type="button" onclick="fecharConta()" class="bg-gray-600 text-white font-black uppercase text-[12px] rounded-full px-6 py-3 w-1/3">Sair</button>
                     <button type="submit" class="bg-blue-600 text-white font-black uppercase text-[12px] rounded-full px-6 py-3 w-2/3">Atualizar Dados</button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="comentarioModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2500] px-4">
+        <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-[#38383a] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+            <button onclick="fecharComentarios()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+            <div class="text-center mb-4 mt-2">
+                <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">Comentários VIP</h3>
+                <p id="comentarioProdutoNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
+            </div>
+            
+            <div id="listaComentarios" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2 custom-scroll">
+                </div>
+
+            <form onsubmit="postarComentario(event)" class="mt-auto border-t border-[#38383a] pt-4">
+                <input type="hidden" id="comentario_oferta_id">
+                <textarea id="comentario_texto" class="apple-input w-full h-[60px] resize-none mb-2 text-[11px]" placeholder="Escreva seu comentário..." required></textarea>
+                <button type="submit" class="bg-blue-600 text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-blue-700">Comentar agora</button>
             </form>
         </div>
     </div>
@@ -157,6 +181,9 @@
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let ofertasAtuais = []; let gradeVariacoes = []; let clienteLogado = null; let todosProdutosMestre = [];
         let currentUsdtRate = 0; 
+        
+        // INJEÇÃO: Memória local para os comentários e curtidas não quebrarem o layout
+        let comentariosMocados = {};
 
         function toggleTheme() {
             const b = document.body; b.classList.toggle('light-mode');
@@ -277,7 +304,6 @@
             return weight;
         }
 
-        // INJEÇÃO: FUNÇÃO DE PESO PARA A MEMÓRIA
         function getCapWeight(cap) {
             if(!cap) return 0;
             let c = cap.toUpperCase();
@@ -290,13 +316,11 @@
             return 0;
         }
 
-        // REGRA DAS CADEIRAS: HIERARQUIA, MEMÓRIA, CONDIÇÃO E SEMPRE ORDENADO PELO MENOR PREÇO
         function sortOffers(a, b) {
             let wA = getModelWeight(a.variacoes.produtos_mestre.nome);
             let wB = getModelWeight(b.variacoes.produtos_mestre.nome);
             if (wA !== wB) return wB - wA; 
             
-            // INJEÇÃO: APLICAÇÃO DO PESO DA MEMÓRIA
             let capA = getCapWeight(a.variacoes.capacidade);
             let capB = getCapWeight(b.variacoes.capacidade);
             if (capA !== capB) return capB - capA;
@@ -304,7 +328,7 @@
             if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
             if (a.condicao !== 'Novo' && b.condicao === 'Novo') return 1;
 
-            return a.preco - b.preco; // Preço menor na frente
+            return a.preco - b.preco;
         }
 
         function renderizarRanking() {
@@ -335,28 +359,16 @@
             let listaUSD = filtrados.filter(o => o.moeda === 'USD').sort(sortOffers);
             
             let finalLayout = [];
-            let idxBRL = 0;
-            let idxUSD = 0;
+            let idxBRL = 0; let idxUSD = 0;
 
             while(idxBRL < listaBRL.length || idxUSD < listaUSD.length) {
                 let slot1 = null, slot2 = null, slot3 = null, slot4 = null;
-                
-                if(idxBRL < listaBRL.length) slot1 = listaBRL[idxBRL++];
-                else if(idxUSD < listaUSD.length) slot1 = listaUSD[idxUSD++];
-                
-                if(idxBRL < listaBRL.length) slot2 = listaBRL[idxBRL++];
-                else if(idxUSD < listaUSD.length) slot2 = listaUSD[idxUSD++];
-
-                if(idxUSD < listaUSD.length) slot3 = listaUSD[idxUSD++];
-                else if(idxBRL < listaBRL.length) slot3 = listaBRL[idxBRL++];
-
-                if(idxUSD < listaUSD.length) slot4 = listaUSD[idxUSD++];
-                else if(idxBRL < listaBRL.length) slot4 = listaBRL[idxBRL++];
-
-                if(slot1) finalLayout.push(slot1);
-                if(slot2) finalLayout.push(slot2);
-                if(slot3) finalLayout.push(slot3);
-                if(slot4) finalLayout.push(slot4);
+                if(idxBRL < listaBRL.length) slot1 = listaBRL[idxBRL++]; else if(idxUSD < listaUSD.length) slot1 = listaUSD[idxUSD++];
+                if(idxBRL < listaBRL.length) slot2 = listaBRL[idxBRL++]; else if(idxUSD < listaUSD.length) slot2 = listaUSD[idxUSD++];
+                if(idxUSD < listaUSD.length) slot3 = listaUSD[idxUSD++]; else if(idxBRL < listaBRL.length) slot3 = listaBRL[idxBRL++];
+                if(idxUSD < listaUSD.length) slot4 = listaUSD[idxUSD++]; else if(idxBRL < listaBRL.length) slot4 = listaBRL[idxBRL++];
+                if(slot1) finalLayout.push(slot1); if(slot2) finalLayout.push(slot2);
+                if(slot3) finalLayout.push(slot3); if(slot4) finalLayout.push(slot4);
             }
 
             grid.innerHTML = finalLayout.map(o => {
@@ -366,11 +378,8 @@
                 let tagAlteracao = '';
                 if(o.data_alteracao_preco && o.preco_anterior) {
                     let minsPassados = (new Date() - new Date(o.data_alteracao_preco)) / 60000;
-                    if(o.preco < o.preco_anterior && minsPassados <= 30) {
-                        tagAlteracao = `<span class="tag-status" style="background:#32d74b; color:#000;">📉 OPORTUNIDADE</span>`;
-                    } else if (o.preco > o.preco_anterior && minsPassados <= 15) {
-                        tagAlteracao = `<span class="tag-status" style="background:#ff3b30; color:#fff;">📈 EM ALTA</span>`;
-                    }
+                    if(o.preco < o.preco_anterior && minsPassados <= 30) { tagAlteracao = `<span class="tag-status" style="background:#32d74b; color:#000;">📉 OPORTUNIDADE</span>`; } 
+                    else if (o.preco > o.preco_anterior && minsPassados <= 15) { tagAlteracao = `<span class="tag-status" style="background:#ff3b30; color:#fff;">📈 EM ALTA</span>`; }
                 }
 
                 let tagMenor = o.preco === menorPreco ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
@@ -398,8 +407,90 @@
                 let msgTexto = `Olá tudo bem! encontrei seu anuncio de um ${o.variacoes.produtos_mestre.nome} | ${detalhes} pelo valor de ${precoFormatado} \n\nVENHO PELO *https://ifipe.com.br/*`;
                 let linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(msgTexto)}`;
 
-                return `<div class="product-card"><div class="flex flex-wrap gap-1 mb-2">${tagAlteracao} ${tagEstoque} ${tagMenor}</div><h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2><p class="text-[10px] text-gray-300 font-bold mt-1 uppercase tracking-wide mb-3">${detalhes}</p><div class="flex flex-wrap gap-1.5 mb-3">${tagsStr}</div><div class="mt-2 border-t border-[#38383a] pt-3"><p class="text-[9px] text-blue-400 font-black uppercase tracking-widest">LOJA: ${o.fornecedores.nome} ${selo}</p><p class="text-[8px] text-gray-500 font-bold uppercase mb-1">Local: ${o.cidade || o.fornecedores.cidade}${paisLoja}</p><div class="price-text">${precoFormatado}</div></div><a href="${linkWpp}" target="_blank" class="buy-button">Comprar agora no WhatsApp</a></div>`;
+                // INJEÇÃO: BARRA DE ENGAJAMENTO
+                return `
+                <div class="product-card flex flex-col">
+                    <div class="flex flex-wrap gap-1 mb-2">${tagAlteracao} ${tagEstoque} ${tagMenor}</div>
+                    <h2 class="text-lg font-black leading-tight">${o.variacoes.produtos_mestre.nome}</h2>
+                    <p class="text-[10px] text-gray-300 font-bold mt-1 uppercase tracking-wide mb-3">${detalhes}</p>
+                    <div class="flex flex-wrap gap-1.5 mb-3">${tagsStr}</div>
+                    
+                    <div class="mt-auto border-t border-[#38383a] pt-3">
+                        <p class="text-[9px] text-blue-400 font-black uppercase tracking-widest">LOJA: ${o.fornecedores.nome} ${selo}</p>
+                        <p class="text-[8px] text-gray-500 font-bold uppercase mb-1">Local: ${o.cidade || o.fornecedores.cidade}${paisLoja}</p>
+                        <div class="price-text mb-3">${precoFormatado}</div>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-3 pb-1 border-t border-[#38383a] text-gray-400 mt-2">
+                        <button onclick="toggleLike(this)" class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest hover:text-red-500 transition-colors"><span class="text-sm">🤍</span> Curtir</button>
+                        <button onclick="abrirComentarios(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest hover:text-blue-500 transition-colors"><span class="text-sm">💬</span> Comentar</button>
+                        <button onclick="shareOffer('${o.variacoes.produtos_mestre.nome}', '${detalhes}', '${precoFormatado}', '${linkWpp}')" class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest hover:text-green-500 transition-colors"><span class="text-sm">↗️</span> Enviar</button>
+                    </div>
+
+                    <a href="${linkWpp}" target="_blank" class="buy-button mt-0">Comprar agora no WhatsApp</a>
+                </div>`;
             }).join('');
+        }
+
+        // INJEÇÃO: FUNÇÕES DE ENGAJAMENTO (Curtir, Compartilhar, Comentar)
+        function toggleLike(btn) {
+            let icone = btn.querySelector('span');
+            if(icone.innerText === '🤍') { icone.innerText = '❤️'; btn.classList.add('text-red-500'); } 
+            else { icone.innerText = '🤍'; btn.classList.remove('text-red-500'); }
+        }
+
+        function shareOffer(nome, detalhes, preco, link) {
+            const texto = `🔥 Olha essa oferta no iFipe!\n\n📱 ${nome}\n📋 ${detalhes}\n💰 ${preco}\n\nFale direto com o Lojista:\n👉 ${link}`;
+            if (navigator.share) {
+                navigator.share({ title: 'Oferta iFipe', text: texto }).catch(console.error);
+            } else {
+                navigator.clipboard.writeText(texto); alert("Texto da oferta copiado para enviar!");
+            }
+        }
+
+        function abrirComentarios(ofertaId, nomeProduto) {
+            document.getElementById('comentario_oferta_id').value = ofertaId;
+            document.getElementById('comentarioProdutoNome').innerText = nomeProduto;
+            renderizarComentarios(ofertaId);
+            document.getElementById('comentarioModal').classList.remove('hidden');
+        }
+
+        function fecharComentarios() {
+            document.getElementById('comentarioModal').classList.add('hidden');
+            document.getElementById('comentario_texto').value = '';
+        }
+
+        function postarComentario(e) {
+            e.preventDefault();
+            const ofertaId = document.getElementById('comentario_oferta_id').value;
+            const texto = document.getElementById('comentario_texto').value;
+            
+            if(!comentariosMocados[ofertaId]) comentariosMocados[ofertaId] = [];
+            
+            comentariosMocados[ofertaId].push({
+                texto: texto, data: new Date().toLocaleDateString('pt-BR', {hour: '2-digit', minute:'2-digit'})
+            });
+            
+            document.getElementById('comentario_texto').value = '';
+            renderizarComentarios(ofertaId);
+        }
+
+        function renderizarComentarios(ofertaId) {
+            const div = document.getElementById('listaComentarios');
+            const lista = comentariosMocados[ofertaId] || [];
+            if(lista.length === 0) {
+                div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Ninguém comentou ainda. Seja o primeiro!</p>';
+                return;
+            }
+            div.innerHTML = lista.map(c => `
+                <div class="bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a]">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="text-[9px] font-black text-blue-400 uppercase tracking-widest">Usuário VIP</span>
+                        <span class="text-[7px] text-gray-500 uppercase font-bold">${c.data}</span>
+                    </div>
+                    <p class="text-[11px] text-gray-300 font-bold leading-relaxed">${c.texto}</p>
+                </div>
+            `).join('');
         }
 
         function logout() { localStorage.removeItem('iFipe_Token'); window.location.replace('index.html'); }
