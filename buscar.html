@@ -15,6 +15,7 @@
         .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
         .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; }
         
+        /* CARD COMPACTO */
         .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px; transition: 0.3s; position: relative; }
         .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
 
@@ -267,8 +268,9 @@
         function popularAparelhos() { const catId = document.getElementById('f_cat').value; const filtrados = catId ? todosProdutosMestre.filter(x => x.grupo_id == catId) : todosProdutosMestre; document.getElementById('f_prod').innerHTML = '<option value="">Todos</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); atualizarFiltrosCascata(); }
         function atualizarFiltrosCascata() { const pid = document.getElementById('f_prod').value; const vars = pid ? gradeVariacoes.filter(x => x.produto_id == pid) : gradeVariacoes; const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))]; document.getElementById('f_cap').innerHTML = '<option value="">Todas</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join(''); document.getElementById('f_cor').innerHTML = '<option value="">Todas</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join(''); renderizarRanking(); }
 
+        // INJEÇÃO: AGORA O FETCH PUXA A TABELA DE CURTIDAS DO SUPABASE
         async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira)');
+            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira), curtidas(cliente_id)');
             ofertasAtuais = data || []; renderizarRanking();
         }
 
@@ -302,9 +304,6 @@
         }
 
         function renderizarRanking() {
-            // INJEÇÃO DA MEMÓRIA LOCAL PARA CURTIDAS NÃO SUMIREM
-            let curtidasLocais = JSON.parse(localStorage.getItem('iFipe_Likes') || '[]');
-
             const fCat = document.getElementById('f_cat').value; const fP = document.getElementById('f_prod').value; const fC = document.getElementById('f_cond').value; const fCap = document.getElementById('f_cap').value; const fCor = document.getElementById('f_cor').value; const fReg = document.getElementById('f_reg').value; const fLoj = document.getElementById('f_lojista').value; const fCid = document.getElementById('f_cid').value;
             let filtrados = ofertasAtuais.filter(o => o.quantidade > 0 && (!fCat || o.variacoes.produtos_mestre.grupo_id == fCat) && (!fP || o.variacoes.produtos_mestre.id == fP) && (!fC || o.condicao == fC) && (!fCap || o.variacoes.capacidade == fCap) && (!fCor || o.variacoes.cor == fCor) && (!fReg || o.regiao_id == fReg) && (!fLoj || o.fornecedor_id == fLoj) && (!fCid || o.fornecedores.cidade == fCid));
             const grid = document.getElementById('gridGeral');
@@ -359,10 +358,26 @@
                         <span class="text-[9px] text-white font-black uppercase tracking-widest bg-[#2c2c2e] border border-[#38383a] px-2 py-0.5 rounded-md truncate max-w-full">${textoLocal}</span>
                     </div>`;
 
-                // CHECAGEM DE CURTIDA MEMÓRIA LOCAL
-                let isCurtido = curtidasLocais.includes(o.id);
-                let corLike = isCurtido ? 'text-blue-500' : '';
-                let textoLike = isCurtido ? 'Recomendado 🔥' : 'Recomendar Loja 👍';
+                // INJEÇÃO: CHECAGEM DE CURTIDA GLOBAL NO BANCO
+                let isCurtido = false;
+                let numCurtidas = 0;
+                if(o.curtidas) {
+                    numCurtidas = o.curtidas.length;
+                    if(clienteLogado) {
+                        isCurtido = o.curtidas.some(c => c.cliente_id === clienteLogado.id);
+                    }
+                }
+
+                let corLike = '';
+                let textoLike = 'Recomendar Loja 👍';
+
+                if (isCurtido) {
+                    corLike = 'text-blue-500';
+                    textoLike = `Recomendado 🔥 ${numCurtidas > 1 ? '('+numCurtidas+')' : ''}`;
+                } else if (numCurtidas > 0) {
+                    corLike = 'text-blue-400'; // Azul mais claro para mostrar que já tem votos de outros
+                    textoLike = `Recomendado 👍 (${numCurtidas})`;
+                }
 
                 return `
                 <div class="product-card flex flex-col">
@@ -393,27 +408,31 @@
             }).join('');
         }
 
-        // LÓGICA DE CURTIDA LOCAL ATUALIZADA
-        function toggleLike(btn, id) {
-            let curtidasLocais = JSON.parse(localStorage.getItem('iFipe_Likes') || '[]');
+        // INJEÇÃO: FUNÇÃO TOGGLE LIKE CONECTADA AO BANCO
+        async function toggleLike(btn, id) {
+            if (!clienteLogado) return alert("Você precisa estar logado para recomendar!");
+            
+            let isCurtido = btn.classList.contains('text-blue-500');
             const span = btn.querySelector('span');
 
-            if (curtidasLocais.includes(id)) {
-                // Tira a curtida
-                curtidasLocais = curtidasLocais.filter(item => item !== id);
+            // Efeito visual imediato
+            btn.classList.add('like-anim');
+            setTimeout(() => btn.classList.remove('like-anim'), 300);
+
+            if (isCurtido) {
+                // Tira a curtida visualmente
                 btn.classList.remove('text-blue-500');
                 span.innerText = "Recomendar Loja 👍";
+                // Deleta no banco
+                await _s.from('curtidas').delete().eq('oferta_id', id).eq('cliente_id', clienteLogado.id);
             } else {
-                // Dá a curtida
-                curtidasLocais.push(id);
+                // Coloca a curtida visualmente
+                btn.classList.remove('text-blue-400');
                 btn.classList.add('text-blue-500');
-                btn.classList.add('like-anim');
                 span.innerText = "Recomendado 🔥";
-                setTimeout(() => btn.classList.remove('like-anim'), 300);
+                // Salva no banco
+                await _s.from('curtidas').insert([{ oferta_id: id, cliente_id: clienteLogado.id }]);
             }
-            
-            // Salva no celular da pessoa
-            localStorage.setItem('iFipe_Likes', JSON.stringify(curtidasLocais));
         }
 
         function shareOffer(nome, detalhes, preco, link) {
