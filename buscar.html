@@ -15,7 +15,6 @@
         .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
         .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; }
         
-        /* CARD COMPACTO */
         .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px; transition: 0.3s; position: relative; }
         .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
 
@@ -303,6 +302,9 @@
         }
 
         function renderizarRanking() {
+            // INJEÇÃO DA MEMÓRIA LOCAL PARA CURTIDAS NÃO SUMIREM
+            let curtidasLocais = JSON.parse(localStorage.getItem('iFipe_Likes') || '[]');
+
             const fCat = document.getElementById('f_cat').value; const fP = document.getElementById('f_prod').value; const fC = document.getElementById('f_cond').value; const fCap = document.getElementById('f_cap').value; const fCor = document.getElementById('f_cor').value; const fReg = document.getElementById('f_reg').value; const fLoj = document.getElementById('f_lojista').value; const fCid = document.getElementById('f_cid').value;
             let filtrados = ofertasAtuais.filter(o => o.quantidade > 0 && (!fCat || o.variacoes.produtos_mestre.grupo_id == fCat) && (!fP || o.variacoes.produtos_mestre.id == fP) && (!fC || o.condicao == fC) && (!fCap || o.variacoes.capacidade == fCap) && (!fCor || o.variacoes.cor == fCor) && (!fReg || o.regiao_id == fReg) && (!fLoj || o.fornecedor_id == fLoj) && (!fCid || o.fornecedores.cidade == fCid));
             const grid = document.getElementById('gridGeral');
@@ -357,6 +359,11 @@
                         <span class="text-[9px] text-white font-black uppercase tracking-widest bg-[#2c2c2e] border border-[#38383a] px-2 py-0.5 rounded-md truncate max-w-full">${textoLocal}</span>
                     </div>`;
 
+                // CHECAGEM DE CURTIDA MEMÓRIA LOCAL
+                let isCurtido = curtidasLocais.includes(o.id);
+                let corLike = isCurtido ? 'text-blue-500' : '';
+                let textoLike = isCurtido ? 'Recomendado 🔥' : 'Recomendar Loja 👍';
+
                 return `
                 <div class="product-card flex flex-col">
                     <div class="flex flex-wrap gap-1 mb-1.5">${tagAlteracao} ${tagEstoque} ${tagMenor}</div>
@@ -375,8 +382,8 @@
                     </div>
 
                     <div class="flex justify-between items-center pt-2 pb-1 border-t border-[#38383a] text-gray-400 mt-1">
-                        <button onclick="toggleLike(this)" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors like-btn">
-                            <span>Recomendar Loja 👍</span>
+                        <button onclick="toggleLike(this, ${o.id})" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors like-btn ${corLike}">
+                            <span>${textoLike}</span>
                         </button>
                         <button onclick="abrirComentarios(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors">Perguntas</button>
                         <button onclick="shareOffer('${o.variacoes.produtos_mestre.nome}', '${detalhes}', '${precoFormatado}', '${linkWpp}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-green-500 transition-colors">Compartilhar</button>
@@ -386,16 +393,27 @@
             }).join('');
         }
 
-        function toggleLike(btn) {
-            btn.classList.toggle('text-blue-500');
-            btn.classList.add('like-anim');
+        // LÓGICA DE CURTIDA LOCAL ATUALIZADA
+        function toggleLike(btn, id) {
+            let curtidasLocais = JSON.parse(localStorage.getItem('iFipe_Likes') || '[]');
             const span = btn.querySelector('span');
-            if(btn.classList.contains('text-blue-500')) {
-                span.innerText = "Recomendado 👍";
-            } else {
+
+            if (curtidasLocais.includes(id)) {
+                // Tira a curtida
+                curtidasLocais = curtidasLocais.filter(item => item !== id);
+                btn.classList.remove('text-blue-500');
                 span.innerText = "Recomendar Loja 👍";
+            } else {
+                // Dá a curtida
+                curtidasLocais.push(id);
+                btn.classList.add('text-blue-500');
+                btn.classList.add('like-anim');
+                span.innerText = "Recomendado 🔥";
+                setTimeout(() => btn.classList.remove('like-anim'), 300);
             }
-            setTimeout(() => btn.classList.remove('like-anim'), 300);
+            
+            // Salva no celular da pessoa
+            localStorage.setItem('iFipe_Likes', JSON.stringify(curtidasLocais));
         }
 
         function shareOffer(nome, detalhes, preco, link) {
