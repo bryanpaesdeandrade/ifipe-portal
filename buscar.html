@@ -6,385 +6,342 @@
     <title>iFipe - Buscador VIP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root { 
-            --bg: #f8f9fb; 
-            --glass: rgba(255, 255, 255, 0.7);
-            --surface: #ffffff; 
-            --text-main: #1c1c1e; 
-            --text-muted: #6e6e73; 
-            --border: #d2d2d7; 
-            --accent: #0071e3;
-            --accent-soft: rgba(0, 113, 227, 0.1);
-            --success: #248a3d;
-            --success-soft: #eaf5ed;
-            --warning: #ff9f0a;
-            --warning-soft: #fff4e5;
-            --danger: #ff3b30;
-            --danger-soft: #ffebeb;
+            --bg: #ffffff; 
+            --surface: #f4f4f5; 
+            --text-main: #000000; 
+            --text-muted: #71717a; 
+            --border: #e4e4e7; 
+            --accent: #000000;
+            --info: #0071e3;
+            --success: #16a34a;
+            --ig-blue: #0095f6;
         }
         
         body.dark-mode { 
             --bg: #000000; 
-            --glass: rgba(28, 28, 30, 0.7);
-            --surface: #1c1c1e; 
-            --text-main: #f5f5f7; 
-            --text-muted: #86868b; 
-            --border: #38383a; 
-            --accent: #0a84ff;
-            --accent-soft: rgba(10, 132, 255, 0.15);
-            --success: #32d74b;
-            --success-soft: rgba(50, 215, 75, 0.1);
-            --warning: #ffd60a;
-            --warning-soft: rgba(255, 214, 10, 0.1);
-            --danger: #ff453a;
-            --danger-soft: rgba(255, 69, 58, 0.1);
+            --surface: #18181b; 
+            --text-main: #ffffff; 
+            --text-muted: #a1a1aa; 
+            --border: #27272a; 
+            --accent: #ffffff;
+            --info: #0a84ff;
+            --success: #22c55e;
         }
 
-        body { background: var(--bg); color: var(--text-main); font-family: 'Inter', -apple-system, sans-serif; margin:0; transition: 0.3s; -webkit-font-smoothing: antialiased; }
+        body { background: var(--bg); color: var(--text-main); font-family: 'Inter', -apple-system, sans-serif; margin:0; -webkit-font-smoothing: antialiased; }
         
-        .glass-nav { background: var(--glass); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000; padding: 12px 24px; }
+        /* NAV BAR INSTITUCIONAL */
+        .nav-bar { background: var(--bg); border-bottom: 1px solid var(--border); padding: 12px 24px; position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
         
-        /* SEARCH BAR E-COMMERCE PREMIUM */
-        .search-wrapper { position: relative; max-width: 850px; margin: 30px auto; }
-        .search-box { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 100px; padding: 4px 4px 4px 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.04); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .search-box:focus-within { border-color: var(--accent); box-shadow: 0 12px 40px rgba(0,0,0,0.08); transform: translateY(-2px); }
-        .search-input { flex: 1; border: none; background: transparent; color: var(--text-main); font-size: 15px; font-weight: 600; outline: none; padding: 12px 0; text-transform: uppercase; }
-        .search-btn { background: var(--accent); color: #fff; border-radius: 100px; padding: 12px 32px; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; transition: 0.2s; }
-        .search-btn:hover { background: #005bb5; transform: scale(1.03); }
+        /* SEARCH BOX "SPOTLIGHT" */
+        .search-container { max-width: 700px; margin: 40px auto 20px; padding: 0 20px; }
+        .search-box { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 4px 4px 4px 16px; transition: 0.2s; }
+        .search-box:focus-within { border-color: var(--info); background: var(--bg); box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1); }
+        .search-input { flex: 1; border: none; background: transparent; color: var(--text-main); font-size: 14px; font-weight: 600; outline: none; padding: 10px 0; text-transform: uppercase; }
+        .search-btn { background: var(--text-main); color: var(--bg); border-radius: 10px; padding: 10px 20px; font-weight: 800; font-size: 12px; text-transform: uppercase; }
 
-        /* FILTROS MINIMALISTAS */
-        .filter-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 40px; }
-        .filter-pill { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 16px; font-size: 11px; font-weight: 700; color: var(--text-muted); outline: none; cursor: pointer; transition: 0.2s; }
-        .filter-pill:focus { border-color: var(--accent); color: var(--accent); }
+        /* PERFORMANCE ROWS */
+        .list-container { display: flex; flex-direction: column; max-width: 1200px; margin: 40px auto; padding: 0 20px; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .perf-row { background: var(--bg); display: flex; flex-direction: column; lg:flex-row; padding: 24px; gap: 24px; transition: 0.2s; position: relative; }
+        .perf-row:hover { background: var(--surface); }
 
-        /* LIST VIEW PREMIUM (THE WOW ROW) */
-        .list-container { display: flex; flex-direction: column; gap: 12px; }
-        .premium-row { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; transition: all 0.3s ease; position: relative; overflow: hidden; }
-        .premium-row:hover { border-color: var(--accent); box-shadow: 0 10px 40px rgba(0,0,0,0.05); transform: scale(1.005); }
+        .col-prod { flex: 2; min-width: 0; }
+        .col-store { flex: 1.2; border-left: 0; lg:border-left: 1px solid var(--border); padding-left: 0; lg:padding-left: 24px; }
+        .col-price { flex: 1; text-align: right; border-left: 0; lg:border-left: 1px solid var(--border); padding-left: 0; lg:padding-left: 24px; display: flex; flex-direction: column; justify-content: space-between; }
+
+        .badge-pill { font-size: 9px; font-weight: 800; padding: 4px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+        .badge-info { background: rgba(0, 113, 227, 0.1); color: var(--info); }
+        .badge-success { background: rgba(22, 163, 74, 0.1); color: var(--success); }
+        .badge-warn { background: rgba(217, 119, 6, 0.1); color: #d97706; }
+
+        .prod-title { font-size: 22px; font-weight: 900; letter-spacing: -0.04em; line-height: 1.1; margin-bottom: 6px; }
+        .prod-specs { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; display: flex; flex-wrap: wrap; gap: 8px; }
+
+        /* ACTION BAR COM TEXTO REESTABELECIDO */
+        .row-actions { display: flex; gap: 16px; margin-top: 16px; }
+        .action-link { display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .action-link:hover { color: var(--info); }
+        .action-link.active { color: #ff3b30; }
+
+        .price-big { font-size: 32px; font-weight: 900; letter-spacing: -0.05em; line-height: 1; margin-bottom: 4px; }
+        .price-label { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 2px; }
+
+        .btn-go { background: var(--accent); color: var(--bg); border-radius: 12px; padding: 14px; font-weight: 800; font-size: 12px; text-transform: uppercase; text-align: center; transition: 0.2s; }
+        .btn-go:hover { opacity: 0.8; transform: translateY(-2px); }
+
+        /* SININHO POSIÇÃO FIXADA */
+        .alert-trigger { position: absolute; top: 12px; left: 12px; cursor: pointer; color: var(--text-muted); transition: 0.2s; z-index: 10; }
+        .alert-trigger:hover { color: #f59e0b; transform: scale(1.1); }
+
+        /* VOLTAR AO TOPO REESTABELECIDO */
+        .scroll-top { position: fixed; bottom: 30px; right: 30px; width: 48px; height: 48px; background: var(--accent); color: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.2); opacity: 0; pointer-events: none; transition: 0.3s; z-index: 1000; }
+        .scroll-top.show { opacity: 1; pointer-events: auto; }
+
+        .hidden { display: none !important; }
         
-        .row-info { flex: 1; min-width: 0; }
-        .row-meta { flex: 1; border-left: 1px solid var(--border); padding: 0 24px; }
-        .row-price-action { flex: 0 0 240px; text-align: right; border-left: 1px solid var(--border); padding-left: 24px; }
-
-        .title-main { font-size: 20px; font-weight: 900; letter-spacing: -0.03em; color: var(--text-main); margin-bottom: 4px; }
-        .title-sub { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-
-        .price-big { font-size: 30px; font-weight: 900; letter-spacing: -0.04em; color: var(--text-main); line-height: 1; margin-bottom: 8px; }
-        
-        .pill-tag { padding: 4px 10px; border-radius: 100px; font-size: 9px; font-weight: 800; text-transform: uppercase; display: inline-flex; align-items: center; gap: 4px; }
-        .tag-success { background: var(--success-soft); color: var(--success); }
-        .tag-info { background: var(--accent-soft); color: var(--accent); }
-        .tag-warning { background: var(--warning-soft); color: var(--warning); }
-        .tag-danger { background: var(--danger-soft); color: var(--danger); }
-
-        .action-icon-btn { padding: 8px; border-radius: 50%; color: var(--text-muted); transition: 0.2s; background: var(--bg); border: 1px solid var(--border); }
-        .action-icon-btn:hover { color: var(--accent); border-color: var(--accent); transform: translateY(-2px); }
-        .action-icon-btn.active { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
-
-        .buy-btn-premium { background: var(--text-main); color: var(--bg); border-radius: 14px; padding: 12px 24px; font-weight: 800; font-size: 12px; text-transform: uppercase; width: 100%; display: block; text-align: center; transition: 0.2s; }
-        .buy-btn-premium:hover { opacity: 0.9; transform: translateY(-2px); }
-
-        .btn-alerta-row { position: absolute; top: 12px; right: 12px; color: var(--warning); padding: 6px; border-radius: 50%; cursor: pointer; transition: 0.2s; }
-        .btn-alerta-row:hover { background: var(--warning-soft); transform: rotate(15deg); }
-
-        .btn-header-clean { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-main); padding: 8px 16px; border-radius: 100px; transition: 0.2s; border: 1px solid var(--border); }
-        .btn-header-clean:hover { background: var(--surface); border-color: var(--text-main); }
-        
-        @media (max-width: 1024px) {
-            .premium-row { flex-direction: column; align-items: flex-start; gap: 20px; }
-            .row-meta, .row-price-action { border-left: none; padding-left: 0; width: 100%; }
-            .row-price-action { text-align: left; }
-        }
+        /* FILTROS CLEAN */
+        .filter-select { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 11px; font-weight: 700; cursor: pointer; outline: none; }
     </style>
 </head>
 <body>
 
-    <div id="calcModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[2500] px-4">
-        <div class="w-full max-w-[380px] bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-8 shadow-2xl relative">
-            <button onclick="fecharCalc()" class="absolute top-5 right-6 text-[var(--text-muted)] hover:text-[var(--text-main)] font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-6">
-                <h2 class="text-xl font-black text-[var(--text-main)]">Calculadora VIP</h2>
-                <p class="text-[10px] text-[var(--accent)] font-bold uppercase mt-1">Dólar para Custo SP</p>
+    <div id="calcModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[3000] px-4">
+        <div class="w-full max-w-[380px] bg-[var(--bg)] border border-[var(--border)] rounded-3xl p-8 shadow-2xl relative">
+            <button onclick="fecharCalc()" class="absolute top-5 right-6 text-[var(--text-muted)] font-bold text-2xl">×</button>
+            <h2 class="text-xl font-black mb-1">Calculadora VIP</h2>
+            <p class="text-[10px] font-bold text-[var(--info)] uppercase tracking-widest mb-6">Custo Final Paraguai para SP</p>
+            <div class="bg-[var(--surface)] rounded-2xl p-6 text-right mb-6">
+                <span class="text-[9px] font-bold uppercase text-[var(--text-muted)]">Custo Final (R$)</span>
+                <div id="calcResult" class="font-mono text-3xl font-black text-[var(--info)] mt-2">R$ 0,00</div>
             </div>
-            <div class="bg-[var(--bg)] rounded-2xl p-5 text-right mb-5 border border-[var(--border)]">
-                <span class="text-[9px] text-[var(--text-muted)] font-bold uppercase">Custo Final (R$)</span>
-                <div id="calcResult" class="font-mono text-3xl font-black text-[var(--accent)] mt-2">R$ 0,00</div>
-            </div>
-            <input type="number" id="calcUsd" class="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl py-4 font-mono text-xl font-black text-center outline-none focus:border-[var(--accent)]" placeholder="Custo no PY ($)" oninput="calcularImportacao()">
-            <div class="bg-[var(--bg)] border border-[var(--border)] rounded-xl p-4 mt-5 text-[11px] font-semibold text-[var(--text-muted)]">
-                <div class="flex justify-between mb-2"><span>Binance</span><span id="tickerCalc" class="text-[var(--success)] font-bold">R$ --</span></div>
-                <div class="flex justify-between"><span>Com Oráculo</span><span id="calcTaxaEfetiva" class="text-[var(--success)] font-bold">R$ --</span></div>
-                <div class="text-center mt-3 text-[var(--accent)] font-bold uppercase text-[9px]">🔒 Frete PY X SP incluso</div>
+            <input type="number" id="calcUsd" class="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl py-4 text-center font-black text-xl outline-none" placeholder="Custo no PY ($)" oninput="calcularImportacao()">
+            <div class="mt-6 space-y-2 text-[11px] font-semibold text-[var(--text-muted)]">
+                <div class="flex justify-between"><span>Binance USDT</span><span id="tickerCalc">--</span></div>
+                <div class="flex justify-between border-t border-[var(--border)] pt-2 text-[var(--info)]"><span>Taxa c/ Oráculo (+0.07)</span><span id="calcTaxaEfetiva">--</span></div>
             </div>
         </div>
     </div>
 
-    <div id="contaModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[2500] px-4">
-        <div class="bg-[var(--surface)] border border-[var(--border)] rounded-3xl w-full max-w-[400px] p-8 shadow-2xl relative">
-            <button onclick="fecharConta()" class="absolute top-5 right-6 text-[var(--text-muted)] hover:text-[var(--text-main)] font-bold text-2xl leading-none">×</button>
-            <h3 class="font-black text-[22px] text-[var(--text-main)] mb-6">Sua Conta</h3>
-            <form onsubmit="salvarConta(event)">
-                <input type="text" id="conta_whats" class="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl p-4 mb-4 outline-none font-semibold" placeholder="WhatsApp">
-                <input type="text" id="conta_senha" class="w-full bg-[var(--bg)] border border-[var(--border)] rounded-xl p-4 mb-6 outline-none font-semibold" placeholder="Senha">
-                <button type="submit" class="buy-btn-premium">Atualizar Dados</button>
+    <nav class="nav-bar">
+        <div class="flex items-center gap-6">
+            <h1 class="text-2xl font-black tracking-tighter">iFipe<span class="text-[var(--info)]">.</span></h1>
+            <a href="https://wa.me/556896003049?text=Ol%C3%A1%20venho%20do%20iFipe%20e%20preciso%20de%20suporte" target="_blank" class="hidden md:flex items-center gap-2 bg-[var(--surface)] border border-[var(--border)] px-4 py-1.5 rounded-full no-underline hover:border-[var(--info)] transition-colors">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326z"/></svg>
+                <span class="text-[11px] font-bold uppercase">Suporte</span>
+            </a>
+        </div>
+
+        <div class="flex gap-4 items-center">
+            <div class="hidden lg:flex items-center gap-4 text-[13px] font-mono font-black border-r border-[var(--border)] pr-4">
+                <span class="text-[var(--success)]" id="ticker">$ --</span>
+                <span class="text-[var(--info)]" id="oraculoRate">R$ --</span>
+            </div>
+            <button onclick="abrirSininho()" class="relative p-2">
+                🔔 <span id="badgeSininho" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+            </button>
+            <button onclick="toggleTheme()" id="themeBtn" class="text-[18px]">🌙</button>
+            <button onclick="abrirConta()" class="text-[11px] font-bold uppercase hover:text-[var(--info)] transition-colors">Conta</button>
+            <button onclick="logout()" class="text-[11px] font-bold uppercase text-red-500">Sair</button>
+        </div>
+    </nav>
+
+    <main>
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="buscaTexto" class="search-input" placeholder="Encontre o melhor preço" oninput="mostrarSugestoes(this.value)">
+                <button onclick="renderizarRanking()" class="search-btn">Buscar</button>
+            </div>
+            <div id="sugestoesBusca" class="hidden mt-2 bg-[var(--bg)] border border-[var(--border)] rounded-xl shadow-xl overflow-hidden"></div>
+        </div>
+
+        <div class="max-w-[1200px] mx-auto px-5 mb-8 flex flex-wrap gap-3 justify-center">
+            <select id="f_cat" class="filter-select" onchange="popularAparelhos()"><option value="">Todas as Categorias</option><option value="1">iPhone</option><option value="2">Apple Watch</option><option value="4">MacBook</option></select>
+            <select id="f_prod" class="filter-select" onchange="atualizarFiltrosCascata()"><option value="">Todos os Modelos</option></select>
+            <select id="f_cond" class="filter-select" onchange="renderizarRanking()"><option value="">Condição</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
+            <select id="f_cap" class="filter-select" onchange="renderizarRanking()"><option value="">Memória</option></select>
+            <select id="f_lojista" class="filter-select" onchange="renderizarRanking()"><option value="">Todas as Lojas</option></select>
+        </div>
+
+        <div id="gridGeral" class="list-container"></div>
+    </main>
+
+    <div id="scrollTop" class="scroll-top" onclick="window.scrollTo({top:0, behavior:'smooth'})">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+    </div>
+
+    <div id="comentarioModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[3000] px-4">
+        <div class="w-full max-w-[450px] bg-[var(--bg)] border border-[var(--border)] rounded-3xl p-8 shadow-2xl relative flex flex-col max-h-[85vh]">
+            <button onclick="fecharComentarios()" class="absolute top-5 right-6 text-[var(--text-muted)] font-bold text-2xl">×</button>
+            <h3 class="text-2xl font-black mb-1">Perguntas</h3>
+            <p id="comentarioProdutoNome" class="text-[12px] font-bold text-[var(--info)] uppercase mb-6"></p>
+            <div id="listaComentarios" class="flex-1 overflow-y-auto space-y-3 mb-6"></div>
+            <form onsubmit="postarComentario(event)">
+                <input type="hidden" id="comentario_oferta_id">
+                <textarea id="comentario_texto" class="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4 text-sm outline-none mb-4" placeholder="Sua pergunta..."></textarea>
+                <button type="submit" class="w-full bg-[var(--info)] text-white font-bold py-4 rounded-xl uppercase text-xs tracking-widest">Enviar</button>
             </form>
         </div>
     </div>
 
-    <nav class="glass-nav">
-        <div class="max-w-[1400px] mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-6">
-                <h1 class="text-2xl font-black text-[var(--text-main)] tracking-tighter">iFipe<span class="text-[var(--accent)]">.</span></h1>
-                
-                <div class="hidden lg:flex items-center bg-[var(--bg)] border border-[var(--border)] rounded-full px-4 py-1.5 gap-4">
-                    <div class="flex items-center gap-2 border-r border-[var(--border)] pr-4">
-                        <span class="text-[10px] text-[var(--text-muted)] font-bold uppercase">USDT</span>
-                        <span class="text-[13px] font-black text-[var(--success)] font-mono" id="ticker">$ --</span>
-                    </div>
-                    <a href="https://wa.me/15616760652?text=venho%20do%20ifipe%20e%20quero%20comprar%20USDT" target="_blank" class="flex items-center gap-2 group no-underline">
-                        <span class="text-[10px] font-bold text-[var(--text-main)] group-hover:text-[var(--accent)] transition-colors">Taxa VIP</span>
-                        <span class="bg-[var(--accent-soft)] text-[var(--accent)] px-2 py-0.5 rounded-md text-[11px] font-mono font-black" id="oraculoRate">R$ --</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="flex gap-3 items-center">
-                <button onclick="abrirCalc()" class="btn-header-clean">
-                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="16" y1="18" x2="16" y2="18"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="12" y1="18" x2="12" y2="18"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/></svg>
-                    Calculadora VIP
-                </button>
-
-                <a href="https://wa.me/556896003049?text=Ol%C3%A1%20venho%20do%20iFipe%20e%20preciso%20de%20suporte" target="_blank" class="btn-header-clean bg-[var(--success-soft)] !border-none !text-[var(--success)]">
-                    <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326z"/></svg>
-                    Suporte
-                </a>
-
-                <div class="w-px h-6 bg-[var(--border)] mx-2"></div>
-                
-                <button onclick="abrirSininho()" class="relative p-2 text-[var(--text-main)]">
-                    🔔 <span id="badgeSininho" class="hidden absolute top-0 right-0 bg-[var(--danger)] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black border-2 border-[var(--surface)]">0</span>
-                </button>
-                <button onclick="toggleTheme()" id="themeBtn" class="text-[18px] p-2">☀️</button>
-                <button onclick="abrirConta()" class="btn-header-clean">Conta</button>
-                <button onclick="logout()" class="text-[11px] font-black text-[var(--danger)] uppercase px-2">Sair</button>
-            </div>
+    <div id="historicoModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[3000] px-4">
+        <div class="w-full max-w-[400px] bg-[var(--bg)] border border-[var(--border)] rounded-3xl p-8 shadow-2xl relative flex flex-col max-h-[85vh]">
+            <button onclick="fecharHistorico()" class="absolute top-5 right-6 text-[var(--text-muted)] font-bold text-2xl">×</button>
+            <h3 class="text-2xl font-black mb-1">Cotações</h3>
+            <p id="historicoNome" class="text-[12px] font-bold text-[var(--info)] uppercase mb-6"></p>
+            <div id="listaHistorico" class="space-y-2"></div>
         </div>
-    </nav>
-
-    <main class="max-w-[1400px] mx-auto px-6 pb-24">
-        
-        <div class="search-wrapper">
-            <div class="search-box">
-                <svg width="20" height="20" fill="none" stroke="var(--text-muted)" stroke-width="3" viewBox="0 0 24 24" class="mr-3"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" id="buscaTexto" class="search-input" 
-                       placeholder="ENCONTRE O MELHOR PREÇO" 
-                       oninput="mostrarSugestoes(this.value)" 
-                       onkeydown="if(event.key === 'Enter') { document.getElementById('sugestoesBusca').classList.add('hidden'); renderizarRanking(); }">
-                <button onclick="document.getElementById('sugestoesBusca').classList.add('hidden'); renderizarRanking()" class="search-btn">Buscar</button>
-            </div>
-            <div id="sugestoesBusca" class="hidden absolute top-[calc(100%+12px)] left-0 w-full bg-[var(--surface)] border border-[var(--border)] rounded-[24px] shadow-2xl overflow-hidden z-[100]"></div>
-        </div>
-
-        <div class="filter-grid">
-            <select id="f_cat" class="filter-pill" onchange="popularAparelhos()"><option value="">Categorias</option><option value="1">iPhone</option><option value="2">Apple Watch</option><option value="3">iPad</option><option value="4">MacBook</option></select>
-            <select id="f_prod" class="filter-pill" onchange="atualizarFiltrosCascata()"><option value="">Modelo</option></select>
-            <select id="f_cond" class="filter-pill" onchange="renderizarRanking()"><option value="">Condição</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
-            <select id="f_cap" class="filter-pill" onchange="renderizarRanking()"><option value="">Memória</option></select>
-            <select id="f_cor" class="filter-pill" onchange="renderizarRanking()"><option value="">Cor</option></select>
-            <select id="f_reg" class="filter-pill" onchange="renderizarRanking()"><option value="">Origem</option></select>
-            <select id="f_lojista" class="filter-pill" onchange="renderizarRanking()"><option value="">Loja</option></select>
-            <select id="f_cid" class="filter-pill" onchange="renderizarRanking()"><option value="">Cidade</option></select>
-        </div>
-        
-        <div id="gridGeral" class="list-container"></div>
-    </main>
+    </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let ofertasAtuais = []; let gradeVariacoes = []; let clienteLogado = null; let todosProdutosMestre = [];
-        let currentUsdtRate = 0; let meusAlertas = []; 
+        let ofertasAtuais = [], gradeVariacoes = [], clienteLogado = null, todosProdutosMestre = [], currentUsdtRate = 0, meusAlertas = [];
 
         function toggleTheme() {
-            const b = document.body; b.classList.toggle('dark-mode');
-            const isDark = b.classList.contains('dark-mode');
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
             document.getElementById('themeBtn').innerText = isDark ? "☀️" : "🌙";
             localStorage.setItem('iFipe_Theme', isDark ? 'dark' : 'light');
         }
 
         window.onload = async () => {
-            if(localStorage.getItem('iFipe_Theme') === 'dark') { document.body.classList.add('dark-mode'); document.getElementById('themeBtn').innerText = "☀️"; }
-            const token = localStorage.getItem('iFipe_Token');
-            if(!token) { window.location.replace('index.html'); } 
-            else {
-                const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
-                if(data) clienteLogado = data;
-                init();
-            }
+            if(localStorage.getItem('iFipe_Theme') === 'dark') toggleTheme();
+            const t = localStorage.getItem('iFipe_Token');
+            if(!t) window.location.replace('index.html');
+            const { data } = await _s.from('clientes_buscador').select('*').eq('id', t).single();
+            if(data) clienteLogado = data;
+            init();
         };
 
-        function iniciarTicker() {
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('scrollTop');
+            if(window.scrollY > 300) btn.classList.add('show'); else btn.classList.remove('show');
+        });
+
+        async function init() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             socket.onmessage = (e) => {
                 currentUsdtRate = parseFloat(JSON.parse(e.data).c);
-                let finalOraculoRate = currentUsdtRate + 0.07;
-                document.getElementById('ticker').innerText = `R$ ${currentUsdtRate.toFixed(4)}`;
-                document.getElementById('oraculoRate').innerText = `R$ ${finalOraculoRate.toFixed(4)}`;
+                document.getElementById('ticker').innerText = `USDT R$ ${currentUsdtRate.toFixed(4)}`;
+                document.getElementById('oraculoRate').innerText = `VIP R$ ${(currentUsdtRate + 0.07).toFixed(4)}`;
                 calcularImportacao();
             };
-        }
-
-        function abrirCalc() { document.getElementById('calcModal').classList.remove('hidden'); }
-        function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
-        function calcularImportacao() {
-            const usd = parseFloat(document.getElementById('calcUsd').value);
-            if(!usd || currentUsdtRate === 0) return;
-            const final = (usd * (currentUsdtRate + 0.07)) * 1.06;
-            document.getElementById('calcResult').innerText = final.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('tickerCalc').innerText = `R$ ${currentUsdtRate.toFixed(4)}`;
-            document.getElementById('calcTaxaEfetiva').innerText = `R$ ${(currentUsdtRate + 0.07).toFixed(4)}`;
-        }
-
-        async function init() {
-            iniciarTicker();
-            const [p, r, v, f] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*'), _s.from('fornecedores').select('id, nome, cidade, pais, verificado').eq('ativo', true) ]);
+            const [p, v, f] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('variacoes').select('*'), _s.from('fornecedores').select('*').eq('ativo', true) ]);
             todosProdutosMestre = p.data; gradeVariacoes = v.data;
             document.getElementById('f_prod').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            if(clienteLogado) await carregarAlertas(); 
-            carregarDados(); setInterval(carregarDados, 5000);
+            carregarDados(); setInterval(carregarDados, 8000);
         }
-
-        async function carregarAlertas() {
-            const { data } = await _s.from('alertas_preco').select('*, produtos_mestre(nome)').eq('cliente_id', clienteLogado.id);
-            meusAlertas = data || []; processarNotificacoesSininho();
-        }
-
-        function processarNotificacoesSininho() {
-            let avisos = [];
-            meusAlertas.forEach(alerta => {
-                let match = ofertasAtuais.find(o => o.variacoes.produto_id == alerta.produto_id && (alerta.capacidade === '' || o.variacoes.capacidade === alerta.capacidade) && o.preco <= alerta.preco_desejado && o.moeda === 'BRL' && o.quantidade > 0);
-                if(match) avisos.push({ alerta, oferta: match });
-            });
-            const b = document.getElementById('badgeSininho');
-            if(avisos.length > 0) { b.innerText = avisos.length; b.classList.remove('hidden'); } else b.classList.add('hidden');
-        }
-
-        function popularAparelhos() { const catId = document.getElementById('f_cat').value; const filtrados = catId ? todosProdutosMestre.filter(x => x.grupo_id == catId) : todosProdutosMestre; document.getElementById('f_prod').innerHTML = '<option value="">Modelo</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); atualizarFiltrosCascata(); }
-        function atualizarFiltrosCascata() { const pid = document.getElementById('f_prod').value; const vars = pid ? gradeVariacoes.filter(x => x.produto_id == pid) : gradeVariacoes; const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))]; document.getElementById('f_cap').innerHTML = '<option value="">Memória</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join(''); document.getElementById('f_cor').innerHTML = '<option value="">Cor</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join(''); renderizarRanking(); }
 
         async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais), variacoes(tamanho, capacidade, cor, produto_id, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira), curtidas(cliente_id)');
-            ofertasAtuais = data || []; renderizarRanking(); processarNotificacoesSininho();
+            const { data } = await _s.from('ofertas').select('*, fornecedores(*), variacoes(*, produtos_mestre(*)), regioes(*), curtidas(cliente_id)');
+            ofertasAtuais = data || []; renderizarRanking();
         }
-
-        function getModelWeight(name) {
-            let weight = 0; let n = (name || "").toLowerCase(); let match = n.match(/iphone\s*(\d+)/);
-            if(match) weight += parseInt(match[1]) * 1000;
-            if(n.includes("pro max")) weight += 40; else if(n.includes("pro")) weight += 30; else if(n.includes("plus")) weight += 20; else weight += 10;
-            return weight;
-        }
-
-        function sortOffers(a, b) {
-            let wA = getModelWeight(a.variacoes.produtos_mestre.nome); let wB = getModelWeight(b.variacoes.produtos_mestre.nome);
-            if (wA !== wB) return wB - wA; 
-            if (a.condicao === 'Novo' && b.condicao !== 'Novo') return -1;
-            return a.preco - b.preco;
-        }
-
-        function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
         function renderizarRanking() {
-            const fTexto = document.getElementById('buscaTexto').value.toLowerCase();
-            const fCat = document.getElementById('f_cat').value; const fP = document.getElementById('f_prod').value; const fC = document.getElementById('f_cond').value; const fCap = document.getElementById('f_cap').value; const fCor = document.getElementById('f_cor').value; const fReg = document.getElementById('f_reg').value; const fLoj = document.getElementById('f_lojista').value; const fCid = document.getElementById('f_cid').value;
-            
-            let filtrados = ofertasAtuais.filter(o => o.quantidade > 0 && (!fTexto || o.variacoes.produtos_mestre.nome.toLowerCase().includes(fTexto)) && (!fCat || o.variacoes.produtos_mestre.grupo_id == fCat) && (!fP || o.variacoes.produtos_mestre.id == fP) && (!fC || o.condicao == fC) && (!fCap || o.variacoes.capacidade == fCap) && (!fCor || o.variacoes.cor == fCor) && (!fReg || o.regiao_id == fReg) && (!fLoj || o.fornecedor_id == fLoj) && (!fCid || o.fornecedores.cidade == fCid));
-            
+            const fTxt = document.getElementById('buscaTexto').value.toLowerCase();
+            const filtrados = ofertasAtuais.filter(o => o.quantidade > 0 && (!fTxt || o.variacoes.produtos_mestre.nome.toLowerCase().includes(fTxt)));
             const grid = document.getElementById('gridGeral');
-            if(filtrados.length === 0) { grid.innerHTML = '<p class="text-center py-20 font-bold text-[var(--text-muted)]">Nenhum aparelho encontrado.</p>'; return; }
             
-            let menores = {}; filtrados.forEach(o => { let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`; if(!menores[k] || o.preco < menores[k]) menores[k] = o.preco; });
-            let finalLayout = filtrados.sort(sortOffers);
-            
-            grid.innerHTML = finalLayout.map(o => {
-                let moeda = o.moeda === 'USD' ? '$' : 'R$';
-                let menorPreco = menores[`${o.variacao_id}_${o.condicao}_${o.moeda}`];
-                
-                let tagAlteracao = '';
-                if(o.data_alteracao_preco && o.preco_anterior) {
-                    let minsPassados = (new Date() - new Date(o.data_alteracao_preco)) / 60000;
-                    if(o.preco < o.preco_anterior && minsPassados <= 30) tagAlteracao = `<span class="pill-tag tag-success">📉 Baixou</span>`;
-                    else if (o.preco > o.preco_anterior && minsPassados <= 15) tagAlteracao = `<span class="pill-tag tag-danger">📈 Subiu</span>`;
-                }
-                
-                let tagMenor = o.preco === menorPreco ? '<span class="pill-tag" style="background:var(--text-main); color:var(--bg);">🔥 Menor Preço</span>' : '';
-                let tagEstoque = o.quantidade <= 3 ? `<span class="pill-tag tag-warning">Últimas ${o.quantidade} un</span>` : `<span class="pill-tag tag-info">Em Estoque</span>`;
-                
-                let detalhes = [o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' • ');
-                let specs = [(o.saude_bateria ? '🔋 '+o.saude_bateria.replace('BATERIA ','') : ''), (o.garantia ? '🛡️ '+o.garantia : ''), (o.regioes ? '🌎 '+o.regioes.nome : '')].filter(Boolean).join(' • ');
+            if(!filtrados.length) { grid.innerHTML = '<p class="text-center py-20 bg-white">Nenhum aparelho encontrado.</p>'; return; }
 
-                let precoFormatado = `${moeda} ${o.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
-                let linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent('Olá! Vi no iFipe o '+o.variacoes.produtos_mestre.nome+' por '+precoFormatado)}`;
-                let isCurtido = clienteLogado && o.curtidas ? o.curtidas.some(c => c.cliente_id === clienteLogado.id) : false;
-
+            grid.innerHTML = filtrados.map(o => {
+                const igSelo = o.fornecedores.verificado ? `<svg style="color:var(--ig-blue); margin-left:4px;" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>` : '';
+                const isCurtido = clienteLogado && o.curtidas ? o.curtidas.some(c => c.cliente_id === clienteLogado.id) : false;
+                
                 return `
-                <div class="premium-row group">
-                    <div onclick="abrirModalAlerta(${o.variacoes.produto_id}, '${o.variacoes.capacidade}', '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="btn-alerta-row" title="Alerta de Preço">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <div class="perf-row">
+                    <div onclick="abrirModalAlerta(${o.variacoes.produto_id}, '${o.variacoes.capacidade}', '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="alert-trigger" title="Me avise se baixar">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                     </div>
 
-                    <div class="row-info">
+                    <div class="col-prod">
                         <div class="flex gap-2 mb-3">
-                            ${tagMenor} ${tagAlteracao} ${tagEstoque}
+                            <span class="badge-pill badge-info">Monitorado</span>
+                            <span class="badge-pill ${o.quantidade <= 3 ? 'badge-warn' : 'badge-success'}">${o.quantidade <= 3 ? 'Últimas '+o.quantidade : 'Em Estoque'}</span>
                         </div>
-                        <h2 class="title-main">${o.variacoes.produtos_mestre.nome}</h2>
-                        <div class="title-sub mb-3">${detalhes}</div>
-                        <div class="text-[11px] font-medium text-[var(--text-muted)]">${specs}</div>
-                    </div>
-                    
-                    <div class="row-meta">
-                        <span class="text-[10px] text-[var(--text-muted)] font-black uppercase tracking-widest block mb-2">Fornecedor VIP</span>
-                        <div class="flex items-center gap-1 font-bold text-[15px] mb-1">
-                            ${o.fornecedores.nome} ${o.fornecedores.verificado ? '✔️' : ''}
-                        </div>
-                        <div class="text-[12px] text-[var(--text-muted)] font-medium mb-4">📍 ${o.fornecedores.cidade} - BR</div>
+                        <h2 class="prod-title">${o.variacoes.produtos_mestre.nome}</h2>
+                        <div class="prod-specs">${o.variacoes.capacidade} • ${o.variacoes.cor} • ${o.condicao}</div>
                         
-                        <div class="flex gap-3">
-                            <button onclick="toggleLike(this, ${o.id})" class="action-icon-btn ${isCurtido ? 'active' : ''}" title="Recomendar"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-                            <button onclick="abrirHistorico(${o.id}, '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="action-icon-btn" title="Histórico"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></button>
-                            <button onclick="abrirComentarios(${o.id}, '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="action-icon-btn" title="Perguntas"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
-                            <button onclick="shareOffer('${escapeString(o.variacoes.produtos_mestre.nome)}', '${detalhes}', '${precoFormatado}', '${linkWpp}')" class="action-icon-btn" title="Compartilhar"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+                        <div class="row-actions">
+                            <div onclick="toggleLike(this, ${o.id})" class="action-link ${isCurtido ? 'active' : ''}">
+                                <svg width="14" height="14" fill="${isCurtido ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                <span>Recomendar</span>
+                            </div>
+                            <div onclick="abrirHistorico(${o.id}, '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="action-link">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                                <span>Histórico</span>
+                            </div>
+                            <div onclick="abrirComentarios(${o.id}, '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="action-link">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                <span>Perguntas</span>
+                            </div>
+                            <div onclick="shareOffer('${escapeString(o.variacoes.produtos_mestre.nome)}', '${o.variacoes.capacidade}', '${o.preco}', '${o.fornecedores.whatsapp}')" class="action-link">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                <span>Compartilhar</span>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="row-price-action">
-                        <div class="price-label">Preço à vista</div>
-                        <div class="price-big">${precoFormatado}</div>
-                        <a href="${linkWpp}" target="_blank" class="buy-btn-premium">Ir para a Loja</a>
+
+                    <div class="col-store">
+                        <span class="text-[10px] font-black uppercase text-[var(--text-muted)] block mb-2">Loja Verificada</span>
+                        <div class="flex items-center font-bold text-[16px]">
+                            ${o.fornecedores.nome} ${igSelo}
+                        </div>
+                        <div class="text-[12px] text-[var(--text-muted)] font-medium mt-1">📍 ${o.fornecedores.cidade}</div>
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            ${o.aceita_pix ? '<span class="badge-pill badge-info">PIX</span>' : ''}
+                            ${o.aceita_usdt ? '<span class="badge-pill badge-success">USDT</span>' : ''}
+                            ${o.emite_nota ? '<span class="badge-pill badge-info">NF</span>' : ''}
+                        </div>
+                    </div>
+
+                    <div class="col-price">
+                        <div>
+                            <div class="price-label">À vista / Lote</div>
+                            <div class="price-big">${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>
+                        </div>
+                        <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}" target="_blank" class="btn-go no-underline">Negociar no Whats</a>
                     </div>
                 </div>`;
             }).join('');
         }
 
+        function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
         async function toggleLike(btn, id) {
-            if (!clienteLogado) return alert("Logue para recomendar!");
-            let isCurtido = btn.classList.contains('active');
-            btn.classList.add('like-anim'); setTimeout(() => btn.classList.remove('like-anim'), 300);
-            if (isCurtido) { btn.classList.remove('active'); await _s.from('curtidas').delete().eq('oferta_id', id).eq('cliente_id', clienteLogado.id); } 
+            if (!clienteLogado) return;
+            const isC = btn.classList.contains('active');
+            if (isC) { btn.classList.remove('active'); await _s.from('curtidas').delete().eq('oferta_id', id).eq('cliente_id', clienteLogado.id); } 
             else { btn.classList.add('active'); await _s.from('curtidas').insert([{ oferta_id: id, cliente_id: clienteLogado.id }]); }
         }
-
-        function shareOffer(n, d, p, l) {
-            const t = `🔥 iFipe: ${n}\n📱 ${d}\n💰 ${p}\n👉 ${l}`;
-            if (navigator.share) navigator.share({ title: 'Oferta iFipe', text: t });
-            else window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(t)}`, '_blank');
+        function shareOffer(n, c, p, w) {
+            const t = `🔥 iFipe: ${n} ${c} por R$ ${p}\n👉 wa.me/${w}`;
+            if(navigator.share) navigator.share({title: 'Oferta iFipe', text: t});
+            else window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(t)}`);
         }
-
-        async function abrirComentarios(oid, n) { document.getElementById('comentario_oferta_id').value = oid; document.getElementById('comentarioProdutoNome').innerText = n; document.getElementById('comentarioModal').classList.remove('hidden'); await carregarComentarios(oid); }
+        function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
+        function abrirCalc() { document.getElementById('calcModal').classList.remove('hidden'); }
+        function calcularImportacao() {
+            const u = parseFloat(document.getElementById('calcUsd').value);
+            if(!u || !currentUsdtRate) return;
+            const res = (u * (currentUsdtRate + 0.07)) * 1.06;
+            document.getElementById('calcResult').innerText = res.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('tickerCalc').innerText = `R$ ${currentUsdtRate.toFixed(4)}`;
+            document.getElementById('calcTaxaEfetiva').innerText = `R$ ${(currentUsdtRate + 0.07).toFixed(4)}`;
+        }
+        function abrirHistorico(id, nome) {
+            document.getElementById('historicoNome').innerText = nome;
+            document.getElementById('historicoModal').classList.remove('hidden');
+            const div = document.getElementById('listaHistorico');
+            div.innerHTML = '<p class="text-center py-4">Carregando...</p>';
+            _s.from('historico_precos').select('*').eq('oferta_id', id).order('registrado_em', {ascending:false}).then(({data}) => {
+                if(!data?.length) { div.innerHTML = '<p class="text-center text-xs">Sem histórico disponível.</p>'; return; }
+                div.innerHTML = data.map(h => `<div class="bg-[var(--surface)] p-3 rounded-lg flex justify-between"><span>${new Date(h.registrado_em).toLocaleDateString()}</span><span class="font-black">R$ ${h.preco.toLocaleString()}</span></div>`).join('');
+            });
+        }
+        function fecharHistorico() { document.getElementById('historicoModal').classList.add('hidden'); }
+        function abrirComentarios(id, nome) { document.getElementById('comentario_oferta_id').value = id; document.getElementById('comentarioProdutoNome').innerText = nome; document.getElementById('comentarioModal').classList.remove('hidden'); carregarComentarios(id); }
         function fecharComentarios() { document.getElementById('comentarioModal').classList.add('hidden'); }
+        function carregarComentarios(id) {
+            const div = document.getElementById('listaComentarios');
+            _s.from('comentarios').select('*').eq('oferta_id', id).order('criado_em', {ascending:true}).then(({data}) => {
+                if(!data?.length) { div.innerHTML = '<p class="text-center text-xs">Nenhuma pergunta.</p>'; return; }
+                div.innerHTML = data.map(c => `<div class="bg-[var(--surface)] p-3 rounded-lg"><div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-[var(--info)]">Usuário Privado</span></div><p class="text-xs font-medium">${c.texto}</p></div>`).join('');
+                div.scrollTop = div.scrollHeight;
+            });
+        }
+        function postarComentario(e) {
+            e.preventDefault();
+            const id = document.getElementById('comentario_oferta_id').value;
+            const t = document.getElementById('comentario_texto').value;
+            if(!t.trim()) return;
+            _s.from('comentarios').insert([{ oferta_id: id, autor_nome: 'Privado', texto: t }]).then(() => {
+                document.getElementById('comentario_texto').value = ''; carregarComentarios(id);
+            });
+        }
         function logout() { localStorage.removeItem('iFipe_Token'); window.location.replace('index.html'); }
-        async function carregarAlertas() { /* Carregamento simples */ }
     </script>
 </body>
 </html>
