@@ -283,8 +283,9 @@
             renderizarRanking();
         }
 
+        // INJEÇÃO: BUSCA A TABELA DE COMENTÁRIOS JUNTO COM AS OFERTAS PARA MONTAR O CONTADOR
         async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira)');
+            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais), variacoes(tamanho, capacidade, cor, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira), comentarios(id)');
             ofertasAtuais = data || []; renderizarRanking();
         }
 
@@ -403,6 +404,9 @@
                 let msgTexto = `Olá tudo bem! encontrei seu anuncio de um ${o.variacoes.produtos_mestre.nome} | ${detalhes} pelo valor de ${precoFormatado} \n\nVENHO PELO *https://ifipe.com.br/*`;
                 let linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(msgTexto)}`;
 
+                // INJEÇÃO DO CONTADOR DE COMENTÁRIOS
+                let countComentarios = o.comentarios ? o.comentarios.length : 0;
+
                 return `
                 <div class="product-card flex flex-col">
                     <div class="flex flex-wrap gap-1 mb-2">${tagAlteracao} ${tagEstoque} ${tagMenor}</div>
@@ -418,7 +422,7 @@
 
                     <div class="flex justify-between items-center pt-3 pb-1 border-t border-[#38383a] text-gray-400 mt-2">
                         <button onclick="toggleLike(this)" class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest hover:text-red-500 transition-colors"><span class="text-sm">🤍</span> Curtir</button>
-                        <button onclick="abrirComentarios(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest hover:text-blue-500 transition-colors"><span class="text-sm">💬</span> Comentar</button>
+                        <button onclick="abrirComentarios(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest hover:text-blue-500 transition-colors"><span class="text-sm">💬</span> Comentar (${countComentarios})</button>
                         <button onclick="shareOffer('${o.variacoes.produtos_mestre.nome}', '${detalhes}', '${precoFormatado}', '${linkWpp}')" class="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest hover:text-green-500 transition-colors"><span class="text-sm">↗️</span> Compartilhar</button>
                     </div>
 
@@ -427,23 +431,23 @@
             }).join('');
         }
 
-        // FUNÇÕES DE ENGAJAMENTO
         function toggleLike(btn) {
             let icone = btn.querySelector('span');
             if(icone.innerText === '🤍') { icone.innerText = '❤️'; btn.classList.add('text-red-500'); } 
             else { icone.innerText = '🤍'; btn.classList.remove('text-red-500'); }
         }
 
+        // INJEÇÃO DA LÓGICA HÍBRIDA (CELULAR X PC)
         function shareOffer(nome, detalhes, preco, link) {
             const texto = `🔥 Olha essa oferta no iFipe!\n\n📱 ${nome}\n📋 ${detalhes}\n💰 ${preco}\n\nFale direto com o Lojista:\n👉 ${link}`;
-            if (navigator.share) {
+            
+            if (navigator.share && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
                 navigator.share({ title: 'Oferta iFipe', text: texto }).catch(console.error);
             } else {
-                navigator.clipboard.writeText(texto); alert("Texto da oferta copiado para enviar!");
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
             }
         }
 
-        // INTEGRAÇÃO REAL COM SUPABASE (COMENTÁRIOS)
         async function abrirComentarios(ofertaId, nomeProduto) {
             document.getElementById('comentario_oferta_id').value = ofertaId;
             document.getElementById('comentarioProdutoNome').innerText = nomeProduto;
@@ -507,7 +511,9 @@
             
             if(!error) {
                 document.getElementById('comentario_texto').value = '';
+                alert("Comentário registrado com sucesso!");
                 await carregarComentarios(ofertaId);
+                carregarDados(); // Recarrega para atualizar os contadores (X) na tela de fundo
             } else {
                 alert("Erro ao postar comentário. Verifique a conexão.");
                 console.error(error);
