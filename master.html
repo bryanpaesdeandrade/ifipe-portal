@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; }
+        body { background:#000; color:#fff; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; scroll-behavior: smooth; }
         .nav-bar { background:rgba(28,28,30,0.8); backdrop-filter:blur(15px); border-bottom:1px solid #38383a; padding:15px 30px; position:sticky; top:0; z-index:100; }
         .apple-card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4); position: relative; }
         .apple-input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 12px; padding: 14px; width: 100%; color: white; outline: none; margin-bottom: 1rem; font-size: 13px; }
@@ -20,17 +20,17 @@
         
         .btn-acao { font-size: 10px; font-weight: bold; text-transform: uppercase; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: 0.3s; display: inline-block; margin-right: 5px; margin-bottom: 5px; }
         .btn-verde { background: rgba(50, 215, 75, 0.2); color: #32d74b; }
-        .btn-verde:hover { background: #32d74b; color: #000; }
         .btn-amarelo { background: rgba(255, 204, 0, 0.2); color: #ffcc00; }
-        .btn-amarelo:hover { background: #ffcc00; color: #000; }
         .btn-azul { background: rgba(0, 113, 227, 0.2); color: #0071e3; }
-        .btn-azul:hover { background: #0071e3; color: #fff; }
         .btn-vermelho { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
-        .btn-vermelho:hover { background: #ff3b30; color: #fff; }
         
-        /* Estilo para edição rápida na tabela de ofertas */
         .mini-edit { background: transparent; border: 1px solid transparent; color: #32d74b; font-weight: 800; width: 80px; text-align: center; border-radius: 6px; padding: 4px; transition: 0.2s; }
         .mini-edit:focus { border-color: #0071e3; background: #2c2c2e; outline: none; }
+
+        /* Estilo das abas de filtro superior */
+        .tab-btn { background: #2c2c2e; color: #86868b; padding: 8px 16px; border-radius: 50px; font-size: 10px; font-weight: 900; text-transform: uppercase; cursor: pointer; transition: 0.3s; border: 1px solid #38383a; }
+        .tab-btn:hover { background: #38383a; color: #fff; }
+        .tab-btn.active { background: #0071e3; color: #fff; border-color: #0071e3; }
 
         label { display: block; text-transform: uppercase; font-size: 9px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.1em; }
         .hidden { display: none !important; }
@@ -41,21 +41,17 @@
 
     <div id="bulkMasterModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[300] px-4">
         <div class="apple-card w-full max-w-[400px]">
-            <button type="button" onclick="fecharBulkMaster()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none bg-transparent border-0 cursor-pointer">×</button>
+            <button type="button" onclick="fecharBulkMaster()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none cursor-pointer">×</button>
             <h3 class="font-bold text-[14px] text-blue-500 mb-2 uppercase tracking-widest">Edição em Massa</h3>
-            <p class="text-[10px] text-gray-400 font-bold mb-4 uppercase tracking-wide">Alterando <span id="bulkMasterCount" class="text-white font-black">0</span> cadastros.</p>
-            <p class="text-[9px] text-yellow-500 font-bold uppercase mb-4 tracking-widest bg-yellow-900/20 p-2 rounded border border-yellow-700/50">Atenção: Preencha apenas os campos que deseja corrigir. O que ficar vazio será mantido intacto.</p>
             <form id="formBulkMaster" onsubmit="salvarBulkMaster(event)">
                 <input type="hidden" id="bm_tabela">
                 <div id="bm_lojista_fields" class="hidden flex-col gap-2 mb-4">
-                    <div><label>Padronizar País</label><select id="bm_pais" class="apple-input py-2 mb-0"><option value="">-- Não Alterar --</option><option value="Brasil">LOJA NO BRASIL 🇧🇷</option><option value="Paraguai">LOJA NO PARAGUAI 🇵🇾</option><option value="Dubai">LOJA EM DUBAI 🇦🇪</option><option value="Estados Unidos">LOJA NOS EUA 🇺🇸</option></select></div>
-                    <div><label class="mt-2">Padronizar Estado (UF)</label><input type="text" id="bm_estado" class="apple-input py-2 mb-0" placeholder="Ex: SP"></div>
-                    <div><label class="mt-2">Padronizar Cidade</label><input type="text" id="bm_cidade" class="apple-input py-2 mb-0" placeholder="Ex: São Paulo"></div>
+                    <div><label>Padronizar País</label><select id="bm_pais" class="apple-input py-2 mb-0"><option value="">-- Não Alterar --</option><option value="Brasil">LOJA NO BRASIL 🇧🇷</option><option value="Paraguai">LOJA NO PARAGUAI 🇵🇾</option></select></div>
                 </div>
                 <div id="bm_cliente_fields" class="hidden flex-col gap-2 mb-4">
-                    <div><label>Padronizar Senha (Reset)</label><input type="text" id="bm_senha" class="apple-input py-2 mb-0" placeholder="Ex: 123456"></div>
+                    <div><label>Padronizar Senha</label><input type="text" id="bm_senha" class="apple-input py-2 mb-0"></div>
                 </div>
-                <button type="submit" id="btnSalvarBulkMaster" class="apple-button w-full bg-blue-600 text-white border-0 mt-2">Aplicar Alterações</button>
+                <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-2">Aplicar</button>
             </form>
         </div>
     </div>
@@ -66,17 +62,8 @@
             <form onsubmit="salvarEdicao(event)">
                 <input type="hidden" id="edit_id"><input type="hidden" id="edit_tabela">
                 <label>Nome</label><input type="text" id="edit_nome" class="apple-input py-2" required>
-                <div id="loc_box" class="hidden flex-col gap-2 mt-2 mb-2">
-                    <div class="grid grid-cols-2 gap-2">
-                        <div><label>Estado (Ex: SP)</label><input type="text" id="edit_estado" class="apple-input py-2 mb-0"></div>
-                        <div><label>Cidade</label><input type="text" id="edit_cidade" class="apple-input py-2 mb-0"></div>
-                    </div>
-                    <div><label>País Sede da Loja</label><select id="edit_pais" class="apple-input py-2 mb-0"><option value="Brasil">LOJA NO BRASIL 🇧🇷</option><option value="Paraguai">LOJA NO PARAGUAI 🇵🇾</option><option value="Dubai">LOJA EM DUBAI 🇦🇪</option><option value="Estados Unidos">LOJA NOS EUA 🇺🇸</option></select></div>
-                </div>
-                <label id="label_email">E-mail / Usuário</label><input type="text" id="edit_email" class="apple-input py-2">
-                <label id="label_whats">WhatsApp</label><input type="text" id="edit_whats" class="apple-input py-2">
-                <label>Senha de Acesso</label><input type="text" id="edit_senha" class="apple-input py-2" required>
-                <div class="flex gap-2 mt-4"><button type="button" onclick="fecharModal()" class="apple-button bg-gray-600 text-white w-1/2 border-0">Cancelar</button><button type="submit" class="apple-button bg-blue-600 text-white w-1/2 border-0">Salvar</button></div>
+                <label>Senha</label><input type="text" id="edit_senha" class="apple-input py-2" required>
+                <div class="flex gap-2 mt-4"><button type="button" onclick="fecharModal()" class="apple-button bg-gray-600 text-white w-1/2">Cancelar</button><button type="submit" class="apple-button bg-blue-600 text-white w-1/2">Salvar</button></div>
             </form>
         </div>
     </div>
@@ -86,85 +73,95 @@
             <h1 class="text-5xl font-black italic mb-2">iFipe</h1>
             <p class="text-[10px] font-bold uppercase text-red-500 mb-8 tracking-[0.4em]">Painel Master</p>
             <form onsubmit="fazerLoginAdmin(event)">
-                <label>Usuário Master</label><input type="text" id="adminEmail" class="apple-input" placeholder="Seu usuário" required>
-                <label>Senha Master</label><input type="password" id="adminPass" class="apple-input" placeholder="••••••••" required>
-                <button type="submit" class="apple-button w-full">Entrar no Comando</button>
+                <input type="text" id="adminEmail" class="apple-input" placeholder="Usuário Master" required>
+                <input type="password" id="adminPass" class="apple-input" placeholder="Senha" required>
+                <button type="submit" class="apple-button w-full">Entrar</button>
             </form>
             <p id="loginMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase"></p>
         </div>
     </div>
 
     <div id="dashboardSection" class="hidden">
-        <nav class="nav-bar flex justify-between items-center">
-            <h1 class="text-2xl font-black italic">iFipe <span class="text-red-500 text-sm">MASTER</span></h1>
-            <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase tracking-widest hover:text-white transition-colors border-0 bg-transparent cursor-pointer">Sair do Painel</button>
+        <nav class="nav-bar">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                <h1 class="text-2xl font-black italic">iFipe <span class="text-red-500 text-sm">MASTER</span></h1>
+                
+                <div class="flex gap-2">
+                    <button onclick="irPara('sec-ofertas')" class="tab-btn">⚙️ Gestão de Ofertas</button>
+                    <button onclick="irPara('sec-cadastros')" class="tab-btn">➕ Novos Cadastros</button>
+                    <button onclick="irPara('sec-banco')" class="tab-btn">🗄️ Banco de Dados</button>
+                </div>
+
+                <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase border-0 bg-transparent cursor-pointer">Sair</button>
+            </div>
         </nav>
 
         <div class="max-w-7xl mx-auto p-4 md:p-8">
             
-            <h2 class="text-2xl font-black italic mb-6 text-yellow-500">Gestão Global de Anúncios (Concierge)</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-12">
-                
-                <div class="lg:col-span-1">
-                    <div class="apple-card p-6 border-yellow-600/30 bg-yellow-600/5">
-                        <label class="text-yellow-500">1. Selecione a Loja Alvo</label>
-                        <select id="master_fornecedor_id" class="apple-input border-yellow-600/50 text-yellow-500 font-black uppercase">
-                            <option value="">Aguardando lojas...</option>
-                        </select>
-
-                        <form id="masterPriceForm" onsubmit="postarOfertaMaster(event)">
-                            <select id="m_cat" class="apple-input mb-2" onchange="popularProdutosMaster()" required><option value="">Categoria...</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="3">IPAD</option></select>
-                            <select id="m_prod" class="apple-input mb-2" onchange="aoMudarProdutoMaster()" required><option value="">Modelo...</option></select>
-                            <div id="m_grade"></div>
-                            <select id="m_cond" class="apple-input mt-2" required><option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="AS IS +">AS IS +</option></select>
-                            <input type="number" id="m_qtd" class="apple-input mt-2" placeholder="Qtd" min="1" required>
-                            <input type="text" id="m_gar" class="apple-input mt-2" placeholder="Garantia (Ex: 1 ANO)">
-                            <select id="m_reg" class="apple-input mt-2" required><option value="">Origem...</option></select>
-                            <div class="grid grid-cols-2 gap-2 mt-2">
-                                <input type="text" id="m_brl" class="apple-input" placeholder="R$" oninput="mascararMoeda(this)">
-                                <input type="text" id="m_usd" class="apple-input" placeholder="$" oninput="mascararMoeda(this)">
-                            </div>
-                            <button type="submit" class="apple-button w-full bg-yellow-600 text-black mt-4">Publicar pela Loja</button>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="lg:col-span-3">
-                    <div class="apple-card overflow-x-auto">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-[14px] text-yellow-500 uppercase tracking-widest m-0">Todos os Anúncios do iFipe</h3>
+            <div id="sec-ofertas" class="pt-20 -mt-20">
+                <h2 class="text-2xl font-black italic mb-6 text-yellow-500 uppercase">Gestão Global de Anúncios (Concierge)</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-12">
+                    <div class="lg:col-span-1">
+                        <div class="apple-card p-6 border-yellow-600/30 bg-yellow-600/5">
+                            <label class="text-yellow-500">1. Selecione a Loja Alvo</label>
+                            <select id="master_fornecedor_id" class="apple-input border-yellow-600/50 text-yellow-500 font-black uppercase"><option value="">Aguardando lojas...</option></select>
+                            <form id="masterPriceForm" onsubmit="postarOfertaMaster(event)">
+                                <select id="m_cat" class="apple-input mb-2" onchange="popularProdutosMaster()" required><option value="">Categoria...</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="3">IPAD</option></select>
+                                <select id="m_prod" class="apple-input mb-2" onchange="aoMudarProdutoMaster()" required><option value="">Modelo...</option></select>
+                                <div id="m_grade"></div>
+                                <select id="m_cond" class="apple-input mt-2" required><option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option></select>
+                                <input type="number" id="m_qtd" class="apple-input mt-2" placeholder="Qtd" min="1" required>
+                                <input type="text" id="m_gar" class="apple-input mt-2" placeholder="Garantia (Ex: 1 ANO)">
+                                <select id="m_reg" class="apple-input mt-2" required><option value="">Origem...</option></select>
+                                <div class="grid grid-cols-2 gap-2 mt-2">
+                                    <input type="text" id="m_brl" class="apple-input" placeholder="R$" oninput="mascararMoeda(this)">
+                                    <input type="text" id="m_usd" class="apple-input" placeholder="$" oninput="mascararMoeda(this)">
+                                </div>
+                                <button type="submit" class="apple-button w-full bg-yellow-600 text-black mt-4">Publicar pela Loja</button>
+                            </form>
                         </div>
-                        <input type="text" onkeyup="filtrarTabela('listaOfertasMaster', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Filtrar anúncios (Loja, Modelo, Cor, Memória)...">
-                        <table>
-                            <thead><tr><th>Loja</th><th>Produto</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
-                            <tbody id="listaOfertasMaster"></tbody>
-                        </table>
+                    </div>
+                    <div class="lg:col-span-3">
+                        <div class="apple-card overflow-x-auto">
+                            <h3 class="font-bold text-[14px] text-yellow-500 uppercase mb-4">Todos os Anúncios Online</h3>
+                            <input type="text" onkeyup="filtrarTabela('listaOfertasMaster', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Filtrar por Loja, Modelo...">
+                            <table>
+                                <thead><tr><th>Loja</th><th>Produto</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
+                                <tbody id="listaOfertasMaster"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <hr class="border-[#38383a] my-10">
+            <hr class="border-[#38383a] my-20">
 
-            <h2 class="text-2xl font-black italic mb-6">Criar Novos Cadastros</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                <div class="apple-card p-6"><h3 class="font-bold text-[11px] text-blue-500 mb-4 uppercase tracking-widest">Novo Lojista</h3><form onsubmit="addLojista(event)"><input type="text" id="nl_nome" class="apple-input py-2" placeholder="Nome da Loja" required><select id="nl_pais" class="apple-input py-2" required><option value="" disabled selected>Selecione o País...</option><option value="Brasil">LOJA NO BRASIL 🇧🇷</option><option value="Paraguai">LOJA NO PARAGUAI 🇵🇾</option><option value="Dubai">LOJA EM DUBAI 🇦🇪</option><option value="Estados Unidos">LOJA NOS EUA 🇺🇸</option></select><div class="grid grid-cols-2 gap-2"><input type="text" id="nl_estado" class="apple-input py-2" placeholder="Estado (Ex: SP)" required><input type="text" id="nl_cidade" class="apple-input py-2" placeholder="Cidade" required></div><input type="text" id="nl_whats" class="apple-input py-2" placeholder="WhatsApp" required><input type="text" id="nl_senha" class="apple-input py-2" placeholder="Senha de Acesso" required><button type="submit" class="apple-button bg-blue-600 text-white border-0">Cadastrar Lojista</button></form></div>
-                <div class="apple-card p-6"><h3 class="font-bold text-[11px] text-green-500 mb-4 uppercase tracking-widest">Novo Cliente VIP</h3><form onsubmit="addCliente(event)"><input type="text" id="nc_nome" class="apple-input py-2" placeholder="Nome Completo" required><div class="grid grid-cols-2 gap-2"><input type="text" id="nc_cpf" class="apple-input py-2" placeholder="CPF" required><input type="text" id="nc_whats" class="apple-input py-2" placeholder="WhatsApp"></div><input type="email" id="nc_email" class="apple-input py-2" placeholder="E-mail" required><input type="text" id="nc_senha" class="apple-input py-2" placeholder="Senha" required><button type="submit" class="apple-button bg-green-600 text-white border-0">Cadastrar Cliente</button></form></div>
-                <div class="apple-card p-6"><h3 class="font-bold text-[11px] text-red-500 mb-4 uppercase tracking-widest">Novo Admin / Staff</h3><form onsubmit="addAdmin(event)"><input type="text" id="na_nome" class="apple-input py-2" placeholder="Nome do Funcionário" required><input type="text" id="na_user" class="apple-input py-2" placeholder="Usuário de Login" required><input type="text" id="na_senha" class="apple-input py-2" placeholder="Senha" required><button type="submit" class="apple-button bg-red-600 text-white border-0">Cadastrar Admin</button></form></div>
+            <div id="sec-cadastros" class="pt-20 -mt-20">
+                <h2 class="text-2xl font-black italic mb-6">Criar Novos Cadastros</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                    <div class="apple-card p-6"><h3 class="font-bold text-[11px] text-blue-500 mb-4 uppercase tracking-widest">Novo Lojista</h3><form onsubmit="addLojista(event)"><input type="text" id="nl_nome" class="apple-input py-2" placeholder="Nome da Loja" required><select id="nl_pais" class="apple-input py-2" required><option value="" disabled selected>Selecione o País...</option><option value="Brasil">BRASIL 🇧🇷</option><option value="Paraguai">PARAGUAI 🇵🇾</option></select><div class="grid grid-cols-2 gap-2"><input type="text" id="nl_estado" class="apple-input py-2" placeholder="Estado" required><input type="text" id="nl_cidade" class="apple-input py-2" placeholder="Cidade" required></div><input type="text" id="nl_whats" class="apple-input py-2" placeholder="WhatsApp" required><input type="text" id="nl_senha" class="apple-input py-2" placeholder="Senha" required><button type="submit" class="apple-button bg-blue-600 text-white">Cadastrar Lojista</button></form></div>
+                    <div class="apple-card p-6"><h3 class="font-bold text-[11px] text-green-500 mb-4 uppercase tracking-widest">Novo Cliente VIP</h3><form onsubmit="addCliente(event)"><input type="text" id="nc_nome" class="apple-input py-2" placeholder="Nome Completo" required><div class="grid grid-cols-2 gap-2"><input type="text" id="nc_cpf" class="apple-input py-2" placeholder="CPF" required><input type="text" id="nc_whats" class="apple-input py-2" placeholder="WhatsApp"></div><input type="email" id="nc_email" class="apple-input py-2" placeholder="E-mail" required><input type="text" id="nc_senha" class="apple-input py-2" placeholder="Senha" required><button type="submit" class="apple-button bg-green-600 text-white">Cadastrar Cliente</button></form></div>
+                    <div class="apple-card p-6"><h3 class="font-bold text-[11px] text-red-500 mb-4 uppercase tracking-widest">Novo Admin</h3><form onsubmit="addAdmin(event)"><input type="text" id="na_nome" class="apple-input py-2" placeholder="Nome" required><input type="text" id="na_user" class="apple-input py-2" placeholder="Usuário" required><input type="text" id="na_senha" class="apple-input py-2" placeholder="Senha" required><button type="submit" class="apple-button bg-red-600 text-white">Cadastrar Admin</button></form></div>
+                </div>
             </div>
 
-            <h2 class="text-2xl font-black italic mb-6">Gestão do Banco de Dados</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="apple-card overflow-x-auto">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2"><h3 class="font-bold text-[14px] text-blue-500 uppercase tracking-widest m-0">Lojistas Atacadistas</h3><div class="flex gap-2 items-center flex-wrap"><button onclick="selecionarTodos('chk-lojista')" class="text-[9px] bg-gray-700 text-white px-3 py-1 rounded-full font-black uppercase border-0">Todos</button><button onclick="abrirBulkMaster('fornecedores')" class="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-full font-black uppercase border-0">🛠️ EDITAR EM MASSA</button><button onclick="acaoEmLote('fornecedores', 'ativo', true, 'chk-lojista')" class="text-[9px] bg-green-800 text-white px-3 py-1 rounded-full font-black uppercase border-0">Ativar</button><button onclick="acaoEmLote('fornecedores', 'ativo', false, 'chk-lojista')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase border-0">Inativar</button></div></div>
-                    <input type="text" onkeyup="filtrarTabela('listaFornecedores', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Buscar Loja...">
-                    <table><thead><tr><th>Sel</th><th>Loja / Local</th><th>WhatsApp</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead><tbody id="listaFornecedores"></tbody></table>
+            <hr class="border-[#38383a] my-20">
+
+            <div id="sec-banco" class="pt-20 -mt-20 pb-40">
+                <h2 class="text-2xl font-black italic mb-6">Gestão do Banco de Dados</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="apple-card overflow-x-auto">
+                        <div class="flex flex-col md:flex-row justify-between mb-4 gap-2"><h3 class="font-bold text-[14px] text-blue-500 uppercase m-0">Lojistas</h3><div class="flex gap-2"><button onclick="selecionarTodos('chk-lojista')" class="text-[9px] bg-gray-700 text-white px-3 py-1 rounded-full border-0">Todos</button><button onclick="abrirBulkMaster('fornecedores')" class="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-full border-0">🛠️ Massa</button></div></div>
+                        <input type="text" onkeyup="filtrarTabela('listaFornecedores', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Buscar Loja...">
+                        <table><thead><tr><th>Sel</th><th>Loja</th><th>WhatsApp</th><th>Status</th><th>Ações</th></tr></thead><tbody id="listaFornecedores"></tbody></table>
+                    </div>
+                    <div class="apple-card overflow-x-auto">
+                        <div class="flex flex-col md:flex-row justify-between mb-4 gap-2"><h3 class="font-bold text-[14px] text-green-500 uppercase m-0">Clientes VIP</h3><div class="flex gap-2"><button onclick="selecionarTodos('chk-cliente')" class="text-[9px] bg-gray-700 text-white px-3 py-1 rounded-full border-0">Todos</button><button onclick="abrirBulkMaster('clientes_buscador')" class="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-full border-0">🛠️ Massa</button></div></div>
+                        <input type="text" onkeyup="filtrarTabela('listaClientes', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Buscar VIP...">
+                        <table><thead><tr><th>Sel</th><th>Nome</th><th>E-mail</th><th>Status</th><th>Ações</th></tr></thead><tbody id="listaClientes"></tbody></table>
+                    </div>
+                    <div class="apple-card overflow-x-auto lg:col-span-2"><h3 class="font-bold text-[14px] text-red-500 mb-4 uppercase">Equipe Master</h3><table><thead><tr><th>Nome</th><th>Usuário</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead><tbody id="listaAdmins"></tbody></table></div>
                 </div>
-                <div class="apple-card overflow-x-auto">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2"><h3 class="font-bold text-[14px] text-green-500 uppercase tracking-widest m-0">Clientes VIP</h3><div class="flex gap-2 flex-wrap items-center"><button onclick="selecionarTodos('chk-cliente')" class="text-[9px] bg-gray-700 text-white px-3 py-1 rounded-full font-black uppercase border-0">Todos</button><button onclick="abrirBulkMaster('clientes_buscador')" class="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-full font-black uppercase border-0">🛠️ EDITAR EM MASSA</button><button onclick="acaoEmLote('clientes_buscador', 'aprovado', true, 'chk-cliente')" class="text-[9px] bg-green-800 text-white px-3 py-1 rounded-full font-black uppercase border-0">Aprovar</button><button onclick="acaoEmLote('clientes_buscador', 'aprovado', false, 'chk-cliente')" class="text-[9px] bg-red-900 text-white px-3 py-1 rounded-full font-black uppercase border-0">Bloquear</button></div></div>
-                    <input type="text" onkeyup="filtrarTabela('listaClientes', this.value)" class="apple-input py-2 text-[11px]" placeholder="🔍 Buscar VIP...">
-                    <table><thead><tr><th>Sel</th><th>Nome</th><th>Contatos</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead><tbody id="listaClientes"></tbody></table>
-                </div>
-                <div class="apple-card overflow-x-auto lg:col-span-2"><h3 class="font-bold text-[14px] text-red-500 mb-4 uppercase tracking-widest">Equipe Master</h3><table><thead><tr><th>Nome</th><th>Usuário</th><th>Senha</th><th>Status</th><th>Ações Master</th></tr></thead><tbody id="listaAdmins"></tbody></table></div>
             </div>
         </div>
     </div>
@@ -173,11 +170,19 @@
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let produtosMestre = [], gradeVariacoes = [];
 
+        // FUNÇÃO DE NAVEGAÇÃO RÁPIDA
+        function irPara(id) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            const element = document.getElementById(id);
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+
         window.onload = async () => {
             const token = localStorage.getItem('iFipe_MasterToken');
             if (token) {
                 const { data } = await _s.from('admin_users').select('id').eq('id', token).maybeSingle();
-                if(data) { liberarAcesso(); } else { localStorage.removeItem('iFipe_MasterToken'); }
+                if(data) { liberarAcesso(); }
             }
         };
 
@@ -185,21 +190,18 @@
             event.preventDefault(); 
             const e = document.getElementById('adminEmail').value.trim();
             const p = document.getElementById('adminPass').value.trim();
-            const m = document.getElementById('loginMsg');
-            m.innerText = "VERIFICANDO...";
             const { data } = await _s.from('admin_users').select('*').ilike('email', e).eq('senha', p).maybeSingle();
             if(data && data.ativo) { localStorage.setItem('iFipe_MasterToken', data.id); liberarAcesso(); } 
-            else { m.innerText = "ACESSO NEGADO."; m.style.color = "#ff3b30"; }
+            else alert("Acesso Negado.");
         }
 
         function liberarAcesso() {
             document.getElementById('loginSection').classList.add('hidden');
             document.getElementById('dashboardSection').classList.remove('hidden');
             carregarTabelas();
-            initMasterAnuncios(); // Inicia a gestão de iPhones
+            initMasterAnuncios();
         }
 
-        // --- LÓGICA DO MÓDULO CONCIERGE ---
         async function initMasterAnuncios() {
             const [p, r, v, f] = await Promise.all([ 
                 _s.from('produtos_mestre').select('*').order('nome'), 
@@ -224,13 +226,13 @@
         async function postarOfertaMaster(e) {
             e.preventDefault();
             const lojaId = document.getElementById('master_fornecedor_id').value;
-            if(!lojaId) return alert("Escolha uma loja primeiro!");
+            if(!lojaId) return alert("Escolha uma loja!");
             const pid = document.getElementById('m_prod').value, cap = document.getElementById('mf_cap')?.value, cor = document.getElementById('mf_cor')?.value;
             let v = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && (cor === 'MIXER COLORS' || x.cor == cor));
             if(!v) v = gradeVariacoes.find(x => x.produto_id == pid);
             const pBrl = parsePreco(document.getElementById('m_brl').value), pUsd = parsePreco(document.getElementById('m_usd').value);
             await _s.from('ofertas').insert([{ fornecedor_id: lojaId, variacao_id: v.id, regiao_id: document.getElementById('m_reg').value, preco: pBrl || pUsd, moeda: pBrl > 0 ? 'BRL' : 'USD', quantidade: parseInt(document.getElementById('m_qtd').value), condicao: document.getElementById('m_cond').value, garantia: document.getElementById('m_gar').value, cores_variadas: cor === 'MIXER COLORS', data_alteracao_preco: new Date().toISOString() }]);
-            alert("Publicado na conta do Lojista!"); carregarOfertasMaster();
+            alert("Publicado!"); carregarOfertasMaster();
         }
 
         async function carregarOfertasMaster() {
@@ -251,66 +253,40 @@
             await _s.from('ofertas').update({ [campo]: v, data_alteracao_preco: new Date().toISOString() }).eq('id', id);
         }
 
-        async function excluirOfertaMaster(id) { if(confirm("Apagar anúncio?")) { await _s.from('ofertas').delete().eq('id', id); carregarOfertasMaster(); } }
-
-        // --- FUNÇÕES DE AUXÍLIO E GESTÃO ORIGINAL (TODAS MANTIDAS) ---
+        async function excluirOfertaMaster(id) { if(confirm("Apagar?")) { await _s.from('ofertas').delete().eq('id', id); carregarOfertasMaster(); } }
         function parsePreco(v) { return v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0; }
         function mascararMoeda(input) { let v = input.value.replace(/\D/g, ''); if (!v) { input.value = ''; return; } v = (parseFloat(v) / 100).toFixed(2).replace('.', ','); input.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
         function filtrarTabela(id, t) { const rows = document.getElementById(id).getElementsByTagName('tr'); for (let i = 0; i < rows.length; i++) { rows[i].style.display = rows[i].innerText.toLowerCase().includes(t.toLowerCase()) ? '' : 'none'; } }
         
         async function carregarTabelas() {
-            const lojasR = await _s.from('fornecedores').select('*').order('id', {ascending: true});
-            document.getElementById('listaFornecedores').innerHTML = lojasR.data.map(l => `<tr><td class="text-center"><input type="checkbox" class="check-box chk-lojista" value="${l.id}"></td><td><span class="font-bold block">${l.nome} ${l.verificado ? '✔️' : ''}</span><span class="text-[10px] text-gray-500">${l.pais} - ${l.cidade}</span></td><td>${l.whatsapp}</td><td class="text-red-400 font-mono">${l.senha}</td><td>${l.ativo?'Ativo':'Inativo'}</td><td><span class="btn-acao btn-azul" onclick="abrirModalEdicao('fornecedores', ${l.id}, '${escapeString(l.nome)}', '', '${escapeString(l.whatsapp)}', '${escapeString(l.senha)}', '${escapeString(l.estado)}', '${escapeString(l.cidade)}', '${escapeString(l.pais)}')">Editar</span></td></tr>`).join('');
-            
-            const clisR = await _s.from('clientes_buscador').select('*').order('criado_em', {ascending: false});
-            document.getElementById('listaClientes').innerHTML = clisR.data.map(c => `<tr><td class="text-center"><input type="checkbox" class="check-box chk-cliente" value="${c.id}"></td><td><span class="font-bold">${c.nome}</span></td><td>${c.email}</td><td class="text-red-400 font-mono">${c.senha}</td><td>${c.aprovado?'OK':'Pendente'}</td><td><span class="btn-acao btn-azul" onclick="abrirModalEdicao('clientes_buscador', ${c.id}, '${escapeString(c.nome)}', '${escapeString(c.email)}', '${escapeString(c.whatsapp)}', '${escapeString(c.senha)}')">Editar</span></td></tr>`).join('');
-            
-            const adsR = await _s.from('admin_users').select('*').order('id', {ascending: true});
-            document.getElementById('listaAdmins').innerHTML = adsR.data.map(a => `<tr><td>${a.nome}</td><td>${a.email}</td><td class="text-red-400 font-mono">${a.senha}</td><td>${a.ativo?'Ativo':'Inativo'}</td><td><span class="btn-acao btn-azul" onclick="abrirModalEdicao('admin_users', ${a.id}, '${escapeString(a.nome)}', '${escapeString(a.email)}', '', '${escapeString(a.senha)}')">Editar</span></td></tr>`).join('');
+            const { data: lojas } = await _s.from('fornecedores').select('*').order('id', {ascending: true});
+            document.getElementById('listaFornecedores').innerHTML = lojas.map(l => `<tr><td class="text-center"><input type="checkbox" class="check-box chk-lojista" value="${l.id}"></td><td><span class="font-bold block">${l.nome}</span><span class="text-[10px] text-gray-500">${l.pais}</span></td><td>${l.whatsapp}</td><td>${l.ativo?'Ativo':'Inativo'}</td><td><span class="btn-acao btn-azul" onclick="abrirModalEdicao('fornecedores', ${l.id}, '${escapeString(l.nome)}', '', '${escapeString(l.whatsapp)}', '${escapeString(l.senha)}')">Editar</span></td></tr>`).join('');
+            const { data: clis } = await _s.from('clientes_buscador').select('*').order('criado_em', {ascending: false});
+            document.getElementById('listaClientes').innerHTML = clis.map(c => `<tr><td class="text-center"><input type="checkbox" class="check-box chk-cliente" value="${c.id}"></td><td><span class="font-bold">${c.nome}</span></td><td>${c.email}</td><td>${c.aprovado?'OK':'Pendente'}</td><td><span class="btn-acao btn-azul" onclick="abrirModalEdicao('clientes_buscador', ${c.id}, '${escapeString(c.nome)}', '${escapeString(c.email)}', '${escapeString(c.whatsapp)}', '${escapeString(c.senha)}')">Editar</span></td></tr>`).join('');
+            const { data: ads } = await _s.from('admin_users').select('*').order('id', {ascending: true});
+            document.getElementById('listaAdmins').innerHTML = ads.map(a => `<tr><td>${a.nome}</td><td>${a.email}</td><td>${a.senha}</td><td>${a.ativo?'Ativo':'Inativo'}</td><td><span class="btn-acao btn-azul" onclick="abrirModalEdicao('admin_users', ${a.id}, '${escapeString(a.nome)}', '${escapeString(a.email)}', '', '${escapeString(a.senha)}')">Editar</span></td></tr>`).join('');
         }
 
         async function acaoEmLote(tabela, coluna, valor, classeCheck) {
-            const checkboxes = document.querySelectorAll(`.${classeCheck}:checked`);
-            const idsSelecionados = Array.from(checkboxes).map(chk => parseInt(chk.value));
-            if(idsSelecionados.length === 0) return alert("Selecione itens!");
-            if(confirm(`Confirmar ação em ${idsSelecionados.length} itens?`)) {
-                await _s.from(tabela).update({ [coluna]: valor }).in('id', idsSelecionados);
-                carregarTabelas();
-            }
+            const ids = Array.from(document.querySelectorAll(`.${classeCheck}:checked`)).map(chk => parseInt(chk.value));
+            if(ids.length === 0) return alert("Selecione itens!");
+            await _s.from(tabela).update({ [coluna]: valor }).in('id', ids);
+            carregarTabelas();
         }
 
-        function abrirBulkMaster(tabela) {
-            let classe = tabela === 'fornecedores' ? 'chk-lojista' : 'chk-cliente';
-            const ids = Array.from(document.querySelectorAll(`.${classe}:checked`)).map(c => parseInt(c.value));
-            if(ids.length === 0) return alert("Selecione primeiro!");
-            document.getElementById('bm_tabela').value = tabela;
-            document.getElementById('bulkMasterCount').innerText = ids.length;
-            if(tabela === 'fornecedores') { document.getElementById('bm_lojista_fields').classList.remove('hidden'); document.getElementById('bm_cliente_fields').classList.add('hidden'); } 
-            else { document.getElementById('bm_cliente_fields').classList.remove('hidden'); document.getElementById('bm_lojista_fields').classList.add('hidden'); }
-            document.getElementById('bulkMasterModal').classList.remove('hidden');
-        }
-
+        function abrirBulkMaster(tabela) { document.getElementById('bm_tabela').value = tabela; document.getElementById('bulkMasterModal').classList.remove('hidden'); if(tabela==='fornecedores') { document.getElementById('bm_lojista_fields').classList.remove('hidden'); document.getElementById('bm_cliente_fields').classList.add('hidden'); } else { document.getElementById('bm_cliente_fields').classList.remove('hidden'); document.getElementById('bm_lojista_fields').classList.add('hidden'); } }
         function fecharBulkMaster() { document.getElementById('bulkMasterModal').classList.add('hidden'); }
         async function salvarBulkMaster(e) { e.preventDefault(); const t = document.getElementById('bm_tabela').value; let updates = {}; if (t === 'fornecedores') { const p = document.getElementById('bm_pais').value; if (p) updates.pais = p; } else { const s = document.getElementById('bm_senha').value; if (s) updates.senha = s; } const ids = Array.from(document.querySelectorAll(t === 'fornecedores' ? '.chk-lojista:checked' : '.chk-cliente:checked')).map(c => parseInt(c.value)); await _s.from(t).update(updates).in('id', ids); fecharBulkMaster(); carregarTabelas(); alert("Sucesso!"); }
 
-        function abrirModalEdicao(t, id, n, e, w, s, est, cid, p) {
-            document.getElementById('edit_tabela').value = t; document.getElementById('edit_id').value = id;
-            document.getElementById('edit_nome').value = n || ''; document.getElementById('edit_email').value = e || '';
-            document.getElementById('edit_whats').value = w || ''; document.getElementById('edit_senha').value = s || '';
-            if(t==='fornecedores') document.getElementById('loc_box').classList.remove('hidden'); else document.getElementById('loc_box').classList.add('hidden');
-            document.getElementById('editModal').classList.remove('hidden');
-        }
+        function abrirModalEdicao(t, id, n, e, w, s) { document.getElementById('edit_tabela').value = t; document.getElementById('edit_id').value = id; document.getElementById('edit_nome').value = n || ''; document.getElementById('edit_senha').value = s || ''; document.getElementById('editModal').classList.remove('hidden'); }
         function fecharModal() { document.getElementById('editModal').classList.add('hidden'); }
         async function salvarEdicao(e) { e.preventDefault(); const t = document.getElementById('edit_tabela').value; const id = document.getElementById('edit_id').value; let updateData = { nome: document.getElementById('edit_nome').value, senha: document.getElementById('edit_senha').value }; await _s.from(t).update(updateData).eq('id', id); fecharModal(); carregarTabelas(); alert("OK!"); }
         
         async function addLojista(e) { e.preventDefault(); await _s.from('fornecedores').insert([{ nome: document.getElementById('nl_nome').value, whatsapp: document.getElementById('nl_whats').value, senha: document.getElementById('nl_senha').value, estado: document.getElementById('nl_estado').value, cidade: document.getElementById('nl_cidade').value, pais: document.getElementById('nl_pais').value, ativo: true }]); e.target.reset(); carregarTabelas(); alert("Lojista criado!"); }
-        async function addCliente(e) { e.preventDefault(); await _s.from('clientes_buscador').insert([{ nome: document.getElementById('nc_nome').value, cpf: document.getElementById('nc_cpf').value, email: document.getElementById('nc_email').value, whatsapp: document.getElementById('nc_whats').value, senha: document.getElementById('nc_senha').value, aprovado: true }]); e.target.reset(); carregarTabelas(); alert("Cliente VIP criado!"); }
+        async function addCliente(e) { e.preventDefault(); await _s.from('clientes_buscador').insert([{ nome: document.getElementById('nc_nome').value, cpf: document.getElementById('nc_cpf').value, email: document.getElementById('nc_email').value, whatsapp: document.getElementById('nc_whats').value, senha: document.getElementById('nc_senha').value, aprovado: true }]); e.target.reset(); carregarTabelas(); alert("VIP criado!"); }
         async function addAdmin(e) { e.preventDefault(); await _s.from('admin_users').insert([{ nome: document.getElementById('na_nome').value, email: document.getElementById('na_user').value, senha: document.getElementById('na_senha').value, ativo: true }]); e.target.reset(); carregarTabelas(); alert("Admin criado!"); }
 
         function selecionarTodos(classe) { document.querySelectorAll(`.${classe}`).forEach(c => c.checked = !c.checked); }
-        async function alterarStatus(t, id, col, val) { await _s.from(t).update({ [col]: val }).eq('id', id); carregarTabelas(); }
-        async function excluirLojista(id) { if(confirm("Excluir TUDO da loja?")) { await _s.from('ofertas').delete().eq('fornecedor_id', id); await _s.from('fornecedores').delete().eq('id', id); carregarTabelas(); } }
-        async function excluirRegistro(t, id) { if(confirm("Excluir?")) { await _s.from(t).delete().eq('id', id); carregarTabelas(); } }
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
         function sairPainel() { localStorage.removeItem('iFipe_MasterToken'); window.location.reload(); }
     </script>
