@@ -6,302 +6,280 @@
     <title>iFipe - Buscador VIP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet">
     <style>
-        /* INJEÇÃO: NOVA PALETA DE CORES APPLE CLEAN (LIGHT COMO PADRÃO) */
+        /* A NOVA PALETA E-COMMERCE APPLE/BUSCAPÉ */
         :root { 
             --bg: #f5f5f7; 
             --card: #ffffff; 
             --text: #1d1d1f; 
             --text-muted: #86868b; 
-            --border: #d2d2d7; 
-            --input: #f5f5f7; 
-            --shadow: 0 4px 24px rgba(0,0,0,0.06);
-            --success-text: #248a3d;
-            --success-bg: rgba(52, 199, 89, 0.15);
-            --warning-text: #d97706;
-            --warning-bg: rgba(255, 149, 0, 0.15);
-            --danger-text: #d70015;
-            --danger-bg: rgba(255, 59, 48, 0.15);
+            --border: #e5e5ea; 
+            --input: #ffffff; 
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-lg: 0 12px 24px rgba(0,0,0,0.06);
             --info-text: #0071e3;
-            --info-bg: rgba(0, 113, 227, 0.15);
+            --info-bg: #e8f2fc;
+            --success-text: #16a34a;
+            --success-bg: #dcfce7;
+            --warning-text: #d97706;
+            --warning-bg: #fef3c7;
+            --danger-text: #dc2626;
+            --danger-bg: #fee2e2;
+            --spec-bg: #f5f5f7;
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         
-        /* MODO ESCURO MANTIDO PARA QUEM GOSTA */
+        /* MODO ESCURO MANTIDO COM ELEGÂNCIA */
         body.dark-mode { 
             --bg: #000000; 
             --card: #1c1c1e; 
             --text: #f5f5f7; 
-            --text-muted: #a1a1a6; 
+            --text-muted: #86868b; 
             --border: #38383a; 
-            --input: #2c2c2e; 
-            --shadow: 0 10px 30px rgba(0,0,0,0.5);
+            --input: #1c1c1e; 
+            --shadow-sm: 0 4px 12px rgba(0,0,0,0.4);
+            --shadow-lg: 0 12px 30px rgba(0,0,0,0.6);
+            --info-text: #2997ff;
+            --info-bg: rgba(41, 151, 255, 0.15);
             --success-text: #32d74b;
             --success-bg: rgba(50, 215, 75, 0.15);
-            --warning-text: #ffcc00;
-            --warning-bg: rgba(255, 204, 0, 0.15);
-            --danger-text: #ff3b30;
-            --danger-bg: rgba(255, 59, 48, 0.15);
-            --info-text: #0a84ff;
-            --info-bg: rgba(10, 132, 255, 0.15);
+            --warning-text: #ffd60a;
+            --warning-bg: rgba(255, 214, 10, 0.15);
+            --danger-text: #ff453a;
+            --danger-bg: rgba(255, 69, 58, 0.15);
+            --spec-bg: #2c2c2e;
         }
 
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: background-color 0.3s, color 0.3s; }
+        body { background: var(--bg); color: var(--text); font-family: var(--font-main); margin:0; transition: background-color 0.3s, color 0.3s; -webkit-font-smoothing: antialiased; }
         
-        /* NAV BAR E BARRA DE BUSCA */
-        .nav-bar { background:rgba(var(--card-rgb, 255, 255, 255), 0.8); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px; transition: 0.3s;}
-        body.dark-mode .nav-bar { background:rgba(28, 28, 30, 0.8); }
-        
-        .filter-bar { background: var(--card); padding:15px; border-radius:20px; margin-top:0; border:1px solid var(--border); box-shadow: var(--shadow); transition: 0.3s;}
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 12px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; font-weight: 600; transition: 0.2s;}
-        .apple-input:focus { border-color: var(--info-text); box-shadow: 0 0 0 3px var(--info-bg); }
+        /* NAV BAR */
+        .nav-bar { background:rgba(var(--card-rgb, 255, 255, 255), 0.85); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:12px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px; transition: 0.3s;}
+        body.dark-mode .nav-bar { background:rgba(28, 28, 30, 0.85); }
 
-        /* CARDS MAIS LIMPOS */
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 16px; transition: 0.3s; position: relative; box-shadow: var(--shadow); }
-        .product-card:hover { border-color: var(--info-text); transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
-        body.dark-mode .product-card:hover { box-shadow: 0 12px 30px rgba(0,0,0,0.6); }
+        /* FILTROS CLEAN */
+        .filter-select { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; color: var(--text); font-size: 11px; font-weight: 600; outline: none; transition: 0.2s; box-shadow: var(--shadow-sm); cursor: pointer; width: 100%; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%2386868b' viewBox='0 0 24 24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+        .filter-select:focus { border-color: var(--info-text); box-shadow: 0 0 0 3px var(--info-bg); }
+        .filter-label { display: block; font-size: 9px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; padding-left: 4px; letter-spacing: 0.05em; }
 
-        /* TAGS SUAVES (FUNDO TRANSLÚCIDO E LETRA FORTE) */
-        .tag-status { font-size: 8px; font-weight: 800; text-transform: uppercase; padding: 5px 10px; border-radius: 50px; letter-spacing: 0.05em; display: inline-block; margin-bottom: 3px; border: 1px solid transparent;}
-        .tag-menor { background: var(--danger-bg); color: var(--danger-text); border-color: rgba(255,59,48,0.2); }
-        .tag-poucas { background: var(--warning-bg); color: var(--warning-text); border-color: rgba(255,149,0,0.2); }
-        .tag-muitas { background: var(--info-bg); color: var(--info-text); border-color: rgba(0,113,227,0.2); }
-        .tag-estoque-alto { background: var(--success-bg); color: var(--success-text); border-color: rgba(52,199,89,0.2); }
+        /* CARDS ESTILO E-COMMERCE */
+        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 24px; transition: transform 0.2s ease, box-shadow 0.2s ease; position: relative; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; }
+        .product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--info-text); }
         
-        .mini-tag { font-size: 8px; font-weight: 800; text-transform: uppercase; padding: 4px 8px; border-radius: 8px; background: var(--input); color: var(--text-muted); border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; }
-        .mini-tag.active { color: var(--info-text); border-color: transparent; background: var(--info-bg); }
-        .mini-tag.usdt { color: var(--success-text); border-color: transparent; background: var(--success-bg); }
-        .mini-tag.lote { color: var(--info-text); border-color: transparent; background: var(--info-bg); }
-        .mini-tag.bat { color: var(--success-text); border-color: transparent; background: var(--success-bg); }
-        .mini-tag.gar { color: var(--warning-text); border-color: transparent; background: var(--warning-bg); }
-        .mini-tag.fab { color: var(--text-muted); border-color: transparent; background: var(--input); }
-        .mini-tag.pix { color: var(--info-text); border-color: transparent; background: var(--info-bg); }
+        .card-title { font-size: 18px; font-weight: 800; color: var(--text); line-height: 1.2; margin-bottom: 4px; letter-spacing: -0.02em; }
+        .card-subtitle { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.03em; }
+
+        /* TAGS SOFT DESIGN */
+        .badge-soft-success { background: var(--success-bg); color: var(--success-text); padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; text-transform: uppercase; display: inline-block; letter-spacing: 0.05em;}
+        .badge-soft-danger { background: var(--danger-bg); color: var(--danger-text); padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; text-transform: uppercase; display: inline-block; letter-spacing: 0.05em;}
+        .badge-soft-warning { background: var(--warning-bg); color: var(--warning-text); padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; text-transform: uppercase; display: inline-block; letter-spacing: 0.05em;}
+        .badge-soft-info { background: var(--info-bg); color: var(--info-text); padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 800; text-transform: uppercase; display: inline-block; letter-spacing: 0.05em;}
+
+        /* LISTA DE ESPECIFICAÇÕES */
+        .spec-item { font-size: 10px; font-weight: 600; color: var(--text-muted); background: var(--spec-bg); padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border); }
         
-        .price-text { font-size: 24px; font-weight: 800; color: var(--text); letter-spacing: -0.03em; text-align: right; }
+        /* BLOCO DE PREÇO (RODAPÉ) */
+        .price-block { margin-top: auto; pt-4; }
+        .price-text { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.04em; font-family: 'Inter', sans-serif;}
+        .store-name { font-size: 12px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 4px; }
         
-        .buy-button { background: var(--info-text); color: #fff; font-weight: 800; border-radius: 50px; padding: 14px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 16px; transition: 0.3s; letter-spacing: 0.05em; border: none;}
-        .buy-button:hover { background: #005bb5; transform: scale(1.02); }
+        .buy-button { background: var(--info-text); color: #fff; font-weight: 700; border-radius: 12px; padding: 14px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 12px; text-align: center; display: block; text-decoration: none; transition: 0.2s; letter-spacing: 0.02em; border: none;}
+        .buy-button:hover { background: #005bb5; transform: scale(1.01); }
         
+        /* BARRA DE AÇÕES INFERIOR */
+        .action-btn { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); transition: color 0.2s; cursor: pointer; background: transparent; border: none; padding: 0;}
+        .action-btn:hover { color: var(--info-text); }
+        .action-btn.liked { color: var(--info-text); }
+
         .hidden { display: none !important; }
-        .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 14px; font-weight: 700; transition: 0.3s;}
+        .theme-toggle { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 14px; font-weight: 700; transition: 0.3s; box-shadow: var(--shadow-sm);}
         
-        .btn-header { display: flex; align-items: center; justify-content: center; border-radius: 12px; height: 38px; padding: 0 14px; transition: 0.3s; border: 1px solid var(--info-bg); background: var(--info-bg); text-decoration: none; gap: 6px; }
-        .btn-header span { font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--info-text); }
-        .btn-header svg { stroke: var(--info-text); }
-        .btn-header:hover { background: var(--info-text); }
-        .btn-header:hover span { color: #fff; }
-        .btn-header:hover svg { stroke: #fff; }
-        
-        .btn-wpp-top { background: var(--success-bg); border-color: var(--success-bg); }
-        .btn-wpp-top span { color: var(--success-text); }
-        .btn-wpp-top svg { fill: var(--success-text); stroke: none; }
-        .btn-wpp-top:hover { background: var(--success-text); }
-        .btn-wpp-top:hover span { color: #fff; }
-        .btn-wpp-top:hover svg { fill: #fff; }
-
         .custom-scroll::-webkit-scrollbar { width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
         @keyframes likePulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         .like-anim { animation: likePulse 0.3s ease-in-out; }
 
-        .btn-scroll-top { position: fixed; bottom: 80px; right: 20px; background-color: var(--card); border: 1px solid var(--border); color: var(--text); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 999; transition: 0.3s; opacity: 0; pointer-events: none; box-shadow: var(--shadow); }
+        .btn-scroll-top { position: fixed; bottom: 80px; right: 20px; background-color: var(--card); border: 1px solid var(--border); color: var(--text); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 999; transition: 0.3s; opacity: 0; pointer-events: none; box-shadow: var(--shadow-lg); }
         .btn-scroll-top.show { opacity: 1; pointer-events: auto; }
         .btn-scroll-top:hover { background-color: var(--info-text); border-color: var(--info-text); color: #fff; transform: translateY(-3px);}
         
-        .btn-alerta-card { position: absolute; top: 16px; right: 16px; background: var(--warning-bg); border: 1px solid transparent; border-radius: 50px; padding: 6px 10px; display: flex; align-items: center; gap: 4px; cursor: pointer; transition: 0.3s; }
-        .btn-alerta-card:hover { border-color: var(--warning-text); transform: scale(1.05);}
-        .btn-alerta-card svg { width: 12px; height: 12px; fill: var(--warning-text); }
-        .btn-alerta-card span { color: var(--warning-text); }
+        /* BOTÃO ALERTA FLUTUANTE (AGORA MAIS DISCRETO E ELEGANTE) */
+        .btn-alerta-card { position: absolute; top: 20px; right: 20px; background: transparent; border: none; border-radius: 50px; padding: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; color: var(--text-muted); }
+        .btn-alerta-card:hover { background: var(--warning-bg); color: var(--warning-text); }
+        .btn-alerta-card svg { width: 18px; height: 18px; fill: currentColor; }
 
-        .search-suggestion-item { padding: 14px 20px; border-bottom: 1px solid var(--border); cursor: pointer; font-weight: 800; font-size: 13px; text-transform: uppercase; transition: 0.2s; color: var(--text); background: var(--card);}
-        .search-suggestion-item:hover { background-color: var(--input); color: var(--info-text); }
+        .search-suggestion-item { padding: 14px 20px; border-bottom: 1px solid var(--border); cursor: pointer; font-weight: 700; font-size: 13px; text-transform: uppercase; transition: 0.2s; color: var(--text); background: var(--card);}
+        .search-suggestion-item:hover { background-color: var(--spec-bg); color: var(--info-text); }
         .search-suggestion-item:last-child { border-bottom: none; }
+        
+        /* INPUTS DOS MODAIS */
+        .modal-input { background: var(--spec-bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; width: 100%; color: var(--text); outline: none; font-size: 13px; font-weight: 600; transition: 0.2s; margin-bottom: 12px;}
+        .modal-input:focus { border-color: var(--info-text); box-shadow: 0 0 0 3px var(--info-bg); }
     </style>
 </head>
 <body>
 
-    <div id="calcModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[2000] px-4">
-        <div class="w-full max-w-[380px] bg-[var(--card)] border border-[var(--info-text)] rounded-3xl p-6 shadow-2xl relative">
-            <button onclick="fecharCalc()" class="absolute top-4 right-5 text-[var(--text-muted)] hover:text-[var(--text)] font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-5 mt-2">
-                <h2 class="text-lg font-black italic text-[var(--text)]">Calculadora VIP</h2>
-                <p class="text-[9px] text-[var(--info-text)] font-black uppercase mt-2 tracking-widest leading-relaxed">Coloque o preço em Dólar e saiba o custo em SP</p>
+    <div id="calcModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[2000] px-4">
+        <div class="w-full max-w-[380px] bg-[var(--card)] border border-[var(--border)] rounded-3xl p-8 shadow-2xl relative">
+            <button onclick="fecharCalc()" class="absolute top-5 right-6 text-[var(--text-muted)] hover:text-[var(--text)] font-bold text-2xl leading-none">×</button>
+            <div class="text-center mb-6 mt-2">
+                <h2 class="text-xl font-black text-[var(--text)] tracking-tight">Calculadora VIP</h2>
+                <p class="text-[10px] text-[var(--info-text)] font-bold uppercase mt-1 tracking-widest">Dólar para Custo SP</p>
             </div>
-            <div class="bg-[var(--input)] border border-[var(--border)] rounded-2xl p-4 text-right mb-4 relative">
-                <span class="absolute top-3 left-4 text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest">Custo Final SP (R$)</span>
+            <div class="bg-[var(--spec-bg)] rounded-2xl p-5 text-right mb-5 relative border border-[var(--border)]">
+                <span class="absolute top-4 left-5 text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-widest">Custo Final (R$)</span>
                 <div id="calcResult" class="font-mono text-3xl font-black text-[var(--info-text)] mt-4 tracking-tighter">R$ 0,00</div>
             </div>
-            <div class="relative mb-4">
-                <span class="absolute top-1/2 left-4 -translate-y-1/2 text-[var(--text-muted)] font-black text-xl">$</span>
-                <input type="number" id="calcUsd" class="w-full bg-[var(--input)] border border-[var(--border)] rounded-xl py-4 pl-12 pr-4 font-mono text-xl font-black text-[var(--text)] outline-none focus:border-[var(--info-text)] text-center transition-colors" placeholder="Custo no PY (USD)" oninput="calcularImportacao()">
+            <div class="relative mb-5">
+                <span class="absolute top-1/2 left-5 -translate-y-1/2 text-[var(--text-muted)] font-black text-xl">$</span>
+                <input type="number" id="calcUsd" class="modal-input !pl-12 !py-4 font-mono text-xl !mb-0 text-center" placeholder="Custo no PY" oninput="calcularImportacao()">
             </div>
-            <div class="bg-[var(--input)] border border-[var(--border)] rounded-xl p-4 text-[10px] font-black uppercase text-[var(--text-muted)] tracking-wide">
+            <div class="bg-[var(--spec-bg)] border border-[var(--border)] rounded-xl p-4 text-[10px] font-bold uppercase text-[var(--text-muted)] tracking-wide">
                 <div class="flex justify-between items-center mb-3 border-b border-[var(--border)] pb-3">
                     <span>Taxa Binance</span>
                     <span id="tickerCalc" class="font-mono text-[11px] text-[var(--success-text)]">R$ --</span>
                 </div>
                 <div class="flex justify-between items-center mb-3 border-b border-[var(--border)] pb-3 gap-2">
-                    <span style="font-size: 8px; line-height: 1.3; max-width: 65%;">Melhor Taxa oferecida e paga por Oráculo (+0,07)</span>
+                    <span style="font-size: 8px; line-height: 1.3; max-width: 65%;">Taxa c/ Oráculo (+0,07)</span>
                     <span id="calcTaxaEfetiva" class="font-mono text-[11px] text-[var(--success-text)]">R$ --</span>
                 </div>
-                <div class="flex justify-center mt-2 pt-1">
-                    <span class="text-[var(--info-text)]">🔒 Frete PY X São Paulo incluso</span>
-                </div>
+                <div class="flex justify-center mt-2 pt-1 text-[var(--info-text)]">🔒 Frete PY X SP incluso</div>
             </div>
         </div>
     </div>
 
-    <div id="contaModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[200] px-4">
-        <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl w-full max-w-[400px] p-8 shadow-2xl">
-            <h3 class="font-bold text-[14px] text-[var(--info-text)] mb-4 uppercase tracking-widest">Minha Conta VIP</h3>
+    <div id="contaModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[200] px-4">
+        <div class="bg-[var(--card)] border border-[var(--border)] rounded-3xl w-full max-w-[400px] p-8 shadow-2xl relative">
+            <button onclick="fecharConta()" class="absolute top-5 right-6 text-[var(--text-muted)] hover:text-[var(--text)] font-bold text-2xl leading-none">×</button>
+            <h3 class="font-black text-[18px] text-[var(--text)] mb-6 tracking-tight">Minha Conta</h3>
             <form onsubmit="salvarConta(event)">
-                <label class="block text-[10px] text-[var(--text-muted)] uppercase font-black mb-1">Meu WhatsApp</label>
-                <input type="text" id="conta_whats" class="apple-input mb-3" placeholder="Ex: 11999999999" required>
-                <label class="block text-[10px] text-[var(--text-muted)] uppercase font-black mb-1">Minha Senha</label>
-                <input type="text" id="conta_senha" class="apple-input mb-4" required>
-                <div class="flex gap-2">
-                    <button type="button" onclick="fecharConta()" class="bg-[var(--border)] text-[var(--text)] font-black uppercase text-[12px] rounded-full px-6 py-3 w-1/3 hover:bg-[var(--text-muted)] hover:text-white transition-colors">Sair</button>
-                    <button type="submit" class="bg-[var(--info-text)] text-white font-black uppercase text-[12px] rounded-full px-6 py-3 w-2/3 hover:bg-blue-600 transition-colors">Atualizar Dados</button>
+                <label class="block text-[10px] text-[var(--text-muted)] uppercase font-bold mb-2 pl-1">WhatsApp</label>
+                <input type="text" id="conta_whats" class="modal-input" placeholder="Ex: 11999999999" required>
+                <label class="block text-[10px] text-[var(--text-muted)] uppercase font-bold mb-2 pl-1 mt-2">Senha</label>
+                <input type="text" id="conta_senha" class="modal-input" required>
+                <div class="mt-6">
+                    <button type="submit" class="bg-[var(--info-text)] text-white font-bold uppercase text-[12px] rounded-xl px-6 py-4 w-full hover:opacity-90 transition-opacity">Atualizar Dados</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="comentarioModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[2500] px-4">
+    <div id="comentarioModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[2500] px-4">
         <div class="w-full max-w-[400px] bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
-            <button onclick="fecharComentarios()" class="absolute top-4 right-5 text-[var(--text-muted)] hover:text-[var(--text)] font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-[var(--info-text)] tracking-widest">Perguntas sobre a Oferta</h3>
-                <p id="comentarioProdutoNome" class="text-[10px] text-[var(--text-muted)] font-bold mt-1 uppercase"></p>
+            <button onclick="fecharComentarios()" class="absolute top-5 right-6 text-[var(--text-muted)] hover:text-[var(--text)] font-bold text-2xl leading-none">×</button>
+            <div class="mb-6 mt-2">
+                <h3 class="text-[18px] font-black text-[var(--text)] tracking-tight">Perguntas</h3>
+                <p id="comentarioProdutoNome" class="text-[11px] text-[var(--info-text)] font-bold mt-1 uppercase"></p>
             </div>
             <div id="listaComentarios" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2 custom-scroll"></div>
             <form onsubmit="postarComentario(event)" class="mt-auto border-t border-[var(--border)] pt-4">
                 <input type="hidden" id="comentario_oferta_id">
-                <textarea id="comentario_texto" class="apple-input w-full h-[60px] resize-none mb-2 text-[11px]" placeholder="Faça uma pergunta sobre este aparelho (estoque, detalhes, envio)..." required></textarea>
-                <button type="submit" class="bg-[var(--info-text)] text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-blue-600">Enviar Pergunta</button>
+                <textarea id="comentario_texto" class="modal-input h-[70px] resize-none" placeholder="Faça uma pergunta sobre este aparelho..." required></textarea>
+                <button type="submit" class="bg-[var(--text)] text-[var(--bg)] font-bold uppercase text-[11px] rounded-xl px-6 py-3.5 w-full hover:opacity-80 transition-opacity">Enviar Pergunta</button>
             </form>
         </div>
     </div>
 
-    <div id="alertaModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[3000] px-4">
-        <div class="w-full max-w-[350px] bg-[var(--card)] border border-[var(--warning-text)] rounded-3xl p-6 shadow-2xl relative">
-            <button onclick="fecharAlerta()" class="absolute top-4 right-5 text-[var(--text-muted)] hover:text-[var(--text)] font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-[var(--warning-text)] tracking-widest">Aviso de Preço 🔔</h3>
-                <p id="alertaNome" class="text-[10px] text-[var(--text-muted)] font-bold mt-1 uppercase"></p>
+    <div id="alertaModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[3000] px-4">
+        <div class="w-full max-w-[350px] bg-[var(--card)] border border-[var(--border)] rounded-3xl p-8 shadow-2xl relative">
+            <button onclick="fecharAlerta()" class="absolute top-5 right-6 text-[var(--text-muted)] hover:text-[var(--text)] font-bold text-2xl leading-none">×</button>
+            <div class="mb-6 mt-2">
+                <h3 class="text-[18px] font-black text-[var(--text)] tracking-tight">Criar Alerta 🔔</h3>
+                <p id="alertaNome" class="text-[11px] text-[var(--warning-text)] font-bold mt-1 uppercase"></p>
             </div>
             <input type="hidden" id="alerta_prod_id">
             <input type="hidden" id="alerta_cap">
-            <label class="text-[8px] text-[var(--text-muted)] font-bold uppercase mb-1 block">Me avise quando baixar para (R$):</label>
-            <input type="number" id="alerta_preco" class="apple-input w-full mb-4 border-[var(--warning-bg)] focus:border-[var(--warning-text)] focus:ring-[var(--warning-bg)]" placeholder="Ex: 3500">
-            <button onclick="gravarAlerta()" style="background-color: var(--warning-text); color: #fff;" class="font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors">Criar Alerta</button>
+            <label class="text-[10px] text-[var(--text-muted)] font-bold uppercase mb-2 block pl-1">Avisar quando baixar para (R$):</label>
+            <input type="number" id="alerta_preco" class="modal-input !text-lg !font-black !py-4" placeholder="Ex: 3500">
+            <button onclick="gravarAlerta()" class="bg-[var(--warning-text)] text-white font-bold uppercase text-[12px] rounded-xl px-6 py-4 w-full mt-2 hover:opacity-90 transition-opacity">Confirmar Alerta</button>
         </div>
     </div>
 
-    <div id="sininhoModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[3000] px-4">
-        <div class="w-full max-w-[400px] bg-[var(--card)] border border-[var(--warning-text)] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
-            <button onclick="fecharSininho()" class="absolute top-4 right-5 text-[var(--text-muted)] hover:text-[var(--text)] font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-[var(--warning-text)] tracking-widest">Seus Alertas 🔔</h3>
+    <div id="sininhoModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[3000] px-4">
+        <div class="w-full max-w-[400px] bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+            <button onclick="fecharSininho()" class="absolute top-5 right-6 text-[var(--text-muted)] hover:text-[var(--text)] font-bold text-2xl leading-none">×</button>
+            <div class="mb-6 mt-2 border-b border-[var(--border)] pb-4">
+                <h3 class="text-[18px] font-black text-[var(--text)] tracking-tight">Seus Alertas 🔔</h3>
             </div>
             <div id="listaNotificacoes" class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scroll"></div>
         </div>
     </div>
 
-    <div id="historicoModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[3000] px-4">
-        <div class="w-full max-w-[400px] bg-[var(--card)] border border-[var(--info-text)] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
-            <button onclick="fecharHistorico()" class="absolute top-4 right-5 text-[var(--text-muted)] hover:text-[var(--text)] font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-[var(--info-text)] tracking-widest">📈 Histórico de Preço</h3>
-                <p id="historicoNome" class="text-[10px] text-[var(--text-muted)] font-bold mt-1 uppercase"></p>
+    <div id="historicoModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[3000] px-4">
+        <div class="w-full max-w-[400px] bg-[var(--card)] border border-[var(--border)] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+            <button onclick="fecharHistorico()" class="absolute top-5 right-6 text-[var(--text-muted)] hover:text-[var(--text)] font-bold text-2xl leading-none">×</button>
+            <div class="mb-6 mt-2 border-b border-[var(--border)] pb-4">
+                <h3 class="text-[18px] font-black text-[var(--text)] tracking-tight">📈 Histórico de Preço</h3>
+                <p id="historicoNome" class="text-[11px] text-[var(--info-text)] font-bold mt-1 uppercase"></p>
             </div>
-            <div id="listaHistorico" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll">
-            </div>
+            <div id="listaHistorico" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll"></div>
         </div>
     </div>
 
     <nav class="nav-bar">
-        <div class="flex items-center gap-2 sm:gap-3">
-            <h1 class="text-2xl font-black italic m-0 mr-2 text-[var(--text)]">iFipe</h1>
-            
-            <button onclick="abrirCalc()" class="btn-header">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="16" y1="18" x2="16" y2="18"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="12" y1="18" x2="12" y2="18"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/></svg>
-                <span>Calculadora VIP</span>
-            </button>
-
-            <a href="https://wa.me/556896003049?text=Ol%C3%A1%20venho%20do%20iFipe%20e%20preciso%20de%20suporte" target="_blank" class="btn-header btn-wpp-top">
-                <svg width="16" height="16" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
-                <span>Suporte</span>
-            </a>
+        <div class="flex items-center gap-4">
+            <h1 class="text-3xl font-black italic m-0 text-[var(--text)] tracking-tighter">iFipe</h1>
         </div>
 
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-[var(--input)] p-2 px-3 rounded-xl border border-[var(--border)]">
-            <div class="flex items-center gap-2">
-                <span class="text-[8px] text-[var(--text-muted)] font-bold uppercase tracking-widest">Binance USDT/BRL</span>
-                <span class="text-[14px] font-black text-[var(--success-text)] font-mono" id="ticker">$ --</span>
+        <div class="flex items-center bg-[var(--spec-bg)] border border-[var(--border)] rounded-full px-4 py-2 gap-3 shadow-sm">
+            <div class="flex items-center gap-2 border-r border-[var(--border)] pr-3">
+                <span class="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-widest">USDT</span>
+                <span class="text-[13px] font-black text-[var(--success-text)] font-mono" id="ticker">$ --</span>
             </div>
-            <a href="https://wa.me/15616760652?text=venho%20do%20ifipe%20e%20quero%20comprar%20USDT" target="_blank" class="bg-[var(--warning-bg)] flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-[var(--warning-text)] transition-colors no-underline group">
-                <span class="text-[8px] sm:text-[9px] font-black uppercase text-[var(--warning-text)] group-hover:text-white transition-colors">Comprar USDT c/ Oráculo Taxa VIP</span>
-                <span class="bg-[var(--card)] text-[var(--warning-text)] border border-[var(--warning-text)] px-1.5 py-0.5 rounded text-[10px] font-mono font-black" id="oraculoRate">R$ --</span>
+            <a href="https://wa.me/15616760652?text=venho%20do%20ifipe%20e%20quero%20comprar%20USDT" target="_blank" class="flex items-center gap-2 group text-decoration-none">
+                <span class="text-[9px] font-bold uppercase text-[var(--text)] group-hover:text-[var(--info-text)] transition-colors">Comprar c/ Taxa VIP</span>
+                <span class="bg-[var(--info-bg)] text-[var(--info-text)] px-2 py-0.5 rounded-md text-[10px] font-mono font-black" id="oraculoRate">R$ --</span>
             </a>
         </div>
 
-        <div class="flex gap-4 items-center">
-            <button onclick="abrirSininho()" class="relative text-[10px] text-[var(--warning-text)] font-black uppercase hover:opacity-80 flex items-center gap-1 border border-[var(--warning-bg)] px-3 py-1.5 rounded-full bg-[var(--warning-bg)] transition-colors">
-                🔔 Alertas
-                <span id="badgeSininho" class="hidden absolute -top-1 -right-1 bg-[var(--danger-text)] text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center shadow-lg">0</span>
+        <div class="flex gap-3 items-center">
+            <button onclick="abrirSininho()" class="relative text-[12px] text-[var(--text)] hover:text-[var(--warning-text)] transition-colors p-2">
+                🔔
+                <span id="badgeSininho" class="hidden absolute top-0 right-0 bg-[var(--danger-text)] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold shadow-sm border border-[var(--card)]">0</span>
             </button>
-
-            <button onclick="toggleTheme()" id="themeBtn" class="theme-toggle">🌙</button>
-            
-            <button onclick="abrirConta()" class="text-[10px] text-[var(--info-text)] font-black uppercase hover:opacity-80 flex items-center gap-1">Conta</button>
-            <button onclick="logout()" class="text-[var(--danger-text)] font-black text-[10px] uppercase">Sair</button>
+            <button onclick="toggleTheme()" id="themeBtn" class="text-[16px] p-2 hover:opacity-70 transition-opacity">🌙</button>
+            <button onclick="abrirConta()" class="text-[11px] text-[var(--text)] font-bold uppercase hover:text-[var(--info-text)] transition-colors px-2">Conta</button>
+            <button onclick="logout()" class="text-[11px] text-[var(--text-muted)] font-bold uppercase hover:text-[var(--danger-text)] transition-colors px-2">Sair</button>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 pb-20 pt-8">
+    <main class="max-w-7xl mx-auto px-4 pb-20 pt-10">
         
-        <div class="relative w-full max-w-3xl mx-auto mb-6 z-[150]">
-            <div class="flex items-center bg-[var(--card)] border-2 border-[var(--border)] rounded-full overflow-hidden shadow-lg transition-all focus-within:border-[var(--info-text)] focus-within:ring-4 focus-within:ring-[var(--info-bg)]">
-                <input type="text" id="buscaTexto" class="w-full bg-[var(--card)] text-[var(--text)] px-6 py-4 outline-none font-bold uppercase text-sm placeholder-[var(--text-muted)]" 
+        <div class="relative w-full max-w-3xl mx-auto mb-10 z-[150]">
+            <div class="flex items-center bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-lg transition-all focus-within:border-[var(--info-text)] focus-within:shadow-[0_8px_30px_rgba(0,113,227,0.15)]">
+                <svg class="w-5 h-5 ml-5 text-[var(--text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="buscaTexto" class="w-full bg-transparent text-[var(--text)] px-4 py-5 outline-none font-bold text-[14px] placeholder-[var(--text-muted)] uppercase" 
                        placeholder="ENCONTRE O MELHOR PREÇO" 
                        oninput="mostrarSugestoes(this.value)" 
                        onkeydown="if(event.key === 'Enter') { document.getElementById('sugestoesBusca').classList.add('hidden'); renderizarRanking(); }">
                 
-                <button onclick="document.getElementById('sugestoesBusca').classList.add('hidden'); renderizarRanking()" class="bg-[var(--card)] text-[var(--info-text)] px-6 py-4 hover:bg-[var(--input)] transition-colors border-l border-[var(--border)]">
-                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                    </svg>
+                <button onclick="document.getElementById('sugestoesBusca').classList.add('hidden'); renderizarRanking()" class="px-8 py-5 bg-[var(--info-text)] text-white font-bold text-[13px] uppercase tracking-wide hover:bg-blue-700 transition-colors">
+                    Buscar
                 </button>
             </div>
-            <div id="sugestoesBusca" class="hidden absolute top-[calc(100%+8px)] left-0 w-full bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-2xl max-h-[300px] overflow-y-auto z-[200]">
+            <div id="sugestoesBusca" class="hidden absolute top-[calc(100%+8px)] left-0 w-full bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-xl max-h-[300px] overflow-y-auto z-[200]">
             </div>
         </div>
 
-        <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-8 mt-0">
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-10">
             <div>
-                <label class="block text-[8px] uppercase font-black text-[var(--info-text)] mb-1 text-center">1. Categoria</label>
-                <select id="f_cat" class="apple-input" onchange="popularAparelhos()">
+                <label class="filter-label">1. Categoria</label>
+                <select id="f_cat" class="filter-select" onchange="popularAparelhos()">
                     <option value="">Todas</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="3">IPAD</option><option value="4">MACBOOK</option><option value="5">IMAC</option><option value="6">ACESSÓRIOS</option><option value="7">XIAOMI</option><option value="8">REALME</option>
                 </select>
             </div>
-            <div><label class="block text-[8px] uppercase font-bold text-[var(--text-muted)] mb-1 text-center">2. Aparelho</label><select id="f_prod" class="apple-input" onchange="atualizarFiltrosCascata()"><option value="">Todos</option></select></div>
-            <div>
-                <label class="block text-[8px] uppercase font-bold text-[var(--text-muted)] mb-1 text-center">Condição</label>
-                <select id="f_cond" class="apple-input" onchange="renderizarRanking()">
-                    <option value="">Todas</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="Apple As Is">Apple As Is</option><option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option>
-                </select>
-            </div>
-            <div><label class="block text-[8px] uppercase font-bold text-[var(--text-muted)] mb-1 text-center">Memória</label><select id="f_cap" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-            <div><label class="block text-[8px] uppercase font-bold text-[var(--text-muted)] mb-1 text-center">Cor</label><select id="f_cor" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-            <div><label class="block text-[8px] uppercase font-bold text-[var(--text-muted)] mb-1 text-center">Origem</label><select id="f_reg" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-            <div><label class="block text-[8px] uppercase font-bold text-[var(--text-muted)] mb-1 text-center">Atacadista</label><select id="f_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
-            <div><label class="block text-[8px] uppercase font-bold text-[var(--text-muted)] mb-1 text-center">Cidade</label><select id="f_cid" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+            <div><label class="filter-label">2. Aparelho</label><select id="f_prod" class="filter-select" onchange="atualizarFiltrosCascata()"><option value="">Todos</option></select></div>
+            <div><label class="filter-label">Condição</label><select id="f_cond" class="filter-select" onchange="renderizarRanking()"><option value="">Todas</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="Apple As Is">Apple As Is</option><option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option></select></div>
+            <div><label class="filter-label">Memória</label><select id="f_cap" class="filter-select" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+            <div><label class="filter-label">Cor</label><select id="f_cor" class="filter-select" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+            <div><label class="filter-label">Origem</label><select id="f_reg" class="filter-select" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+            <div><label class="filter-label">Atacadista</label><select id="f_lojista" class="filter-select" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
+            <div><label class="filter-label">Cidade</label><select id="f_cid" class="filter-select" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
         </div>
         
-        <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+        <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6"></div>
     </main>
 
     <button id="scrollTopBtn" class="btn-scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
@@ -314,7 +292,6 @@
         let currentUsdtRate = 0; 
         let meusAlertas = []; 
 
-        // INJEÇÃO: FUNÇÃO DE TEMA ATUALIZADA PARA USAR DARK COMO TOGGLE
         function toggleTheme() {
             const b = document.body; b.classList.toggle('dark-mode');
             const isDark = b.classList.contains('dark-mode');
@@ -323,7 +300,6 @@
         }
 
         window.onload = async () => {
-            // Se o usuário tinha salvo dark, carrega dark. Se não, o CSS padrão (light) assume.
             if(localStorage.getItem('iFipe_Theme') === 'dark') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('themeBtn').innerText = "☀️";
@@ -439,15 +415,15 @@
             
             const div = document.getElementById('listaNotificacoes');
             if(avisos.length === 0) {
-                div.innerHTML = '<p class="text-[10px] text-[var(--text-muted)] italic text-center py-6 uppercase font-bold">Nenhum alerta atingido ainda. Fique de olho!</p>';
+                div.innerHTML = '<p class="text-[11px] text-[var(--text-muted)] text-center py-6 font-bold">Nenhum alerta atingido ainda. Fique de olho!</p>';
             } else {
                 div.innerHTML = avisos.map(a => `
-                    <div class="bg-[var(--input)] p-3 rounded-xl border border-[var(--warning-text)] relative">
-                        <span class="absolute top-2 right-2 text-[8px] bg-[var(--danger-text)] text-white px-1.5 py-0.5 rounded font-black">ATINGIDO</span>
-                        <p class="text-[11px] font-black text-[var(--text)] mb-1">${a.oferta.variacoes.produtos_mestre.nome} ${a.alerta.capacidade}</p>
-                        <p class="text-[9px] text-[var(--text-muted)] mb-2">Você pediu abaixo de R$ ${a.alerta.preco_desejado.toLocaleString('pt-BR')}</p>
-                        <p class="text-[14px] font-black text-[var(--success-text)] mb-1">Encontramos por R$ ${a.oferta.preco.toLocaleString('pt-BR')}</p>
-                        <p class="text-[9px] text-[var(--success-text)] uppercase font-black">Loja: ${a.oferta.fornecedores.nome}</p>
+                    <div class="bg-[var(--spec-bg)] p-4 rounded-2xl border border-[var(--border)] relative">
+                        <span class="absolute top-3 right-3 text-[9px] bg-[var(--danger-text)] text-white px-2 py-1 rounded-md font-black">ATINGIDO</span>
+                        <p class="text-[13px] font-black text-[var(--text)] mb-1">${a.oferta.variacoes.produtos_mestre.nome} ${a.alerta.capacidade}</p>
+                        <p class="text-[10px] text-[var(--text-muted)] mb-3 font-semibold">Você pediu abaixo de R$ ${a.alerta.preco_desejado.toLocaleString('pt-BR')}</p>
+                        <p class="text-[18px] font-black text-[var(--success-text)] mb-1">Encontramos por R$ ${a.oferta.preco.toLocaleString('pt-BR')}</p>
+                        <p class="text-[10px] text-[var(--text)] font-bold">Loja: ${a.oferta.fornecedores.nome}</p>
                     </div>
                 `).join('');
             }
@@ -460,21 +436,21 @@
             document.getElementById('historicoNome').innerText = nome;
             document.getElementById('historicoModal').classList.remove('hidden');
             const div = document.getElementById('listaHistorico');
-            div.innerHTML = '<p class="text-[10px] text-[var(--text-muted)] italic text-center py-6">Buscando cotações...</p>';
+            div.innerHTML = '<p class="text-[11px] text-[var(--text-muted)] text-center py-6 font-bold">Buscando cotações...</p>';
 
             const { data, error } = await _s.from('historico_precos').select('*').eq('oferta_id', ofertaId).order('registrado_em', { ascending: false }).limit(10);
 
             if (error || !data || data.length === 0) {
-                div.innerHTML = '<p class="text-[10px] text-[var(--text-muted)] italic text-center py-6 uppercase font-bold tracking-widest">Nenhuma alteração de preço registrada ainda.</p>';
+                div.innerHTML = '<p class="text-[11px] text-[var(--text-muted)] text-center py-6 font-bold">Nenhuma alteração de preço registrada ainda.</p>';
                 return;
             }
 
             div.innerHTML = data.map(h => {
                 let dataFormatada = new Date(h.registrado_em).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'});
                 return `
-                <div class="bg-[var(--input)] p-3 rounded-xl border border-[var(--border)] flex justify-between items-center">
-                    <span class="text-[10px] text-[var(--text-muted)] font-bold">${dataFormatada}</span>
-                    <span class="text-[14px] font-black text-[var(--text)]">${h.moeda === 'USD' ? '$' : 'R$'} ${h.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>
+                <div class="bg-[var(--spec-bg)] p-3.5 rounded-xl border border-[var(--border)] flex justify-between items-center">
+                    <span class="text-[11px] text-[var(--text-muted)] font-semibold">${dataFormatada}</span>
+                    <span class="text-[15px] font-black text-[var(--text)]">${h.moeda === 'USD' ? '$' : 'R$'} ${h.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>
                 </div>
                 `;
             }).join('');
@@ -561,7 +537,7 @@
             let filtrados = ofertasAtuais.filter(o => o.quantidade > 0 && (!fTexto || o.variacoes.produtos_mestre.nome.toLowerCase().includes(fTexto) || (o.variacoes.cor && o.variacoes.cor.toLowerCase().includes(fTexto))) && (!fCat || o.variacoes.produtos_mestre.grupo_id == fCat) && (!fP || o.variacoes.produtos_mestre.id == fP) && (!fC || o.condicao == fC) && (!fCap || o.variacoes.capacidade == fCap) && (!fCor || o.variacoes.cor == fCor) && (!fReg || o.regiao_id == fReg) && (!fLoj || o.fornecedor_id == fLoj) && (!fCid || o.fornecedores.cidade == fCid));
             
             const grid = document.getElementById('gridGeral');
-            if(filtrados.length === 0) { grid.innerHTML = '<p class="text-[var(--text-muted)] text-center col-span-full py-10 font-bold uppercase tracking-widest">Nenhuma oferta encontrada para essa busca.</p>'; return; }
+            if(filtrados.length === 0) { grid.innerHTML = '<p class="text-[var(--text-muted)] text-center col-span-full py-10 font-bold uppercase tracking-widest">Nenhuma oferta encontrada.</p>'; return; }
             let menores = {}; filtrados.forEach(o => { let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`; if(!menores[k] || o.preco < menores[k]) menores[k] = o.preco; });
             let listaBRL = filtrados.filter(o => o.moeda === 'BRL').sort(sortOffers);
             let listaUSD = filtrados.filter(o => o.moeda === 'USD').sort(sortOffers);
@@ -578,26 +554,40 @@
             grid.innerHTML = finalLayout.map(o => {
                 let moeda = o.moeda === 'USD' ? '$' : 'R$';
                 let menorPreco = menores[`${o.variacao_id}_${o.condicao}_${o.moeda}`];
+                
+                // AJUSTE ESTÉTICO: TAGS APPLE/BUSCAPÉ (SEM MEXER NA LÓGICA DE QTD)
                 let tagAlteracao = '';
                 if(o.data_alteracao_preco && o.preco_anterior) {
                     let minsPassados = (new Date() - new Date(o.data_alteracao_preco)) / 60000;
-                    if(o.preco < o.preco_anterior && minsPassados <= 30) { tagAlteracao = `<span class="tag-status" style="background:var(--success-bg); color:var(--success-text);">📉 OPORTUNIDADE</span>`; } 
-                    else if (o.preco > o.preco_anterior && minsPassados <= 15) { tagAlteracao = `<span class="tag-status" style="background:var(--danger-bg); color:var(--danger-text);">📈 EM ALTA</span>`; }
+                    if(o.preco < o.preco_anterior && minsPassados <= 30) { tagAlteracao = `<span class="badge-soft-success">📉 OPORTUNIDADE</span>`; } 
+                    else if (o.preco > o.preco_anterior && minsPassados <= 15) { tagAlteracao = `<span class="badge-soft-danger">📈 EM ALTA</span>`; }
                 }
-                let tagMenor = o.preco === menorPreco ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
-                let tagEstoque = o.quantidade <= 3 ? `<span class="tag-status tag-poucas">APENAS ${o.quantidade} UN</span>` : (o.quantidade <= 10 ? `<span class="tag-status tag-muitas">ESTOQUE ${o.quantidade} UN</span>` : `<span class="tag-status tag-estoque-alto">ALTO ESTOQUE ${o.quantidade} UN</span>`);
+                let tagMenor = o.preco === menorPreco ? '<span class="badge-soft-danger">🔥 MENOR PREÇO</span>' : '';
+                let tagEstoque = o.quantidade <= 3 ? `<span class="badge-soft-warning">ÚLTIMAS ${o.quantidade} UN</span>` : (o.quantidade <= 10 ? `<span class="badge-soft-info">ESTOQUE ${o.quantidade} UN</span>` : `<span class="badge-soft-success">EM ESTOQUE</span>`);
+                
                 let detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ');
+                
+                // AJUSTE ESTÉTICO: ESPECIFICAÇÕES LIMPAS
                 let txtBat = o.saude_bateria ? o.saude_bateria.replace('BATERIA ', '') : '';
-                let t_bat = txtBat ? `<span class="mini-tag bat">🔋 ${txtBat}</span>` : '';
-                let t_gar = o.garantia ? `<span class="mini-tag gar">🛡️ GAR: ${o.garantia}</span>` : '';
-                let t_fab = o.regioes ? `<span class="mini-tag fab">🌎 FAB: ${o.regioes.bandeira} ${o.regioes.nome}</span>` : '';
-                let tagsStr = [t_bat, t_gar, t_fab, (o.aceita_coleta ? `<span class="mini-tag active">Coleta</span>` : ''), (o.tem_boy ? `<span class="mini-tag active">Motoboy</span>` : ''), (o.aceita_usdt ? `<span class="mini-tag usdt">USDT</span>` : ''), (o.aceita_pix ? `<span class="mini-tag pix">💠 PIX</span>` : ''), (o.emite_nota ? `<span class="mini-tag active">NF</span>` : ''), (o.faz_envio ? `<span class="mini-tag active">Envio</span>` : ''), (o.aceita_proposta ? `<span class="mini-tag lote">🤝 Negocia Qtd</span>` : '')].filter(Boolean).join(' ');
-                let precoFormatado = `${moeda} ${o.preco.toLocaleString('pt-BR')}`;
+                let t_bat = txtBat ? `<span class="spec-item">🔋 ${txtBat}</span>` : '';
+                let t_gar = o.garantia ? `<span class="spec-item">🛡️ ${o.garantia}</span>` : '';
+                let t_fab = o.regioes ? `<span class="spec-item">🌎 ${o.regioes.nome}</span>` : '';
+                let tagsStr = [t_bat, t_gar, t_fab, 
+                    (o.aceita_coleta ? `<span class="spec-item">📦 Coleta</span>` : ''), 
+                    (o.tem_boy ? `<span class="spec-item">🏍️ Motoboy</span>` : ''), 
+                    (o.aceita_usdt ? `<span class="spec-item">🪙 USDT</span>` : ''), 
+                    (o.aceita_pix ? `<span class="spec-item">💠 PIX</span>` : ''), 
+                    (o.emite_nota ? `<span class="spec-item">🧾 NF</span>` : ''), 
+                    (o.faz_envio ? `<span class="spec-item">✈️ Envio</span>` : ''), 
+                    (o.aceita_proposta ? `<span class="spec-item">🤝 Negocia Qtd</span>` : '')
+                ].filter(Boolean).join('');
+                
+                let precoFormatado = `${moeda} ${o.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
                 let msgTexto = `Olá tudo bem! encontrei seu anuncio de um ${o.variacoes.produtos_mestre.nome} | ${detalhes} pelo valor de ${precoFormatado} \n\nVENHO PELO *https://ifipe.com.br/*`;
                 let linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(msgTexto)}`;
 
                 let selo = o.fornecedores.verificado ? `
-                    <svg class="ml-1 text-[var(--info-text)] flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <svg class="text-[var(--info-text)] flex-shrink-0 ml-1" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12.001 2C6.478 2 2 6.478 2 12.001c0 5.522 4.478 9.999 10.001 9.999 5.522 0 9.999-4.477 9.999-9.999C22 6.478 17.523 2 12.001 2zm-1.935 14.981l-3.97-3.97 1.415-1.414 2.555 2.555 6.563-6.563 1.414 1.414-7.977 7.978z"/>
                     </svg>` : '';
 
@@ -607,9 +597,9 @@
                 let textoLocal = isBrasil ? `${o.cidade || o.fornecedores.cidade} - ${paisLoja}` : paisLoja;
 
                 let localDestaque = `
-                    <div class="flex items-center gap-1.5 mb-1 mt-0.5">
+                    <div class="flex items-center gap-1.5 mt-1">
                         <span class="text-sm">${bandeiraLoja}</span>
-                        <span class="text-[9px] text-[var(--text)] font-bold uppercase tracking-widest bg-[var(--input)] border border-[var(--border)] px-2 py-0.5 rounded-md truncate max-w-full">${textoLocal}</span>
+                        <span class="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-widest truncate">${textoLocal}</span>
                     </div>`;
 
                 let isCurtido = false;
@@ -620,70 +610,80 @@
                 }
 
                 let corLike = '';
-                let textoLike = 'Recomendar 👍';
+                let textoLike = '👍 Recomendar';
+                if (isCurtido) { corLike = 'liked'; textoLike = `🔥 Recomendado ${numCurtidas > 1 ? '('+numCurtidas+')' : ''}`; } 
+                else if (numCurtidas > 0) { textoLike = `👍 Recomendar (${numCurtidas})`; }
 
-                if (isCurtido) {
-                    corLike = 'text-[var(--info-text)]';
-                    textoLike = `Recomendado 🔥 ${numCurtidas > 1 ? '('+numCurtidas+')' : ''}`;
-                } else if (numCurtidas > 0) {
-                    corLike = 'text-blue-400'; 
-                    textoLike = `Recomendado 👍 (${numCurtidas})`;
-                }
-
+                // AJUSTE ESTÉTICO: O NOVO CARD ESTRUTURADO (BUSCAPÉ STYLE)
                 return `
-                <div class="product-card flex flex-col pt-6 relative">
+                <div class="product-card">
                     
-                    <div onclick="abrirModalAlerta(${o.variacoes.produto_id}, '${o.variacoes.capacidade}', '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="btn-alerta-card" title="Avisar quando baixar o preço">
-                        <span class="text-[8px] font-black uppercase">Alerta</span>
+                    <div onclick="abrirModalAlerta(${o.variacoes.produto_id}, '${o.variacoes.capacidade}', '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="btn-alerta-card" title="Criar Alerta de Preço">
                         <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
                     </div>
 
-                    <div class="flex flex-wrap gap-1 mb-1.5">${tagAlteracao} ${tagEstoque} ${tagMenor}</div>
-                    <h2 class="text-lg font-black leading-tight mb-0.5 text-[var(--text)]">${o.variacoes.produtos_mestre.nome}</h2>
-                    <p class="text-[9px] text-[var(--text-muted)] font-bold mt-0.5 uppercase tracking-wide mb-2">${detalhes}</p>
-                    <div class="flex flex-wrap gap-1 mb-2">${tagsStr}</div>
+                    <div class="flex flex-wrap gap-2 mb-4 h-[22px] items-center">
+                        ${tagMenor} ${tagAlteracao} ${tagEstoque}
+                    </div>
+
+                    <h2 class="card-title">${o.variacoes.produtos_mestre.nome}</h2>
+                    <p class="card-subtitle">${detalhes}</p>
                     
-                    <div class="mt-auto border-t border-[var(--border)] pt-3 flex justify-between items-end">
-                        <div class="flex-1 overflow-hidden pr-2">
-                            <div class="flex items-center text-[11px] text-[var(--success-text)] font-black uppercase tracking-widest mb-0.5">
-                                <span class="truncate">${o.fornecedores.nome}</span>${selo}
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        ${tagsStr}
+                    </div>
+                    
+                    <div class="price-block">
+                        <div class="flex justify-between items-end mb-5">
+                            <div class="flex-1 pr-2">
+                                <div class="store-name">
+                                    ${o.fornecedores.nome} ${selo}
+                                </div>
+                                ${localDestaque}
                             </div>
-                            ${localDestaque}
+                            <div class="text-right">
+                                <span class="text-[9px] text-[var(--text-muted)] font-bold uppercase block mb-1">Preço à vista</span>
+                                <div class="price-text">${precoFormatado}</div>
+                            </div>
                         </div>
-                        <div class="price-text mb-1 flex-shrink-0">${precoFormatado}</div>
-                    </div>
-
-                    <div class="flex justify-between items-center pt-3 pb-1 border-t border-[var(--border)] text-[var(--text-muted)] mt-2">
-                        <button onclick="toggleLike(this, ${o.id})" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-[var(--info-text)] transition-colors like-btn ${corLike}">
-                            <span>${textoLike}</span>
-                        </button>
                         
-                        <button onclick="abrirHistorico(${o.id}, '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-[var(--info-text)] transition-colors">
-                            📈 Histórico
-                        </button>
+                        <a href="${linkWpp}" target="_blank" class="buy-button">Ir para a Loja</a>
+                        
+                        <div class="flex justify-between items-center pt-4 mt-5 border-t border-[var(--border)]">
+                            <button onclick="toggleLike(this, ${o.id})" class="action-btn ${corLike}">
+                                <span>${textoLike}</span>
+                            </button>
+                            
+                            <button onclick="abrirHistorico(${o.id}, '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="action-btn">
+                                📈 Histórico
+                            </button>
 
-                        <button onclick="abrirComentarios(${o.id}, '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-[var(--info-text)] transition-colors">Perguntas</button>
-                        <button onclick="shareOffer('${escapeString(o.variacoes.produtos_mestre.nome)}', '${detalhes}', '${precoFormatado}', '${linkWpp}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-[var(--success-text)] transition-colors">Compartilhar</button>
+                            <button onclick="abrirComentarios(${o.id}, '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="action-btn">
+                                💬 Perguntas
+                            </button>
+                            
+                            <button onclick="shareOffer('${escapeString(o.variacoes.produtos_mestre.nome)}', '${detalhes}', '${precoFormatado}', '${linkWpp}')" class="action-btn">
+                                🔗 Compartilhar
+                            </button>
+                        </div>
                     </div>
-                    <a href="${linkWpp}" target="_blank" class="buy-button mt-4">Comprar agora no WhatsApp</a>
                 </div>`;
             }).join('');
         }
 
         async function toggleLike(btn, id) {
             if (!clienteLogado) return alert("Você precisa estar logado para recomendar!");
-            let isCurtido = btn.classList.contains('text-[var(--info-text)]');
+            let isCurtido = btn.classList.contains('liked');
             const span = btn.querySelector('span');
             btn.classList.add('like-anim');
             setTimeout(() => btn.classList.remove('like-anim'), 300);
             if (isCurtido) {
-                btn.classList.remove('text-[var(--info-text)]');
-                span.innerText = "Recomendar 👍";
+                btn.classList.remove('liked');
+                span.innerText = "👍 Recomendar";
                 await _s.from('curtidas').delete().eq('oferta_id', id).eq('cliente_id', clienteLogado.id);
             } else {
-                btn.classList.remove('text-blue-400');
-                btn.classList.add('text-[var(--info-text)]');
-                span.innerText = "Recomendado 🔥";
+                btn.classList.add('liked');
+                span.innerText = "🔥 Recomendado";
                 await _s.from('curtidas').insert([{ oferta_id: id, cliente_id: clienteLogado.id }]);
             }
         }
@@ -700,20 +700,20 @@
 
         async function carregarComentarios(ofertaId) {
             const div = document.getElementById('listaComentarios');
-            div.innerHTML = '<p class="text-[10px] text-[var(--text-muted)] italic text-center py-6">Carregando...</p>';
+            div.innerHTML = '<p class="text-[11px] text-[var(--text-muted)] text-center py-6 font-bold">Carregando...</p>';
             const { data, error } = await _s.from('comentarios').select('*').eq('oferta_id', ofertaId).order('criado_em', { ascending: true });
-            if(error || !data || data.length === 0) { div.innerHTML = '<p class="text-[10px] text-[var(--text-muted)] italic text-center py-6 uppercase font-bold tracking-widest">Nenhuma pergunta ainda.</p>'; return; }
+            if(error || !data || data.length === 0) { div.innerHTML = '<p class="text-[11px] text-[var(--text-muted)] text-center py-6 font-bold">Nenhuma pergunta ainda.</p>'; return; }
             div.innerHTML = data.map(c => {
                 let dataFormatada = new Date(c.criado_em).toLocaleDateString('pt-BR', {hour: '2-digit', minute:'2-digit'});
                 let isMeu = (clienteLogado && c.autor_nome === clienteLogado.whatsapp);
-                let btnDel = isMeu ? `<button onclick="excluirDepoimento(${c.id}, ${ofertaId})" class="text-[7px] text-[var(--danger-text)] font-black uppercase ml-2">[ Apagar ]</button>` : '';
+                let btnDel = isMeu ? `<button onclick="excluirDepoimento(${c.id}, ${ofertaId})" class="text-[9px] text-[var(--danger-text)] font-black uppercase ml-2 hover:underline">Apagar</button>` : '';
                 return `
-                <div class="bg-[var(--input)] p-3 rounded-xl border border-[var(--border)]">
-                    <div class="flex justify-between items-center mb-1.5">
-                        <span class="text-[9px] font-black text-[var(--info-text)] uppercase tracking-widest">Usuário Privado ${btnDel}</span>
-                        <span class="text-[7px] text-[var(--text-muted)] uppercase font-bold">${dataFormatada}</span>
+                <div class="bg-[var(--spec-bg)] p-4 rounded-xl border border-[var(--border)]">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-black text-[var(--info-text)] uppercase tracking-wide">Usuário Privado ${btnDel}</span>
+                        <span class="text-[9px] text-[var(--text-muted)] font-bold">${dataFormatada}</span>
                     </div>
-                    <p class="text-[11px] text-[var(--text)] font-bold leading-relaxed">${c.texto}</p>
+                    <p class="text-[13px] text-[var(--text)] font-medium leading-relaxed">${c.texto}</p>
                 </div>`;
             }).join('');
             div.scrollTop = div.scrollHeight;
