@@ -33,7 +33,6 @@
         .mini-tag.fab { color: #d2d2d7; border-color: #86868b; background: rgba(134, 134, 139, 0.1); }
         .mini-tag.pix { color: #32bcad; border-color: #32bcad; background: rgba(50, 188, 173, 0.1); }
         
-        /* PREÇO AJUSTADO PARA CABER MELHOR */
         .price-text { font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.05em; text-align: right; }
         
         .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 16px; transition: 0.3s; letter-spacing: 0.05em; }
@@ -54,6 +53,11 @@
 
         @keyframes likePulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         .like-anim { animation: likePulse 0.3s ease-in-out; }
+
+        /* INJEÇÃO: ESTILO DO BOTÃO SUBIR */
+        .btn-scroll-top { position: fixed; bottom: 80px; right: 20px; background-color: var(--card); border: 1px solid var(--border); color: var(--text); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 999; transition: 0.3s; opacity: 0; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .btn-scroll-top.show { opacity: 1; pointer-events: auto; }
+        .btn-scroll-top:hover { background-color: #0071e3; border-color: #0071e3; color: #fff; }
     </style>
 </head>
 <body>
@@ -178,6 +182,10 @@
         <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
     </main>
 
+    <button id="scrollTopBtn" class="btn-scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+    </button>
+
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let ofertasAtuais = []; let gradeVariacoes = []; let clienteLogado = null; let todosProdutosMestre = [];
@@ -200,6 +208,16 @@
                 init();
             }
         };
+
+        // LÓGICA DO BOTÃO SUBIR (INJEÇÃO)
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('scrollTopBtn');
+            if (window.scrollY > 300) {
+                btn.classList.add('show');
+            } else {
+                btn.classList.remove('show');
+            }
+        });
 
         function iniciarTicker() {
             const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
@@ -320,18 +338,26 @@
                 let t_bat = txtBat ? `<span class="mini-tag bat">🔋 ${txtBat}</span>` : '';
                 let t_gar = o.garantia ? `<span class="mini-tag gar">🛡️ GAR: ${o.garantia}</span>` : '';
                 let t_fab = o.regioes ? `<span class="mini-tag fab">🌎 FAB: ${o.regioes.bandeira} ${o.regioes.nome}</span>` : '';
-                let selo = o.fornecedores.verificado ? '<span style="background:#ffcc00; color:#000;" class="rounded px-1 py-0.5 text-[7px] font-black uppercase ml-1">✔️ Verificado</span>' : '';
                 let tagsStr = [t_bat, t_gar, t_fab, (o.aceita_coleta ? `<span class="mini-tag active">Coleta</span>` : ''), (o.tem_boy ? `<span class="mini-tag active">Motoboy</span>` : ''), (o.aceita_usdt ? `<span class="mini-tag usdt">USDT</span>` : ''), (o.aceita_pix ? `<span class="mini-tag pix">💠 PIX</span>` : ''), (o.emite_nota ? `<span class="mini-tag active">NF</span>` : ''), (o.faz_envio ? `<span class="mini-tag active">Envio</span>` : ''), (o.aceita_proposta ? `<span class="mini-tag lote">🤝 Negocia Qtd</span>` : '')].filter(Boolean).join(' ');
                 let precoFormatado = `${moeda} ${o.preco.toLocaleString('pt-BR')}`;
                 let msgTexto = `Olá tudo bem! encontrei seu anuncio de um ${o.variacoes.produtos_mestre.nome} | ${detalhes} pelo valor de ${precoFormatado} \n\nVENHO PELO *https://ifipe.com.br/*`;
                 let linkWpp = `https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=${encodeURIComponent(msgTexto)}`;
 
+                // INJEÇÃO: SELO INSTAGRAM E LÓGICA DE PAÍS
+                let selo = o.fornecedores.verificado ? `
+                    <svg class="ml-1 text-[#38bdf8] flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11.996 22c-1.313 0-2.548-.514-3.484-1.446l-1.536-1.528-2.158-.027a4.936 4.936 0 0 1-4.864-4.908l.024-2.15-1.536-1.53a4.942 4.942 0 0 1 0-6.981l1.535-1.528-.024-2.15A4.936 4.936 0 0 1 4.817.844l2.159-.027 1.535-1.53a4.942 4.942 0 0 1 6.981 0l1.536 1.53 2.158.027a4.936 4.936 0 0 1 4.864 4.908l-.024 2.15 1.536 1.53a4.942 4.942 0 0 1 0 6.981l-1.536 1.528.024 2.15a4.936 4.936 0 0 1-4.864 4.908l-2.158-.027-1.536 1.528A4.896 4.896 0 0 1 11.996 22zm-1.85-6.5l6.54-6.54-1.41-1.42-5.13 5.13-2.6-2.6-1.42 1.41 4.02 4.02z"></path>
+                    </svg>` : '';
+
                 let paisLoja = o.fornecedores.pais || 'Brasil';
+                let isBrasil = paisLoja.toLowerCase().includes('brasil');
                 let bandeiraLoja = paisLoja.toLowerCase().includes('paraguai') ? '🇵🇾' : (paisLoja.toLowerCase().includes('eua') || paisLoja.toLowerCase().includes('estados unidos') ? '🇺🇸' : (paisLoja.toLowerCase().includes('dubai') ? '🇦🇪' : '🇧🇷'));
+                let textoLocal = isBrasil ? `${o.cidade || o.fornecedores.cidade} - ${paisLoja}` : paisLoja;
+
                 let localDestaque = `
                     <div class="flex items-center gap-1.5 mb-1 mt-0.5">
                         <span class="text-sm">${bandeiraLoja}</span>
-                        <span class="text-[9px] text-white font-black uppercase tracking-widest bg-[#2c2c2e] border border-[#38383a] px-2 py-0.5 rounded-md">${o.cidade || o.fornecedores.cidade} - ${paisLoja}</span>
+                        <span class="text-[9px] text-white font-black uppercase tracking-widest bg-[#2c2c2e] border border-[#38383a] px-2 py-0.5 rounded-md truncate max-w-full">${textoLocal}</span>
                     </div>`;
 
                 return `
@@ -342,11 +368,13 @@
                     <div class="flex flex-wrap gap-1 mb-2">${tagsStr}</div>
                     
                     <div class="mt-auto border-t border-[#38383a] pt-2 flex justify-between items-end">
-                        <div>
-                            <p class="text-[8px] text-blue-400 font-black uppercase tracking-widest mb-0.5">LOJA: ${o.fornecedores.nome} ${selo}</p>
+                        <div class="flex-1 overflow-hidden pr-2">
+                            <div class="flex items-center text-[11px] text-blue-400 font-black uppercase tracking-widest mb-0.5">
+                                <span class="truncate">LOJA: ${o.fornecedores.nome}</span>${selo}
+                            </div>
                             ${localDestaque}
                         </div>
-                        <div class="price-text mb-1">${precoFormatado}</div>
+                        <div class="price-text mb-1 flex-shrink-0">${precoFormatado}</div>
                     </div>
 
                     <div class="flex justify-between items-center pt-2 pb-1 border-t border-[#38383a] text-gray-400 mt-1">
