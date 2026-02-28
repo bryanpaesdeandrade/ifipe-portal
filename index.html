@@ -273,7 +273,16 @@
 
         async function realizarLogin(event) {
             event.preventDefault();
-            const { data } = await _s.from('clientes_buscador').select('*').eq('email', document.getElementById('logEmail').value).eq('senha', document.getElementById('logPass').value).maybeSingle();
+            const emailInput = document.getElementById('logEmail').value;
+            
+            // TRAVA DE MANUTENÇÃO
+            const { data: cfg } = await _s.from('configuracoes').select('manutencao').eq('id', 1).single();
+            if(cfg && cfg.manutencao && emailInput !== 'bryan.paes@hotmail.com') {
+                alert("ESTAMOS EM ATUALIZAÇÃO PARA TRAZER MELHORIAS PARA VOCÊ.\nVoltamos em breve - TIME iFipe");
+                return;
+            }
+
+            const { data } = await _s.from('clientes_buscador').select('*').eq('email', emailInput).eq('senha', document.getElementById('logPass').value).maybeSingle();
             if(data && data.aprovado) { localStorage.setItem('iFipe_Token', data.id); window.location.href = 'buscar.html'; } 
             else if(data) alert("ACESSO PENDENTE DE LIBERAÇÃO."); else alert("ERRO DE LOGIN.");
         }
@@ -287,7 +296,6 @@
                 pais: document.getElementById('regPais').value, estado: document.getElementById('regEstado').value, cidade: document.getElementById('regCidade').value
             }]);
             
-            // AQUI O ALERTA FOI ALTERADO PARA ESCONDER A MENSAGEM TÉCNICA
             if(!error) { 
                 alert("SOLICITAÇÃO ENVIADA COM SUCESSO!"); 
                 toggleForm(); 
@@ -296,7 +304,6 @@
             }
         }
 
-        // --- FUNÇÕES IBGE ---
         async function carregarEstados(idSelect) {
             const select = document.getElementById(idSelect);
             if(!select || select.tagName !== 'SELECT') return;
