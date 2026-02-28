@@ -56,25 +56,13 @@
 
     <button id="btnScrollTop" onclick="window.scrollTo(0,0)">↑</button>
 
-    <div id="authSection" class="flex items-center justify-center min-h-screen px-4">
-        <div class="apple-card max-w-[400px] text-center w-full border-red-500 border-2 shadow-2xl">
-            <h1 class="text-4xl font-black italic mb-2 text-red-500">iFipe MASTER</h1>
-            <p class="text-[9px] font-bold uppercase text-gray-500 mb-8 tracking-[0.3em]">Acesso God Mode</p>
-            <form onsubmit="realizarLoginMaster(event)">
-                <input type="text" id="logEmailMaster" class="apple-input mb-3 text-center" placeholder="Login ou E-mail" required>
-                <input type="password" id="logPassMaster" class="apple-input mb-4 text-center" placeholder="Senha" required>
-                <button type="submit" class="apple-button w-full">Entrar</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="dashboardSection" class="hidden">
+    <div id="dashboardSection">
         <div class="user-bar">
             <div class="flex items-center gap-4">
                 <h1 class="text-xl font-black italic text-red-500 m-0">iFipe MASTER</h1>
                 <button id="btnManutencaoToggle" onclick="toggleManutencao()" class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase transition-colors shadow-lg">Aguarde...</button>
             </div>
-            <button onclick="sairMaster()" class="text-[10px] text-red-500 font-black uppercase border border-red-900 rounded px-3 py-1.5">Sair</button>
+            <button class="text-[10px] text-gray-500 font-black uppercase border border-gray-900 rounded px-3 py-1.5 cursor-not-allowed">Admin Ativo</button>
         </div>
 
         <div class="max-w-[1600px] mx-auto p-4 md:p-8">
@@ -253,7 +241,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div><label class="text-[8px] text-gray-500 font-bold uppercase">Bateria</label><select id="mb_bat" class="apple-input"><option value="">Manter...</option><option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option><option value="ACIMA DE 90%">ACIMA DE 90%</option><option value="ACIMA DE 95%">ACIMA DE 95%</option><option value="BATERIA EM 100%">BATERIA EM 100%</option></select></div>
-                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Garantia</label><select id="mb_gar" class="apple-input"><option value="">Manter...</option><option value="SEM GARANTIA">Sem Garantia</option><option value="1 MÊS">1 Mês</option><option value="3 MESES">3 Meses</option><option value="6 MESES">6 Meses</option><option value="1 ANO">1 Ano</option></select></div>
+                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Garantia</label><select id="mb_gar" class="apple-input"><option value="">Manter...</option><option value="SEM GARANTIA">Sem Garantia</option><option value="1 MÊS">1 Mês</option><option value="3 MESES">3 MESES</option><option value="6 MESES">6 Meses</option><option value="1 ANO">1 Ano</option></select></div>
                 </div>
                 <div class="grid grid-cols-4 gap-2 mb-6 p-4 bg-[#151516] rounded-xl border border-[#2c2c2e]">
                     <label class="text-[8px] flex items-center gap-1 font-black"><input type="checkbox" id="mb_pix_v"> PIX</label><label class="text-[8px] flex items-center gap-1 font-black"><input type="checkbox" id="mb_usdt_v"> USDT</label><label class="text-[8px] flex items-center gap-1 font-black"><input type="checkbox" id="mb_nota_v"> NF</label><label class="text-[8px] flex items-center gap-1 font-black"><input type="checkbox" id="mb_prop_v"> LOTE</label>
@@ -326,43 +314,10 @@
 
         function getEmojiForColor(c) { const s = (c||'').toUpperCase(); if (s.includes('PRETO') || s.includes('BLACK')) return '⚫'; if (s.includes('BRANCO') || s.includes('WHITE')) return '⚪'; if (s.includes('AZUL')) return '🔵'; if (s.includes('VERDE')) return '🟢'; if (s.includes('ROXO')) return '🟣'; if (s.includes('VERMELHO')) return '🔴'; if (s.includes('AMARELO')) return '🟡'; if (s.includes('TITAN')) return '🔘'; if (s.includes('ROSA')) return '🩷'; return '📱'; }
 
-        window.onscroll = () => { document.getElementById('btnScrollTop').style.display = window.scrollY > 300 ? 'flex' : 'none'; };
-        
-        // RECUPERA SESSÃO
-        window.onload = () => { if(localStorage.getItem('iFipe_Master_Auth') === 'true') liberarDashboard(); };
+        // AQUI ESTÁ A CORREÇÃO: ABRE DIRETO AO CARREGAR A PÁGINA
+        window.onload = () => { liberarDashboard(); };
 
-        // LOGIN BLINDADO (Sem erro de ID Missing)
-        async function realizarLoginMaster(e) {
-            e.preventDefault(); 
-            const login = document.getElementById('logEmailMaster').value.trim();
-            const senha = document.getElementById('logPassMaster').value.trim();
-
-            // O SEU ACESSO DIRETO AQUI
-            if (login === 'bryan' && senha === '96197577') {
-                localStorage.setItem('iFipe_Master_Auth', 'true');
-                liberarDashboard();
-                return;
-            }
-            
-            // Tentativa via banco para outras pessoas
-            try {
-                const { data } = await _s.from('clientes_buscador').select('*').eq('email', login).eq('senha', senha).maybeSingle();
-                if (data?.is_master) { 
-                    localStorage.setItem('iFipe_Master_Auth', 'true'); 
-                    liberarDashboard(); 
-                } else { 
-                    alert("Acesso Negado."); 
-                }
-            } catch(e) {
-                alert("Erro ao validar login.");
-            }
-        }
-        
-        function sairMaster() { localStorage.removeItem('iFipe_Master_Auth'); window.location.reload(); }
-
-        // A CORREÇÃO QUE FALTAVA ESTÁ AQUI NA LIBERAÇÃO
         function liberarDashboard() { 
-            document.getElementById('authSection').style.display = 'none'; 
             document.getElementById('dashboardSection').classList.remove('hidden'); 
             checkManutencao(); 
             carregarBasePostagem(); 
@@ -508,7 +463,7 @@
         }
         async function salvarRapido(id, campo, valor) { let v = (campo === 'preco') ? parsePreco(valor) : parseInt(valor); await _s.from('ofertas').update({ [campo]: v, data_alteracao_preco: new Date().toISOString() }).eq('id', id); carregarAnunciosGlobais(); }
 
-        function abrirMasterBulkEdit() { if(!document.querySelectorAll('.master-offer-check:checked').length) return alert("Selecione!"); document.getElementById('masterBulkEditModal').classList.remove('hidden'); }
+        function abrirMasterBulkEdit() { if(!document.querySelectorAll('.master-offer-check:checked').length) return alert("Selecione os anúncios!"); document.getElementById('masterBulkEditModal').classList.remove('hidden'); }
         function fecharMasterBulkEdit() { document.getElementById('masterBulkEditModal').classList.add('hidden'); }
         async function salvarMasterBulkChanges(e) {
             e.preventDefault(); const ids = Array.from(document.querySelectorAll('.master-offer-check:checked')).map(c => parseInt(c.value)); let up = {}; const p = parsePreco(document.getElementById('mb_preco').value);
