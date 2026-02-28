@@ -65,8 +65,18 @@
         .search-suggestion-item:hover { background-color: #f5f5f7; color: #0071e3; }
         .search-suggestion-item:last-child { border-bottom: none; }
 
-        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); }
-        body.light-mode .color-dot { border: 1px solid rgba(0,0,0,0.1); }
+        /* MELHORIA DA BOLINHA DE COR */
+        .color-dot { 
+            width: 12px; 
+            height: 12px; 
+            border-radius: 50%; 
+            display: inline-block; 
+            margin-right: 8px; 
+            vertical-align: middle; 
+            border: 1px solid rgba(255,255,255,0.2); 
+            box-shadow: 0 0 5px rgba(0,0,0,0.5); /* Sombra para destaque */
+        }
+        body.light-mode .color-dot { border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 0 3px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -496,26 +506,30 @@
 
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
+        // NOVA FUNÇÃO DE MAPEAMENTO POR APROXIMAÇÃO
         function getAppleColorHex(colorName) {
-            // MAPA DE CORES ATUALIZADO E CORRIGIDO
-            const colors = {
-                // Cores Escuras e Padrão
-                'PRETO': '#000000', 'BLACK': '#000000', 'MIDNIGHT': '#191919', 'STELAR': '#242a31', 'SPACE GRAY': '#535150', 'CINZA ESPACIAL': '#535150', 'SPACE BLACK': '#1c1c1e',
-                // Cores Claras e Padrão
-                'BRANCO': '#FFFFFF', 'WHITE': '#FFFFFF', 'STARLIGHT': '#faf9f6', 'ESTELAR': '#faf9f6', 'SILVER': '#e3e4e5', 'PRATA': '#e3e4e5', 'PRATEADO': '#e3e4e5',
-                // Cores Metálicas
-                'GOLD': '#fad7bd', 'DOURADO': '#fad7bd',
-                // Cores Vivas
-                'YELLOW': '#f9e479', 'AMARELO': '#f9e479', 'ORANGE': '#ff9500', 'LARANJA': '#ff9500', 'RED': '#a50011', 'VERMELHO': '#a50011', '(PRODUCT)RED': '#a50011',
-                // Tons de Roxo e Azul
-                'PURPLE': '#b1b1cc', 'ROXO': '#b1b1cc', 'DEEP PURPLE': '#433d4c', 'BLUE': '#215e7c', 'AZUL': '#215e7c', 'SIERRA BLUE': '#9bb5ce', 'PACIFIC BLUE': '#2e4756',
-                // Tons de Verde e Titânio
-                'NATURAL TITANIUM': '#bcbab5', 'TITANIO NATURAL': '#bcbab5', 'GREEN': '#505c4c', 'VERDE': '#505c4c', 'ALPINE GREEN': '#414d3c',
-                // Outros
-                'PINK': '#fae0d8', 'ROSA': '#fae0d8'
-            };
             const search = (colorName || '').toUpperCase();
-            return colors[search] || '#808080'; // Retorna cinza se a cor for desconhecida
+            
+            // Ordem estratégica: das mais específicas para as mais gerais
+            if (search.includes('MIDNIGHT') || search.includes('ESCURA')) return '#191919';
+            if (search.includes('PRETO') || search.includes('BLACK')) return '#000000';
+            if (search.includes('BRANCO') || search.includes('WHITE')) return '#FFFFFF';
+            if (search.includes('ESTELAR') || search.includes('STARLIGHT')) return '#faf9f6';
+            if (search.includes('PRATA') || search.includes('SILVER') || search.includes('PRATEADO')) return '#e3e4e5';
+            if (search.includes('DOURADO') || search.includes('GOLD')) {
+                if (search.includes('ROSA') || search.includes('ROSE')) return '#e6c7c2';
+                return '#fad7bd';
+            }
+            if (search.includes('AZUL') || search.includes('BLUE')) return '#215e7c';
+            if (search.includes('VERDE') || search.includes('GREEN')) return '#505c4c';
+            if (search.includes('ROXO') || search.includes('PURPLE')) return '#b1b1cc';
+            if (search.includes('AMARELO') || search.includes('YELLOW')) return '#f9e479';
+            if (search.includes('VERMELHO') || search.includes('RED')) return '#a50011';
+            if (search.includes('LARANJA') || search.includes('ORANGE')) return '#ff9500';
+            if (search.includes('ROSA') || search.includes('PINK')) return '#fae0d8';
+            if (search.includes('TITAN') || search.includes('CINZA') || search.includes('GRAY')) return '#bcbab5'; 
+            
+            return '#808080'; // Cinza se nada for encontrado
         }
 
         function renderizarRanking() {
@@ -552,7 +566,7 @@
                 let tagEstoque = o.quantidade <= 3 ? `<span class="tag-status tag-poucas">APENAS ${o.quantidade} UN</span>` : (o.quantidade <= 10 ? `<span class="tag-status tag-muitas">ESTOQUE ${o.quantidade} UN</span>` : `<span class="tag-status tag-estoque-alto">ALTO ESTOQUE ${o.quantidade} UN</span>`);
                 let detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ');
                 
-                // INJETANDO A BOLINHA DE COR NO TÍTULO COM O HEX CORRETO
+                // GERAÇÃO DA BOLINHA DE COR CORRIGIDA
                 let colorHex = getAppleColorHex(o.variacoes.cor);
                 let colorDot = `<span class="color-dot" style="background-color: ${colorHex};"></span>`;
 
