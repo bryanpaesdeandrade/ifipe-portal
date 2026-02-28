@@ -232,11 +232,19 @@
                                     <select id="garantia_semi" class="apple-input mb-0 text-[11px]">
                                         <option value="" disabled selected>Selecione o tempo...</option>
                                         <option value="SEM GARANTIA">Sem Garantia</option>
-                                        <option value="30 DIAS">30 Dias</option>
-                                        <option value="3 MESES">3 Meses</option>
-                                        <option value="6 MESES">6 Meses</option>
-                                        <option value="1 ANO">1 Ano</option>
                                         <option value="GARANTIA APPLE">Garantia Apple Restante</option>
+                                        <option value="1 MÊS">1 Mês (30 dias)</option>
+                                        <option value="2 MESES">2 Meses (60 dias)</option>
+                                        <option value="3 MESES">3 Meses (90 dias)</option>
+                                        <option value="4 MESES">4 Meses</option>
+                                        <option value="5 MESES">5 Meses</option>
+                                        <option value="6 MESES">6 Meses</option>
+                                        <option value="7 MESES">7 Meses</option>
+                                        <option value="8 MESES">8 Meses</option>
+                                        <option value="9 MESES">9 Meses</option>
+                                        <option value="10 MESES">10 Meses</option>
+                                        <option value="11 MESES">11 Meses</option>
+                                        <option value="12 MESES">12 Meses (1 Ano)</option>
                                     </select>
                                 </div>
 
@@ -361,12 +369,20 @@
                         <label class="text-[8px] text-gray-500 uppercase font-black">Garantia</label>
                         <select id="edit_gar" class="apple-input mb-3">
                             <option value="SEM GARANTIA">Sem Garantia</option>
-                            <option value="30 DIAS">30 Dias</option>
-                            <option value="3 MESES">3 Meses</option>
-                            <option value="6 MESES">6 Meses</option>
-                            <option value="1 ANO">1 Ano</option>
-                            <option value="1 ANO GARANTIA APPLE">1 Ano Garantia Apple (Novo)</option>
                             <option value="GARANTIA APPLE">Garantia Apple Restante</option>
+                            <option value="1 MÊS">1 Mês (30 dias)</option>
+                            <option value="2 MESES">2 Meses (60 dias)</option>
+                            <option value="3 MESES">3 Meses (90 dias)</option>
+                            <option value="4 MESES">4 Meses</option>
+                            <option value="5 MESES">5 Meses</option>
+                            <option value="6 MESES">6 Meses</option>
+                            <option value="7 MESES">7 Meses</option>
+                            <option value="8 MESES">8 Meses</option>
+                            <option value="9 MESES">9 Meses</option>
+                            <option value="10 MESES">10 Meses</option>
+                            <option value="11 MESES">11 Meses</option>
+                            <option value="12 MESES">12 Meses (1 Ano)</option>
+                            <option value="1 ANO GARANTIA APPLE">1 Ano Garantia Apple (Novo)</option>
                         </select>
                     </div>
 
@@ -402,12 +418,20 @@
                         <select id="bulk_garantia" class="apple-input text-[11px]">
                             <option value="">Manter atual...</option>
                             <option value="SEM GARANTIA">Sem Garantia</option>
-                            <option value="30 DIAS">30 Dias</option>
-                            <option value="3 MESES">3 Meses</option>
-                            <option value="6 MESES">6 Meses</option>
-                            <option value="1 ANO">1 Ano</option>
-                            <option value="1 ANO GARANTIA APPLE">1 Ano Garantia Apple (Novos)</option>
                             <option value="GARANTIA APPLE">Garantia Apple Restante</option>
+                            <option value="1 MÊS">1 Mês (30 dias)</option>
+                            <option value="2 MESES">2 Meses (60 dias)</option>
+                            <option value="3 MESES">3 Meses (90 dias)</option>
+                            <option value="4 MESES">4 Meses</option>
+                            <option value="5 MESES">5 Meses</option>
+                            <option value="6 MESES">6 Meses</option>
+                            <option value="7 MESES">7 Meses</option>
+                            <option value="8 MESES">8 Meses</option>
+                            <option value="9 MESES">9 Meses</option>
+                            <option value="10 MESES">10 Meses</option>
+                            <option value="11 MESES">11 Meses</option>
+                            <option value="12 MESES">12 Meses (1 Ano)</option>
+                            <option value="1 ANO GARANTIA APPLE">1 Ano Garantia Apple (Novo)</option>
                         </select>
                     </div>
 
@@ -450,7 +474,6 @@
             if (search.includes('AMARELO') || search.includes('YELLOW')) return '#f9e479';
             if (search.includes('VERMELHO') || search.includes('RED')) return '#a50011';
             if (search.includes('LARANJA') || search.includes('ORANGE') || search.includes('CÓSMICO') || search.includes('DESERTO')) return '#ff9500';
-            if (search.includes('ROSA') || search.includes('PINK')) return '#fae0d8';
             if (search.includes('TITAN') || search.includes('CINZA') || search.includes('GRAY') || search.includes('AREIA')) return '#bcbab5'; 
             return '#808080'; 
         }
@@ -535,10 +558,24 @@
             };
             const [p, r, v] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*') ]);
             produtosMestre = p.data; gradeVariacoes = v.data;
-            document.getElementById('regiao_id').innerHTML = '<option value="" disabled selected>Origem...</option>' + r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            
+            // BLINDAGEM JS PARA A ORIGEM (Mata a redundância do Estados Unidos na marra)
+            let regioesTratadas = [];
+            let nomesVistos = new Set();
+            r.data.forEach(x => {
+                let n = x.nome;
+                if (n.toLowerCase().includes('estados unidos') || n.toLowerCase() === 'eua') { n = 'EUA'; }
+                if (!nomesVistos.has(n)) {
+                    nomesVistos.add(n);
+                    regioesTratadas.push({id: x.id, bandeira: x.bandeira, nome: n});
+                }
+            });
+            document.getElementById('regiao_id').innerHTML = '<option value="" disabled selected>Origem...</option>' + regioesTratadas.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            
             atualizarLista();
         }
 
+        // --- MÁQUINA DE CASCATA (WIZARD) ---
         function selecionarTipoAnuncio(tipo) {
             document.getElementById('tipo_anuncio_selecionado').value = tipo;
             
@@ -550,7 +587,7 @@
                 document.getElementById('zona_novo').classList.remove('hidden');
                 document.getElementById('zona_seminovo').classList.add('hidden');
                 document.getElementById('saude_bateria').required = false;
-                document.getElementById('garantia_semi').required = false; // Não é obrigatório pois assumimos o Novo
+                document.getElementById('garantia_semi').required = false;
             } else {
                 document.getElementById('btnTipoSemi').classList.add('active');
                 document.getElementById('zona_novo').classList.add('hidden');
@@ -683,6 +720,7 @@
             alert("Aparelho adicionado ao seu estoque com sucesso!"); 
         }
 
+        // --- FUNÇÃO COPIAR ESTOQUE PARA WHATSAPP ---
         function copiarEstoqueWhatsApp() {
             if(!ofertasAtuais || ofertasAtuais.length === 0) {
                 return alert("Você não possui anúncios ativos para copiar.");
@@ -814,7 +852,7 @@
         async function salvarConta(e) { e.preventDefault(); const { data } = await _s.from('fornecedores').update({ nome: document.getElementById('c_nome').value, whatsapp: document.getElementById('c_whats').value, senha: document.getElementById('c_senha').value }).eq('id', loja.id).select().single(); if(data) { loja = data; document.getElementById('nomeLoja').innerText = loja.nome; } alert("Dados atualizados!"); fecharConta(); }
         async function salvarRapido(id, campo, valor) { let v = (campo === 'preco') ? parsePreco(valor) : parseInt(valor); if(isNaN(v)) return; await _s.from('ofertas').update({ [campo]: v, data_alteracao_preco: new Date().toISOString() }).eq('id', id); atualizarLista(); }
         async function salvarBulkChanges(e) { e.preventDefault(); const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length) return; const newPreco = parsePreco(document.getElementById('bulk_preco').value); const newQtd = document.getElementById('bulk_qtd').value; const newCond = document.getElementById('bulk_condicao').value; const newBat = document.getElementById('bulk_bateria').value; const newGar = document.getElementById('bulk_garantia').value; const bPix = document.getElementById('bulk_pix').value; const bUsdt = document.getElementById('bulk_usdt').value; const bNota = document.getElementById('bulk_nota').value; const bProp = document.getElementById('bulk_proposta').value; const bEnvio = document.getElementById('bulk_envio').value; const bColeta = document.getElementById('bulk_coleta').value; const bBoy = document.getElementById('bulk_boy').value; let up = {}; if(newPreco > 0) up.preco = newPreco; if(newQtd) up.quantidade = parseInt(newQtd); if(newCond) up.condicao = newCond; if(newBat) up.saude_bateria = newBat; if(newGar) up.garantia = newGar; if(bPix !== "") up.aceita_pix = bPix === "1"; if(bUsdt !== "") up.aceita_usdt = bUsdt === "1"; if(bNota !== "") up.emite_nota = bNota === "1"; if(bProp !== "") up.aceita_proposta = bProp === "1"; if(bEnvio !== "") up.faz_envio = bEnvio === "1"; if(bColeta !== "") up.aceita_coleta = bColeta === "1"; if(bBoy !== "") up.tem_boy = bBoy === "1"; if(Object.keys(up).length && ids.length) { up.data_alteracao_preco = new Date().toISOString(); await _s.from('ofertas').update(up).in('id', ids); fecharBulkEdit(); atualizarLista(); alert("Massa atualizada!"); } }
-        async function abrirEdicaoCompleta(id) { const { data: o } = await _s.from('ofertas').select('*, variacoes(*)').eq('id', id).single(); document.getElementById('edit_id').value = o.id; document.getElementById('edit_produto_id').value = o.variacoes.produto_id; document.getElementById('edit_capacidade').value = o.variacoes.capacidade; document.getElementById('edit_preco').value = o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2}); document.getElementById('edit_qtd').value = o.quantidade; document.getElementById('edit_cond').value = o.condicao; document.getElementById('edit_gar').value = o.garantia || 'SEM GARANTIA'; const coresDisp = gradeVariacoes.filter(v => v.produto_id == o.variacoes.produto_id && v.capacidade == o.variacoes.capacidade); document.getElementById('edit_cor').innerHTML = coresDisp.map(v => `<option value="${v.cor}" ${v.cor == o.variacoes.cor ? 'selected' : ''}>${v.cor}</option>`).join(''); document.getElementById('editModal').classList.remove('hidden'); }
+        async function abrirEdicaoCompleta(id) { const { data: o } = await _s.from('ofertas').select('*, variacoes(*)').eq('id', id).single(); document.getElementById('edit_id').value = o.id; document.getElementById('edit_produto_id').value = o.variacoes.produto_id; document.getElementById('edit_capacidade').value = o.variacoes.capacidade; document.getElementById('edit_preco').value = o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2}); document.getElementById('edit_qtd').value = o.quantidade; document.getElementById('edit_cond').value = o.condicao; let selectGar = document.getElementById('edit_gar'); let garVal = (o.garantia || 'SEM GARANTIA').toUpperCase(); let found = Array.from(selectGar.options).some(opt => opt.value === garVal); selectGar.value = found ? garVal : "SEM GARANTIA"; const coresDisp = gradeVariacoes.filter(v => v.produto_id == o.variacoes.produto_id && v.capacidade == o.variacoes.capacidade); document.getElementById('edit_cor').innerHTML = coresDisp.map(v => `<option value="${v.cor}" ${v.cor == o.variacoes.cor ? 'selected' : ''}>${v.cor}</option>`).join(''); document.getElementById('editModal').classList.remove('hidden'); }
         async function salvarEdicaoCompleta(e) { e.preventDefault(); const id = document.getElementById('edit_id').value; const corSel = document.getElementById('edit_cor').value; const v = gradeVariacoes.find(x => x.produto_id == document.getElementById('edit_produto_id').value && x.capacidade == document.getElementById('edit_capacidade').value && x.cor == corSel); const { data: antiga } = await _s.from('ofertas').select('preco').eq('id', id).single(); await _s.from('ofertas').update({ preco: parsePreco(document.getElementById('edit_preco').value), preco_anterior: antiga.preco, quantidade: parseInt(document.getElementById('edit_qtd').value), condicao: document.getElementById('edit_cond').value, garantia: document.getElementById('edit_gar').value, variacao_id: v.id, data_alteracao_preco: new Date().toISOString() }).eq('id', id); fecharModalEdit(); atualizarLista(); }
         async function bulkDuplicate() { const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length) return alert("Selecione!"); const { data: originais } = await _s.from('ofertas').select('*').in('id', ids); await _s.from('ofertas').insert(originais.map(o => { const { id, criado_em, ...resto } = o; return resto; })); atualizarLista(); }
         async function bulkDelete() { const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length || !confirm("Apagar?")) return; await _s.from('ofertas').delete().in('id', ids); atualizarLista(); }
