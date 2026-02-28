@@ -9,8 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
-        /* Remoção do CSS de modo claro */
-        
         body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; }
         .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
         .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
@@ -65,7 +63,6 @@
         .search-suggestion-item:hover { background-color: #f5f5f7; color: #0071e3; }
         .search-suggestion-item:last-child { border-bottom: none; }
 
-        /* CLASSE DA BOLINHA DE COR */
         .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
     </style>
 </head>
@@ -138,14 +135,15 @@
         <div class="w-full max-w-[350px] bg-[#1c1c1e] border border-yellow-500 rounded-3xl p-6 shadow-2xl relative">
             <button onclick="fecharAlerta()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
             <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-yellow-500 tracking-widest">Aviso de Preço 🔔</h3>
-                <p id="alertaNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
+                <h3 class="text-sm font-black uppercase text-yellow-500 tracking-widest">Criar Alerta de Preço 🔔</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase">Seja avisado e chame Lojistas</p>
             </div>
-            <input type="hidden" id="alerta_prod_id">
-            <input type="hidden" id="alerta_cap">
+            <select id="alerta_prod_id" class="apple-input w-full mb-2" onchange="atualizarFiltrosAlerta()"><option value="">Selecione o Modelo...</option></select>
+            <select id="alerta_cap" class="apple-input w-full mb-4"><option value="">Selecione a Memória...</option></select>
+            
             <label class="text-[8px] text-gray-500 font-bold uppercase mb-1 block">Me avise quando baixar para (R$):</label>
             <input type="number" id="alerta_preco" class="apple-input w-full mb-4" placeholder="Ex: 3500">
-            <button onclick="gravarAlerta()" class="bg-yellow-500 text-black font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-yellow-400">Criar Alerta</button>
+            <button onclick="gravarAlerta()" class="bg-yellow-500 text-black font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-yellow-400">Ativar Alerta</button>
         </div>
     </div>
 
@@ -153,7 +151,7 @@
         <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-yellow-500/50 rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
             <button onclick="fecharSininho()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
             <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-yellow-500 tracking-widest">Seus Alertas 🔔</h3>
+                <h3 class="text-sm font-black uppercase text-yellow-500 tracking-widest">Seus Alertas Ativos 🔔</h3>
             </div>
             <div id="listaNotificacoes" class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scroll"></div>
         </div>
@@ -163,8 +161,8 @@
         <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-[#0071e3] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
             <button onclick="fecharModalFipe()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
             <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-[#0071e3] tracking-widest">📊 Fipe do iPhone</h3>
-                <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase">Preço médio mercado (7 Dias)</p>
+                <h3 class="text-sm font-black uppercase text-[#0071e3] tracking-widest">📊 Preço Médio 7 dias</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase">Variações do mercado</p>
             </div>
             
             <div class="flex flex-col gap-2 mb-4 border-b border-[#38383a] pb-4">
@@ -174,11 +172,11 @@
                 <select id="fipe_cond" class="apple-input w-full">
                     <option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="Apple As Is">Apple As Is</option><option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option>
                 </select>
-                <button onclick="calcularFipe()" class="bg-[#0071e3] text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-blue-600 mt-2">Consultar Fipe</button>
+                <button onclick="calcularFipe()" class="bg-[#0071e3] text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-blue-600 mt-2">Calcular Média</button>
             </div>
 
             <div id="listaFipe" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll">
-                </div>
+            </div>
         </div>
     </div>
 
@@ -208,12 +206,17 @@
             </a>
         </div>
 
-        <div class="flex gap-4 items-center flex-wrap justify-end">
-            <button onclick="abrirModalFipe()" class="relative text-[10px] text-blue-500 font-black uppercase hover:text-blue-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
-                📊 Fipe 7 Dias
+        <div class="flex gap-2 sm:gap-4 items-center flex-wrap justify-end">
+            <button onclick="abrirModalFipe()" class="relative text-[9px] sm:text-[10px] text-blue-500 font-black uppercase hover:text-blue-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
+                📊 Preço Médio 7 Dias
             </button>
-            <button onclick="abrirSininho()" class="relative text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
-                🔔 Alertas
+
+            <button onclick="abrirModalCriarAlerta()" class="relative text-[9px] sm:text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
+                ➕ Criar Alerta
+            </button>
+
+            <button onclick="abrirSininho()" class="relative text-[9px] sm:text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
+                🔔 Meus Alertas
                 <span id="badgeSininho" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center shadow-lg">0</span>
             </button>
 
@@ -348,11 +351,17 @@
             processarNotificacoesSininho();
         }
 
-        function abrirModalAlerta(prodId, cap, nome) {
-            document.getElementById('alerta_prod_id').value = prodId;
-            document.getElementById('alerta_cap').value = cap || '';
-            document.getElementById('alertaNome').innerText = nome + (cap ? ' | ' + cap : '');
+        function abrirModalCriarAlerta() {
             document.getElementById('alertaModal').classList.remove('hidden');
+            document.getElementById('alerta_prod_id').innerHTML = '<option value="">Selecione o Modelo...</option>' + todosProdutosMestre.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('alerta_cap').innerHTML = '<option value="">Selecione a Memória...</option>';
+        }
+
+        function atualizarFiltrosAlerta() {
+            const pid = document.getElementById('alerta_prod_id').value;
+            const vars = pid ? gradeVariacoes.filter(x => x.produto_id == pid) : [];
+            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
+            document.getElementById('alerta_cap').innerHTML = '<option value="">Selecione a Memória...</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
         function fecharAlerta() { document.getElementById('alertaModal').classList.add('hidden'); document.getElementById('alerta_preco').value = ''; }
@@ -361,9 +370,11 @@
             const pId = document.getElementById('alerta_prod_id').value;
             const cap = document.getElementById('alerta_cap').value;
             const preco = parseFloat(document.getElementById('alerta_preco').value);
-            if(!preco || preco <= 0) return alert("Digite um valor válido!");
+            
+            if(!pId || !cap || !preco || preco <= 0) return alert("Preencha todos os campos corretamente para criar o alerta!");
+            
             await _s.from('alertas_preco').insert([{ cliente_id: clienteLogado.id, produto_id: pId, capacidade: cap, preco_desejado: preco }]);
-            alert("Alerta criado! O sininho vai te avisar quando a mágica acontecer.");
+            alert("Alerta criado! Lojistas da plataforma poderão ver sua demanda.");
             fecharAlerta();
             carregarAlertas();
         }
@@ -403,7 +414,6 @@
         function abrirSininho() { document.getElementById('sininhoModal').classList.remove('hidden'); processarNotificacoesSininho(); }
         function fecharSininho() { document.getElementById('sininhoModal').classList.add('hidden'); }
 
-        // --- SISTEMA FIPE 7 DIAS (NOVO) ---
         function abrirModalFipe() {
             document.getElementById('modalFipe').classList.remove('hidden');
             document.getElementById('fipe_prod').innerHTML = '<option value="">Selecione o Modelo...</option>' + todosProdutosMestre.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
@@ -429,10 +439,13 @@
             const div = document.getElementById('listaFipe');
 
             if(!pid || !cap || !cor || !cond) {
-                return alert("Por favor, preencha todos os campos para consultar a Fipe.");
+                return alert("Por favor, preencha todos os campos para consultar o Preço Médio.");
+            }
+            if(currentUsdtRate === 0) {
+                return alert("Aguarde a cotação do Dólar carregar...");
             }
 
-            div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Calculando média de mercado (7 dias)...</p>';
+            div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Calculando preço médio...</p>';
 
             const varObj = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && x.cor == cor);
             
@@ -447,26 +460,57 @@
             const dataFiltro = seteDiasAtras.toISOString();
 
             const { data: historicosGlobais, error: errHist } = await _s.from('historico_precos')
-                .select('preco, moeda, registrado_em, oferta_id, ofertas!inner(variacao_id, condicao)')
+                .select('preco, registrado_em, ofertas!inner(variacao_id, condicao, moeda)')
                 .eq('ofertas.variacao_id', varId)
                 .eq('ofertas.condicao', cond)
                 .gte('registrado_em', dataFiltro)
                 .order('registrado_em', { ascending: false });
 
+            let htmlFinal = '';
+
             if (errHist || !historicosGlobais || historicosGlobais.length === 0) {
-                div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Ainda não há volume de dados suficiente para calcular a Fipe deste aparelho.</p>';
+                const { data: ofertasAtuaisFipe, error: errOf } = await _s.from('ofertas')
+                    .select('preco, moeda')
+                    .eq('variacao_id', varId)
+                    .eq('condicao', cond)
+                    .gt('quantidade', 0);
+
+                if (errOf || !ofertasAtuaisFipe || ofertasAtuaisFipe.length === 0) {
+                     div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Nenhuma oferta ou histórico encontrado para esta configuração.</p>';
+                     return;
+                }
+
+                let somaAtual = 0;
+                ofertasAtuaisFipe.forEach(o => {
+                     let pReais = o.moeda === 'USD' ? (o.preco * (currentUsdtRate + 0.07) * 1.06) : o.preco;
+                     somaAtual += pReais;
+                });
+                let mediaAtual = somaAtual / ofertasAtuaisFipe.length;
+
+                htmlFinal = `<div class="mb-3 p-2 bg-[#2c2c2e] rounded-lg text-center border border-[#38383a]">
+                                <span class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Baseado nas ${ofertasAtuaisFipe.length} ofertas ativas hoje</span>
+                             </div>
+                             <div class="bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a] flex justify-between items-center mb-2">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] text-gray-400 font-bold">Hoje</span>
+                                    <span class="text-[7px] text-gray-500 uppercase">Preço Médio Atual</span>
+                                </div>
+                                <span class="text-[14px] font-black text-[#0071e3]">R$ ${mediaAtual.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                            </div>`;
+                div.innerHTML = htmlFinal;
                 return;
             }
 
             const mediaPorDia = {};
             historicosGlobais.forEach(h => {
                 let dataFormatada = new Date(h.registrado_em).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
-                let precoEmReais = h.moeda === 'USD' ? (h.preco * (currentUsdtRate + 0.07) * 1.06) : h.preco;
+                let moeda = h.ofertas ? h.ofertas.moeda : 'BRL';
+                let pReais = moeda === 'USD' ? (h.preco * (currentUsdtRate + 0.07) * 1.06) : h.preco;
 
                 if (!mediaPorDia[dataFormatada]) {
                     mediaPorDia[dataFormatada] = { soma: 0, count: 0 };
                 }
-                mediaPorDia[dataFormatada].soma += precoEmReais;
+                mediaPorDia[dataFormatada].soma += pReais;
                 mediaPorDia[dataFormatada].count += 1;
             });
 
@@ -474,9 +518,9 @@
                 return b.split('/').reverse().join('') - a.split('/').reverse().join('');
             });
 
-            let htmlFinal = `<div class="mb-3 p-2 bg-[#2c2c2e] rounded-lg text-center border border-[#38383a]">
-                                <span class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Baseado em ${historicosGlobais.length} cotações</span>
-                             </div>`;
+            htmlFinal = `<div class="mb-3 p-2 bg-[#2c2c2e] rounded-lg text-center border border-[#38383a]">
+                            <span class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Baseado em ${historicosGlobais.length} registros (Últimos 7 dias)</span>
+                         </div>`;
 
             diasOrdenados.forEach(dia => {
                 let media = mediaPorDia[dia].soma / mediaPorDia[dia].count;
@@ -484,7 +528,7 @@
                 <div class="bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a] flex justify-between items-center mb-2">
                     <div class="flex flex-col">
                         <span class="text-[10px] text-gray-400 font-bold">${dia}</span>
-                        <span class="text-[7px] text-gray-500 uppercase">Preço Médio Fipe</span>
+                        <span class="text-[7px] text-gray-500 uppercase">Preço Médio</span>
                     </div>
                     <span class="text-[14px] font-black text-[#0071e3]">R$ ${media.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                 </div>
@@ -493,7 +537,6 @@
 
             div.innerHTML = htmlFinal;
         }
-        // -----------------------------------------------
 
         function mostrarSugestoes(termo) {
             const div = document.getElementById('sugestoesBusca');
@@ -568,7 +611,6 @@
 
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
-        // FUNÇÃO DE MAPEAMENTO DE CORES
         function getAppleColorHex(colorName) {
             const search = (colorName || '').toUpperCase();
             if (search.includes('MIDNIGHT') || search.includes('ESCURA')) return '#191919';
@@ -673,11 +715,6 @@
 
                 return `
                 <div class="product-card flex flex-col pt-6 relative">
-                    
-                    <div onclick="abrirModalAlerta(${o.variacoes.produto_id}, '${o.variacoes.capacidade}', '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="btn-alerta-card" title="Avisar quando baixar o preço">
-                        <span class="text-[8px] font-black uppercase text-yellow-500">Alerta</span>
-                        <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-                    </div>
 
                     <div class="flex flex-wrap gap-1 mb-1.5">${tagAlteracao} ${tagEstoque} ${tagMenor}</div>
                     <h2 class="text-lg font-black leading-tight mb-0.5">${colorDot}${o.variacoes.produtos_mestre.nome}</h2>
@@ -744,10 +781,14 @@
                 let dataFormatada = new Date(c.criado_em).toLocaleDateString('pt-BR', {hour: '2-digit', minute:'2-digit'});
                 let isMeu = (clienteLogado && c.autor_nome === clienteLogado.whatsapp);
                 let btnDel = isMeu ? `<button onclick="excluirDepoimento(${c.id}, ${ofertaId})" class="text-[7px] text-red-500 font-black uppercase ml-2">[ Apagar ]</button>` : '';
+                
+                // MUDANÇA DA FASE B: Mostrando o WhatsApp se houver, senão "Cliente"
+                let exibirNome = c.is_vendedor ? 'Lojista' : (c.autor_nome || 'Cliente');
+
                 return `
                 <div class="bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a]">
                     <div class="flex justify-between items-center mb-1.5">
-                        <span class="text-[9px] font-black text-blue-400 uppercase tracking-widest">Usuário Privado ${btnDel}</span>
+                        <span class="text-[9px] font-black text-blue-400 uppercase tracking-widest">${exibirNome} ${btnDel}</span>
                         <span class="text-[7px] text-gray-500 uppercase font-bold">${dataFormatada}</span>
                     </div>
                     <p class="text-[11px] text-gray-300 font-bold leading-relaxed">${c.texto}</p>
@@ -765,7 +806,7 @@
             const btnSubmit = e.target.querySelector('button[type="submit"]');
             if(!texto.trim()) return;
             btnSubmit.disabled = true; btnSubmit.innerText = "Enviando...";
-            let autor = (clienteLogado && clienteLogado.whatsapp) ? clienteLogado.whatsapp : "Usuário Privado";
+            let autor = (clienteLogado && clienteLogado.whatsapp) ? clienteLogado.whatsapp : "Cliente Sem Cadastro";
             const { error } = await _s.from('comentarios').insert([{ oferta_id: ofertaId, autor_nome: autor, texto: texto }]);
             btnSubmit.disabled = false; btnSubmit.innerText = "Enviar Pergunta";
             if(!error) { document.getElementById('comentario_texto').value = ''; await carregarComentarios(ofertaId); carregarDados(); }
