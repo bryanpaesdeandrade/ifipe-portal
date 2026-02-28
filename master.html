@@ -63,8 +63,8 @@
             <h1 class="text-4xl font-black italic mb-2 text-red-500">iFipe MASTER</h1>
             <p class="text-[9px] font-bold uppercase text-gray-500 mb-8 tracking-[0.3em]">God Mode Dashboard</p>
             <form onsubmit="realizarLoginMaster(event)">
-                <input type="email" id="logEmailMaster" class="apple-input mb-3 text-center" placeholder="Seu E-mail Administrativo" required>
-                <input type="password" id="logPassMaster" class="apple-input mb-4 text-center" placeholder="Sua Senha" required>
+                <input type="text" id="logEmailMaster" class="apple-input mb-3 text-center" placeholder="Login" required>
+                <input type="password" id="logPassMaster" class="apple-input mb-4 text-center" placeholder="Senha" required>
                 <button type="submit" class="apple-button w-full">Entrar</button>
             </form>
         </div>
@@ -287,10 +287,24 @@
         window.onscroll = () => { document.getElementById('btnScrollTop').style.display = window.scrollY > 300 ? 'flex' : 'none'; };
         window.onload = () => { if(localStorage.getItem('iFipe_Master_Auth') === 'true') liberarDashboard(); };
 
+        // 1. CORREÇÃO DO LOGIN (Direcionado para a nova tabela admin_master)
         async function realizarLoginMaster(e) {
             e.preventDefault();
-            const { data } = await _s.from('clientes_buscador').select('*').eq('email', document.getElementById('logEmailMaster').value).eq('senha', document.getElementById('logPassMaster').value).maybeSingle();
-            if (data?.is_master) { localStorage.setItem('iFipe_Master_Auth', 'true'); liberarDashboard(); } else alert("Acesso Negado.");
+            const loginInput = document.getElementById('logEmailMaster').value.trim();
+            const passInput = document.getElementById('logPassMaster').value.trim();
+            
+            const { data } = await _s.from('admin_master')
+                .select('*')
+                .eq('login', loginInput)
+                .eq('senha', passInput)
+                .maybeSingle();
+
+            if (data) { 
+                localStorage.setItem('iFipe_Master_Auth', 'true'); 
+                liberarDashboard(); 
+            } else { 
+                alert("Acesso Negado."); 
+            }
         }
         function sairMaster() { localStorage.removeItem('iFipe_Master_Auth'); window.location.reload(); }
 
@@ -383,15 +397,24 @@
         async function toggleUser(tabela, id, valor, campo) { await _s.from(tabela).update({ [campo]: valor }).eq('id', id); tabela === 'fornecedores' ? carregarLojistas() : carregarClientes(); }
         async function masterDeleteUser(tabela, id) { if(confirm("Apagar usuário permanentemente?")) { await _s.from(tabela).delete().eq('id', id); tabela === 'fornecedores' ? carregarLojistas() : carregarClientes(); carregarStaff(); } }
 
-        // CONCIERGE E ANUNCIOS
+        // 2. CORREÇÃO DO CONCIERGE (Separando as requisições para evitar falha silenciosa)
         async function carregarBasePostagem() {
-            const [p, r, v, f] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*'), _s.from('fornecedores').select('id, nome').order('nome') ]);
-            produtosMestre = p.data; gradeVariacoes = v.data;
-            const html = r.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('m_regiao').innerHTML = '<option value="" disabled selected>Origem Logística...</option>' + html;
-            document.getElementById('mb_regiao').innerHTML = '<option value="">Manter Origem...</option>' + html;
-            document.getElementById('c_pais_user').innerHTML = html;
-            document.getElementById('master_dono_id').innerHTML = '<option value="" disabled selected>Selecionar Atacadista...</option>' + f.data.map(loja => `<option value="${loja.id}">${loja.nome.toUpperCase()}</option>`).join('');
+            const p = await _s.from('produtos_mestre').select('*').order('nome');
+            if(p.data) produtosMestre = p.data;
+            
+            const r = await _s.from('regioes').select('*').order('nome');
+            if(r.data) {
+                const html = r.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+                document.getElementById('m_regiao').innerHTML = '<option value="" disabled selected>Origem Logística...</option>' + html;
+            }
+            
+            const v = await _s.from('variacoes').select('*');
+            if(v.data) gradeVariacoes = v.data;
+            
+            const f = await _s.from('fornecedores').select('id, nome').order('nome');
+            if(f.data) {
+                document.getElementById('master_dono_id').innerHTML = '<option value="" disabled selected>Selecionar Atacadista...</option>' + f.data.map(loja => `<option value="${loja.id}">${loja.nome.toUpperCase()}</option>`).join('');
+            }
         }
 
         function masterSelecionarTipo(t) { document.getElementById('master_tipo_selecionado').value = t; document.getElementById('btnMasterTipoNovo').classList.toggle('active', t==='Novo'); document.getElementById('btnMasterTipoSemi').classList.toggle('active', t==='Seminovo'); document.getElementById('m_zona_seminovo').classList.toggle('hidden', t==='Novo'); document.getElementById('m_filtro_grupo').disabled = false; document.getElementById('m_filtro_grupo').value = "1"; masterLiberarModelos(); }
@@ -411,7 +434,7 @@
             const container = document.getElementById('listaMasterGlobal'); container.innerHTML = '';
             const grupos = {}; ofertasGlobais.forEach(o => { const n = o.fornecedores?.nome || 'Sem Loja'; if(!grupos[n]) grupos[n] = []; grupos[n].push(o); });
             const lojistas = [...new Set(ofertasGlobais.map(o => o.fornecedores?.nome))].sort();
-            document.getElementById('filtro_master_loja').innerHTML = '<option value="TODOS">Todos Atacadistas</option>' + lojistas.map(n => `<option value="${n}">${n}</option>`).join('');
+            document.getElementById('filtro_master_loja').innerHTML = '<option value="TODOS">Todos Lojistas</option>' + lojistas.map(n => `<option value="${n}">${n}</option>`).join('');
             for (let loja in grupos) {
                 let linhas = grupos[loja].map(o => {
                     let m = `<span class="m-badge ${o.aceita_pix?'on':''}">PIX</span><span class="m-badge ${o.aceita_usdt?'on':''}">USDT</span><span class="m-badge ${o.emite_nota?'on':''}">NF</span><span class="m-badge ${o.aceita_proposta?'on':''}">LOTE</span><span class="m-badge ${o.faz_envio?'on':''}">ENVIO</span><span class="m-badge ${o.aceita_coleta?'on':''}">COLETA</span><span class="m-badge ${o.tem_boy?'on':''}">MOTO</span>`;
