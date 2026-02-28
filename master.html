@@ -37,6 +37,8 @@
         label { display: block; text-transform: uppercase; font-size: 9px; color: #86868b; margin-bottom: 6px; font-weight: 900; letter-spacing: 0.1em; }
         .hidden { display: none !important; }
         .check-box { accent-color: #0071e3; width: 16px; height: 16px; cursor: pointer; }
+        
+        .color-dot-preview { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
@@ -94,9 +96,12 @@
                     <div><label class="mt-2">Padronizar Estado</label><div><select id="bm_estado" class="apple-input py-2 mb-0" disabled><option value="">Estado...</option></select></div></div>
                     <div><label class="mt-2">Padronizar Cidade</label><div><select id="bm_cidade" class="apple-input py-2 mb-0" disabled><option value="">Cidade...</option></select></div></div>
                 </div>
-                <div id="bm_cliente_fields" class="hidden flex-col gap-2 mb-4">
-                    <div><label>Padronizar Senha (Reset)</label><input type="text" id="bm_senha" class="apple-input py-2 mb-0" placeholder="Ex: 123456"></div>
+                
+                <div class="flex-col gap-2 mb-4 mt-4 border-t border-[#38383a] pt-4">
+                    <label>Mudar Senhas em Massa (Deixe em branco p/ não alterar)</label>
+                    <input type="text" id="bm_senha_geral" class="apple-input py-2 mb-0" placeholder="Nova senha geral...">
                 </div>
+
                 <button type="submit" id="btnSalvarBulkMaster" class="apple-button w-full bg-blue-600 text-white border-0 mt-2">Aplicar Alterações</button>
             </form>
         </div>
@@ -159,7 +164,8 @@
             <div class="w-full flex flex-col md:flex-row justify-between items-center gap-4">
                 <h1 class="text-2xl font-black italic m-0">iFipe <span class="text-red-500 text-sm">MASTER</span></h1>
                 
-                <div class="flex gap-2">
+                <div class="flex gap-2 flex-wrap justify-center">
+                    <button onclick="toggleManutencao()" id="btnManutencao" class="tab-btn font-black border-none" style="background:#4b5563;color:#fff;">Carregando...</button>
                     <button onclick="irPara('sec-ofertas', this)" class="tab-btn active">⚙️ Ofertas</button>
                     <button onclick="irPara('sec-cadastros', this)" class="tab-btn">➕ Novos</button>
                     <button onclick="irPara('sec-banco', this)" class="tab-btn">🗄️ Banco</button>
@@ -368,9 +374,17 @@
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let produtosMestre = [], gradeVariacoes = [];
+        let emManutencao = false; // Controle de manutenção
 
         function irPara(id, btn) { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); document.getElementById(id).scrollIntoView({ behavior: 'smooth' }); }
-        window.onload = async () => { const token = localStorage.getItem('iFipe_MasterToken'); if (token) { const { data } = await _s.from('admin_users').select('id').eq('id', token).maybeSingle(); if(data) { liberarAcesso(); } else { localStorage.removeItem('iFipe_MasterToken'); } } };
+        
+        window.onload = async () => { 
+            const token = localStorage.getItem('iFipe_MasterToken'); 
+            if (token) { 
+                const { data } = await _s.from('admin_users').select('id').eq('id', token).maybeSingle(); 
+                if(data) { liberarAcesso(); } else { localStorage.removeItem('iFipe_MasterToken'); } 
+            } 
+        };
 
         async function fazerLoginAdmin(event) {
             event.preventDefault(); 
@@ -383,8 +397,57 @@
             else { m.innerText = "ACESSO NEGADO. VERIFIQUE OS DADOS."; m.style.color = "#ff3b30"; }
         }
 
-        function liberarAcesso() { document.getElementById('loginSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden'); carregarTabelas(); initMasterAnuncios(); }
+        function liberarAcesso() { document.getElementById('loginSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden'); carregarTabelas(); initMasterAnuncios(); checarStatusManutencao(); }
         function sairPainel() { localStorage.removeItem('iFipe_MasterToken'); window.location.reload(); }
+
+        // MANUTENÇÃO (BOTÃO DE PÂNICO)
+        async function checarStatusManutencao() {
+            const { data } = await _s.from('configuracoes').select('manutencao').eq('id', 1).maybeSingle();
+            emManutencao = data ? data.manutencao : false;
+            renderBtnManutencao();
+        }
+
+        function renderBtnManutencao() {
+            const btn = document.getElementById('btnManutencao');
+            if(emManutencao) {
+                btn.innerHTML = "🔴 TIRAR DA MANUTENÇÃO (REABRIR SITE)";
+                btn.style.background = "#ff3b30";
+            } else {
+                btn.innerHTML = "🟢 COLOCAR SITE EM MANUTENÇÃO (FECHAR)";
+                btn.style.background = "#4b5563";
+            }
+        }
+
+        async function toggleManutencao() {
+            const msg = emManutencao ? "Deseja REABRIR os painéis para todo o público?" : "ATENÇÃO: Deseja colocar o site em MANUTENÇÃO? (Apenas você terá acesso)";
+            if(confirm(msg)) {
+                emManutencao = !emManutencao;
+                await _s.from('configuracoes').update({manutencao: emManutencao}).eq('id', 1);
+                renderBtnManutencao();
+            }
+        }
+
+        function getAppleColorHex(colorName) {
+            const search = (colorName || '').toUpperCase();
+            if (search.includes('MIDNIGHT') || search.includes('ESCURA')) return '#191919';
+            if (search.includes('PRETO') || search.includes('BLACK')) return '#000000';
+            if (search.includes('BRANCO') || search.includes('WHITE')) return '#FFFFFF';
+            if (search.includes('ESTELAR') || search.includes('STARLIGHT')) return '#faf9f6';
+            if (search.includes('PRATA') || search.includes('SILVER') || search.includes('PRATEADO')) return '#e3e4e5';
+            if (search.includes('DOURADO') || search.includes('GOLD')) {
+                if (search.includes('ROSA') || search.includes('ROSE')) return '#e6c7c2';
+                return '#fad7bd';
+            }
+            if (search.includes('AZUL') || search.includes('BLUE')) return '#215e7c';
+            if (search.includes('VERDE') || search.includes('GREEN')) return '#505c4c';
+            if (search.includes('ROXO') || search.includes('PURPLE')) return '#b1b1cc';
+            if (search.includes('AMARELO') || search.includes('YELLOW')) return '#f9e479';
+            if (search.includes('VERMELHO') || search.includes('RED')) return '#a50011';
+            if (search.includes('LARANJA') || search.includes('ORANGE')) return '#ff9500';
+            if (search.includes('ROSA') || search.includes('PINK')) return '#fae0d8';
+            if (search.includes('TITAN') || search.includes('CINZA') || search.includes('GRAY')) return '#bcbab5'; 
+            return '#808080';
+        }
 
         async function carregarTabelas() {
             const { data: lojas } = await _s.from('fornecedores').select('*').order('id', {ascending: true});
@@ -441,7 +504,6 @@
                     </td>
                 </tr>`).join('');
 
-            // Refiltra caso o admin tenha digitado/selecionado algo e atualizado a tabela
             if(document.getElementById('buscaLojista')) aplicarFiltrosMaster('listaFornecedores', 'buscaLojista', 'statusLojista');
             if(document.getElementById('buscaCliente')) aplicarFiltrosMaster('listaClientes', 'buscaCliente', 'statusCliente');
         }
@@ -469,7 +531,11 @@
 
         async function carregarOfertasMaster() {
             const { data } = await _s.from('ofertas').select('*, fornecedores(nome), variacoes(capacidade, cor, produtos_mestre(nome))').order('criado_em', {ascending: false});
-            document.getElementById('listaOfertasMaster').innerHTML = data.map(o => `<tr><td class="text-center"><input type="checkbox" class="offer-master-check check-box" value="${o.id}" onclick="updateBulkCountMaster()"></td><td class="text-yellow-500 font-black uppercase text-[10px]">${o.fornecedores.nome}</td><td><span class="font-bold block">${o.variacoes.produtos_mestre.nome}</span><span class="text-[9px] text-gray-500 uppercase">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td><td class="text-center"><input type="number" class="mini-edit w-[50px]" value="${o.quantidade}" onblur="salvarRapidoMaster(${o.id}, 'quantidade', this.value)"></td><td class="text-center"><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapidoMaster(${o.id}, 'preco', this.value)"><span class="text-[8px] block opacity-40">${o.moeda}</span></td><td class="text-right"><span class="btn-acao btn-vermelho" onclick="excluirOfertaMaster(${o.id})">Apagar</span></td></tr>`).join('');
+            document.getElementById('listaOfertasMaster').innerHTML = data.map(o => {
+                let colorHex = getAppleColorHex(o.variacoes.cor);
+                let colorDot = `<span class="color-dot-preview" style="background-color: ${colorHex};"></span>`;
+                return `<tr><td class="text-center"><input type="checkbox" class="offer-master-check check-box" value="${o.id}" onclick="updateBulkCountMaster()"></td><td class="text-yellow-500 font-black uppercase text-[10px]">${o.fornecedores.nome}</td><td><span class="font-bold block">${colorDot} ${o.variacoes.produtos_mestre.nome}</span><span class="text-[9px] text-gray-500 uppercase">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td><td class="text-center"><input type="number" class="mini-edit w-[50px]" value="${o.quantidade}" onblur="salvarRapidoMaster(${o.id}, 'quantidade', this.value)"></td><td class="text-center"><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarRapidoMaster(${o.id}, 'preco', this.value)"><span class="text-[8px] block opacity-40">${o.moeda}</span></td><td class="text-right"><span class="btn-acao btn-vermelho" onclick="excluirOfertaMaster(${o.id})">Apagar</span></td></tr>`
+            }).join('');
             updateBulkCountMaster();
         }
 
@@ -504,38 +570,57 @@
         async function bulkDuplicateMaster() { const ids = Array.from(document.querySelectorAll('.offer-master-check:checked')).map(c => parseInt(c.value)); if(ids.length === 0) return alert("Selecione!"); const { data: ori } = await _s.from('ofertas').select('*').in('id', ids); await _s.from('ofertas').insert(ori.map(o => { const { id, criado_em, ...rest } = o; return rest; })); alert("Duplicados!"); carregarOfertasMaster(); }
         async function bulkDeleteMaster() { const ids = Array.from(document.querySelectorAll('.offer-master-check:checked')).map(c => parseInt(c.value)); if(ids.length > 0 && confirm("Apagar?")) { await _s.from('ofertas').delete().in('id', ids); carregarOfertasMaster(); } }
 
-        // --- FILTRO INTELIGENTE PARA MASTER (INJEÇÃO) ---
         function filtrarTabela(tabelaId, termo) { const linhas = document.getElementById(tabelaId).getElementsByTagName('tr'); for (let i = 0; i < linhas.length; i++) { linhas[i].style.display = linhas[i].innerText.toLowerCase().includes(termo.toLowerCase()) ? '' : 'none'; } }
-        
         function aplicarFiltrosMaster(tabelaId, inputBuscaId, selectStatusId) {
             const termo = document.getElementById(inputBuscaId).value.toLowerCase();
             const statusVal = document.getElementById(selectStatusId).value;
             const linhas = document.getElementById(tabelaId).getElementsByTagName('tr');
-            
             for (let i = 0; i < linhas.length; i++) {
                 const textoLinha = linhas[i].innerText.toLowerCase();
-                const colStatus = linhas[i].cells[4].innerText.toLowerCase().trim(); // A coluna Status é sempre a 4
-                
+                const colStatus = linhas[i].cells[4].innerText.toLowerCase().trim(); 
                 let matchTexto = textoLinha.includes(termo);
                 let matchStatus = true;
-                
-                if (statusVal !== 'todos') {
-                    matchStatus = (colStatus === statusVal);
-                }
-                
+                if (statusVal !== 'todos') { matchStatus = (colStatus === statusVal); }
                 linhas[i].style.display = (matchTexto && matchStatus) ? '' : 'none';
             }
         }
-        // --------------------------------------------------
 
         let checkboxesEstado = {}; 
         function selecionarTodos(classeCheck) { checkboxesEstado[classeCheck] = !checkboxesEstado[classeCheck]; document.querySelectorAll(`.${classeCheck}`).forEach(chk => { if(chk.closest('tr').style.display !== 'none') chk.checked = checkboxesEstado[classeCheck]; }); }
         async function acaoEmLote(tabela, coluna, valor, classeCheck) { const ids = Array.from(document.querySelectorAll(`.${classeCheck}:checked`)).map(chk => parseInt(chk.value)); if(ids.length === 0) return alert("Nada selecionado."); if(confirm(`Confirmar ação?`)) { await _s.from(tabela).update({ [coluna]: valor }).in('id', ids); carregarTabelas(); } }
 
-        function abrirBulkMaster(tabela) { const ids = Array.from(document.querySelectorAll(`.${tabela === 'fornecedores' ? 'chk-lojista' : 'chk-cliente'}:checked`)); if(ids.length === 0) return alert("Selecione na tabela."); document.getElementById('bm_tabela').value = tabela; document.getElementById('bulkMasterCount').innerText = ids.length; if(tabela === 'fornecedores') { document.getElementById('bm_lojista_fields').classList.remove('hidden'); document.getElementById('bm_cliente_fields').classList.add('hidden'); } else { document.getElementById('bm_cliente_fields').classList.remove('hidden'); document.getElementById('bm_lojista_fields').classList.add('hidden'); } document.getElementById('bulkMasterModal').classList.remove('hidden'); }
+        function abrirBulkMaster(tabela) { 
+            const ids = Array.from(document.querySelectorAll(`.${tabela === 'fornecedores' ? 'chk-lojista' : 'chk-cliente'}:checked`)); 
+            if(ids.length === 0) return alert("Selecione na tabela."); 
+            document.getElementById('bm_tabela').value = tabela; 
+            document.getElementById('bulkMasterCount').innerText = ids.length; 
+            if(tabela === 'fornecedores') { 
+                document.getElementById('bm_lojista_fields').classList.remove('hidden'); 
+                document.getElementById('bm_cliente_fields').classList.add('hidden'); 
+            } else { 
+                document.getElementById('bm_cliente_fields').classList.remove('hidden'); 
+                document.getElementById('bm_lojista_fields').classList.add('hidden'); 
+            } 
+            document.getElementById('bulkMasterModal').classList.remove('hidden'); 
+        }
         function fecharBulkMaster() { document.getElementById('bulkMasterModal').classList.add('hidden'); document.getElementById('formBulkMaster').reset(); }
 
-        async function salvarBulkMaster(e) { e.preventDefault(); const t = document.getElementById('bm_tabela').value; const ids = Array.from(document.querySelectorAll(`.${t === 'fornecedores' ? 'chk-lojista' : 'chk-cliente'}:checked`)).map(c => parseInt(c.value)); let updates = {}; if (t === 'fornecedores') { const pais = document.getElementById('bm_pais').value, est = document.getElementById('bm_estado').value.trim(), cid = document.getElementById('bm_cidade').value.trim(); if (pais) updates.pais = pais; if (est) updates.estado = est; if (cid) updates.cidade = cid; } else { const s = document.getElementById('bm_senha').value.trim(); if (s) updates.senha = s; } if(Object.keys(updates).length === 0) return alert("Preencha ao menos um campo."); await _s.from(t).update(updates).in('id', ids); fecharBulkMaster(); carregarTabelas(); alert("Sucesso!"); }
+        async function salvarBulkMaster(e) { 
+            e.preventDefault(); 
+            const t = document.getElementById('bm_tabela').value; 
+            const ids = Array.from(document.querySelectorAll(`.${t === 'fornecedores' ? 'chk-lojista' : 'chk-cliente'}:checked`)).map(c => parseInt(c.value)); 
+            let updates = {}; 
+            if (t === 'fornecedores') { 
+                const pais = document.getElementById('bm_pais').value, est = document.getElementById('bm_estado').value.trim(), cid = document.getElementById('bm_cidade').value.trim(); 
+                if (pais) updates.pais = pais; if (est) updates.estado = est; if (cid) updates.cidade = cid; 
+            } 
+            const s = document.getElementById('bm_senha_geral').value.trim(); 
+            if (s) updates.senha = s; 
+            
+            if(Object.keys(updates).length === 0) return alert("Preencha ao menos um campo."); 
+            await _s.from(t).update(updates).in('id', ids); 
+            fecharBulkMaster(); carregarTabelas(); alert("Senhas/Dados alterados com Sucesso!"); 
+        }
 
         async function abrirModalEdicao(tabela, id, nome, email, whats, senha, estado, cidade, pais) {
             document.getElementById('edit_tabela').value = tabela; document.getElementById('edit_id').value = id; document.getElementById('edit_nome').value = nome || ''; document.getElementById('edit_email').value = email || ''; document.getElementById('edit_whats').value = whats || ''; document.getElementById('edit_senha').value = senha || '';
@@ -564,7 +649,6 @@
         function mascararMoeda(input) { let v = input.value.replace(/\D/g, ''); if (!v) { input.value = ''; return; } v = (parseFloat(v) / 100).toFixed(2).replace('.', ','); input.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
-        // --- INJEÇÃO IBGE ---
         async function carregarEstados(idSelect) { const select = document.getElementById(idSelect); if(!select || select.tagName !== 'SELECT') return; select.innerHTML = '<option value="" disabled selected>Carregando...</option>'; try { const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome'); const estados = await res.json(); select.innerHTML = '<option value="" disabled selected>Selecione o Estado...</option>'; estados.forEach(e => { select.innerHTML += `<option value="${e.sigla}">${e.nome}</option>`; }); select.disabled = false; } catch(e) { select.innerHTML = '<option value="">Erro</option>'; } }
         async function carregarCidades(uf, idSelect) { const select = document.getElementById(idSelect); if(!select || select.tagName !== 'SELECT') return; select.innerHTML = '<option value="" disabled selected>Carregando...</option>'; try { const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`); const cidades = await res.json(); select.innerHTML = '<option value="" disabled selected>Selecione a Cidade...</option>'; cidades.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); select.disabled = false; } catch(e) { select.innerHTML = '<option value="">Erro</option>'; } }
         function mudarPais(idPais, idEstado, idCidade, isReq = true) { const reqStr = isReq ? 'required' : ''; const pais = document.getElementById(idPais).value; const elEst = document.getElementById(idEstado); const elCid = document.getElementById(idCidade); if(!elEst || !elCid) return; const divEst = elEst.parentElement; const divCid = elCid.parentElement; const cName = elEst.className; if (pais === 'Brasil') { divEst.innerHTML = `<select id="${idEstado}" class="${cName}" ${reqStr} onchange="carregarCidades(this.value, '${idCidade}')"><option value="">Estado...</option></select>`; divCid.innerHTML = `<select id="${idCidade}" class="${cName}" ${reqStr} disabled><option value="">Cidade...</option></select>`; carregarEstados(idEstado); } else { divEst.innerHTML = `<input type="text" id="${idEstado}" class="${cName}" placeholder="Estado / Distrito" ${reqStr}>`; divCid.innerHTML = `<input type="text" id="${idCidade}" class="${cName}" placeholder="Cidade" ${reqStr}>`; } }
