@@ -403,7 +403,7 @@
 
         function getAppleColorHex(colorName) {
             const search = (colorName || '').toUpperCase();
-            if (search.includes('MIDNIGHT') || search.includes('ESCURA')) return '#191919';
+            if (search.includes('MIDNIGHT') || search.includes('ESCURA') || search.includes('MEIA-NOITE') || search.includes('GRAFITE')) return '#191919';
             if (search.includes('PRETO') || search.includes('BLACK') || search.includes('ÔNIX')) return '#000000';
             if (search.includes('BRANCO') || search.includes('WHITE') || search.includes('NUVEM')) return '#FFFFFF';
             if (search.includes('ESTELAR') || search.includes('STARLIGHT')) return '#faf9f6';
@@ -412,9 +412,9 @@
                 if (search.includes('ROSA') || search.includes('ROSE')) return '#e6c7c2';
                 return '#fad7bd';
             }
-            if (search.includes('AZUL') || search.includes('BLUE') || search.includes('CÉU') || search.includes('NÉVOA') || search.includes('INTENSO') || search.includes('ULTRAMARINO')) return '#215e7c';
-            if (search.includes('VERDE') || search.includes('GREEN') || search.includes('SAFIRA') || search.includes('MUSGO') || search.includes('SÁLVIA') || search.includes('ACINZENTADO')) return '#505c4c';
-            if (search.includes('ROXO') || search.includes('PURPLE') || search.includes('LAVANDA')) return '#b1b1cc';
+            if (search.includes('AZUL') || search.includes('BLUE') || search.includes('CÉU') || search.includes('NÉVOA') || search.includes('INTENSO') || search.includes('ULTRAMARINO') || search.includes('PACÍFICO')) return '#215e7c';
+            if (search.includes('VERDE') || search.includes('GREEN') || search.includes('SAFIRA') || search.includes('MUSGO') || search.includes('SÁLVIA') || search.includes('ACINZENTADO') || search.includes('ALPINO')) return '#505c4c';
+            if (search.includes('ROXO') || search.includes('PURPLE') || search.includes('LAVANDA') || search.includes('PROFUNDO')) return '#b1b1cc';
             if (search.includes('AMARELO') || search.includes('YELLOW')) return '#f9e479';
             if (search.includes('VERMELHO') || search.includes('RED')) return '#a50011';
             if (search.includes('LARANJA') || search.includes('ORANGE') || search.includes('CÓSMICO') || search.includes('DESERTO')) return '#ff9500';
@@ -423,17 +423,20 @@
             return '#808080'; 
         }
 
+        // NOVO: Função para o WhatsApp (Emoji por aproximação visual da cor)
         function getEmojiForColor(colorName) {
             const search = (colorName || '').toUpperCase();
-            if (search.includes('PRETO') || search.includes('BLACK') || search.includes('MIDNIGHT') || search.includes('ÔNIX')) return '⚫';
-            if (search.includes('BRANCO') || search.includes('WHITE') || search.includes('STARLIGHT') || search.includes('PRATA') || search.includes('SILVER') || search.includes('GELO') || search.includes('NUVEM')) return '⚪';
-            if (search.includes('AZUL') || search.includes('BLUE') || search.includes('CÉU') || search.includes('NÉVOA') || search.includes('INTENSO') || search.includes('ULTRAMARINO')) return '🔵';
-            if (search.includes('VERDE') || search.includes('GREEN') || search.includes('SAFIRA') || search.includes('MUSGO') || search.includes('SÁLVIA') || search.includes('ACINZENTADO')) return '🟢';
-            if (search.includes('ROXO') || search.includes('PURPLE') || search.includes('LAVANDA')) return '🟣';
+            if (search.includes('MIX')) return '🔴🟢🔵';
+            if (search.includes('PRETO') || search.includes('BLACK') || search.includes('MIDNIGHT') || search.includes('ÔNIX') || search.includes('MEIA-NOITE') || search.includes('GRAFITE')) return '⚫';
+            if (search.includes('BRANCO') || search.includes('WHITE') || search.includes('STARLIGHT') || search.includes('ESTELAR') || search.includes('PRATA') || search.includes('SILVER') || search.includes('PRATEADO') || search.includes('GELO') || search.includes('NUVEM')) return '⚪';
+            if (search.includes('AZUL') || search.includes('BLUE') || search.includes('CÉU') || search.includes('NÉVOA') || search.includes('INTENSO') || search.includes('ULTRAMARINO') || search.includes('PACÍFICO')) return '🔵';
+            if (search.includes('VERDE') || search.includes('GREEN') || search.includes('SAFIRA') || search.includes('MUSGO') || search.includes('SÁLVIA') || search.includes('ACINZENTADO') || search.includes('ALPINO')) return '🟢';
+            if (search.includes('ROXO') || search.includes('PURPLE') || search.includes('LAVANDA') || search.includes('PROFUNDO')) return '🟣';
             if (search.includes('VERMELHO') || search.includes('RED')) return '🔴';
             if (search.includes('DOURADO') || search.includes('GOLD') || search.includes('AMARELO') || search.includes('YELLOW')) return '🟡';
             if (search.includes('LARANJA') || search.includes('ORANGE') || search.includes('CÓSMICO') || search.includes('DESERTO')) return '🟠';
             if (search.includes('TITAN') || search.includes('CINZA') || search.includes('GRAY') || search.includes('AREIA')) return '🔘';
+            if (search.includes('ROSA') || search.includes('PINK')) return '🩷';
             return '📱';
         }
 
@@ -487,12 +490,6 @@
             if (data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); loja = data; window.location.reload(); } else { alert("Verifique sua loja."); } 
         }
 
-        async function carregarEstados(idSelect) { const select = document.getElementById(idSelect); if(!select || select.tagName !== 'SELECT') return; select.innerHTML = '<option value="" disabled selected>Carregando...</option>'; try { const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome'); const estados = await res.json(); select.innerHTML = '<option value="" disabled selected>Selecione o Estado...</option>'; estados.forEach(e => { select.innerHTML += `<option value="${e.sigla}">${e.nome}</option>`; }); select.disabled = false; } catch(e) { select.innerHTML = '<option value="">Erro ao carregar</option>'; } }
-        async function carregarCidades(uf, idSelect) { const select = document.getElementById(idSelect); if(!select || select.tagName !== 'SELECT') return; select.innerHTML = '<option value="" disabled selected>Carregando...</option>'; try { const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`); const cidades = await res.json(); select.innerHTML = '<option value="" disabled selected>Selecione a Cidade...</option>'; cidades.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); select.disabled = false; } catch(e) { select.innerHTML = '<option value="">Erro ao carregar</option>'; } }
-        function mudarPais(idPais, idEstado, idCidade) { const pais = document.getElementById(idPais).value; const elEst = document.getElementById(idEstado); const elCid = document.getElementById(idCidade); const divEst = elEst.parentElement; const divCid = elCid.parentElement; const cName = elEst.className; if (pais === 'Brasil') { divEst.innerHTML = `<select id="${idEstado}" class="${cName}" required onchange="carregarCidades(this.value, '${idCidade}')"><option value="">Estado...</option></select>`; divCid.innerHTML = `<select id="${idCidade}" class="${cName}" required disabled><option value="">Cidade...</option></select>`; carregarEstados(idEstado); } else { divEst.innerHTML = `<input type="text" id="${idEstado}" class="${cName}" placeholder="Estado / Distrito" required>`; divCid.innerHTML = `<input type="text" id="${idCidade}" class="${cName}" placeholder="Cidade" required>`; } }
-        
-        async function registrarLojista(e) { e.preventDefault(); await _s.from('fornecedores').insert([{ nome: document.getElementById('regNome').value, whatsapp: document.getElementById('regWhats').value, senha: document.getElementById('regSenha').value, pais: document.getElementById('regPaisAta').value, estado: document.getElementById('regEstadoAta').value, cidade: document.getElementById('regCidadeAta').value, ativo: false }]); alert("Solicitado!"); toggleAuth(); }
-        
         function liberarDashboard() { document.getElementById('authSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden'); document.getElementById('nomeLoja').innerText = loja.nome; init(); }
 
         async function init() {
@@ -584,7 +581,7 @@
             const vars = gradeVariacoes.filter(x => x.produto_id == pid && x.capacidade == cap);
             const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
             
-            document.getElementById('f_cor').innerHTML = '<option value="" disabled selected>Qual a Cor?</option><option value="MIX COLORS">🌈 MIX COLORS (Para Lotes)</option>' + cores.filter(c => c !== 'MIX COLORS').map(c => {
+            document.getElementById('f_cor').innerHTML = '<option value="" disabled selected>Qual a Cor?</option><option value="MIX COLORS">🔴🟢🔵 MIX COLORS (Para Lotes)</option>' + cores.filter(c => c !== 'MIX COLORS').map(c => {
                 let emoji = getEmojiForColor(c);
                 return `<option value="${c}">${emoji} ${c}</option>`;
             }).join('');
@@ -644,6 +641,7 @@
             btn.disabled = false; btn.innerText = "Anunciar Agora";
             e.target.reset(); 
             
+            // Reseta UI
             document.getElementById('tipo_anuncio_selecionado').value = "";
             document.getElementById('btnTipoNovo').classList.remove('active');
             document.getElementById('btnTipoSemi').classList.remove('active');
@@ -668,7 +666,7 @@
                let precoFormat = `${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
                
                text += `📱 *${nomeLimpo} ${o.variacoes.capacidade}*\n`;
-               text += `${emojiCor} Cor: ${o.cores_variadas ? 'Mix Colors' : o.variacoes.cor}\n`;
+               text += `${emojiCor} Cor: ${o.variacoes.cor}\n`;
                text += `📦 Cond: ${o.condicao}\n`;
                text += `💰 *Por: ${precoFormat}* (Qtd: ${o.quantidade})\n\n`;
             });
@@ -750,7 +748,7 @@
                     <td><input type="checkbox" class="offer-check" value="${o.id}"></td>
                     <td>
                         <span class="font-black text-blue-500">${colorDot} ${o.variacoes.produtos_mestre.nome}</span><br>
-                        <span class="text-[10px] text-gray-400 font-bold uppercase">${o.variacoes.capacidade} | ${o.cores_variadas ? '🟠 MIX COLORS' : o.variacoes.cor}</span><br>
+                        <span class="text-[10px] text-gray-400 font-bold uppercase">${o.variacoes.capacidade} | ${o.cores_variadas ? '🔴🟢🔵 MIX COLORS' : o.variacoes.cor}</span><br>
                         <button onclick="abrirModalPerguntas(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="text-[9px] font-black text-yellow-500 uppercase mt-1 hover:underline">
                             💬 Perguntas (${o.comentarios ? o.comentarios.length : 0})
                         </button>
@@ -774,6 +772,7 @@
             calcularInsignias(totalEstoque, totalPerguntas); 
         }
 
+        // Funções Auxiliares
         async function abrirModalPerguntas(ofertaId, nomeProd) { document.getElementById('atendimento_oferta_id').value = ofertaId; document.getElementById('perguntaProdutoNome').innerText = nomeProd; document.getElementById('perguntasModal').classList.remove('hidden'); await carregarPerguntas(ofertaId); }
         function fecharModalPerguntas() { document.getElementById('perguntasModal').classList.add('hidden'); }
         async function carregarPerguntas(ofertaId) { const div = document.getElementById('listaAtendimento'); div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Buscando mensagens...</p>'; const { data } = await _s.from('comentarios').select('*').eq('oferta_id', ofertaId).order('criado_em', { ascending: true }); if(!data || data.length === 0) { div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Nenhuma pergunta recebida.</p>'; return; } div.innerHTML = data.map(c => `<div class="p-3 rounded-xl border border-[#38383a] ${c.is_vendedor ? 'bg-blue-900/20 ml-6' : 'bg-[#2c2c2e] mr-6'}"><div class="flex justify-between items-center mb-1.5"><span class="text-[9px] font-black uppercase ${c.is_vendedor ? 'text-blue-400' : 'text-gray-400'}">${c.is_vendedor ? 'Sua Resposta Oficial' : (c.autor_nome || 'Cliente')}</span><button onclick="excluirMensagem(${c.id}, ${ofertaId})" class="text-[7px] text-red-500 font-black uppercase">[ Apagar ]</button></div><p class="text-[11px] text-gray-300 font-bold leading-relaxed">${c.texto}</p></div>`).join(''); div.scrollTop = div.scrollHeight; }
