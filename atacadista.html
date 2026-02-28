@@ -43,7 +43,6 @@
         .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #0071e3; border-radius: 10px; }
         
-        /* INJEÇÃO: ESTILOS DAS INSÍGNIAS */
         .insignia-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 8px; border-radius: 8px; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); margin-right: 5px; margin-bottom: 5px; }
         .insignia-badge.magnata { color: #f59e0b; border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
         .insignia-badge.rei { color: #3b82f6; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
@@ -334,12 +333,43 @@
             const t = localStorage.getItem('iFipe_Anunciante');
             if (t) {
                 const { data } = await _s.from('fornecedores').select('*').eq('id', t).maybeSingle();
-                if(data?.ativo) { loja = data; liberarDashboard(); } else localStorage.removeItem('iFipe_Anunciante');
+                if(data?.ativo) { 
+                    loja = data; 
+                    
+                    // TRAVA DE MANUTENÇÃO
+                    const { data: cfg } = await _s.from('configuracoes').select('manutencao').eq('id', 1).single();
+                    if(cfg && cfg.manutencao && (loja.nome || '').toLowerCase() !== 'oráculo') {
+                        document.body.innerHTML = `
+                            <div style="background:#000; color:#fff; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; font-family:-apple-system, sans-serif;">
+                                <h1 style="font-size:4rem; font-weight:900; font-style:italic; margin-bottom:20px;">iFipe</h1>
+                                <h2 style="color:#0071e3; font-size:1.5rem; font-weight:900; text-transform:uppercase; letter-spacing:2px; margin-bottom:30px;">ESTAMOS EM ATUALIZAÇÃO<br>PARA TRAZER MELHORIAS PARA VOCÊ</h2>
+                                <p style="color:#86868b; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Voltamos em breve<br>TIME iFipe</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    liberarDashboard(); 
+                } else localStorage.removeItem('iFipe_Anunciante');
             }
         };
 
         function toggleAuth() { document.getElementById('loginForm').classList.toggle('hidden'); document.getElementById('registerForm').classList.toggle('hidden'); }
-        async function realizarLoginAnunciante(e) { e.preventDefault(); const { data } = await _s.from('fornecedores').select('*').ilike('nome', document.getElementById('logLoja').value.trim()).eq('senha', document.getElementById('logPass').value).maybeSingle(); if (data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); loja = data; liberarDashboard(); } else { alert("Verifique sua loja."); } }
+        
+        async function realizarLoginAnunciante(e) { 
+            e.preventDefault(); 
+            const lojaInput = document.getElementById('logLoja').value.trim();
+            
+            // TRAVA DE MANUTENÇÃO NO LOGIN
+            const { data: cfg } = await _s.from('configuracoes').select('manutencao').eq('id', 1).single();
+            if(cfg && cfg.manutencao && lojaInput.toLowerCase() !== 'oráculo') {
+                alert("ESTAMOS EM ATUALIZAÇÃO PARA TRAZER MELHORIAS PARA VOCÊ.\nVoltamos em breve - TIME iFipe");
+                return;
+            }
+
+            const { data } = await _s.from('fornecedores').select('*').ilike('nome', lojaInput).eq('senha', document.getElementById('logPass').value).maybeSingle(); 
+            if (data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); loja = data; liberarDashboard(); } else { alert("Verifique sua loja."); } 
+        }
         
         async function carregarEstados(idSelect) { const select = document.getElementById(idSelect); if(!select || select.tagName !== 'SELECT') return; select.innerHTML = '<option value="" disabled selected>Carregando...</option>'; try { const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome'); const estados = await res.json(); select.innerHTML = '<option value="" disabled selected>Selecione o Estado...</option>'; estados.forEach(e => { select.innerHTML += `<option value="${e.sigla}">${e.nome}</option>`; }); select.disabled = false; } catch(e) { select.innerHTML = '<option value="">Erro ao carregar</option>'; } }
         async function carregarCidades(uf, idSelect) { const select = document.getElementById(idSelect); if(!select || select.tagName !== 'SELECT') return; select.innerHTML = '<option value="" disabled selected>Carregando...</option>'; try { const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`); const cidades = await res.json(); select.innerHTML = '<option value="" disabled selected>Selecione a Cidade...</option>'; cidades.forEach(c => { select.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; }); select.disabled = false; } catch(e) { select.innerHTML = '<option value="">Erro ao carregar</option>'; } }
@@ -365,11 +395,8 @@
             atualizarLista();
         }
 
-        // --- INJEÇÃO DA LÓGICA DE GAMIFICAÇÃO NO LOJISTA ---
         function calcularInsignias(totalEstoque, totalPerguntas) {
             let tags = [];
-            
-            // Regra do Estoque
             if (totalEstoque >= 1000) tags.push(`<span class="insignia-badge califa">👑 CALIFA APPLE (+1K)</span>`);
             else if (totalEstoque >= 500) tags.push(`<span class="insignia-badge sheikh">🕌 SHEIKH APPLE (+500)</span>`);
             else if (totalEstoque >= 300) tags.push(`<span class="insignia-badge sultao">🏰 SULTÃO APPLE (+300)</span>`);
@@ -377,15 +404,13 @@
             else if (totalEstoque >= 100) tags.push(`<span class="insignia-badge rei">🛡️ REI APPLE (+100)</span>`);
             else if (totalEstoque >= 50) tags.push(`<span class="insignia-badge magnata">💰 MAGNATA APPLE (+50)</span>`);
 
-            // Regra de Perguntas
             if (totalPerguntas >= 10) tags.push(`<span class="insignia-badge falador">💬 BLÁ BLÁ BLÁ APPLE</span>`);
             
             if(tags.length === 0) tags.push(`<span class="text-[9px] text-gray-500 italic">Continue postando para ganhar insígnias...</span>`);
             
             document.getElementById('blocoInsignias').innerHTML = tags.join('');
-            return tags; // Retorna para usar na linha da tabela se precisar
+            return tags; 
         }
-        // --------------------------------------------------
 
         async function atualizarLista() {
             const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), comentarios(id)').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
@@ -453,7 +478,7 @@
             }).join(''); 
             
             updateBulkCount(); 
-            calcularInsignias(totalEstoque, totalPerguntas); // Ativa as patentes no painel
+            calcularInsignias(totalEstoque, totalPerguntas);
         }
 
         async function abrirModalPerguntas(ofertaId, nomeProd) { document.getElementById('atendimento_oferta_id').value = ofertaId; document.getElementById('perguntaProdutoNome').innerText = nomeProd; document.getElementById('perguntasModal').classList.remove('hidden'); await carregarPerguntas(ofertaId); }
