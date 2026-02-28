@@ -33,12 +33,6 @@
         .btn-wpp-float:hover { width: 170px; padding-left: 18px; justify-content: flex-start; }
         .btn-wpp-float:hover .wpp-text { opacity: 1; }
 
-        .btn-calc-float { position: fixed; bottom: 90px; right: 20px; background-color: #0071e3; color: #fff; width: 60px; height: 60px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 5px 20px rgba(0,113,227,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; cursor: pointer; border: none; }
-        .btn-calc-float svg { flex-shrink: 0; width: 26px; height: 26px; fill: #fff; }
-        .calc-text { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
-        .btn-calc-float:hover { width: 140px; padding-left: 18px; justify-content: flex-start; }
-        .btn-calc-float:hover .calc-text { opacity: 1; }
-
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #0071e3; border-radius: 10px; }
@@ -51,6 +45,8 @@
         .insignia-badge.sheikh { color: #ec4899; border-color: #ec4899; background: rgba(236, 72, 153, 0.1); }
         .insignia-badge.califa { color: #f43f5e; border-color: #f43f5e; background: rgba(244, 63, 94, 0.1); box-shadow: 0 0 10px rgba(244, 63, 94, 0.5); }
         .insignia-badge.falador { color: #10b981; border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+
+        .color-dot-preview { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
@@ -329,27 +325,40 @@
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let loja = null, produtosMestre = [], gradeVariacoes = [], taxaVipGlobal = 0;
 
+        function getAppleColorHex(colorName) {
+            const search = (colorName || '').toUpperCase();
+            if (search.includes('MIDNIGHT') || search.includes('ESCURA')) return '#191919';
+            if (search.includes('PRETO') || search.includes('BLACK')) return '#000000';
+            if (search.includes('BRANCO') || search.includes('WHITE')) return '#FFFFFF';
+            if (search.includes('ESTELAR') || search.includes('STARLIGHT')) return '#faf9f6';
+            if (search.includes('PRATA') || search.includes('SILVER') || search.includes('PRATEADO')) return '#e3e4e5';
+            if (search.includes('DOURADO') || search.includes('GOLD')) {
+                if (search.includes('ROSA') || search.includes('ROSE')) return '#e6c7c2';
+                return '#fad7bd';
+            }
+            if (search.includes('AZUL') || search.includes('BLUE')) return '#215e7c';
+            if (search.includes('VERDE') || search.includes('GREEN')) return '#505c4c';
+            if (search.includes('ROXO') || search.includes('PURPLE')) return '#b1b1cc';
+            if (search.includes('AMARELO') || search.includes('YELLOW')) return '#f9e479';
+            if (search.includes('VERMELHO') || search.includes('RED')) return '#a50011';
+            if (search.includes('LARANJA') || search.includes('ORANGE')) return '#ff9500';
+            if (search.includes('ROSA') || search.includes('PINK')) return '#fae0d8';
+            if (search.includes('TITAN') || search.includes('CINZA') || search.includes('GRAY')) return '#bcbab5'; 
+            return '#808080'; 
+        }
+
         window.onload = async () => {
             const t = localStorage.getItem('iFipe_Anunciante');
             if (t) {
+                // TRAVA MANUTENÇÃO
+                const { data: config } = await _s.from('configuracoes').select('manutencao').eq('id', 1).maybeSingle();
                 const { data } = await _s.from('fornecedores').select('*').eq('id', t).maybeSingle();
                 if(data?.ativo) { 
-                    loja = data; 
-                    
-                    // TRAVA DE MANUTENÇÃO
-                    const { data: cfg } = await _s.from('configuracoes').select('manutencao').eq('id', 1).single();
-                    if(cfg && cfg.manutencao && (loja.nome || '').toLowerCase() !== 'oráculo') {
-                        document.body.innerHTML = `
-                            <div style="background:#000; color:#fff; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:20px; font-family:-apple-system, sans-serif;">
-                                <h1 style="font-size:4rem; font-weight:900; font-style:italic; margin-bottom:20px;">iFipe</h1>
-                                <h2 style="color:#0071e3; font-size:1.5rem; font-weight:900; text-transform:uppercase; letter-spacing:2px; margin-bottom:30px;">ESTAMOS EM ATUALIZAÇÃO<br>PARA TRAZER MELHORIAS PARA VOCÊ</h2>
-                                <p style="color:#86868b; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Voltamos em breve<br>TIME iFipe</p>
-                            </div>
-                        `;
+                    if (config && config.manutencao && data.nome.toLowerCase() !== 'oráculo' && data.nome.toLowerCase() !== 'oraculo') {
+                        document.body.innerHTML = `<div style="background:#000;color:#fff;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px;"><div style="font-size:4rem;font-style:italic;font-weight:900;margin-bottom:20px;">iFipe</div><div style="font-size:1.2rem;font-weight:900;color:#0071e3;text-transform:uppercase;letter-spacing:2px;line-height:1.6;margin-bottom:30px;">ESTAMOS EM ATUALIZAÇÃO<br>PARA TRAZER MELHORIAS PARA VOCÊ</div><div style="color:#86868b;font-size:0.9rem;font-weight:700;text-transform:uppercase;">Voltamos em breve<br>TIME iFipe</div></div>`;
                         return;
                     }
-                    
-                    liberarDashboard(); 
+                    loja = data; liberarDashboard(); 
                 } else localStorage.removeItem('iFipe_Anunciante');
             }
         };
@@ -358,17 +367,16 @@
         
         async function realizarLoginAnunciante(e) { 
             e.preventDefault(); 
-            const lojaInput = document.getElementById('logLoja').value.trim();
+            const lojaName = document.getElementById('logLoja').value.trim();
+            const { data: config } = await _s.from('configuracoes').select('manutencao').eq('id', 1).maybeSingle();
             
-            // TRAVA DE MANUTENÇÃO NO LOGIN
-            const { data: cfg } = await _s.from('configuracoes').select('manutencao').eq('id', 1).single();
-            if(cfg && cfg.manutencao && lojaInput.toLowerCase() !== 'oráculo') {
-                alert("ESTAMOS EM ATUALIZAÇÃO PARA TRAZER MELHORIAS PARA VOCÊ.\nVoltamos em breve - TIME iFipe");
+            if (config && config.manutencao && lojaName.toLowerCase() !== 'oráculo' && lojaName.toLowerCase() !== 'oraculo') {
+                document.body.innerHTML = `<div style="background:#000;color:#fff;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px;"><div style="font-size:4rem;font-style:italic;font-weight:900;margin-bottom:20px;">iFipe</div><div style="font-size:1.2rem;font-weight:900;color:#0071e3;text-transform:uppercase;letter-spacing:2px;line-height:1.6;margin-bottom:30px;">ESTAMOS EM ATUALIZAÇÃO<br>PARA TRAZER MELHORIAS PARA VOCÊ</div><div style="color:#86868b;font-size:0.9rem;font-weight:700;text-transform:uppercase;">Voltamos em breve<br>TIME iFipe</div></div>`;
                 return;
             }
 
-            const { data } = await _s.from('fornecedores').select('*').ilike('nome', lojaInput).eq('senha', document.getElementById('logPass').value).maybeSingle(); 
-            if (data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); loja = data; liberarDashboard(); } else { alert("Verifique sua loja."); } 
+            const { data } = await _s.from('fornecedores').select('*').ilike('nome', lojaName).eq('senha', document.getElementById('logPass').value).maybeSingle(); 
+            if (data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); loja = data; window.location.reload(); } else { alert("Verifique sua loja."); } 
         }
         
         async function carregarEstados(idSelect) { const select = document.getElementById(idSelect); if(!select || select.tagName !== 'SELECT') return; select.innerHTML = '<option value="" disabled selected>Carregando...</option>'; try { const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome'); const estados = await res.json(); select.innerHTML = '<option value="" disabled selected>Selecione o Estado...</option>'; estados.forEach(e => { select.innerHTML += `<option value="${e.sigla}">${e.nome}</option>`; }); select.disabled = false; } catch(e) { select.innerHTML = '<option value="">Erro ao carregar</option>'; } }
@@ -452,11 +460,15 @@
                     }
                 }
 
+                // INJETANDO BOLINHA
+                let colorHex = getAppleColorHex(o.variacoes.cor);
+                let colorDot = `<span class="color-dot-preview" style="background-color: ${colorHex};"></span>`;
+
                 return `
                 <tr data-id="${o.id}">
                     <td><input type="checkbox" class="offer-check" value="${o.id}"></td>
                     <td>
-                        <span class="font-black text-blue-500">${o.variacoes.produtos_mestre.nome}</span><br>
+                        <span class="font-black text-blue-500">${colorDot} ${o.variacoes.produtos_mestre.nome}</span><br>
                         <span class="text-[10px] text-gray-400 font-bold uppercase">${o.variacoes.capacidade} | ${o.cores_variadas ? '🟠 MIXER' : o.variacoes.cor}</span><br>
                         <button onclick="abrirModalPerguntas(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="text-[9px] font-black text-yellow-500 uppercase mt-1 hover:underline">
                             💬 Perguntas (${o.comentarios ? o.comentarios.length : 0})
@@ -478,12 +490,12 @@
             }).join(''); 
             
             updateBulkCount(); 
-            calcularInsignias(totalEstoque, totalPerguntas);
+            calcularInsignias(totalEstoque, totalPerguntas); 
         }
 
         async function abrirModalPerguntas(ofertaId, nomeProd) { document.getElementById('atendimento_oferta_id').value = ofertaId; document.getElementById('perguntaProdutoNome').innerText = nomeProd; document.getElementById('perguntasModal').classList.remove('hidden'); await carregarPerguntas(ofertaId); }
         function fecharModalPerguntas() { document.getElementById('perguntasModal').classList.add('hidden'); }
-        async function carregarPerguntas(ofertaId) { const div = document.getElementById('listaAtendimento'); div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Buscando mensagens...</p>'; const { data } = await _s.from('comentarios').select('*').eq('oferta_id', ofertaId).order('criado_em', { ascending: true }); if(!data || data.length === 0) { div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Nenhuma pergunta recebida.</p>'; return; } div.innerHTML = data.map(c => `<div class="p-3 rounded-xl border border-[#38383a] ${c.is_vendedor ? 'bg-blue-900/20 ml-6' : 'bg-[#2c2c2e] mr-6'}"><div class="flex justify-between items-center mb-1.5"><span class="text-[9px] font-black uppercase ${c.is_vendedor ? 'text-blue-400' : 'text-gray-400'}">${c.is_vendedor ? 'Sua Resposta Oficial' : 'Usuário Privado'}</span><button onclick="excluirMensagem(${c.id}, ${ofertaId})" class="text-[7px] text-red-500 font-black uppercase">[ Apagar ]</button></div><p class="text-[11px] text-gray-300 font-bold leading-relaxed">${c.texto}</p></div>`).join(''); div.scrollTop = div.scrollHeight; }
+        async function carregarPerguntas(ofertaId) { const div = document.getElementById('listaAtendimento'); div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Buscando mensagens...</p>'; const { data } = await _s.from('comentarios').select('*').eq('oferta_id', ofertaId).order('criado_em', { ascending: true }); if(!data || data.length === 0) { div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Nenhuma pergunta recebida.</p>'; return; } div.innerHTML = data.map(c => `<div class="p-3 rounded-xl border border-[#38383a] ${c.is_vendedor ? 'bg-blue-900/20 ml-6' : 'bg-[#2c2c2e] mr-6'}"><div class="flex justify-between items-center mb-1.5"><span class="text-[9px] font-black uppercase ${c.is_vendedor ? 'text-blue-400' : 'text-gray-400'}">${c.is_vendedor ? 'Sua Resposta Oficial' : (c.autor_nome || 'Cliente')}</span><button onclick="excluirMensagem(${c.id}, ${ofertaId})" class="text-[7px] text-red-500 font-black uppercase">[ Apagar ]</button></div><p class="text-[11px] text-gray-300 font-bold leading-relaxed">${c.texto}</p></div>`).join(''); div.scrollTop = div.scrollHeight; }
         async function salvarResposta(e) { e.preventDefault(); const id = document.getElementById('atendimento_oferta_id').value; const txt = document.getElementById('atendimento_texto').value; if(!txt.trim()) return; const { error } = await _s.from('comentarios').insert([{ oferta_id: id, autor_nome: loja.nome, texto: txt, is_vendedor: true }]); if(!error) { document.getElementById('atendimento_texto').value = ''; await carregarPerguntas(id); atualizarLista(); } }
         async function excluirMensagem(id, ofertaId) { if(!confirm("Deseja apagar esta mensagem permanentemente?")) return; await _s.from('comentarios').delete().eq('id', id); await carregarPerguntas(ofertaId); atualizarLista(); }
         function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
