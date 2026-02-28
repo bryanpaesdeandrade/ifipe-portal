@@ -33,10 +33,17 @@
         .btn-wpp-float:hover { width: 170px; padding-left: 18px; justify-content: flex-start; }
         .btn-wpp-float:hover .wpp-text { opacity: 1; }
 
+        .btn-calc-float { position: fixed; bottom: 90px; right: 20px; background-color: #0071e3; color: #fff; width: 60px; height: 60px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 5px 20px rgba(0,113,227,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; cursor: pointer; border: none; }
+        .btn-calc-float svg { flex-shrink: 0; width: 26px; height: 26px; fill: #fff; }
+        .calc-text { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
+        .btn-calc-float:hover { width: 140px; padding-left: 18px; justify-content: flex-start; }
+        .btn-calc-float:hover .calc-text { opacity: 1; }
+
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #0071e3; border-radius: 10px; }
         
+        /* INJEÇÃO: ESTILOS DAS INSÍGNIAS E BOLINHA DE COR */
         .insignia-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 8px; border-radius: 8px; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); margin-right: 5px; margin-bottom: 5px; }
         .insignia-badge.magnata { color: #f59e0b; border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
         .insignia-badge.rei { color: #3b82f6; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
@@ -49,275 +56,277 @@
         .color-dot-preview { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
     </style>
 </head>
-<body>
+<body id="appBody">
 
-    <div id="authSection" class="flex items-center justify-center min-h-screen px-4">
-        <div class="apple-card max-w-[400px] text-center w-full">
-            <h1 class="text-5xl font-black italic mb-2">iFipe</h1>
-            <div id="loginForm">
-                <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel Anunciante</p>
-                <form onsubmit="realizarLoginAnunciante(event)">
-                    <input type="text" id="logLoja" class="apple-input mb-3" placeholder="Nome da Loja" required>
-                    <input type="password" id="logPass" class="apple-input mb-4" placeholder="Senha" required>
-                    <button type="submit" class="apple-button w-full">Entrar</button>
-                    <button type="button" onclick="toggleAuth()" class="text-[10px] text-gray-500 mt-6 block w-full text-center font-bold">Quero me cadastrar</button>
-                </form>
-            </div>
-            <div id="registerForm" class="hidden">
-                <p class="text-[10px] font-bold uppercase text-green-500 mb-8 tracking-[0.4em]">Solicitar Cadastro</p>
-                <form onsubmit="registrarLojista(event)">
-                    <input type="text" id="regNome" class="apple-input mb-2" placeholder="Nome da Loja" required>
-                    <input type="text" id="regWhats" class="apple-input mb-2" placeholder="WhatsApp" required>
-                    
-                    <select id="regPaisAta" class="apple-input mb-2" required onchange="mudarPais('regPaisAta', 'regEstadoAta', 'regCidadeAta')">
-                        <option value="" disabled selected>País Sede...</option>
-                        <option value="Brasil">BRASIL</option>
-                        <option value="Paraguai">PARAGUAI</option>
-                        <option value="Dubai">DUBAI</option>
-                        <option value="Estados Unidos">EUA</option>
-                    </select>
-                    <div class="grid grid-cols-2 gap-2 mb-2">
-                        <div><select id="regEstadoAta" class="apple-input mb-0" required disabled><option value="">Estado...</option></select></div>
-                        <div><select id="regCidadeAta" class="apple-input mb-0" required disabled><option value="">Cidade...</option></select></div>
-                    </div>
-
-                    <input type="password" id="regSenha" class="apple-input mb-4" placeholder="Crie uma Senha" required>
-                    <button type="submit" class="apple-button w-full bg-green-600 text-white">Solicitar</button>
-                    <button type="button" onclick="toggleAuth()" class="text-[10px] text-gray-500 mt-6 block w-full text-center font-bold">Voltar</button>
-                </form>
-            </div>
-            <p id="authMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase"></p>
-        </div>
-    </div>
-
-    <div id="dashboardSection" class="hidden">
-        <div class="user-bar">
-            <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-2 sm:gap-4 w-1/3">
-                    <div class="text-[10px] font-black uppercase hidden lg:block">LOJA: <span id="nomeLoja" class="text-blue-500 ml-1">...</span></div>
-                    <button onclick="abrirConta()" class="text-[10px] text-gray-400 hover:text-white font-black uppercase border border-gray-600 rounded px-2 py-1">Conta</button>
-                </div>
-                
-                <a href="https://www.binance.com/pt-BR/trade/USDT_BRL?type=spot" target="_blank" class="text-center w-1/3" style="text-decoration: none;">
-                    <span class="text-[7px] sm:text-[8px] text-gray-400 font-black uppercase block mb-1">BINANCE USDT/BRL ONLINE</span>
-                    <div id="tickerBinance" class="text-[14px] sm:text-[16px] font-mono font-black text-[#fcd535]">R$ --</div>
-                </a>
-
-                <div class="flex items-center justify-end gap-2 sm:gap-6 w-1/3">
-                    <div class="text-right bg-[#32d74b]/10 px-2 sm:px-3 py-1 rounded-lg border border-[#32d74b]/20 hidden sm:block">
-                        <span class="text-[7px] text-[#32d74b] font-black uppercase block">COMPRE USDT (TAXA VIP)</span>
-                        <div id="tVip" class="text-[11px] sm:text-[13px] font-mono font-black text-[#32d74b]">R$ --</div>
-                    </div>
-                    <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div class="lg:col-span-1 space-y-6">
-                
-                <div class="apple-card border-blue-600/30 bg-blue-600/5 p-4">
-                    <h3 class="text-xs font-black uppercase text-blue-500 italic mb-2">Suas Conquistas 🏆</h3>
-                    <p class="text-[8px] text-gray-400 uppercase mb-3 font-bold tracking-widest">Seu nível de poder no iFipe</p>
-                    <div id="blocoInsignias" class="flex flex-wrap gap-1">
-                        <span class="text-[9px] text-gray-500 italic">Carregando status...</span>
-                    </div>
-                </div>
-
-                <div class="apple-card border-green-600/30 bg-green-600/5 p-4">
-                    <h3 class="text-xs font-black uppercase text-green-500 italic mb-3">Simulador Compra USDT</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <label class="text-[8px] text-gray-500 uppercase font-black">Quanto USDT quer comprar?</label>
-                            <input type="number" id="sim_usd" class="apple-input border-green-600/30" placeholder="Ex: 1000" oninput="calcSimulador()">
-                        </div>
-                        <div class="bg-black p-3 rounded-lg border border-[#38383a] text-center">
-                            <span class="text-[8px] text-gray-400 uppercase block mb-1">Valor a enviar em Reais</span>
-                            <span id="sim_result" class="text-lg font-mono font-black text-[#32d74b]">R$ 0,00</span>
-                        </div>
-                        <a id="btnZapCompra" href="https://wa.me/15616760652?text=Preciso%20comprar%20USDT%20vim%20atraves%20da%20iFipe" target="_blank" class="apple-button bg-green-600 text-black block text-center font-black">Garantir Taxa no Zap</a>
-                    </div>
-                </div>
-
-                <div class="apple-card">
-                    <h2 class="text-sm font-black italic mb-4 uppercase text-blue-500">Publicar Novo PRODUTO</h2>
-                    <form id="priceForm" onsubmit="salvarOferta(event)">
-                        <select id="filtro_grupo" class="apple-input mb-2" onchange="popularProdutos()" required>
-                            <option value="" disabled selected>Selecione Categoria...</option>
-                            <option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="3">IPAD</option>
-                        </select>
-                        <select id="produto_id" class="apple-input mb-2" onchange="aoMudarProduto()" required>
-                            <option value="" disabled selected>Escolha o Modelo...</option>
-                        </select>
-                        <div id="gradeOpcoes"></div>
-                        <select id="condicao" class="apple-input mt-2" onchange="checarGarantia()" required>
-                            <option value="" disabled selected>Condição...</option>
-                            <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
-                            <option value="CPO">CPO</option><option value="AS IS +">AS IS +</option>
-                            <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
-                        </select>
-                        <select id="saude_bateria" class="apple-input mt-2">
-                            <option value="" selected>Saúde da Bateria (Se houver)...</option>
-                            <option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option>
-                            <option value="ACIMA DE 90%">ACIMA DE 90%</option><option value="ACIMA DE 95%">ACIMA DE 95%</option>
-                            <option value="BATERIA EM 100%">BATERIA EM 100%</option>
-                        </select>
-                        <input type="number" id="quantidade" class="apple-input mt-2" placeholder="Qtd" min="1" required>
-                        <select id="garantia_sel" class="apple-input mt-2" onchange="document.getElementById('garantia').value = this.value">
-                            <option value="">Tempo de Garantia...</option>
-                            <option value="30 DIAS">30 DIAS</option><option value="3 MESES">3 MESES</option>
-                            <option value="6 MESES">6 MESES</option><option value="1 ANO">1 ANO</option>
-                            <option value="1 ANO GARANTIA APPLE">1 ANO GARANTIA APPLE</option>
-                        </select>
-                        <input type="text" id="garantia" class="apple-input mt-2" placeholder="Ou digite aqui...">
-                        <select id="regiao_id" class="apple-input mt-2" required>
-                            <option value="" disabled selected>Origem...</option>
-                        </select>
-                        <div class="grid grid-cols-2 gap-2 mt-2">
-                            <input type="text" id="preco_brl" class="apple-input" placeholder="R$" oninput="mascararMoeda(this); limparPreco('brl')">
-                            <input type="text" id="preco_usd" class="apple-input" placeholder="$" oninput="mascararMoeda(this); limparPreco('usd')">
-                        </div>
-                        <div class="mt-4 p-3 bg-[#2c2c2e] rounded-xl grid grid-cols-2 gap-2 border border-[#38383a]">
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_pix"> PIX</label>
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_usdt"> USDT</label>
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_nota"> NF</label>
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_proposta"> NEGOCIA QTD</label>
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_envio"> FAZ ENVIO</label>
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_coleta"> ACEITA COLETA</label>
-                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_boy"> MOTOBOY</label>
-                        </div>
-                        <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-4">Anunciar</button>
+    <div id="mainContent" class="hidden">
+        <div id="authSection" class="flex items-center justify-center min-h-screen px-4">
+            <div class="apple-card max-w-[400px] text-center w-full">
+                <h1 class="text-5xl font-black italic mb-2">iFipe</h1>
+                <div id="loginForm">
+                    <p class="text-[10px] font-bold uppercase text-blue-500 mb-8 tracking-[0.4em]">Painel Anunciante</p>
+                    <form onsubmit="realizarLoginAnunciante(event)">
+                        <input type="text" id="logLoja" class="apple-input mb-3" placeholder="Nome da Loja" required>
+                        <input type="password" id="logPass" class="apple-input mb-4" placeholder="Senha" required>
+                        <button type="submit" class="apple-button w-full">Entrar</button>
+                        <button type="button" onclick="toggleAuth()" class="text-[10px] text-gray-500 mt-6 block w-full text-center font-bold">Quero me cadastrar</button>
                     </form>
                 </div>
-            </div>
+                <div id="registerForm" class="hidden">
+                    <p class="text-[10px] font-bold uppercase text-green-500 mb-8 tracking-[0.4em]">Solicitar Cadastro</p>
+                    <form onsubmit="registrarLojista(event)">
+                        <input type="text" id="regNome" class="apple-input mb-2" placeholder="Nome da Loja" required>
+                        <input type="text" id="regWhats" class="apple-input mb-2" placeholder="WhatsApp" required>
+                        
+                        <select id="regPaisAta" class="apple-input mb-2" required onchange="mudarPais('regPaisAta', 'regEstadoAta', 'regCidadeAta')">
+                            <option value="" disabled selected>País Sede...</option>
+                            <option value="Brasil">BRASIL</option>
+                            <option value="Paraguai">PARAGUAI</option>
+                            <option value="Dubai">DUBAI</option>
+                            <option value="Estados Unidos">EUA</option>
+                        </select>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <div><select id="regEstadoAta" class="apple-input mb-0" required disabled><option value="">Estado...</option></select></div>
+                            <div><select id="regCidadeAta" class="apple-input mb-0" required disabled><option value="">Cidade...</option></select></div>
+                        </div>
 
-            <div class="lg:col-span-3 space-y-4">
-                <div class="bg-blue-600 p-4 rounded-2xl flex flex-wrap items-center justify-between shadow-lg gap-4">
-                    <span class="text-xs font-black text-white uppercase"><span id="bulkCount">0</span> Selecionados</span>
-                    <div class="flex gap-2">
-                        <button onclick="abrirBulkEdit()" class="bg-white text-blue-600 px-4 py-2 rounded-full text-[9px] font-black uppercase shadow-lg shadow-black/50">Editar Massa (Tudo)</button>
-                        <button onclick="bulkDuplicate()" class="bg-green-500 text-white px-4 py-2 rounded-full text-[9px] font-black uppercase">Duplicar</button>
-                        <button onclick="bulkDelete()" class="bg-red-500 text-white px-4 py-2 rounded-full text-[9px] font-black uppercase">Apagar</button>
+                        <input type="password" id="regSenha" class="apple-input mb-4" placeholder="Crie uma Senha" required>
+                        <button type="submit" class="apple-button w-full bg-green-600 text-white">Solicitar</button>
+                        <button type="button" onclick="toggleAuth()" class="text-[10px] text-gray-500 mt-6 block w-full text-center font-bold">Voltar</button>
+                    </form>
+                </div>
+                <p id="authMsg" class="mt-4 text-[10px] font-bold text-red-500 uppercase"></p>
+            </div>
+        </div>
+
+        <div id="dashboardSection" class="hidden">
+            <div class="user-bar">
+                <div class="max-w-7xl mx-auto flex justify-between items-center">
+                    <div class="flex items-center gap-2 sm:gap-4 w-1/3">
+                        <div class="text-[10px] font-black uppercase hidden lg:block">LOJA: <span id="nomeLoja" class="text-blue-500 ml-1">...</span></div>
+                        <button onclick="abrirConta()" class="text-[10px] text-gray-400 hover:text-white font-black uppercase border border-gray-600 rounded px-2 py-1">Conta</button>
+                    </div>
+                    
+                    <a href="https://www.binance.com/pt-BR/trade/USDT_BRL?type=spot" target="_blank" class="text-center w-1/3" style="text-decoration: none;">
+                        <span class="text-[7px] sm:text-[8px] text-gray-400 font-black uppercase block mb-1">BINANCE USDT/BRL ONLINE</span>
+                        <div id="tickerBinance" class="text-[14px] sm:text-[16px] font-mono font-black text-[#fcd535]">R$ --</div>
+                    </a>
+
+                    <div class="flex items-center justify-end gap-2 sm:gap-6 w-1/3">
+                        <div class="text-right bg-[#32d74b]/10 px-2 sm:px-3 py-1 rounded-lg border border-[#32d74b]/20 hidden sm:block">
+                            <span class="text-[7px] text-[#32d74b] font-black uppercase block">COMPRE USDT (TAXA VIP)</span>
+                            <div id="tVip" class="text-[11px] sm:text-[13px] font-mono font-black text-[#32d74b]">R$ --</div>
+                        </div>
+                        <button onclick="sairPainel()" class="text-[10px] text-red-500 font-black uppercase">Sair</button>
                     </div>
                 </div>
-                <div class="apple-card overflow-x-auto">
-                    <table>
-                        <thead><tr><th width="30"><input type="checkbox" onclick="toggleAll(this)"></th><th>Modelo / Variação</th><th class="text-center">Qtd (Clique)</th><th class="text-center">Preço (Clique)</th><th class="text-right">Ação</th></tr></thead>
-                        <tbody id="listaAtivos"></tbody>
-                    </table>
+            </div>
+
+            <div class="max-w-7xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div class="lg:col-span-1 space-y-6">
+                    
+                    <div class="apple-card border-blue-600/30 bg-blue-600/5 p-4">
+                        <h3 class="text-xs font-black uppercase text-blue-500 italic mb-2">Suas Conquistas 🏆</h3>
+                        <p class="text-[8px] text-gray-400 uppercase mb-3 font-bold tracking-widest">Seu nível de poder no iFipe</p>
+                        <div id="blocoInsignias" class="flex flex-wrap gap-1">
+                            <span class="text-[9px] text-gray-500 italic">Carregando status...</span>
+                        </div>
+                    </div>
+
+                    <div class="apple-card border-green-600/30 bg-green-600/5 p-4">
+                        <h3 class="text-xs font-black uppercase text-green-500 italic mb-3">Simulador Compra USDT</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="text-[8px] text-gray-500 uppercase font-black">Quanto USDT quer comprar?</label>
+                                <input type="number" id="sim_usd" class="apple-input border-green-600/30" placeholder="Ex: 1000" oninput="calcSimulador()">
+                            </div>
+                            <div class="bg-black p-3 rounded-lg border border-[#38383a] text-center">
+                                <span class="text-[8px] text-gray-400 uppercase block mb-1">Valor a enviar em Reais</span>
+                                <span id="sim_result" class="text-lg font-mono font-black text-[#32d74b]">R$ 0,00</span>
+                            </div>
+                            <a id="btnZapCompra" href="https://wa.me/15616760652?text=Preciso%20comprar%20USDT%20vim%20atraves%20da%20iFipe" target="_blank" class="apple-button bg-green-600 text-black block text-center font-black">Garantir Taxa no Zap</a>
+                        </div>
+                    </div>
+
+                    <div class="apple-card">
+                        <h2 class="text-sm font-black italic mb-4 uppercase text-blue-500">Publicar Novo PRODUTO</h2>
+                        <form id="priceForm" onsubmit="salvarOferta(event)">
+                            <select id="filtro_grupo" class="apple-input mb-2" onchange="popularProdutos()" required>
+                                <option value="" disabled selected>Selecione Categoria...</option>
+                                <option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="3">IPAD</option>
+                            </select>
+                            <select id="produto_id" class="apple-input mb-2" onchange="aoMudarProduto()" required>
+                                <option value="" disabled selected>Escolha o Modelo...</option>
+                            </select>
+                            <div id="gradeOpcoes"></div>
+                            <select id="condicao" class="apple-input mt-2" onchange="checarGarantia()" required>
+                                <option value="" disabled selected>Condição...</option>
+                                <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
+                                <option value="CPO">CPO</option><option value="AS IS +">AS IS +</option>
+                                <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
+                            </select>
+                            <select id="saude_bateria" class="apple-input mt-2">
+                                <option value="" selected>Saúde da Bateria (Se houver)...</option>
+                                <option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option>
+                                <option value="ACIMA DE 90%">ACIMA DE 90%</option><option value="ACIMA DE 95%">ACIMA DE 95%</option>
+                                <option value="BATERIA EM 100%">BATERIA EM 100%</option>
+                            </select>
+                            <input type="number" id="quantidade" class="apple-input mt-2" placeholder="Qtd" min="1" required>
+                            <select id="garantia_sel" class="apple-input mt-2" onchange="document.getElementById('garantia').value = this.value">
+                                <option value="">Tempo de Garantia...</option>
+                                <option value="30 DIAS">30 DIAS</option><option value="3 MESES">3 MESES</option>
+                                <option value="6 MESES">6 MESES</option><option value="1 ANO">1 ANO</option>
+                                <option value="1 ANO GARANTIA APPLE">1 ANO GARANTIA APPLE</option>
+                            </select>
+                            <input type="text" id="garantia" class="apple-input mt-2" placeholder="Ou digite aqui...">
+                            <select id="regiao_id" class="apple-input mt-2" required>
+                                <option value="" disabled selected>Origem...</option>
+                            </select>
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <input type="text" id="preco_brl" class="apple-input" placeholder="R$" oninput="mascararMoeda(this); limparPreco('brl')">
+                                <input type="text" id="preco_usd" class="apple-input" placeholder="$" oninput="mascararMoeda(this); limparPreco('usd')">
+                            </div>
+                            <div class="mt-4 p-3 bg-[#2c2c2e] rounded-xl grid grid-cols-2 gap-2 border border-[#38383a]">
+                                <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_pix"> PIX</label>
+                                <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_usdt"> USDT</label>
+                                <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_nota"> NF</label>
+                                <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_proposta"> NEGOCIA QTD</label>
+                                <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_envio"> FAZ ENVIO</label>
+                                <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_coleta"> ACEITA COLETA</label>
+                                <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_boy"> MOTOBOY</label>
+                            </div>
+                            <button type="submit" class="apple-button w-full bg-blue-600 text-white mt-4">Anunciar</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-3 space-y-4">
+                    <div class="bg-blue-600 p-4 rounded-2xl flex flex-wrap items-center justify-between shadow-lg gap-4">
+                        <span class="text-xs font-black text-white uppercase"><span id="bulkCount">0</span> Selecionados</span>
+                        <div class="flex gap-2">
+                            <button onclick="abrirBulkEdit()" class="bg-white text-blue-600 px-4 py-2 rounded-full text-[9px] font-black uppercase shadow-lg shadow-black/50">Editar Massa (Tudo)</button>
+                            <button onclick="bulkDuplicate()" class="bg-green-500 text-white px-4 py-2 rounded-full text-[9px] font-black uppercase">Duplicar</button>
+                            <button onclick="bulkDelete()" class="bg-red-500 text-white px-4 py-2 rounded-full text-[9px] font-black uppercase">Apagar</button>
+                        </div>
+                    </div>
+                    <div class="apple-card overflow-x-auto">
+                        <table>
+                            <thead><tr><th width="30"><input type="checkbox" onclick="toggleAll(this)"></th><th>Modelo / Variação</th><th class="text-center">Qtd (Clique)</th><th class="text-center">Preço (Clique)</th><th class="text-right">Ação</th></tr></thead>
+                            <tbody id="listaAtivos"></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div id="perguntasModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2500] px-4">
-        <div class="w-full max-w-[450px] bg-[#1c1c1e] border border-[#38383a] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
-            <button onclick="fecharModalPerguntas()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">Responder Perguntas</h3>
-                <p id="perguntaProdutoNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
+        <div id="perguntasModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2500] px-4">
+            <div class="w-full max-w-[450px] bg-[#1c1c1e] border border-[#38383a] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+                <button onclick="fecharModalPerguntas()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+                <div class="text-center mb-4 mt-2">
+                    <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">Responder Perguntas</h3>
+                    <p id="perguntaProdutoNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
+                </div>
+                <div id="listaAtendimento" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2 custom-scroll"></div>
+                <form onsubmit="salvarResposta(event)" class="mt-auto border-t border-[#38383a] pt-4">
+                    <input type="hidden" id="atendimento_oferta_id">
+                    <textarea id="atendimento_texto" class="apple-input w-full h-[70px] resize-none mb-2 text-[11px]" placeholder="Digite sua resposta oficial como lojista..." required></textarea>
+                    <button type="submit" class="bg-green-600 text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-green-700">Enviar Resposta</button>
+                </form>
             </div>
-            <div id="listaAtendimento" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2 custom-scroll"></div>
-            <form onsubmit="salvarResposta(event)" class="mt-auto border-t border-[#38383a] pt-4">
-                <input type="hidden" id="atendimento_oferta_id">
-                <textarea id="atendimento_texto" class="apple-input w-full h-[70px] resize-none mb-2 text-[11px]" placeholder="Digite sua resposta oficial como lojista..." required></textarea>
-                <button type="submit" class="bg-green-600 text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-green-700">Enviar Resposta</button>
-            </form>
         </div>
-    </div>
 
-    <div id="calcModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[3000] p-4">
-        <div class="apple-card max-w-[400px] w-full border-[#0071e3] relative">
-            <button onclick="fecharCalc()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
-            <h3 class="text-lg font-black uppercase mb-1 text-[#0071e3] text-center">Calculadora VIP de importação de iphone</h3>
-            <p class="text-[9px] text-gray-400 font-bold uppercase mb-6 text-center">saiba o preço final comprando no paraguai e recebendo no brasil</p>
-            <div class="bg-[#0a0a0a] border-2 border-[#2c2c2e] rounded-2xl p-4 text-right mb-4">
-                <span class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP (R$)</span>
-                <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-2">R$ 0,00</div>
+        <div id="calcModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[3000] p-4">
+            <div class="apple-card max-w-[400px] w-full border-[#0071e3] relative">
+                <button onclick="fecharCalc()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+                <h3 class="text-lg font-black uppercase mb-1 text-[#0071e3] text-center">Calculadora VIP de importação de iphone</h3>
+                <p class="text-[9px] text-gray-400 font-bold uppercase mb-6 text-center">saiba o preço final comprando no paraguai e recebendo no brasil</p>
+                <div class="bg-[#0a0a0a] border-2 border-[#2c2c2e] rounded-2xl p-4 text-right mb-4">
+                    <span class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP (R$)</span>
+                    <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-2">R$ 0,00</div>
+                </div>
+                <input type="number" id="calcUsdInput" class="w-full bg-[#151516] border-2 border-[#38383a] rounded-xl py-4 text-xl font-black text-white outline-none focus:border-[#0071e3] text-center" placeholder="Dólar no Paraguai" oninput="executarCalc()">
             </div>
-            <input type="number" id="calcUsdInput" class="w-full bg-[#151516] border-2 border-[#38383a] rounded-xl py-4 text-xl font-black text-white outline-none focus:border-[#0071e3] text-center" placeholder="Dólar no Paraguai" oninput="executarCalc()">
         </div>
-    </div>
 
-    <div id="contaModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000] p-4">
-        <div class="apple-card max-w-[400px] w-full border-blue-500">
-            <h3 class="text-sm font-black uppercase mb-4 text-blue-500">Minha Conta VIP</h3>
-            <form onsubmit="salvarConta(event)">
-                <label class="text-[8px] text-gray-500 uppercase font-black">Nome da Loja</label>
-                <input type="text" id="c_nome" class="apple-input mb-3" required>
-                <label class="text-[8px] text-gray-500 uppercase font-black">WhatsApp (Apenas números)</label>
-                <input type="text" id="c_whats" class="apple-input mb-3" required>
-                <label class="text-[8px] text-gray-500 uppercase font-black">Nova Senha</label>
-                <input type="text" id="c_senha" class="apple-input mb-4" required>
-                <div class="flex gap-2">
-                    <button type="button" onclick="fecharConta()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
-                    <button type="submit" class="apple-button bg-blue-600 text-white w-2/3">Atualizar</button>
-                </div>
-            </form>
+        <div id="contaModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000] p-4">
+            <div class="apple-card max-w-[400px] w-full border-blue-500">
+                <h3 class="text-sm font-black uppercase mb-4 text-blue-500">Minha Conta VIP</h3>
+                <form onsubmit="salvarConta(event)">
+                    <label class="text-[8px] text-gray-500 uppercase font-black">Nome da Loja</label>
+                    <input type="text" id="c_nome" class="apple-input mb-3" required>
+                    <label class="text-[8px] text-gray-500 uppercase font-black">WhatsApp (Apenas números)</label>
+                    <input type="text" id="c_whats" class="apple-input mb-3" required>
+                    <label class="text-[8px] text-gray-500 uppercase font-black">Nova Senha</label>
+                    <input type="text" id="c_senha" class="apple-input mb-4" required>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="fecharConta()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
+                        <button type="submit" class="apple-button bg-blue-600 text-white w-2/3">Atualizar</button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <div id="editModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000] p-4">
-        <div class="apple-card max-w-[500px] w-full border-blue-500">
-            <h3 class="text-sm font-black uppercase mb-4 text-blue-500">Editar Detalhes do Anúncio</h3>
-            <form onsubmit="salvarEdicaoCompleta(event)">
-                <input type="hidden" id="edit_id"><input type="hidden" id="edit_produto_id"><input type="hidden" id="edit_capacidade">
-                <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Preço</label><input type="text" id="edit_preco" class="apple-input" oninput="mascararMoeda(this)"></div>
-                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Cor</label><select id="edit_cor" class="apple-input"></select></div>
-                </div>
-                <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Condição</label><select id="edit_cond" class="apple-input" onchange="checarGarantiaModal()">
-                        <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="AS IS">AS IS</option>
-                        <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
-                    </select></div>
-                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Qtd</label><input type="number" id="edit_qtd" class="apple-input"></div>
-                </div>
-                <div><label class="text-[8px] text-gray-500 uppercase font-black">Garantia</label><input type="text" id="edit_gar" class="apple-input mb-3"></div>
-                <div class="flex gap-2">
-                    <button type="button" onclick="fecharModalEdit()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
-                    <button type="submit" class="apple-button bg-blue-600 text-white w-2/3">Salvar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="bulkEditModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[1100] p-4">
-        <div class="apple-card max-w-[600px] w-full border-green-500">
-            <h3 class="text-lg font-black uppercase mb-4 text-green-500 text-center">Super Edição em Massa</h3>
-            <form onsubmit="salvarBulkChanges(event)">
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Preço</label><input type="text" id="bulk_preco" class="apple-input" placeholder="Novo Preço" oninput="mascararMoeda(this)"></div>
-                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Quantidade</label><input type="number" id="bulk_qtd" class="apple-input" placeholder="Nova Qtd"></div>
-                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Condição</label><select id="bulk_condicao" class="apple-input">
-                            <option value="">Manter...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
-                            <option value="CPO">CPO</option><option value="AS IS +">AS IS +</option>
+        <div id="editModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000] p-4">
+            <div class="apple-card max-w-[500px] w-full border-blue-500">
+                <h3 class="text-sm font-black uppercase mb-4 text-blue-500">Editar Detalhes do Anúncio</h3>
+                <form onsubmit="salvarEdicaoCompleta(event)">
+                    <input type="hidden" id="edit_id"><input type="hidden" id="edit_produto_id"><input type="hidden" id="edit_capacidade">
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div><label class="text-[8px] text-gray-500 uppercase font-black">Preço</label><input type="text" id="edit_preco" class="apple-input" oninput="mascararMoeda(this)"></div>
+                        <div><label class="text-[8px] text-gray-500 uppercase font-black">Cor</label><select id="edit_cor" class="apple-input"></select></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div><label class="text-[8px] text-gray-500 uppercase font-black">Condição</label><select id="edit_cond" class="apple-input" onchange="checarGarantiaModal()">
+                            <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="AS IS">AS IS</option>
                             <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
                         </select></div>
-                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Bateria</label><select id="bulk_bateria" class="apple-input">
-                            <option value="">Manter...</option><option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option>
-                            <option value="ACIMA DE 90%">ACIMA DE 90%</option><option value="ACIMA DE 95%">ACIMA DE 95%</option>
-                            <option value="BATERIA EM 100%">BATERIA EM 100%</option>
-                        </select></div>
-                </div>
-                <div class="mb-4">
-                    <label class="text-[8px] text-gray-500 font-bold uppercase">Garantia</label>
-                    <input type="text" id="bulk_garantia" class="apple-input" placeholder="Nova Garantia (Ex: 3 MESES)">
-                </div>
-                <div class="grid grid-cols-4 gap-2 mb-4 p-3 bg-[#2c2c2e] rounded-xl border border-[#38383a]">
-                    <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">PIX</label><select id="bulk_pix" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
-                    <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">USDT</label><select id="bulk_usdt" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
-                    <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">NF</label><select id="bulk_nota" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
-                    <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">NEG. QTD</label><select id="bulk_proposta" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
-                    <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">ENVIO</label><select id="bulk_envio" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
-                    <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">COLETA</label><select id="bulk_coleta" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
-                    <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">MOTOBOY</label><select id="bulk_boy" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
-                </div>
-                <div class="flex gap-2 mt-8">
-                    <button type="button" onclick="fecharBulkEdit()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
-                    <button type="submit" class="apple-button bg-green-600 text-white w-2/3">Aplicar a Todos</button>
-                </div>
-            </form>
+                        <div><label class="text-[8px] text-gray-500 uppercase font-black">Qtd</label><input type="number" id="edit_qtd" class="apple-input"></div>
+                    </div>
+                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Garantia</label><input type="text" id="edit_gar" class="apple-input mb-3"></div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="fecharModalEdit()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
+                        <button type="submit" class="apple-button bg-blue-600 text-white w-2/3">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="bulkEditModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[1100] p-4">
+            <div class="apple-card max-w-[600px] w-full border-green-500">
+                <h3 class="text-lg font-black uppercase mb-4 text-green-500 text-center">Super Edição em Massa</h3>
+                <form onsubmit="salvarBulkChanges(event)">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div><label class="text-[8px] text-gray-500 font-bold uppercase">Preço</label><input type="text" id="bulk_preco" class="apple-input" placeholder="Novo Preço" oninput="mascararMoeda(this)"></div>
+                        <div><label class="text-[8px] text-gray-500 font-bold uppercase">Quantidade</label><input type="number" id="bulk_qtd" class="apple-input" placeholder="Nova Qtd"></div>
+                        <div><label class="text-[8px] text-gray-500 font-bold uppercase">Condição</label><select id="bulk_condicao" class="apple-input">
+                                <option value="">Manter...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
+                                <option value="CPO">CPO</option><option value="AS IS +">AS IS +</option>
+                                <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
+                            </select></div>
+                        <div><label class="text-[8px] text-gray-500 font-bold uppercase">Bateria</label><select id="bulk_bateria" class="apple-input">
+                                <option value="">Manter...</option><option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option>
+                                <option value="ACIMA DE 90%">ACIMA DE 90%</option><option value="ACIMA DE 95%">ACIMA DE 95%</option>
+                                <option value="BATERIA EM 100%">BATERIA EM 100%</option>
+                            </select></div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="text-[8px] text-gray-500 font-bold uppercase">Garantia</label>
+                        <input type="text" id="bulk_garantia" class="apple-input" placeholder="Nova Garantia (Ex: 3 MESES)">
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 mb-4 p-3 bg-[#2c2c2e] rounded-xl border border-[#38383a]">
+                        <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">PIX</label><select id="bulk_pix" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                        <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">USDT</label><select id="bulk_usdt" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                        <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">NF</label><select id="bulk_nota" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                        <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">NEG. QTD</label><select id="bulk_proposta" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                        <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">ENVIO</label><select id="bulk_envio" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                        <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">COLETA</label><select id="bulk_coleta" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                        <div class="text-center"><label class="text-[8px] text-gray-500 block mb-1">MOTOBOY</label><select id="bulk_boy" class="apple-input text-[10px] p-1"><option value="">Manter</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                    </div>
+                    <div class="flex gap-2 mt-8">
+                        <button type="button" onclick="fecharBulkEdit()" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
+                        <button type="submit" class="apple-button bg-green-600 text-white w-2/3">Aplicar a Todos</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -347,17 +356,39 @@
             return '#808080'; 
         }
 
+        // SISTEMA DE MANUTENÇÃO (BARREIRA FRONTAL)
+        async function checarManutencao() {
+            try {
+                const { data } = await _s.from('configuracoes').select('manutencao').eq('id', 1).maybeSingle();
+                
+                const token = localStorage.getItem('iFipe_Anunciante');
+                let isMaster = false;
+                
+                if (token) {
+                    const { data: userData } = await _s.from('fornecedores').select('nome').eq('id', token).single();
+                    if (userData && (userData.nome.toLowerCase() === 'oráculo' || userData.nome.toLowerCase() === 'oraculo')) {
+                        isMaster = true;
+                    }
+                }
+
+                if (data && data.manutencao && !isMaster) {
+                    document.body.innerHTML = `<div style="background:#000;color:#fff;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px;"><div style="font-size:4rem;font-style:italic;font-weight:900;margin-bottom:20px;">iFipe</div><div style="font-size:1.2rem;font-weight:900;color:#0071e3;text-transform:uppercase;letter-spacing:2px;line-height:1.6;margin-bottom:30px;">ESTAMOS EM ATUALIZAÇÃO<br>PARA TRAZER MELHORIAS PARA VOCÊ</div><div style="color:#86868b;font-size:0.9rem;font-weight:700;text-transform:uppercase;">Voltamos em breve<br>TIME iFipe</div></div>`;
+                    return true;
+                }
+            } catch (e) { console.error(e); }
+            return false;
+        }
+
         window.onload = async () => {
+            const estaEmManutencao = await checarManutencao();
+            if (estaEmManutencao) return; // Trava a execução se estiver em manutenção
+            
+            document.getElementById('mainContent').classList.remove('hidden');
+
             const t = localStorage.getItem('iFipe_Anunciante');
             if (t) {
-                // TRAVA MANUTENÇÃO
-                const { data: config } = await _s.from('configuracoes').select('manutencao').eq('id', 1).maybeSingle();
                 const { data } = await _s.from('fornecedores').select('*').eq('id', t).maybeSingle();
                 if(data?.ativo) { 
-                    if (config && config.manutencao && data.nome.toLowerCase() !== 'oráculo' && data.nome.toLowerCase() !== 'oraculo') {
-                        document.body.innerHTML = `<div style="background:#000;color:#fff;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px;"><div style="font-size:4rem;font-style:italic;font-weight:900;margin-bottom:20px;">iFipe</div><div style="font-size:1.2rem;font-weight:900;color:#0071e3;text-transform:uppercase;letter-spacing:2px;line-height:1.6;margin-bottom:30px;">ESTAMOS EM ATUALIZAÇÃO<br>PARA TRAZER MELHORIAS PARA VOCÊ</div><div style="color:#86868b;font-size:0.9rem;font-weight:700;text-transform:uppercase;">Voltamos em breve<br>TIME iFipe</div></div>`;
-                        return;
-                    }
                     loja = data; liberarDashboard(); 
                 } else localStorage.removeItem('iFipe_Anunciante');
             }
@@ -460,7 +491,6 @@
                     }
                 }
 
-                // INJETANDO BOLINHA
                 let colorHex = getAppleColorHex(o.variacoes.cor);
                 let colorDot = `<span class="color-dot-preview" style="background-color: ${colorHex};"></span>`;
 
