@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -65,6 +64,10 @@
         .search-suggestion-item { padding: 12px 20px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-weight: 900; font-size: 13px; text-transform: uppercase; transition: 0.2s; color: #1d1d1f; }
         .search-suggestion-item:hover { background-color: #f5f5f7; color: #0071e3; }
         .search-suggestion-item:last-child { border-bottom: none; }
+
+        /* NOVA CLASSE PARA A BOLINHA DE COR */
+        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); }
+        body.light-mode .color-dot { border: 1px solid rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -396,7 +399,6 @@
         function abrirSininho() { document.getElementById('sininhoModal').classList.remove('hidden'); processarNotificacoesSininho(); }
         function fecharSininho() { document.getElementById('sininhoModal').classList.add('hidden'); }
 
-        // --- INJEÇÃO: FUNÇÕES DO HISTÓRICO DE PREÇO ---
         async function abrirHistorico(ofertaId, nome) {
             document.getElementById('historicoNome').innerText = nome;
             document.getElementById('historicoModal').classList.remove('hidden');
@@ -421,7 +423,6 @@
             }).join('');
         }
         function fecharHistorico() { document.getElementById('historicoModal').classList.add('hidden'); }
-        // -----------------------------------------------
 
         function mostrarSugestoes(termo) {
             const div = document.getElementById('sugestoesBusca');
@@ -496,6 +497,23 @@
 
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
+        // NOVA FUNÇÃO AUXILIAR PARA MAPEAR CORES APPLE PARA HEX
+        function getAppleColorHex(colorName) {
+            const colors = {
+                'PRETO': '#000000', 'BLACK': '#000000', 'MIDNIGHT': '#191919', 'STELAR': '#242a31', 'SPACE GRAY': '#535150', 'CINZA ESPACIAL': '#535150',
+                'BRANCO': '#FFFFFF', 'WHITE': '#FFFFFF', 'STARLIGHT': '#faf9f6', 'ESTELAR': '#faf9f6', 'SILVER': '#e3e4e5', 'PRATA': '#e3e4e5', 'PRATEADO': '#e3e4e5',
+                'GOLD': '#fad7bd', 'DOURADO': '#fad7bd',
+                'BLUE': '#215e7c', 'AZUL': '#215e7c', 'SIERRA BLUE': '#9bb5ce', 'PACIFIC BLUE': '#2e4756', 'NATURAL TITANIUM': '#bcbab5', 'TITANIO NATURAL': '#bcbab5',
+                'GREEN': '#505c4c', 'VERDE': '#505c4c', 'ALPINE GREEN': '#414d3c',
+                'PURPLE': '#b1b1cc', 'ROXO': '#b1b1cc', 'DEEP PURPLE': '#433d4c',
+                'PINK': '#fae0d8', 'ROSA': '#fae0d8',
+                'RED': '#a50011', 'VERMELHO': '#a50011',
+                'YELLOW': '#f9e479', 'AMARELO': '#f9e479'
+            };
+            const search = (colorName || '').toUpperCase();
+            return colors[search] || '#808080'; // Cinza se não achar
+        }
+
         function renderizarRanking() {
             const fTexto = document.getElementById('buscaTexto') ? document.getElementById('buscaTexto').value.toLowerCase() : '';
             const fCat = document.getElementById('f_cat').value; const fP = document.getElementById('f_prod').value; const fC = document.getElementById('f_cond').value; const fCap = document.getElementById('f_cap').value; const fCor = document.getElementById('f_cor').value; const fReg = document.getElementById('f_reg').value; const fLoj = document.getElementById('f_lojista').value; const fCid = document.getElementById('f_cid').value;
@@ -529,6 +547,11 @@
                 let tagMenor = o.preco === menorPreco ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
                 let tagEstoque = o.quantidade <= 3 ? `<span class="tag-status tag-poucas">APENAS ${o.quantidade} UN</span>` : (o.quantidade <= 10 ? `<span class="tag-status tag-muitas">ESTOQUE ${o.quantidade} UN</span>` : `<span class="tag-status tag-estoque-alto">ALTO ESTOQUE ${o.quantidade} UN</span>`);
                 let detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ');
+                
+                // INJETANDO A BOLINHA DE COR NO TÍTULO
+                let colorHex = getAppleColorHex(o.variacoes.cor);
+                let colorDot = `<span class="color-dot" style="background-color: ${colorHex};"></span>`;
+
                 let txtBat = o.saude_bateria ? o.saude_bateria.replace('BATERIA ', '') : '';
                 let t_bat = txtBat ? `<span class="mini-tag bat">🔋 ${txtBat}</span>` : '';
                 let t_gar = o.garantia ? `<span class="mini-tag gar">🛡️ GAR: ${o.garantia}</span>` : '';
@@ -581,7 +604,7 @@
                     </div>
 
                     <div class="flex flex-wrap gap-1 mb-1.5">${tagAlteracao} ${tagEstoque} ${tagMenor}</div>
-                    <h2 class="text-lg font-black leading-tight mb-0.5">${o.variacoes.produtos_mestre.nome}</h2>
+                    <h2 class="text-lg font-black leading-tight mb-0.5">${colorDot}${o.variacoes.produtos_mestre.nome}</h2>
                     <p class="text-[9px] text-gray-300 font-bold mt-0.5 uppercase tracking-wide mb-2">${detalhes}</p>
                     <div class="flex flex-wrap gap-1 mb-2">${tagsStr}</div>
                     
