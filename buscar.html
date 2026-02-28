@@ -65,17 +65,8 @@
         .search-suggestion-item:hover { background-color: #f5f5f7; color: #0071e3; }
         .search-suggestion-item:last-child { border-bottom: none; }
 
-        /* MELHORIA DA BOLINHA DE COR */
-        .color-dot { 
-            width: 12px; 
-            height: 12px; 
-            border-radius: 50%; 
-            display: inline-block; 
-            margin-right: 8px; 
-            vertical-align: middle; 
-            border: 1px solid rgba(255,255,255,0.2); 
-            box-shadow: 0 0 5px rgba(0,0,0,0.5); /* Sombra para destaque */
-        }
+        /* CLASSE DA BOLINHA DE COR */
+        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
         body.light-mode .color-dot { border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 0 3px rgba(0,0,0,0.2); }
     </style>
 </head>
@@ -173,7 +164,7 @@
         <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-blue-500 rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
             <button onclick="fecharHistorico()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
             <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">📈 Histórico de Preço</h3>
+                <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">📈 Histórico de Preço Fipe</h3>
                 <p id="historicoNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
             </div>
             <div id="listaHistorico" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll">
@@ -408,29 +399,72 @@
         function abrirSininho() { document.getElementById('sininhoModal').classList.remove('hidden'); processarNotificacoesSininho(); }
         function fecharSininho() { document.getElementById('sininhoModal').classList.add('hidden'); }
 
+        // --- NOVO HISTÓRICO "FIPE" (MÉDIA DE MERCADO 7 DIAS) ---
         async function abrirHistorico(ofertaId, nome) {
             document.getElementById('historicoNome').innerText = nome;
             document.getElementById('historicoModal').classList.remove('hidden');
             const div = document.getElementById('listaHistorico');
-            div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Buscando cotações...</p>';
+            div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Calculando média de mercado (7 dias)...</p>';
 
-            const { data, error } = await _s.from('historico_precos').select('*').eq('oferta_id', ofertaId).order('registrado_em', { ascending: false }).limit(10);
-
-            if (error || !data || data.length === 0) {
-                div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Nenhuma alteração de preço registrada ainda.</p>';
+            const { data: ofertaAtual, error: errOferta } = await _s.from('ofertas').select('variacao_id, condicao').eq('id', ofertaId).single();
+            
+            if (errOferta || !ofertaAtual) {
+                div.innerHTML = '<p class="text-[10px] text-red-500 italic text-center py-6 font-bold">Erro ao localizar o produto no banco de dados.</p>';
                 return;
             }
 
-            div.innerHTML = data.map(h => {
-                let dataFormatada = new Date(h.registrado_em).toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'});
-                return `
-                <div class="bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a] flex justify-between items-center">
-                    <span class="text-[10px] text-gray-400 font-bold">${dataFormatada}</span>
-                    <span class="text-[14px] font-black text-white">${h.moeda === 'USD' ? '$' : 'R$'} ${h.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>
+            const seteDiasAtras = new Date();
+            seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+            const dataFiltro = seteDiasAtras.toISOString();
+
+            const { data: historicosGlobais, error: errHist } = await _s.from('historico_precos')
+                .select('preco, moeda, registrado_em, oferta_id, ofertas!inner(variacao_id, condicao)')
+                .eq('ofertas.variacao_id', ofertaAtual.variacao_id)
+                .eq('ofertas.condicao', ofertaAtual.condicao)
+                .gte('registrado_em', dataFiltro)
+                .order('registrado_em', { ascending: false });
+
+            if (errHist || !historicosGlobais || historicosGlobais.length === 0) {
+                div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Ainda não há volume de dados para calcular a Fipe deste aparelho.</p>';
+                return;
+            }
+
+            const mediaPorDia = {};
+            historicosGlobais.forEach(h => {
+                let dataFormatada = new Date(h.registrado_em).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+                let precoEmReais = h.moeda === 'USD' ? (h.preco * (currentUsdtRate + 0.07) * 1.06) : h.preco;
+
+                if (!mediaPorDia[dataFormatada]) {
+                    mediaPorDia[dataFormatada] = { soma: 0, count: 0 };
+                }
+                mediaPorDia[dataFormatada].soma += precoEmReais;
+                mediaPorDia[dataFormatada].count += 1;
+            });
+
+            const diasOrdenados = Object.keys(mediaPorDia).sort((a, b) => {
+                return b.split('/').reverse().join('') - a.split('/').reverse().join('');
+            });
+
+            let htmlFinal = `<div class="mb-3 p-2 bg-[#2c2c2e] rounded-lg text-center border border-[#38383a]">
+                                <span class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Baseado em ${historicosGlobais.length} cotações</span>
+                             </div>`;
+
+            diasOrdenados.forEach(dia => {
+                let media = mediaPorDia[dia].soma / mediaPorDia[dia].count;
+                htmlFinal += `
+                <div class="bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a] flex justify-between items-center mb-2">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-gray-400 font-bold">${dia}</span>
+                        <span class="text-[7px] text-gray-500 uppercase">Preço Médio Fipe</span>
+                    </div>
+                    <span class="text-[14px] font-black text-[#0071e3]">R$ ${media.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
                 </div>
                 `;
-            }).join('');
+            });
+
+            div.innerHTML = htmlFinal;
         }
+
         function fecharHistorico() { document.getElementById('historicoModal').classList.add('hidden'); }
 
         function mostrarSugestoes(termo) {
@@ -506,11 +540,8 @@
 
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
-        // NOVA FUNÇÃO DE MAPEAMENTO POR APROXIMAÇÃO
         function getAppleColorHex(colorName) {
             const search = (colorName || '').toUpperCase();
-            
-            // Ordem estratégica: das mais específicas para as mais gerais
             if (search.includes('MIDNIGHT') || search.includes('ESCURA')) return '#191919';
             if (search.includes('PRETO') || search.includes('BLACK')) return '#000000';
             if (search.includes('BRANCO') || search.includes('WHITE')) return '#FFFFFF';
@@ -528,8 +559,7 @@
             if (search.includes('LARANJA') || search.includes('ORANGE')) return '#ff9500';
             if (search.includes('ROSA') || search.includes('PINK')) return '#fae0d8';
             if (search.includes('TITAN') || search.includes('CINZA') || search.includes('GRAY')) return '#bcbab5'; 
-            
-            return '#808080'; // Cinza se nada for encontrado
+            return '#808080';
         }
 
         function renderizarRanking() {
@@ -566,7 +596,6 @@
                 let tagEstoque = o.quantidade <= 3 ? `<span class="tag-status tag-poucas">APENAS ${o.quantidade} UN</span>` : (o.quantidade <= 10 ? `<span class="tag-status tag-muitas">ESTOQUE ${o.quantidade} UN</span>` : `<span class="tag-status tag-estoque-alto">ALTO ESTOQUE ${o.quantidade} UN</span>`);
                 let detalhes = [o.variacoes.tamanho, o.variacoes.capacidade, o.variacoes.cor, o.condicao].filter(Boolean).join(' | ');
                 
-                // GERAÇÃO DA BOLINHA DE COR CORRIGIDA
                 let colorHex = getAppleColorHex(o.variacoes.cor);
                 let colorDot = `<span class="color-dot" style="background-color: ${colorHex};"></span>`;
 
