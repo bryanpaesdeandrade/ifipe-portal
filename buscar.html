@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
+        body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
         body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; }
         .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
         .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
@@ -66,210 +67,213 @@
         .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
     </style>
 </head>
-<body>
+<body id="appBody">
 
-    <div id="calcModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[2000] px-4">
-        <div class="w-full max-w-[380px] bg-[#1c1c1e] border-2 border-[#38383a] rounded-3xl p-6 shadow-2xl relative">
-            <button onclick="fecharCalc()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-5 mt-2">
-                <h2 class="text-lg font-black italic text-white">Calculadora VIP</h2>
-                <p class="text-[9px] text-blue-500 font-black uppercase mt-2 tracking-widest leading-relaxed">Coloque o preço em Dólar e saiba o custo em SP</p>
-            </div>
-            <div class="bg-[#0a0a0a] border-2 border-[#2c2c2e] rounded-2xl p-4 text-right mb-4 relative shadow-inner">
-                <span class="absolute top-3 left-4 text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP (R$)</span>
-                <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-4 tracking-tighter">R$ 0,00</div>
-            </div>
-            <div class="relative mb-4">
-                <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
-                <input type="number" id="calcUsd" class="w-full bg-[#151516] border-2 border-[#38383a] rounded-xl py-4 pl-12 pr-4 font-mono text-xl font-black text-white outline-none focus:border-[#0071e3] text-center transition-colors" placeholder="Custo no PY (USD)" oninput="calcularImportacao()">
-            </div>
-            <div class="bg-black/40 border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase text-gray-500 tracking-wide">
-                <div class="flex justify-between items-center mb-3 border-b border-[#2c2c2e] pb-3">
-                    <span>Taxa Binance</span>
-                    <span id="tickerCalc" class="font-mono text-[11px] text-[#32d74b]">R$ --</span>
-                </div>
-                <div class="flex justify-between items-center mb-3 border-b border-[#2c2c2e] pb-3 gap-2">
-                    <span style="font-size: 8px; line-height: 1.3; max-width: 65%;">Melhor Taxa oferecida e paga por Oráculo (+0,07)</span>
-                    <span id="calcTaxaEfetiva" class="font-mono text-[11px] text-[#32d74b]">R$ --</span>
-                </div>
-                <div class="flex justify-center mt-2 pt-1">
-                    <span class="text-[#0071e3]">🔒 Frete PY X São Paulo incluso</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="contaModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200] px-4">
-        <div class="bg-[#1c1c1e] border border-[#38383a] rounded-2xl w-full max-w-[400px] p-8">
-            <h3 class="font-bold text-[14px] text-blue-500 mb-4 uppercase tracking-widest">Minha Conta VIP</h3>
-            <form onsubmit="salvarConta(event)">
-                <label class="block text-[10px] text-gray-400 uppercase font-black mb-1">Meu WhatsApp</label>
-                <input type="text" id="conta_whats" class="apple-input" placeholder="Ex: 11999999999" required>
-                <label class="block text-[10px] text-gray-400 uppercase font-black mb-1">Minha Senha</label>
-                <input type="text" id="conta_senha" class="apple-input" required>
-                <div class="flex gap-2 mt-4">
-                    <button type="button" onclick="fecharConta()" class="bg-gray-600 text-white font-black uppercase text-[12px] rounded-full px-6 py-3 w-1/3">Sair</button>
-                    <button type="submit" class="bg-blue-600 text-white font-black uppercase text-[12px] rounded-full px-6 py-3 w-2/3">Atualizar Dados</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="comentarioModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2500] px-4">
-        <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-[#38383a] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
-            <button onclick="fecharComentarios()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">Perguntas sobre a Oferta</h3>
-                <p id="comentarioProdutoNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
-            </div>
-            <div id="listaComentarios" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2 custom-scroll"></div>
-            <form onsubmit="postarComentario(event)" class="mt-auto border-t border-[#38383a] pt-4">
-                <input type="hidden" id="comentario_oferta_id">
-                <textarea id="comentario_texto" class="apple-input w-full h-[60px] resize-none mb-2 text-[11px]" placeholder="Faça uma pergunta sobre este aparelho (estoque, detalhes, envio)..." required></textarea>
-                <button type="submit" class="bg-blue-600 text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-blue-700">Enviar Pergunta</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="alertaModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
-        <div class="w-full max-w-[350px] bg-[#1c1c1e] border border-yellow-500 rounded-3xl p-6 shadow-2xl relative">
-            <button onclick="fecharAlerta()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-yellow-500 tracking-widest">Criar Alerta de Preço 🔔</h3>
-                <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase">Seja avisado e chame Lojistas</p>
-            </div>
-            <select id="alerta_prod_id" class="apple-input w-full mb-2" onchange="atualizarFiltrosAlerta()"><option value="">Selecione o Modelo...</option></select>
-            <select id="alerta_cap" class="apple-input w-full mb-4"><option value="">Selecione a Memória...</option></select>
-            
-            <label class="text-[8px] text-gray-500 font-bold uppercase mb-1 block">Me avise quando baixar para (R$):</label>
-            <input type="number" id="alerta_preco" class="apple-input w-full mb-4" placeholder="Ex: 3500">
-            <button onclick="gravarAlerta()" class="bg-yellow-500 text-black font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-yellow-400">Ativar Alerta</button>
-        </div>
-    </div>
-
-    <div id="sininhoModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
-        <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-yellow-500/50 rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
-            <button onclick="fecharSininho()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-yellow-500 tracking-widest">Seus Alertas Ativos 🔔</h3>
-            </div>
-            <div id="listaNotificacoes" class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scroll"></div>
-        </div>
-    </div>
-
-    <div id="modalFipe" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
-        <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-[#0071e3] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
-            <button onclick="fecharModalFipe()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-[#0071e3] tracking-widest">📊 Preço Médio 7 dias</h3>
-                <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase">Variações do mercado</p>
-            </div>
-            
-            <div class="flex flex-col gap-2 mb-4 border-b border-[#38383a] pb-4">
-                <select id="fipe_prod" class="apple-input w-full" onchange="atualizarFiltrosFipe()"><option value="">Selecione o Modelo...</option></select>
-                <select id="fipe_cap" class="apple-input w-full"><option value="">Selecione a Memória...</option></select>
-                <select id="fipe_cor" class="apple-input w-full"><option value="">Selecione a Cor...</option></select>
-                <select id="fipe_cond" class="apple-input w-full">
-                    <option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="Apple As Is">Apple As Is</option><option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option>
-                </select>
-                <button onclick="calcularFipe()" class="bg-[#0071e3] text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-blue-600 mt-2">Calcular Média</button>
-            </div>
-
-            <div id="listaFipe" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll">
-            </div>
-        </div>
-    </div>
-
-    <nav class="nav-bar">
-        <div class="flex items-center gap-2 sm:gap-3">
-            <h1 class="text-2xl font-black italic m-0 mr-2">iFipe</h1>
-            
-            <button onclick="abrirCalc()" class="btn-header btn-calc-top">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="16" y1="18" x2="16" y2="18"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="12" y1="18" x2="12" y2="18"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/></svg>
-                <span>Calculadora VIP</span>
-            </button>
-
-            <a href="https://wa.me/556896003049?text=Ol%C3%A1%20venho%20do%20iFipe%20e%20preciso%20de%20suporte" target="_blank" class="btn-header btn-wpp-top">
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
-                <span>Suporte</span>
-            </a>
-        </div>
-
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-[#1c1c1e] p-2 px-3 rounded-xl border border-[#38383a]">
-            <div class="flex items-center gap-2">
-                <span class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Binance USDT/BRL</span>
-                <span class="text-[14px] font-black text-[#32d74b] font-mono" id="ticker">$ --</span>
-            </div>
-            <a href="https://wa.me/15616760652?text=venho%20do%20ifipe%20e%20quero%20comprar%20USDT" target="_blank" class="bg-[#ffcc00] text-black flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-yellow-400 transition-colors no-underline">
-                <span class="text-[8px] sm:text-[9px] font-black uppercase">Comprar USDT c/ Oráculo Taxa VIP</span>
-                <span class="bg-black text-yellow-500 px-1.5 py-0.5 rounded text-[10px] font-mono font-black" id="oraculoRate">R$ --</span>
-            </a>
-        </div>
-
-        <div class="flex gap-2 sm:gap-4 items-center flex-wrap justify-end">
-            <button onclick="abrirModalFipe()" class="relative text-[9px] sm:text-[10px] text-blue-500 font-black uppercase hover:text-blue-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
-                📊 Preço Médio 7 Dias
-            </button>
-
-            <button onclick="abrirModalCriarAlerta()" class="relative text-[9px] sm:text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
-                ➕ Criar Alerta
-            </button>
-
-            <button onclick="abrirSininho()" class="relative text-[9px] sm:text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
-                🔔 Meus Alertas
-                <span id="badgeSininho" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center shadow-lg">0</span>
-            </button>
-
-            <button onclick="abrirConta()" class="text-[10px] text-blue-400 font-black uppercase hover:text-white flex items-center gap-1">Conta</button>
-            <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
-        </div>
-    </nav>
-
-    <main class="max-w-7xl mx-auto px-4 pb-20 pt-8">
+    <div id="mainContent" class="hidden">
         
-        <div class="relative w-full max-w-3xl mx-auto mb-6 z-[150]">
-            <div class="flex items-center bg-white border-4 border-[#0071e3] rounded-full overflow-hidden shadow-2xl transition-all hover:shadow-[0_0_20px_rgba(0,113,227,0.4)]">
-                <input type="text" id="buscaTexto" class="w-full bg-white text-black px-6 py-4 outline-none font-black uppercase text-sm placeholder-gray-400" 
-                       placeholder="ENCONTRE O MELHOR PREÇO" 
-                       oninput="mostrarSugestoes(this.value)" 
-                       onkeydown="if(event.key === 'Enter') { document.getElementById('sugestoesBusca').classList.add('hidden'); renderizarRanking(); }">
+        <div id="calcModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[2000] px-4">
+            <div class="w-full max-w-[380px] bg-[#1c1c1e] border-2 border-[#38383a] rounded-3xl p-6 shadow-2xl relative">
+                <button onclick="fecharCalc()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+                <div class="text-center mb-5 mt-2">
+                    <h2 class="text-lg font-black italic text-white">Calculadora VIP</h2>
+                    <p class="text-[9px] text-blue-500 font-black uppercase mt-2 tracking-widest leading-relaxed">Coloque o preço em Dólar e saiba o custo em SP</p>
+                </div>
+                <div class="bg-[#0a0a0a] border-2 border-[#2c2c2e] rounded-2xl p-4 text-right mb-4 relative shadow-inner">
+                    <span class="absolute top-3 left-4 text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP (R$)</span>
+                    <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-4 tracking-tighter">R$ 0,00</div>
+                </div>
+                <div class="relative mb-4">
+                    <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
+                    <input type="number" id="calcUsd" class="w-full bg-[#151516] border-2 border-[#38383a] rounded-xl py-4 pl-12 pr-4 font-mono text-xl font-black text-white outline-none focus:border-[#0071e3] text-center transition-colors" placeholder="Custo no PY (USD)" oninput="calcularImportacao()">
+                </div>
+                <div class="bg-black/40 border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase text-gray-500 tracking-wide">
+                    <div class="flex justify-between items-center mb-3 border-b border-[#2c2c2e] pb-3">
+                        <span>Taxa Binance</span>
+                        <span id="tickerCalc" class="font-mono text-[11px] text-[#32d74b]">R$ --</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-3 border-b border-[#2c2c2e] pb-3 gap-2">
+                        <span style="font-size: 8px; line-height: 1.3; max-width: 65%;">Melhor Taxa oferecida e paga por Oráculo (+0,07)</span>
+                        <span id="calcTaxaEfetiva" class="font-mono text-[11px] text-[#32d74b]">R$ --</span>
+                    </div>
+                    <div class="flex justify-center mt-2 pt-1">
+                        <span class="text-[#0071e3]">🔒 Frete PY X São Paulo incluso</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="contaModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[200] px-4">
+            <div class="bg-[#1c1c1e] border border-[#38383a] rounded-2xl w-full max-w-[400px] p-8">
+                <h3 class="font-bold text-[14px] text-blue-500 mb-4 uppercase tracking-widest">Minha Conta VIP</h3>
+                <form onsubmit="salvarConta(event)">
+                    <label class="block text-[10px] text-gray-400 uppercase font-black mb-1">Meu WhatsApp</label>
+                    <input type="text" id="conta_whats" class="apple-input" placeholder="Ex: 11999999999" required>
+                    <label class="block text-[10px] text-gray-400 uppercase font-black mb-1">Minha Senha</label>
+                    <input type="text" id="conta_senha" class="apple-input" required>
+                    <div class="flex gap-2 mt-4">
+                        <button type="button" onclick="fecharConta()" class="bg-gray-600 text-white font-black uppercase text-[12px] rounded-full px-6 py-3 w-1/3">Sair</button>
+                        <button type="submit" class="bg-blue-600 text-white font-black uppercase text-[12px] rounded-full px-6 py-3 w-2/3">Atualizar Dados</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="comentarioModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2500] px-4">
+            <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-[#38383a] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+                <button onclick="fecharComentarios()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+                <div class="text-center mb-4 mt-2">
+                    <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">Perguntas sobre a Oferta</h3>
+                    <p id="comentarioProdutoNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
+                </div>
+                <div id="listaComentarios" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2 custom-scroll"></div>
+                <form onsubmit="postarComentario(event)" class="mt-auto border-t border-[#38383a] pt-4">
+                    <input type="hidden" id="comentario_oferta_id">
+                    <textarea id="comentario_texto" class="apple-input w-full h-[60px] resize-none mb-2 text-[11px]" placeholder="Faça uma pergunta sobre este aparelho (estoque, detalhes, envio)..." required></textarea>
+                    <button type="submit" class="bg-blue-600 text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-blue-700">Enviar Pergunta</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="alertaModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
+            <div class="w-full max-w-[350px] bg-[#1c1c1e] border border-yellow-500 rounded-3xl p-6 shadow-2xl relative">
+                <button onclick="fecharAlerta()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+                <div class="text-center mb-4 mt-2">
+                    <h3 class="text-sm font-black uppercase text-yellow-500 tracking-widest">Criar Alerta de Preço 🔔</h3>
+                    <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase">Seja avisado e chame Lojistas</p>
+                </div>
+                <select id="alerta_prod_id" class="apple-input w-full mb-2" onchange="atualizarFiltrosAlerta()"><option value="">Selecione o Modelo...</option></select>
+                <select id="alerta_cap" class="apple-input w-full mb-4"><option value="">Selecione a Memória...</option></select>
                 
-                <button onclick="document.getElementById('sugestoesBusca').classList.add('hidden'); renderizarRanking()" class="bg-white text-[#0071e3] px-6 py-4 hover:bg-gray-100 transition-colors border-l border-gray-200">
-                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                    </svg>
+                <label class="text-[8px] text-gray-500 font-bold uppercase mb-1 block">Me avise quando baixar para (R$):</label>
+                <input type="number" id="alerta_preco" class="apple-input w-full mb-4" placeholder="Ex: 3500">
+                <button onclick="gravarAlerta()" class="bg-yellow-500 text-black font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-yellow-400">Ativar Alerta</button>
+            </div>
+        </div>
+
+        <div id="sininhoModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
+            <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-yellow-500/50 rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+                <button onclick="fecharSininho()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+                <div class="text-center mb-4 mt-2">
+                    <h3 class="text-sm font-black uppercase text-yellow-500 tracking-widest">Seus Alertas Ativos 🔔</h3>
+                </div>
+                <div id="listaNotificacoes" class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scroll"></div>
+            </div>
+        </div>
+
+        <div id="modalFipe" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
+            <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-[#0071e3] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+                <button onclick="fecharModalFipe()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+                <div class="text-center mb-4 mt-2">
+                    <h3 class="text-sm font-black uppercase text-[#0071e3] tracking-widest">📊 Preço Médio 7 dias</h3>
+                    <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase">Variações do mercado</p>
+                </div>
+                
+                <div class="flex flex-col gap-2 mb-4 border-b border-[#38383a] pb-4">
+                    <select id="fipe_prod" class="apple-input w-full" onchange="atualizarFiltrosFipe()"><option value="">Selecione o Modelo...</option></select>
+                    <select id="fipe_cap" class="apple-input w-full"><option value="">Selecione a Memória...</option></select>
+                    <select id="fipe_cor" class="apple-input w-full"><option value="">Selecione a Cor...</option></select>
+                    <select id="fipe_cond" class="apple-input w-full">
+                        <option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="Apple As Is">Apple As Is</option><option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option>
+                    </select>
+                    <button onclick="calcularFipe()" class="bg-[#0071e3] text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-blue-600 mt-2">Calcular Média</button>
+                </div>
+
+                <div id="listaFipe" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll">
+                </div>
+            </div>
+        </div>
+
+        <nav class="nav-bar">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <h1 class="text-2xl font-black italic m-0 mr-2">iFipe</h1>
+                
+                <button onclick="abrirCalc()" class="btn-header btn-calc-top">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="16" y1="18" x2="16" y2="18"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="12" y1="18" x2="12" y2="18"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="8" y1="18" x2="8" y2="18"/></svg>
+                    <span>Calculadora VIP</span>
                 </button>
-            </div>
-            <div id="sugestoesBusca" class="hidden absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-[300px] overflow-y-auto z-[200]">
-            </div>
-        </div>
 
-        <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6 mt-0">
-            <div>
-                <label class="block text-[8px] uppercase font-black text-blue-500 mb-1 text-center">1. Categoria</label>
-                <select id="f_cat" class="apple-input" onchange="popularAparelhos()">
-                    <option value="">Todas</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="3">IPAD</option><option value="4">MACBOOK</option><option value="5">IMAC</option><option value="6">ACESSÓRIOS</option><option value="7">XIAOMI</option><option value="8">REALME</option>
-                </select>
+                <a href="https://wa.me/556896003049?text=Ol%C3%A1%20venho%20do%20iFipe%20e%20preciso%20de%20suporte" target="_blank" class="btn-header btn-wpp-top">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
+                    <span>Suporte</span>
+                </a>
             </div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">2. Aparelho</label><select id="f_prod" class="apple-input" onchange="atualizarFiltrosCascata()"><option value="">Todos</option></select></div>
-            <div>
-                <label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Condição</label>
-                <select id="f_cond" class="apple-input" onchange="renderizarRanking()">
-                    <option value="">Todas</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="Apple As Is">Apple As Is</option><option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option>
-                </select>
-            </div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Memória</label><select id="f_cap" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cor</label><select id="f_cor" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Origem</label><select id="f_reg" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Atacadista</label><select id="f_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
-            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cidade</label><select id="f_cid" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
-        </div>
-        <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
-    </main>
 
-    <button id="scrollTopBtn" class="btn-scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
-    </button>
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-[#1c1c1e] p-2 px-3 rounded-xl border border-[#38383a]">
+                <div class="flex items-center gap-2">
+                    <span class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Binance USDT/BRL</span>
+                    <span class="text-[14px] font-black text-[#32d74b] font-mono" id="ticker">$ --</span>
+                </div>
+                <a href="https://wa.me/15616760652?text=venho%20do%20ifipe%20e%20quero%20comprar%20USDT" target="_blank" class="bg-[#ffcc00] text-black flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-yellow-400 transition-colors no-underline">
+                    <span class="text-[8px] sm:text-[9px] font-black uppercase">Comprar USDT c/ Oráculo Taxa VIP</span>
+                    <span class="bg-black text-yellow-500 px-1.5 py-0.5 rounded text-[10px] font-mono font-black" id="oraculoRate">R$ --</span>
+                </a>
+            </div>
+
+            <div class="flex gap-2 sm:gap-4 items-center flex-wrap justify-end">
+                <button onclick="abrirModalFipe()" class="relative text-[9px] sm:text-[10px] text-blue-500 font-black uppercase hover:text-blue-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
+                    📊 Preço Médio 7 Dias
+                </button>
+
+                <button onclick="abrirModalCriarAlerta()" class="relative text-[9px] sm:text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
+                    ➕ Criar Alerta
+                </button>
+
+                <button onclick="abrirSininho()" class="relative text-[9px] sm:text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
+                    🔔 Meus Alertas
+                    <span id="badgeSininho" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center shadow-lg">0</span>
+                </button>
+
+                <button onclick="abrirConta()" class="text-[10px] text-blue-400 font-black uppercase hover:text-white flex items-center gap-1">Conta</button>
+                <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
+            </div>
+        </nav>
+
+        <main class="max-w-7xl mx-auto px-4 pb-20 pt-8">
+            
+            <div class="relative w-full max-w-3xl mx-auto mb-6 z-[150]">
+                <div class="flex items-center bg-white border-4 border-[#0071e3] rounded-full overflow-hidden shadow-2xl transition-all hover:shadow-[0_0_20px_rgba(0,113,227,0.4)]">
+                    <input type="text" id="buscaTexto" class="w-full bg-white text-black px-6 py-4 outline-none font-black uppercase text-sm placeholder-gray-400" 
+                           placeholder="ENCONTRE O MELHOR PREÇO" 
+                           oninput="mostrarSugestoes(this.value)" 
+                           onkeydown="if(event.key === 'Enter') { document.getElementById('sugestoesBusca').classList.add('hidden'); renderizarRanking(); }">
+                    
+                    <button onclick="document.getElementById('sugestoesBusca').classList.add('hidden'); renderizarRanking()" class="bg-white text-[#0071e3] px-6 py-4 hover:bg-gray-100 transition-colors border-l border-gray-200">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="sugestoesBusca" class="hidden absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl max-h-[300px] overflow-y-auto z-[200]">
+                </div>
+            </div>
+
+            <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6 mt-0">
+                <div>
+                    <label class="block text-[8px] uppercase font-black text-blue-500 mb-1 text-center">1. Categoria</label>
+                    <select id="f_cat" class="apple-input" onchange="popularAparelhos()">
+                        <option value="">Todas</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="3">IPAD</option><option value="4">MACBOOK</option><option value="5">IMAC</option><option value="6">ACESSÓRIOS</option><option value="7">XIAOMI</option><option value="8">REALME</option>
+                    </select>
+                </div>
+                <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">2. Aparelho</label><select id="f_prod" class="apple-input" onchange="atualizarFiltrosCascata()"><option value="">Todos</option></select></div>
+                <div>
+                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Condição</label>
+                    <select id="f_cond" class="apple-input" onchange="renderizarRanking()">
+                        <option value="">Todas</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="Apple As Is">Apple As Is</option><option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option>
+                    </select>
+                </div>
+                <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Memória</label><select id="f_cap" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+                <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cor</label><select id="f_cor" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+                <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Origem</label><select id="f_reg" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+                <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Atacadista</label><select id="f_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
+                <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cidade</label><select id="f_cid" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+            </div>
+            <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+        </main>
+
+        <button id="scrollTopBtn" class="btn-scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+        </button>
+    </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
@@ -277,7 +281,37 @@
         let currentUsdtRate = 0; 
         let meusAlertas = []; 
 
+        // SISTEMA DE MANUTENÇÃO (BARREIRA FRONTAL)
+        async function checarManutencao() {
+            try {
+                const { data } = await _s.from('configuracoes').select('manutencao').eq('id', 1).maybeSingle();
+                
+                // Pega o token para ver se é a conta VIP (bryan.paes@hotmail.com)
+                const token = localStorage.getItem('iFipe_Token');
+                let isMaster = false;
+                
+                if (token) {
+                    const { data: userData } = await _s.from('clientes_buscador').select('email').eq('id', token).single();
+                    if (userData && userData.email === 'bryan.paes@hotmail.com') {
+                        isMaster = true;
+                    }
+                }
+
+                if (data && data.manutencao && !isMaster) {
+                    document.body.innerHTML = `<div style="background:#000;color:#fff;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px;"><div style="font-size:4rem;font-style:italic;font-weight:900;margin-bottom:20px;">iFipe</div><div style="font-size:1.2rem;font-weight:900;color:#0071e3;text-transform:uppercase;letter-spacing:2px;line-height:1.6;margin-bottom:30px;">ESTAMOS EM ATUALIZAÇÃO<br>PARA TRAZER MELHORIAS PARA VOCÊ</div><div style="color:#86868b;font-size:0.9rem;font-weight:700;text-transform:uppercase;">Voltamos em breve<br>TIME iFipe</div></div>`;
+                    return true;
+                }
+            } catch (e) { console.error(e); }
+            return false;
+        }
+
         window.onload = async () => {
+            const estaEmManutencao = await checarManutencao();
+            if (estaEmManutencao) return; // Trava a execução se estiver em manutenção
+
+            // Se não estiver em manutenção (ou for o Bryan), mostra o site normal
+            document.getElementById('mainContent').classList.remove('hidden');
+
             const token = localStorage.getItem('iFipe_Token');
             if(!token) { window.location.replace('index.html'); } 
             else {
@@ -782,7 +816,6 @@
                 let isMeu = (clienteLogado && c.autor_nome === clienteLogado.whatsapp);
                 let btnDel = isMeu ? `<button onclick="excluirDepoimento(${c.id}, ${ofertaId})" class="text-[7px] text-red-500 font-black uppercase ml-2">[ Apagar ]</button>` : '';
                 
-                // MUDANÇA DA FASE B: Mostrando o WhatsApp se houver, senão "Cliente"
                 let exibirNome = c.is_vendedor ? 'Lojista' : (c.autor_nome || 'Cliente');
 
                 return `
