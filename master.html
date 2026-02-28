@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-pt">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,9 +27,11 @@
         .btn-del:hover { background: #ff3b30; color: #fff; }
         .btn-approve { background: rgba(50, 215, 75, 0.2); color: #32d74b; border: 1px solid rgba(50, 215, 75, 0.5); }
         .btn-approve:hover { background: #32d74b; color: #000; }
+        .btn-suspend { background: rgba(255, 204, 0, 0.2); color: #ffcc00; border: 1px solid rgba(255, 204, 0, 0.5); }
+        .btn-suspend:hover { background: #ffcc00; color: #000; }
         .hidden { display: none !important; }
         
-        /* ESTILOS DA SANFONA (ACCORDION) */
+        /* SANFONA */
         details { background: var(--input); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 15px; overflow: hidden; transition: 0.3s; }
         summary { background: #232325; padding: 15px 20px; font-weight: 900; cursor: pointer; display: flex; justify-content: space-between; align-items: center; outline: none; transition: 0.3s; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         summary:hover { background: #2c2c2e; }
@@ -37,6 +39,11 @@
         .details-content { background: var(--card); border-top: 1px solid var(--border); padding: 0; overflow-x: auto; }
         
         .color-dot-preview { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+
+        /* ABAS DE NAVEGAÇÃO */
+        .tab-btn { background: #1c1c1e; border: 1px solid #38383a; color: #86868b; padding: 12px 20px; font-weight: 900; text-transform: uppercase; font-size: 11px; cursor: pointer; transition: 0.3s; flex: 1; text-align: center; border-radius: 12px; }
+        .tab-btn:hover { background: #2c2c2e; color: #fff; }
+        .tab-btn.active { background: rgba(255, 59, 48, 0.1); border-color: #ff3b30; color: #ff3b30; }
     </style>
 </head>
 <body id="appBody">
@@ -44,9 +51,10 @@
     <div id="authSection" class="flex items-center justify-center min-h-screen px-4">
         <div class="apple-card max-w-[400px] text-center w-full border-red-500 border-2 shadow-[0_0_30px_rgba(255,0,0,0.3)]">
             <h1 class="text-4xl font-black italic mb-2 text-red-500">iFipe MASTER</h1>
-            <p class="text-[9px] font-bold uppercase text-gray-500 mb-8 tracking-[0.3em]">Acesso Exclusivo à Administração</p>
+            <p class="text-[9px] font-bold uppercase text-gray-500 mb-8 tracking-[0.3em]">Acesso Exclusivo e Seguro</p>
             <form onsubmit="realizarLoginMaster(event)">
-                <input type="password" id="logPassMaster" class="apple-input mb-4 text-center" placeholder="Palavra-passe de Segurança" required>
+                <input type="email" id="logEmailMaster" class="apple-input mb-3 text-center" placeholder="Seu E-mail Administrativo" required>
+                <input type="password" id="logPassMaster" class="apple-input mb-4 text-center" placeholder="Sua Palavra-passe" required>
                 <button type="submit" class="apple-button w-full bg-red-600 hover:bg-red-700">Entrar no Controlo Global</button>
             </form>
         </div>
@@ -55,50 +63,91 @@
     <div id="dashboardSection" class="hidden">
         <div class="user-bar">
             <div class="flex items-center gap-4">
-                <h1 class="text-xl font-black italic text-red-500 m-0">iFipe MASTER</h1>
-                <span class="text-[9px] font-black uppercase bg-red-500/20 text-red-500 px-2 py-1 rounded border border-red-500/50 hidden md:block">Gestão Global</span>
+                <h1 class="text-xl font-black italic text-red-500 m-0">iFipe GOD MODE</h1>
             </div>
             <div class="flex gap-4 items-center">
-                <div class="text-right hidden sm:block">
-                    <span class="text-[7px] text-gray-400 font-black uppercase block">Anúncios Ativos</span>
-                    <div id="totalAnunciosInfo" class="text-[12px] font-mono font-black text-white">0</div>
-                </div>
                 <button onclick="sairMaster()" class="text-[10px] text-gray-400 hover:text-white font-black uppercase border border-gray-600 rounded px-3 py-1.5 transition-colors">Sair</button>
             </div>
         </div>
 
         <div class="max-w-[1400px] mx-auto p-4 md:p-8">
             
-            <div class="bg-gradient-to-r from-[#1c1c1e] to-[#2c2c2e] p-5 rounded-2xl border border-[#38383a] shadow-2xl mb-8 flex flex-col md:flex-row gap-4 items-end md:items-center justify-between">
-                
-                <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-                    <div class="flex flex-col">
-                        <label class="text-[8px] text-gray-400 font-black uppercase mb-1">Filtrar por Cliente/Loja</label>
-                        <select id="filtro_master_loja" class="apple-input w-full md:w-[250px] m-0" onchange="renderizarMaster()">
-                            <option value="TODOS">Todos os Lojistas</option>
-                        </select>
+            <div class="flex flex-col md:flex-row gap-3 mb-8">
+                <button class="tab-btn active" id="btnTabAnuncios" onclick="mudarAba('anuncios')">📦 Gestão de Anúncios</button>
+                <button class="tab-btn" id="btnTabLojistas" onclick="mudarAba('lojistas')">🏪 Lojistas (Atacadistas)</button>
+                <button class="tab-btn" id="btnTabClientes" onclick="mudarAba('clientes')">👤 Clientes (Buscador)</button>
+            </div>
+
+            <div id="abaAnuncios">
+                <div class="bg-gradient-to-r from-[#1c1c1e] to-[#2c2c2e] p-5 rounded-2xl border border-[#38383a] shadow-2xl mb-8 flex flex-col md:flex-row gap-4 items-end md:items-center justify-between">
+                    <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                        <div class="flex flex-col">
+                            <label class="text-[8px] text-gray-400 font-black uppercase mb-1">Filtrar por Cliente/Loja</label>
+                            <select id="filtro_master_loja" class="apple-input w-full md:w-[250px] m-0" onchange="renderizarAnuncios()">
+                                <option value="TODOS">Todos os Lojistas</option>
+                            </select>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-[8px] text-gray-400 font-black uppercase mb-1">Estado do Anúncio</label>
+                            <select id="filtro_master_status" class="apple-input w-full md:w-[180px] m-0" onchange="renderizarAnuncios()">
+                                <option value="TODOS">Todos os Estados</option>
+                                <option value="APROVADOS">Apenas Aprovados</option>
+                                <option value="PENDENTES">⚠️ Pendentes de Aprovação</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="flex flex-col">
-                        <label class="text-[8px] text-gray-400 font-black uppercase mb-1">Estado do Anúncio</label>
-                        <select id="filtro_master_status" class="apple-input w-full md:w-[180px] m-0" onchange="renderizarMaster()">
-                            <option value="TODOS">Todos os Estados</option>
-                            <option value="APROVADOS">Apenas Aprovados</option>
-                            <option value="PENDENTES">⚠️ Pendentes de Aprovação</option>
-                        </select>
+                    <div class="flex flex-col items-end gap-2 w-full md:w-auto border-t border-[#38383a] md:border-none pt-4 md:pt-0">
+                        <span class="text-[9px] font-black text-white uppercase"><span id="masterBulkCount" class="text-blue-400 text-sm">0</span> Selecionados</span>
+                        <div class="flex gap-2">
+                            <button onclick="abrirMasterBulkEdit()" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-[9px] font-black uppercase hover:bg-blue-500 shadow-lg transition-colors border border-blue-500">Super Edição em Massa</button>
+                            <button onclick="masterBulkDelete()" class="bg-red-600/20 text-red-500 px-4 py-2 rounded-lg text-[9px] font-black uppercase hover:bg-red-600 hover:text-white transition-colors border border-red-500/50">Apagar Massa</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex flex-col items-end gap-2 w-full md:w-auto border-t border-[#38383a] md:border-none pt-4 md:pt-0">
-                    <span class="text-[9px] font-black text-white uppercase"><span id="masterBulkCount" class="text-blue-400 text-sm">0</span> Selecionados</span>
-                    <div class="flex gap-2">
-                        <button onclick="abrirMasterBulkEdit()" class="bg-blue-600 text-white px-5 py-2 rounded-lg text-[9px] font-black uppercase hover:bg-blue-500 shadow-lg transition-colors border border-blue-500">Super Edição em Massa</button>
-                        <button onclick="masterBulkDelete()" class="bg-red-600/20 text-red-500 px-4 py-2 rounded-lg text-[9px] font-black uppercase hover:bg-red-600 hover:text-white transition-colors border border-red-500/50">Apagar Massa</button>
-                    </div>
+                <div id="listaMasterGlobal" class="space-y-2">
+                    <p class="text-center text-gray-500 text-[10px] font-bold uppercase mt-10">A carregar a base de dados global...</p>
                 </div>
             </div>
 
-            <div id="listaMasterGlobal" class="space-y-2">
-                <p class="text-center text-gray-500 text-[10px] font-bold uppercase mt-10">A carregar a base de dados global...</p>
+            <div id="abaLojistas" class="hidden">
+                <div class="apple-card overflow-x-auto">
+                    <h2 class="text-lg font-black uppercase text-white mb-4">🏪 Lojistas Cadastrados</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome da Loja</th>
+                                <th>Contato / Local</th>
+                                <th>Estado</th>
+                                <th class="text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaLojistas">
+                            <tr><td colspan="5" class="text-center text-gray-500">A carregar...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="abaClientes" class="hidden">
+                <div class="apple-card overflow-x-auto">
+                    <h2 class="text-lg font-black uppercase text-white mb-4">👤 Clientes do Buscador</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome / CPF</th>
+                                <th>Contato / Local</th>
+                                <th>Estado</th>
+                                <th class="text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaClientes">
+                            <tr><td colspan="5" class="text-center text-gray-500">A carregar...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div>
@@ -172,7 +221,7 @@
 
                 <div class="flex gap-3">
                     <button type="button" onclick="fecharMasterBulkEdit()" class="bg-gray-600 text-white font-black text-[11px] uppercase rounded-full px-4 py-3 w-1/3 hover:bg-gray-500 transition-colors">Cancelar</button>
-                    <button type="submit" class="bg-blue-600 text-white font-black text-[11px] uppercase rounded-full px-4 py-3 w-2/3 hover:bg-blue-500 transition-colors">Executar Edição em Massa</button>
+                    <button type="submit" class="bg-blue-600 text-white font-black text-[11px] uppercase rounded-full px-4 py-3 w-2/3 hover:bg-blue-500 transition-colors">Executar</button>
                 </div>
             </form>
         </div>
@@ -180,7 +229,7 @@
 
     <div id="masterEditModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000] p-4">
         <div class="apple-card max-w-[400px] w-full border-blue-500">
-            <h3 class="text-sm font-black uppercase mb-4 text-blue-500">Edição Rápida de Segurança</h3>
+            <h3 class="text-sm font-black uppercase mb-4 text-blue-500">Edição de Segurança</h3>
             <form onsubmit="salvarEdicaoIndividual(event)">
                 <input type="hidden" id="edit_id">
                 <div class="mb-3">
@@ -191,12 +240,12 @@
                     <label class="text-[8px] text-gray-500 uppercase font-black">Estado de Aprovação</label>
                     <select id="edit_aprovacao" class="apple-input text-yellow-500 font-black">
                         <option value="aprovado">Aprovado (Visível)</option>
-                        <option value="pendente">Pendente (Oculto / Em Análise)</option>
+                        <option value="pendente">Pendente (Oculto)</option>
                     </select>
                 </div>
                 <div class="flex gap-2 mt-6">
-                    <button type="button" onclick="fecharMasterEdit()" class="bg-gray-600 text-white font-black text-[11px] uppercase rounded-full px-4 py-3 w-1/3 hover:bg-gray-500 transition-colors">Sair</button>
-                    <button type="submit" class="bg-blue-600 text-white font-black text-[11px] uppercase rounded-full px-4 py-3 w-2/3 hover:bg-blue-500 transition-colors">Salvar</button>
+                    <button type="button" onclick="fecharMasterEdit()" class="bg-gray-600 text-white font-black text-[11px] uppercase rounded-full px-4 py-3 w-1/3">Sair</button>
+                    <button type="submit" class="bg-blue-600 text-white font-black text-[11px] uppercase rounded-full px-4 py-3 w-2/3">Salvar</button>
                 </div>
             </form>
         </div>
@@ -233,15 +282,25 @@
             }
         };
 
-        function realizarLoginMaster(e) {
+        // --- SISTEMA DE LOGIN SEGURO (Buscando no Banco) ---
+        async function realizarLoginMaster(e) {
             e.preventDefault();
-            const pass = document.getElementById('logPassMaster').value.trim().toLowerCase();
-            // Senha simples de acesso ao Master baseada no seu contexto
-            if(pass === 'oraculo' || pass === 'oráculo' || pass === 'bryan') {
+            const email = document.getElementById('logEmailMaster').value.trim();
+            const pass = document.getElementById('logPassMaster').value.trim();
+            
+            // Verifica na tabela de clientes se existe o bryan com a senha correta
+            const { data, error } = await _s.from('clientes_buscador')
+                .select('*')
+                .eq('email', email)
+                .eq('senha', pass)
+                .maybeSingle();
+
+            // Bloqueio de segurança. Só entra se for o email principal que você me informou.
+            if (data && (email === 'bryan.paes@hotmail.com' || data.nome.toLowerCase().includes('bryan'))) {
                 localStorage.setItem('iFipe_Master_Auth', 'true');
                 liberarDashboard();
             } else {
-                alert("Acesso Negado.");
+                alert("Acesso Negado. Credenciais incorretas ou sem privilégios MASTER.");
             }
         }
 
@@ -253,42 +312,61 @@
         function liberarDashboard() {
             document.getElementById('authSection').classList.add('hidden');
             document.getElementById('dashboardSection').classList.remove('hidden');
-            carregarDadosGlobais();
+            
+            // Carrega os dados das 3 abas
+            carregarAnunciosGlobais();
+            carregarLojistas();
+            carregarClientes();
         }
 
-        async function carregarDadosGlobais() {
-            const div = document.getElementById('listaMasterGlobal');
-            div.innerHTML = '<p class="text-center text-gray-500 text-[10px] font-bold uppercase mt-10">A carregar a base de dados global...</p>';
+        // --- SISTEMA DE NAVEGAÇÃO ENTRE ABAS ---
+        function mudarAba(abaId) {
+            document.getElementById('abaAnuncios').classList.add('hidden');
+            document.getElementById('abaLojistas').classList.add('hidden');
+            document.getElementById('abaClientes').classList.add('hidden');
             
+            document.getElementById('btnTabAnuncios').classList.remove('active');
+            document.getElementById('btnTabLojistas').classList.remove('active');
+            document.getElementById('btnTabClientes').classList.remove('active');
+
+            if(abaId === 'anuncios') {
+                document.getElementById('abaAnuncios').classList.remove('hidden');
+                document.getElementById('btnTabAnuncios').classList.add('active');
+            } else if (abaId === 'lojistas') {
+                document.getElementById('abaLojistas').classList.remove('hidden');
+                document.getElementById('btnTabLojistas').classList.add('active');
+            } else if (abaId === 'clientes') {
+                document.getElementById('abaClientes').classList.remove('hidden');
+                document.getElementById('btnTabClientes').classList.add('active');
+            }
+        }
+
+        // ==========================================
+        // LÓGICA DA ABA 1: ANÚNCIOS
+        // ==========================================
+        async function carregarAnunciosGlobais() {
             const { data } = await _s.from('ofertas').select('*, fornecedores(nome, whatsapp), variacoes(*, produtos_mestre(*)), regioes(nome, bandeira)').order('criado_em', {ascending: false});
             ofertasGlobais = data || [];
 
-            // Popula o select de filtro com Lojistas Únicos
             const lojistasUnicos = [...new Set(ofertasGlobais.filter(o => o.fornecedores).map(o => o.fornecedores.nome))].sort();
             const selectLoja = document.getElementById('filtro_master_loja');
             selectLoja.innerHTML = '<option value="TODOS">Todos os Lojistas</option>' + lojistasUnicos.map(nome => `<option value="${nome}">${nome}</option>`).join('');
 
-            document.getElementById('totalAnunciosInfo').innerText = ofertasGlobais.length;
-
-            renderizarMaster();
+            renderizarAnuncios();
         }
 
-        function renderizarMaster() {
+        function renderizarAnuncios() {
             const filtroLoja = document.getElementById('filtro_master_loja').value;
             const filtroStatus = document.getElementById('filtro_master_status').value;
 
-            // 1. Filtragem Central
             let filtrados = ofertasGlobais.filter(o => {
                 if (filtroLoja !== 'TODOS' && (!o.fornecedores || o.fornecedores.nome !== filtroLoja)) return false;
-                
                 let status = o.status_aprovacao || 'aprovado';
                 if (filtroStatus === 'PENDENTES' && status !== 'pendente') return false;
                 if (filtroStatus === 'APROVADOS' && status !== 'aprovado') return false;
-                
                 return true;
             });
 
-            // 2. Agrupamento (A Sanfona)
             const grupos = {};
             filtrados.forEach(o => {
                 let nomeLoja = o.fornecedores ? o.fornecedores.nome : 'Sem Loja Vinculada';
@@ -372,25 +450,17 @@
             updateMasterBulkCount();
         }
 
-        // --- SISTEMA DE SELECÇÃO E CONTAGEM ---
         function updateMasterBulkCount() { 
             const count = document.querySelectorAll('.master-offer-check:checked').length;
             document.getElementById('masterBulkCount').innerText = count; 
         }
-        
         function toggleAllGroup(masterCheckbox, detailsElement) { 
             const checkboxes = detailsElement.querySelectorAll('.master-offer-check');
             checkboxes.forEach(c => c.checked = masterCheckbox.checked); 
             updateMasterBulkCount(); 
         }
-
-        // --- APROVAÇÃO RÁPIDA (Trava de Segurança) ---
-        async function aprovarRapido(id) {
-            await _s.from('ofertas').update({ status_aprovacao: 'aprovado' }).eq('id', id);
-            carregarDadosGlobais();
-        }
-
-        // --- EDIÇÃO INDIVIDUAL MASTER ---
+        async function aprovarRapido(id) { await _s.from('ofertas').update({ status_aprovacao: 'aprovado' }).eq('id', id); carregarAnunciosGlobais(); }
+        
         async function abrirMasterEdit(id) { 
             const { data: o } = await _s.from('ofertas').select('*').eq('id', id).single(); 
             document.getElementById('edit_id').value = o.id; 
@@ -399,25 +469,10 @@
             document.getElementById('masterEditModal').classList.remove('hidden'); 
         }
         function fecharMasterEdit() { document.getElementById('masterEditModal').classList.add('hidden'); }
-        async function salvarEdicaoIndividual(e) { 
-            e.preventDefault(); 
-            const id = document.getElementById('edit_id').value; 
-            const nPreco = parsePreco(document.getElementById('edit_preco').value);
-            const nAprov = document.getElementById('edit_aprovacao').value;
-            await _s.from('ofertas').update({ preco: nPreco, status_aprovacao: nAprov, data_alteracao_preco: new Date().toISOString() }).eq('id', id); 
-            fecharMasterEdit(); carregarDadosGlobais(); 
-        }
-        async function masterDeleteIndividual(id) { 
-            if(confirm("Apagar permanentemente este anúncio da IFIPE?")) { 
-                await _s.from('ofertas').delete().eq('id', id); carregarDadosGlobais(); 
-            } 
-        }
+        async function salvarEdicaoIndividual(e) { e.preventDefault(); const id = document.getElementById('edit_id').value; const nPreco = parsePreco(document.getElementById('edit_preco').value); const nAprov = document.getElementById('edit_aprovacao').value; await _s.from('ofertas').update({ preco: nPreco, status_aprovacao: nAprov, data_alteracao_preco: new Date().toISOString() }).eq('id', id); fecharMasterEdit(); carregarAnunciosGlobais(); }
+        async function masterDeleteIndividual(id) { if(confirm("Apagar permanentemente este anúncio da IFIPE?")) { await _s.from('ofertas').delete().eq('id', id); carregarAnunciosGlobais(); } }
 
-        // --- SUPER EDIÇÃO EM MASSA (Inclui Palavra-passe do Lojista) ---
-        function abrirMasterBulkEdit() { 
-            if(!document.querySelectorAll('.master-offer-check:checked').length) return alert("Selecione os anúncios primeiro!"); 
-            document.getElementById('masterBulkEditModal').classList.remove('hidden'); 
-        }
+        function abrirMasterBulkEdit() { if(!document.querySelectorAll('.master-offer-check:checked').length) return alert("Selecione os anúncios primeiro!"); document.getElementById('masterBulkEditModal').classList.remove('hidden'); }
         function fecharMasterBulkEdit() { document.getElementById('masterBulkEditModal').classList.add('hidden'); }
         
         async function salvarMasterBulkChanges(e) { 
@@ -427,10 +482,8 @@
 
             const checkboxes = Array.from(document.querySelectorAll('.master-offer-check:checked'));
             const idsOfertas = checkboxes.map(c => parseInt(c.value)); 
-            
             if(!idsOfertas.length) { btn.disabled = false; return; }
 
-            // Capturar os Fornecedores únicos que estão selecionados para poder alterar a password deles
             let fornecedoresIdsUnicos = [];
             checkboxes.forEach(c => {
                 let idOferta = parseInt(c.value);
@@ -440,47 +493,101 @@
                 }
             });
 
-            // 1. Alteração da Palavra-passe do Lojista (Se preenchido)
             const novaSenha = document.getElementById('master_bulk_senha').value.trim();
             if(novaSenha && fornecedoresIdsUnicos.length > 0) {
                 await _s.from('fornecedores').update({ senha: novaSenha }).in('id', fornecedoresIdsUnicos);
             }
 
-            // 2. Construir objeto de atualização em massa dos anúncios
-            const mCond = document.getElementById('master_bulk_condicao').value; 
-            const mBat = document.getElementById('master_bulk_bateria').value; 
-            const mGar = document.getElementById('master_bulk_garantia').value; 
-            const mAprov = document.getElementById('master_bulk_aprovacao').value;
-
+            const mCond = document.getElementById('master_bulk_condicao').value; const mBat = document.getElementById('master_bulk_bateria').value; const mGar = document.getElementById('master_bulk_garantia').value; const mAprov = document.getElementById('master_bulk_aprovacao').value;
             const bPix = document.getElementById('mb_pix').value; const bUsdt = document.getElementById('mb_usdt').value; const bNota = document.getElementById('mb_nota').value; const bProp = document.getElementById('mb_prop').value; const bEnvio = document.getElementById('mb_env').value; const bColeta = document.getElementById('mb_col').value; const bBoy = document.getElementById('mb_boy').value; 
             
             let up = {}; 
-            if(mCond) up.condicao = mCond; 
-            if(mBat) up.saude_bateria = mBat; 
-            if(mGar) up.garantia = mGar; 
-            if(mAprov) up.status_aprovacao = mAprov;
+            if(mCond) up.condicao = mCond; if(mBat) up.saude_bateria = mBat; if(mGar) up.garantia = mGar; if(mAprov) up.status_aprovacao = mAprov;
             if(bPix !== "") up.aceita_pix = bPix === "1"; if(bUsdt !== "") up.aceita_usdt = bUsdt === "1"; if(bNota !== "") up.emite_nota = bNota === "1"; if(bProp !== "") up.aceita_proposta = bProp === "1"; if(bEnvio !== "") up.faz_envio = bEnvio === "1"; if(bColeta !== "") up.aceita_coleta = bColeta === "1"; if(bBoy !== "") up.tem_boy = bBoy === "1"; 
             
-            if(Object.keys(up).length > 0) { 
-                up.data_alteracao_preco = new Date().toISOString(); 
-                await _s.from('ofertas').update(up).in('id', idsOfertas); 
-            } 
-
-            document.getElementById('master_bulk_senha').value = '';
-            btn.disabled = false; btn.innerText = "Executar Edição em Massa";
-            fecharMasterBulkEdit(); 
-            carregarDadosGlobais(); 
-            alert("Operação Global executada com sucesso!"); 
+            if(Object.keys(up).length > 0) { up.data_alteracao_preco = new Date().toISOString(); await _s.from('ofertas').update(up).in('id', idsOfertas); } 
+            document.getElementById('master_bulk_senha').value = ''; btn.disabled = false; btn.innerText = "Executar"; fecharMasterBulkEdit(); carregarAnunciosGlobais(); alert("Operação executada!"); 
         }
 
-        async function masterBulkDelete() { 
-            const ids = Array.from(document.querySelectorAll('.master-offer-check:checked')).map(c => parseInt(c.value)); 
-            if(!ids.length || !confirm("Isto irá apagar os anúncios selecionados. Tem a certeza absoluta?")) return; 
-            await _s.from('ofertas').delete().in('id', ids); 
-            carregarDadosGlobais(); 
+        async function masterBulkDelete() { const ids = Array.from(document.querySelectorAll('.master-offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length || !confirm("Apagar os anúncios selecionados?")) return; await _s.from('ofertas').delete().in('id', ids); carregarAnunciosGlobais(); }
+
+        // ==========================================
+        // LÓGICA DA ABA 2: LOJISTAS
+        // ==========================================
+        async function carregarLojistas() {
+            const tbody = document.getElementById('tabelaLojistas');
+            const { data } = await _s.from('fornecedores').select('*').order('id', {ascending: false});
+            if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500">Nenhum Lojista Encontrado.</td></tr>'; return; }
+
+            tbody.innerHTML = data.map(loja => {
+                let statusTag = loja.ativo 
+                    ? '<span class="text-[9px] text-[#32d74b] border border-[#32d74b] px-1 py-0.5 rounded">ATIVO</span>' 
+                    : '<span class="text-[9px] text-yellow-500 border border-yellow-500 px-1 py-0.5 rounded">AGUARDA APROVAÇÃO</span>';
+                
+                let btnAprovar = loja.ativo 
+                    ? `<button onclick="alternarStatusLojista(${loja.id}, false)" class="btn-acao btn-suspend">Suspender</button>` 
+                    : `<button onclick="alternarStatusLojista(${loja.id}, true)" class="btn-acao btn-approve">Aprovar ✔️</button>`;
+
+                return `
+                <tr>
+                    <td class="font-bold text-gray-500">#${loja.id}</td>
+                    <td class="font-black text-white text-[12px] uppercase">${loja.nome}</td>
+                    <td>
+                        <span class="text-[9px] text-gray-400 block">${loja.whatsapp || 'Sem Zap'}</span>
+                        <span class="text-[9px] text-blue-400 block uppercase">${loja.cidade || ''} - ${loja.estado || ''} (${loja.pais || ''})</span>
+                    </td>
+                    <td>${statusTag}</td>
+                    <td class="text-right flex justify-end gap-1">
+                        ${btnAprovar}
+                        <button onclick="apagarLojista(${loja.id})" class="btn-acao btn-del">X</button>
+                    </td>
+                </tr>`;
+            }).join('');
         }
 
-        // Funções Numéricas
+        async function alternarStatusLojista(id, statusBooleano) { await _s.from('fornecedores').update({ ativo: statusBooleano }).eq('id', id); carregarLojistas(); }
+        async function apagarLojista(id) { if(confirm("Apagar permanentemente este lojista e TODOS OS SEUS ANÚNCIOS?")) { await _s.from('fornecedores').delete().eq('id', id); carregarLojistas(); carregarAnunciosGlobais(); } }
+
+        // ==========================================
+        // LÓGICA DA ABA 3: CLIENTES (Buscador VIP)
+        // ==========================================
+        async function carregarClientes() {
+            const tbody = document.getElementById('tabelaClientes');
+            const { data } = await _s.from('clientes_buscador').select('*').order('id', {ascending: false});
+            if(!data || data.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500">Nenhum Cliente Encontrado.</td></tr>'; return; }
+
+            tbody.innerHTML = data.map(cli => {
+                let statusTag = cli.aprovado 
+                    ? '<span class="text-[9px] text-[#32d74b] border border-[#32d74b] px-1 py-0.5 rounded">APROVADO</span>' 
+                    : '<span class="text-[9px] text-yellow-500 border border-yellow-500 px-1 py-0.5 rounded">PENDENTE</span>';
+                
+                let btnAprovar = cli.aprovado 
+                    ? `<button onclick="alternarStatusCliente(${cli.id}, false)" class="btn-acao btn-suspend">Suspender</button>` 
+                    : `<button onclick="alternarStatusCliente(${cli.id}, true)" class="btn-acao btn-approve">Aprovar ✔️</button>`;
+
+                return `
+                <tr>
+                    <td class="font-bold text-gray-500">#${cli.id}</td>
+                    <td>
+                        <span class="font-black text-white text-[12px] uppercase block">${cli.nome}</span>
+                        <span class="text-[9px] text-gray-500 font-mono">CPF: ${cli.cpf}</span>
+                    </td>
+                    <td>
+                        <span class="text-[9px] text-gray-400 block">${cli.whatsapp || 'Sem Zap'}</span>
+                        <span class="text-[9px] text-blue-400 block">${cli.email}</span>
+                    </td>
+                    <td>${statusTag}</td>
+                    <td class="text-right flex justify-end gap-1">
+                        ${btnAprovar}
+                        <button onclick="apagarCliente(${cli.id})" class="btn-acao btn-del">X</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function alternarStatusCliente(id, statusBooleano) { await _s.from('clientes_buscador').update({ aprovado: statusBooleano }).eq('id', id); carregarClientes(); }
+        async function apagarCliente(id) { if(confirm("Apagar permanentemente este cliente VIP?")) { await _s.from('clientes_buscador').delete().eq('id', id); carregarClientes(); } }
+
         function parsePreco(v) { return v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0; }
         function mascararMoeda(input) { let v = input.value.replace(/\D/g, ''); if (!v) { input.value = ''; return; } v = (parseFloat(v) / 100).toFixed(2).replace('.', ','); input.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
     </script>
