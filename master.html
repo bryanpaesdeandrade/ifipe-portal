@@ -59,10 +59,10 @@
     <div id="authSection" class="flex items-center justify-center min-h-screen px-4">
         <div class="apple-card max-w-[400px] text-center w-full border-red-500 border-2 shadow-2xl">
             <h1 class="text-4xl font-black italic mb-2 text-red-500">iFipe MASTER</h1>
-            <p class="text-[9px] font-bold uppercase text-gray-500 mb-8 tracking-[0.3em]">God Mode Dashboard</p>
+            <p class="text-[9px] font-bold uppercase text-gray-500 mb-8 tracking-[0.3em]">Acesso God Mode</p>
             <form onsubmit="realizarLoginMaster(event)">
-                <input type="email" id="logEmailMaster" class="apple-input mb-3 text-center" placeholder="Qualquer E-mail" required>
-                <input type="password" id="logPassMaster" class="apple-input mb-4 text-center" placeholder="Senha: oraculo" required>
+                <input type="text" id="logEmailMaster" class="apple-input mb-3 text-center" placeholder="Login" required>
+                <input type="password" id="logPassMaster" class="apple-input mb-4 text-center" placeholder="Senha" required>
                 <button type="submit" class="apple-button w-full">Entrar no Sistema</button>
             </form>
         </div>
@@ -167,8 +167,8 @@
                     <h2 class="text-lg font-black uppercase text-white">🏪 Atacadistas</h2>
                     <div class="flex gap-2">
                         <input type="text" id="searchLojista" class="apple-input w-[200px]" placeholder="🔎 Buscar..." oninput="filtrarUsuarios('lojista')">
-                        <button onclick="abrirMasterBulkEditUsers('fornecedores')" class="apple-button bg-blue-600 px-4 py-2 text-[9px]">Edição Massa Usuário</button>
-                        <button onclick="abrirCriarUsuario('lojista')" class="apple-button bg-green-600 px-4 py-2 text-[9px]">+ Novo</button>
+                        <button onclick="abrirMasterBulkEditUsers('fornecedores')" class="apple-button bg-blue-600 px-4 py-2 text-[9px] border-none">Edição Massa Usuário</button>
+                        <button onclick="abrirCriarUsuario('lojista')" class="apple-button bg-green-600 px-4 py-2 text-[9px] border-none">+ Novo</button>
                     </div>
                 </div>
                 <div class="apple-card overflow-x-auto">
@@ -184,8 +184,8 @@
                     <h2 class="text-lg font-black uppercase text-white">👤 Buscadores</h2>
                     <div class="flex gap-2">
                         <input type="text" id="searchCliente" class="apple-input w-[200px]" placeholder="🔎 Buscar..." oninput="filtrarUsuarios('cliente')">
-                        <button onclick="abrirMasterBulkEditUsers('clientes_buscador')" class="apple-button bg-blue-600 px-4 py-2 text-[9px]">Edição Massa Usuário</button>
-                        <button onclick="abrirCriarUsuario('cliente')" class="apple-button bg-green-600 px-4 py-2 text-[9px]">+ Novo</button>
+                        <button onclick="abrirMasterBulkEditUsers('clientes_buscador')" class="apple-button bg-blue-600 px-4 py-2 text-[9px] border-none">Edição Massa Usuário</button>
+                        <button onclick="abrirCriarUsuario('cliente')" class="apple-button bg-green-600 px-4 py-2 text-[9px] border-none">+ Novo</button>
                     </div>
                 </div>
                 <div class="apple-card overflow-x-auto">
@@ -197,8 +197,8 @@
             </div>
 
             <div id="abaStaff" class="hidden">
-                <div class="flex justify-between mb-4"><h2 class="text-lg font-black uppercase text-red-500">Equipe Master</h2><button onclick="abrirCriarUsuario('staff')" class="apple-button bg-red-600">+ Novo Admin</button></div>
-                <div class="apple-card overflow-x-auto"><table><thead><tr><th>Admin</th><th>E-mail</th><th>Senha</th><th class="text-right">Ação</th></tr></thead><tbody id="tabelaStaff"></tbody></table></div>
+                <div class="flex justify-between mb-4"><h2 class="text-lg font-black uppercase text-red-500">Equipe Master</h2><button onclick="abrirCriarUsuario('staff')" class="apple-button bg-red-600 border-none">+ Novo Admin</button></div>
+                <div class="apple-card overflow-x-auto"><table><thead><tr><th>Admin</th><th>Login</th><th>Senha</th><th class="text-right">Ação</th></tr></thead><tbody id="tabelaStaff"></tbody></table></div>
             </div>
         </div>
     </div>
@@ -226,6 +226,7 @@
                         <option value="GARANTIA APPLE">Garantia Apple Restante</option>
                     </select></div>
                 </div>
+                <div class="mb-4"><label class="text-[8px] text-gray-500 font-bold uppercase">Status de Aprovação</label><select id="e_aprov" class="apple-input text-yellow-500"><option value="aprovado">Aprovado (Visível)</option><option value="pendente">Pendente (Oculto)</option></select></div>
                 <div class="p-3 bg-[#1c1c1e] rounded-xl grid grid-cols-4 gap-2 border border-[#38383a] mb-6">
                     <label class="text-[8px] flex items-center gap-1 m-0"><input type="checkbox" id="e_pix"> PIX</label>
                     <label class="text-[8px] flex items-center gap-1 m-0"><input type="checkbox" id="e_usdt"> USDT</label>
@@ -330,16 +331,25 @@
 
         window.onscroll = () => { document.getElementById('btnScrollTop').style.display = window.scrollY > 300 ? 'flex' : 'none'; };
         
-        // LOGIN BYPASS "ORACULO"
+        // LOGIN PELO BANCO (Blindado)
         window.onload = () => { if(localStorage.getItem('iFipe_Master_Auth') === 'true') liberarDashboard(); };
 
         async function realizarLoginMaster(e) {
             e.preventDefault(); 
-            const pw = document.getElementById('logPassMaster').value;
-            if (pw === 'oraculo') {
-                localStorage.setItem('iFipe_Master_Auth', 'true'); liberarDashboard();
-            } else {
-                alert("Acesso Negado.");
+            const loginEmail = document.getElementById('logEmailMaster').value;
+            const loginSenha = document.getElementById('logPassMaster').value;
+            
+            const { data } = await _s.from('clientes_buscador')
+                .select('*')
+                .eq('email', loginEmail)
+                .eq('senha', loginSenha)
+                .maybeSingle();
+
+            if (data?.is_master) { 
+                localStorage.setItem('iFipe_Master_Auth', 'true'); 
+                liberarDashboard(); 
+            } else { 
+                alert("Acesso Negado."); 
             }
         }
         function sairMaster() { localStorage.removeItem('iFipe_Master_Auth'); window.location.reload(); }
@@ -379,7 +389,8 @@
             document.getElementById('tabelaLojistas').innerHTML = data.map(l => {
                 let statusTag = l.ativo ? '<span class="text-[#32d74b]">ATIVO</span>' : '<span class="text-[#ff3b30]">BLOQ</span>';
                 let btnAtivar = l.ativo ? `<button onclick="toggleUser('fornecedores',${l.id},false,'ativo')" class="btn-acao btn-del">Bloquear</button>` : `<button onclick="toggleUser('fornecedores',${l.id},true,'ativo')" class="btn-acao btn-approve">Ativar</button>`;
-                return `<tr class="loja-row" data-name="${l.nome.toUpperCase()}"><td><input type="checkbox" class="loja-check" value="${l.id}"></td><td><span class="font-black text-white uppercase">${l.nome} ${l.verificado?'✔️':''}</span></td><td class="text-yellow-400 font-mono text-[9px]">${l.senha||''}</td><td>${l.cidade||''}</td><td>${statusTag}</td><td>${renderTags(l.id, 'fornecedores', l.insignia_manual)}</td><td class="text-right flex justify-end gap-1"><button onclick="abrirEdicaoUser('fornecedores',${l.id})" class="btn-acao btn-edit">Editar</button>${btnAtivar}<button onclick="masterDeleteUser('fornecedores',${l.id})" class="btn-acao btn-del">X</button></td></tr>`;
+                let btnV = l.verificado ? `<button onclick="toggleUser('fornecedores',${l.id},false,'verificado')" class="btn-acao" style="color:gray;">Tirar Selo</button>` : `<button onclick="toggleUser('fornecedores',${l.id},true,'verificado')" class="btn-acao btn-verify">Verificar</button>`;
+                return `<tr class="loja-row" data-name="${l.nome.toUpperCase()}"><td><input type="checkbox" class="loja-check" value="${l.id}"></td><td><span class="font-black text-white uppercase">${l.nome} ${l.verificado?'✔️':''}</span></td><td class="text-yellow-400 font-mono text-[9px]">${l.senha||''}</td><td>${l.cidade||''}</td><td>${statusTag}</td><td>${renderTags(l.id, 'fornecedores', l.insignia_manual)}</td><td class="text-right flex justify-end gap-1"><button onclick="abrirEdicaoUser('fornecedores',${l.id})" class="btn-acao btn-edit">Editar</button>${btnV}${btnAtivar}<button onclick="masterDeleteUser('fornecedores',${l.id})" class="btn-acao btn-del">X</button></td></tr>`;
             }).join('');
         }
 
@@ -431,7 +442,7 @@
         }
         function toggleAllUsers(cName, v) { document.querySelectorAll('.'+cName).forEach(c => c.checked = v); }
 
-        // --- CONCIERGE E ANUNCIOS (Bandeiras Fixas) ---
+        // --- CONCIERGE E ANUNCIOS ---
         async function carregarBasePostagem() {
             const [p, r, v, f] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('id'), _s.from('variacoes').select('*'), _s.from('fornecedores').select('id, nome').order('nome') ]);
             produtosMestre = p.data; gradeVariacoes = v.data;
