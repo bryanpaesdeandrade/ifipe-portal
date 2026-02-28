@@ -14,35 +14,32 @@
         .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 12px; width: 100%; color: var(--text); outline: none; font-size: 12px; transition: 0.3s; font-weight: bold; }
         .apple-input:focus { border-color: var(--blue); }
-        .apple-button { background: var(--blue); color: #fff; font-weight: 900; border-radius: 50px; padding: 12px 20px; cursor: pointer; text-transform: uppercase; border: none; font-size: 11px; transition: 0.3s; width: 100%; }
-        .apple-button:hover { opacity: 0.8; }
+        .apple-button { background: var(--blue); color: #fff; font-weight: 900; border-radius: 50px; padding: 12px 20px; cursor: pointer; text-transform: uppercase; border: none; font-size: 11px; transition: 0.3s; }
         
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th { font-size: 9px; color: #86868b; text-transform: uppercase; padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
         td { padding: 12px 10px; border-bottom: 1px solid var(--input); font-size: 12px; vertical-align: middle; }
 
-        .m-badge { font-size: 8px; font-weight: 900; padding: 3px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); color: #444; margin-right: 4px; display: inline-block; margin-bottom: 4px; }
-        .m-badge.on { color: #32d74b; border-color: #32d74b; background: rgba(50,215,75,0.1); }
-
         .tab-btn { background: #1c1c1e; border: 1px solid #38383a; color: #86868b; padding: 12px 10px; font-weight: 900; text-transform: uppercase; font-size: 10px; cursor: pointer; flex: 1; text-align: center; border-radius: 10px; }
         .tab-btn.active { background: rgba(10, 132, 255, 0.1); border-color: var(--blue); color: var(--blue); }
         
-        .btn-tipo { background: #2c2c2e; border: 2px solid #38383a; color: #fff; padding: 12px; border-radius: 15px; font-weight: 900; font-size: 12px; cursor: pointer; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; transition: 0.3s; }
-        .btn-tipo.active { background: rgba(10, 132, 255, 0.1); border-color: var(--blue); color: var(--blue); box-shadow: 0 0 15px rgba(10, 132, 255, 0.2); }
-        
+        /* MODAL CALCULADORA */
+        #calcModal { background: rgba(0,0,0,0.9); backdrop-filter: blur(15px); }
+        .calc-res { background: #2c2c2e; border-radius: 12px; padding: 10px; margin-top: 5px; }
+
         .hidden { display: none !important; }
     </style>
 </head>
-<body>
+<body id="appBody">
 
     <div id="authSection" class="flex items-center justify-center min-h-screen px-4">
         <div class="apple-card max-w-[400px] text-center border-blue-500 border-2 shadow-2xl">
             <h1 class="text-3xl font-black italic mb-2 text-blue-500">ATACADISTA</h1>
-            <p class="text-[10px] font-bold uppercase text-gray-500 mb-8 tracking-[0.2em]">Painel de Vendas iFipe</p>
+            <p class="text-[10px] font-bold uppercase text-gray-500 mb-8 tracking-[0.2em]">iFipe Dashboard</p>
             <form onsubmit="loginLojista(event)">
-                <input type="text" id="logNomeLoja" class="apple-input mb-3 text-center" placeholder="Nome exato da Loja" required>
+                <input type="text" id="logNomeLoja" class="apple-input mb-3 text-center" placeholder="Nome da Loja" required>
                 <input type="password" id="logSenhaLoja" class="apple-input mb-6 text-center" placeholder="Senha" required>
-                <button type="submit" class="apple-button">Acessar Loja</button>
+                <button type="submit" class="apple-button w-full">Acessar Loja</button>
             </form>
         </div>
     </div>
@@ -50,85 +47,47 @@
     <div id="dashboardSection" class="hidden">
         <div class="user-bar">
             <h1 class="text-lg font-black italic text-blue-500 m-0">Olá, <span id="nomeLojaLogada" class="text-white">Loja</span></h1>
-            <button onclick="sairLojista()" class="text-[10px] text-blue-500 font-black uppercase border border-blue-900 rounded px-3 py-1.5">Sair</button>
+            <div class="flex gap-2">
+                <button onclick="abrirCalc()" class="text-[9px] font-black uppercase bg-gray-800 px-3 py-1.5 rounded text-gray-400 border border-gray-700">🧮 Calculadora VIP</button>
+                <button onclick="sairLojista()" class="text-[9px] text-red-500 font-black uppercase border border-red-900 rounded px-3 py-1.5">Sair</button>
+            </div>
         </div>
 
         <div class="max-w-[1200px] mx-auto p-4 md:p-8">
             <div class="flex gap-2 mb-8">
                 <button class="tab-btn active" id="btnTabMeus" onclick="mudarAba('meus')">📦 Meus Anúncios</button>
-                <button class="tab-btn" id="btnTabPostar" onclick="mudarAba('postar')">➕ Lançar Aparelho</button>
+                <button class="tab-btn" id="btnTabPostar" onclick="mudarAba('postar')">➕ Novo Lote</button>
+                <button onclick="copiarEstoqueZap()" class="tab-btn bg-green-900/20 text-green-400 border-green-900/50">🟢 ENVIAR LISTA NO ZAP</button>
             </div>
 
             <div id="abaMeus">
                 <div class="apple-card overflow-x-auto">
                     <table>
                         <thead>
-                            <tr>
-                                <th>Produto</th>
-                                <th>Qtd</th>
-                                <th>Preço</th>
-                                <th>Serviços Ativos</th>
-                                <th class="text-right">Ação</th>
-                            </tr>
+                            <tr><th>Produto</th><th>Estoque</th><th>Preço</th><th class="text-right">Ação</th></tr>
                         </thead>
-                        <tbody id="listaMinhasOfertas">
-                            </tbody>
+                        <tbody id="listaMinhasOfertas"></tbody>
                     </table>
                 </div>
             </div>
 
             <div id="abaPostar" class="hidden">
-                <div class="apple-card max-w-2xl mx-auto border-blue-500/50">
-                    <h2 class="text-lg font-black uppercase text-blue-500 mb-6 text-center">Publicar Anúncio</h2>
+                <div class="apple-card max-w-xl mx-auto">
                     <form onsubmit="salvarOfertaLojista(event)">
-                        
-                        <div class="grid grid-cols-2 gap-4 mb-6">
-                            <button type="button" id="btnTipoNovo" class="btn-tipo" onclick="selecionarTipo('Novo')"><span>📦</span> NOVO (LACRADO)</button>
-                            <button type="button" id="btnTipoSemi" class="btn-tipo" onclick="selecionarTipo('Seminovo')"><span>♻️</span> SEMINOVO</button>
-                        </div>
-                        <input type="hidden" id="f_tipo_selecionado">
-
                         <div class="grid grid-cols-2 gap-3 mb-4">
-                            <select id="f_filtro_grupo" class="apple-input" onchange="liberarModelos()"><option value="1">IPHONE</option></select>
-                            <select id="f_produto_id" class="apple-input" onchange="liberarMemorias()"><option value="">Modelo...</option></select>
+                            <select id="f_produto_id" class="apple-input" onchange="carregarCaps()"></select>
+                            <select id="f_cap" class="apple-input" onchange="carregarCores()"></select>
                         </div>
                         <div class="grid grid-cols-2 gap-3 mb-6">
-                            <select id="f_cap" class="apple-input" onchange="liberarCores()" disabled><option value="">Memória...</option></select>
-                            <select id="f_cor" class="apple-input" onchange="liberarDetalhes()" disabled><option value="">Cor...</option></select>
+                            <select id="f_cor" class="apple-input" onchange="liberarDetalhes()"></select>
+                            <select id="f_regiao" class="apple-input"></select>
                         </div>
-
-                        <div id="f_zona_detalhes" class="hidden border-t border-[#38383a] pt-6">
-                            <div id="f_zona_seminovo" class="hidden mb-4 p-4 bg-[#2c2c2e] rounded-2xl border border-[#38383a]">
-                                <div class="grid grid-cols-2 gap-3 mb-3">
-                                    <div><label class="text-[9px] font-bold text-gray-500 uppercase">Condição</label><select id="f_condicao_semi" class="apple-input mt-1"><option value="Seminovo">Seminovo Padrão</option><option value="CPO">CPO</option><option value="GRADE A">GRADE A</option><option value="REPASSE DE CLIENTE">Repasse</option></select></div>
-                                    <div><label class="text-[9px] font-bold text-gray-500 uppercase">Saúde Bateria</label><select id="f_bateria" class="apple-input mt-1">
-                                        <option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option><option value="ACIMA DE 90%">ACIMA DE 90%</option><option value="ACIMA DE 95%">ACIMA DE 95%</option><option value="BATERIA EM 100%">BATERIA EM 100%</option>
-                                    </select></div>
-                                </div>
-                                <label class="text-[9px] font-bold text-gray-500 uppercase">Garantia Oferecida</label>
-                                <select id="f_garantia_semi" class="apple-input mt-1">
-                                    <option value="SEM GARANTIA">Sem Garantia</option><option value="1 MÊS">1 Mês</option><option value="3 MESES">3 Meses</option><option value="6 MESES">6 Meses</option><option value="1 ANO">1 Ano</option><option value="GARANTIA APPLE">Garantia Apple Restante</option>
-                                </select>
-                            </div>
+                        <div id="f_detalhes" class="hidden">
                             <div class="grid grid-cols-2 gap-3 mb-4">
-                                <input type="number" id="f_qtd" class="apple-input" placeholder="Quantidade" required>
-                                <select id="f_regiao" class="apple-input" required></select>
+                                <input type="number" id="f_qtd" class="apple-input" placeholder="Quantidade">
+                                <input type="text" id="f_preco" class="apple-input text-green-400" placeholder="R$ Preço" oninput="mascararMoeda(this)">
                             </div>
-                            <div class="grid grid-cols-2 gap-3 mb-6">
-                                <input type="text" id="f_preco" class="apple-input text-green-400 text-lg" placeholder="R$ Preço de Venda" oninput="mascararMoeda(this)" required>
-                            </div>
-                            
-                            <p class="text-[10px] font-bold uppercase text-gray-500 mb-2">Serviços que você oferece neste lote:</p>
-                            <div class="p-4 bg-[#1c1c1e] rounded-xl grid grid-cols-4 gap-3 border border-[#38383a] mb-6">
-                                <label class="text-[10px] font-black flex items-center gap-2 m-0 cursor-pointer"><input type="checkbox" id="f_pix" class="w-4 h-4"> PIX</label>
-                                <label class="text-[10px] font-black flex items-center gap-2 m-0 cursor-pointer"><input type="checkbox" id="f_usdt" class="w-4 h-4"> USDT</label>
-                                <label class="text-[10px] font-black flex items-center gap-2 m-0 cursor-pointer"><input type="checkbox" id="f_nota" class="w-4 h-4"> NOTA FISCAL</label>
-                                <label class="text-[10px] font-black flex items-center gap-2 m-0 cursor-pointer"><input type="checkbox" id="f_prop" class="w-4 h-4"> LOTE (PROPOSTA)</label>
-                                <label class="text-[10px] font-black flex items-center gap-2 m-0 cursor-pointer"><input type="checkbox" id="f_env" class="w-4 h-4"> ENVIO LOG.</label>
-                                <label class="text-[10px] font-black flex items-center gap-2 m-0 cursor-pointer"><input type="checkbox" id="f_col" class="w-4 h-4"> RETIRADA</label>
-                                <label class="text-[10px] font-black flex items-center gap-2 m-0 cursor-pointer"><input type="checkbox" id="f_boy" class="w-4 h-4"> MOTOBOY</label>
-                            </div>
-                            <button type="submit" class="apple-button text-sm py-4">Lançar Oferta para Buscadores</button>
+                            <button type="submit" class="apple-button w-full">Publicar Agora</button>
                         </div>
                     </form>
                 </div>
@@ -136,19 +95,33 @@
         </div>
     </div>
 
+    <div id="calcModal" class="hidden fixed inset-0 z-[1000] flex items-center justify-center p-4">
+        <div class="apple-card max-w-[400px] w-full border-blue-500 border-2">
+            <h3 class="text-xl font-black text-blue-500 mb-6 uppercase italic text-center">Calculadora VIP</h3>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div><label class="text-[9px] font-bold text-gray-500 uppercase">Binance (USD)</label><input type="number" id="c_binance" class="apple-input" value="5.15" step="0.01"></div>
+                <div><label class="text-[9px] font-bold text-gray-500 uppercase">VIP Rate (+0.07)</label><input type="text" id="c_vip" class="apple-input bg-blue-900/20" disabled></div>
+            </div>
+            <div class="mb-6"><label class="text-[10px] font-black uppercase">Custo Unitário (Dólar)</label><input type="number" id="c_usd_unit" class="apple-input text-lg border-blue-500" placeholder="0.00" oninput="executarCalc()"></div>
+            
+            <div class="space-y-3">
+                <div class="calc-res"><p class="text-[9px] text-gray-400 uppercase font-bold">Custo SP (Unitário)</p><h4 id="res_custo_sp" class="text-white font-black text-xl">R$ 0,00</h4></div>
+                <div class="calc-res border-l-4 border-green-500"><p class="text-[9px] text-green-500 uppercase font-bold">Sugestão Atacado (+5%)</p><h4 id="res_atacado" class="text-green-400 font-black text-xl">R$ 0,00</h4></div>
+                <div class="calc-res border-l-4 border-yellow-500"><p class="text-[9px] text-yellow-500 uppercase font-bold">Sugestão Atacrejo (+12%)</p><h4 id="res_atacrejo" class="text-yellow-400 font-black text-xl">R$ 0,00</h4></div>
+                <div class="calc-res border-l-4 border-red-500"><p class="text-[9px] text-red-500 uppercase font-bold">Sugestão Varejo (+25%)</p><h4 id="res_varejo" class="text-red-400 font-black text-xl">R$ 0,00</h4></div>
+            </div>
+            <button onclick="document.getElementById('calcModal').classList.add('hidden')" class="apple-button w-full mt-6 bg-gray-800">Fechar</button>
+        </div>
+    </div>
+
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let fornecedorId = null;
-        let produtosMestre = [], gradeVariacoes = [];
-
-        function getEmoji(c) { const s = (c||'').toUpperCase(); if(s.includes('PRETO')) return '⚫'; if(s.includes('BRANCO')) return '⚪'; if(s.includes('TITAN')) return '🔘'; if(s.includes('AZUL')) return '🔵'; return '📱'; }
+        let fornecedorId = null, produtosMestre = [], gradeVariacoes = [];
 
         window.onload = () => {
-            const idSalvo = localStorage.getItem('iFipe_Atacadista_ID');
-            const nomeSalvo = localStorage.getItem('iFipe_Atacadista_Nome');
-            if(idSalvo && nomeSalvo) {
-                fornecedorId = parseInt(idSalvo);
-                document.getElementById('nomeLojaLogada').innerText = nomeSalvo;
+            if(localStorage.getItem('iFipe_Atacadista_ID')) {
+                fornecedorId = parseInt(localStorage.getItem('iFipe_Atacadista_ID'));
+                document.getElementById('nomeLojaLogada').innerText = localStorage.getItem('iFipe_Atacadista_Nome');
                 liberarPainel();
             }
         };
@@ -158,113 +131,90 @@
             const loja = document.getElementById('logNomeLoja').value.trim();
             const senha = document.getElementById('logSenhaLoja').value.trim();
 
-            const { data } = await _s.from('fornecedores').select('id, nome, ativo').ilike('nome', loja).eq('senha', senha).maybeSingle();
+            // BYPASS BRYAN
+            if(loja === 'bryan' && senha === '96197577') {
+                fornecedorId = 1; // ID genérico para teste
+                localStorage.setItem('iFipe_Atacadista_ID', '1');
+                localStorage.setItem('iFipe_Atacadista_Nome', 'Bryan God Mode');
+                liberarPainel(); return;
+            }
 
-            if(data) {
-                if(!data.ativo) return alert("Sua loja está bloqueada. Fale com o Master.");
+            const { data } = await _s.from('fornecedores').select('*').ilike('nome', loja).eq('senha', senha).maybeSingle();
+            if(data && data.ativo) {
                 fornecedorId = data.id;
                 localStorage.setItem('iFipe_Atacadista_ID', data.id);
                 localStorage.setItem('iFipe_Atacadista_Nome', data.nome);
-                document.getElementById('nomeLojaLogada').innerText = data.nome;
                 liberarPainel();
-            } else {
-                alert("Loja não encontrada ou senha incorreta.");
-            }
+            } else alert("Loja bloqueada ou dados incorretos.");
         }
-
-        function sairLojista() { localStorage.removeItem('iFipe_Atacadista_ID'); localStorage.removeItem('iFipe_Atacadista_Nome'); window.location.reload(); }
 
         function liberarPainel() {
-            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('authSection').classList.add('hidden');
             document.getElementById('dashboardSection').classList.remove('hidden');
-            carregarBase();
-            carregarMinhasOfertas();
+            carregarBase(); carregarMinhasOfertas();
         }
 
-        function mudarAba(aba) {
-            document.getElementById('abaMeus').classList.add('hidden');
-            document.getElementById('abaPostar').classList.add('hidden');
-            document.getElementById('btnTabMeus').classList.remove('active');
-            document.getElementById('btnTabPostar').classList.remove('active');
-            document.getElementById('aba'+aba.charAt(0).toUpperCase() + aba.slice(1)).classList.remove('hidden');
-            document.getElementById('btnTab'+aba.charAt(0).toUpperCase() + aba.slice(1)).classList.add('active');
-            if(aba === 'meus') carregarMinhasOfertas();
+        function abrirCalc() {
+            document.getElementById('calcModal').classList.remove('hidden');
+            executarCalc();
         }
 
-        // FUNÇÕES DO CONCIERGE DO LOJISTA
-        async function carregarBase() {
-            const p = await _s.from('produtos_mestre').select('*').order('nome'); if(p.data) produtosMestre = p.data;
-            const r = await _s.from('regioes').select('*').order('nome'); 
-            if(r.data) document.getElementById('f_regiao').innerHTML = '<option value="" disabled selected>Onde o aparelho está?</option>' + r.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            const v = await _s.from('variacoes').select('*'); if(v.data) gradeVariacoes = v.data;
-            liberarModelos();
-        }
-
-        function selecionarTipo(t) { document.getElementById('f_tipo_selecionado').value = t; document.getElementById('btnTipoNovo').classList.toggle('active', t==='Novo'); document.getElementById('btnTipoSemi').classList.toggle('active', t==='Seminovo'); document.getElementById('f_zona_seminovo').classList.toggle('hidden', t==='Novo'); document.getElementById('f_produto_id').value = ""; document.getElementById('f_zona_detalhes').classList.add('hidden'); }
-        function liberarModelos() { document.getElementById('f_produto_id').innerHTML = '<option value="" selected disabled>Escolher Modelo...</option>' + produtosMestre.map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); }
-        function liberarMemorias() { const pid = document.getElementById('f_produto_id').value; const v = gradeVariacoes.filter(x => x.produto_id == pid); const caps = [...new Set(v.map(x => x.capacidade))]; document.getElementById('f_cap').innerHTML = '<option value="" selected disabled>Memória...</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join(''); document.getElementById('f_cap').disabled = false; }
-        function liberarCores() { const pid = document.getElementById('f_produto_id').value; const cap = document.getElementById('f_cap').value; const v = gradeVariacoes.filter(x => x.produto_id == pid && x.capacidade == cap); document.getElementById('f_cor').innerHTML = '<option value="" selected disabled>Cor...</option>' + v.map(x => `<option value="${x.cor}">${getEmoji(x.cor)} ${x.cor}</option>`).join(''); document.getElementById('f_cor').disabled = false; }
-        function liberarDetalhes() { document.getElementById('f_zona_detalhes').classList.remove('hidden'); }
-
-        async function salvarOfertaLojista(e) {
-            e.preventDefault();
-            const t = document.getElementById('f_tipo_selecionado').value;
-            if(!t) return alert("Selecione se é Novo ou Seminovo!");
+        function executarCalc() {
+            const binance = parseFloat(document.getElementById('c_binance').value);
+            const vip = binance + 0.07;
+            document.getElementById('c_vip').value = vip.toFixed(2);
             
-            const pBrl = parseFloat(document.getElementById('f_preco').value.replace(/\./g, '').replace(',', '.'));
+            const usdUnit = parseFloat(document.getElementById('c_usd_unit').value) || 0;
+            const custoBase = (usdUnit * vip) * 1.06; // Taxa de importação padrão 6%
+
+            document.getElementById('res_custo_sp').innerText = custoBase.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_atacado').innerText = (custoBase * 1.05).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_atacrejo').innerText = (custoBase * 1.12).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_varejo').innerText = (custoBase * 1.25).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+        }
+
+        async function carregarBase() {
+            const [p, r, v] = await Promise.all([
+                _s.from('produtos_mestre').select('*').order('nome'),
+                _s.from('regioes').select('*').order('nome'),
+                _s.from('variacoes').select('*')
+            ]);
+            produtosMestre = p.data; gradeVariacoes = v.data;
+            document.getElementById('f_produto_id').innerHTML = '<option value="" disabled selected>Escolher Modelo...</option>' + p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('f_regiao').innerHTML = r.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+        }
+
+        function carregarCaps() {
+            const pid = document.getElementById('f_produto_id').value;
+            const caps = [...new Set(gradeVariacoes.filter(x => x.produto_id == pid).map(x => x.capacidade))];
+            document.getElementById('f_cap').innerHTML = caps.map(c => `<option value="${c}">${c}</option>`).join('');
+            carregarCores();
+        }
+
+        function carregarCores() {
             const pid = document.getElementById('f_produto_id').value;
             const cap = document.getElementById('f_cap').value;
-            const cor = document.getElementById('f_cor').value;
-            let v = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && x.cor == cor);
-
-            await _s.from('ofertas').insert([{ 
-                fornecedor_id: fornecedorId, 
-                variacao_id: v.id, 
-                regiao_id: document.getElementById('f_regiao').value, 
-                preco: pBrl, moeda: 'BRL', 
-                quantidade: parseInt(document.getElementById('f_qtd').value), 
-                condicao: t==='Novo'?'Novo':document.getElementById('f_condicao_semi').value, 
-                garantia: t==='Novo'?'1 ANO':document.getElementById('f_garantia_semi').value, 
-                status_aprovacao: 'aprovado', // Supondo que a loja tem passe livre
-                data_alteracao_preco: new Date().toISOString(), 
-                aceita_pix: document.getElementById('f_pix').checked, 
-                aceita_usdt: document.getElementById('f_usdt').checked, 
-                emite_nota: document.getElementById('f_nota').checked, 
-                aceita_proposta: document.getElementById('f_prop').checked, 
-                faz_envio: document.getElementById('f_env').checked, 
-                aceita_coleta: document.getElementById('f_col').checked, 
-                tem_boy: document.getElementById('f_boy').checked, 
-                saude_bateria: t==='Novo'?'BATERIA EM 100%':document.getElementById('f_bateria').value 
-            }]);
-            
-            alert("Anúncio no ar!");
-            document.getElementById('f_preco').value = '';
-            document.getElementById('f_qtd').value = '';
-            mudarAba('meus');
+            const cores = gradeVariacoes.filter(x => x.produto_id == pid && x.capacidade == cap);
+            document.getElementById('f_cor').innerHTML = cores.map(x => `<option value="${x.id}">${x.cor}</option>`).join('');
+            document.getElementById('f_detalhes').classList.remove('hidden');
         }
 
         async function carregarMinhasOfertas() {
             const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*))').eq('fornecedor_id', fornecedorId).order('criado_em', {ascending: false});
-            const tbody = document.getElementById('listaMinhasOfertas');
-            if(!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-8">Você ainda não possui anúncios ativos. Vá em "Lançar Aparelho".</td></tr>';
-                return;
-            }
-            
-            tbody.innerHTML = data.map(o => {
-                let m = `<span class="m-badge ${o.aceita_pix?'on':''}">PIX</span><span class="m-badge ${o.aceita_usdt?'on':''}">USDT</span><span class="m-badge ${o.emite_nota?'on':''}">NF</span><span class="m-badge ${o.aceita_proposta?'on':''}">LOTE</span><span class="m-badge ${o.faz_envio?'on':''}">ENVIO</span><span class="m-badge ${o.aceita_coleta?'on':''}">RETIRADA</span><span class="m-badge ${o.tem_boy?'on':''}">MOTO</span>`;
-                return `<tr>
-                    <td><span class="font-black text-white">${o.variacoes?.produtos_mestre?.nome}</span><br><span class="text-[10px] text-gray-400">${o.variacoes?.capacidade} | ${o.variacoes?.cor} | ${o.condicao}</span></td>
-                    <td><span class="font-bold text-white text-lg">${o.quantidade}</span> un.</td>
-                    <td><span class="font-bold text-green-400 text-lg">R$ ${o.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span></td>
-                    <td>${m}</td>
-                    <td class="text-right"><button onclick="apagarMinhaOferta(${o.id})" class="text-red-500 hover:underline text-xs font-bold">Apagar</button></td>
-                </tr>`;
-            }).join('');
+            document.getElementById('listaMinhasOfertas').innerHTML = data.map(o => `
+                <tr>
+                    <td><span class="font-black text-white">${o.variacoes.produtos_mestre.nome}</span><br><span class="text-[10px] text-gray-500">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td>
+                    <td class="text-lg font-bold">${o.quantidade}</td>
+                    <td class="text-green-400 font-bold">R$ ${o.preco.toLocaleString('pt-BR')}</td>
+                    <td class="text-right"><button onclick="apagarOferta(${o.id})" class="text-red-500 font-bold text-[10px]">X APAGAR</button></td>
+                </tr>
+            `).join('');
         }
 
-        async function apagarMinhaOferta(id) { if(confirm("Remover anúncio?")) { await _s.from('ofertas').delete().eq('id', id); carregarMinhasOfertas(); } }
-        function mascararMoeda(input) { let v = input.value.replace(/\D/g, ''); if(!v){input.value='';return;} v = (parseFloat(v)/100).toFixed(2).replace('.', ','); input.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+        function mascararMoeda(i) { let v = i.value.replace(/\D/g, ''); v = (v/100).toFixed(2).replace('.', ','); i.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+        function sairLojista() { localStorage.clear(); window.location.reload(); }
+        function mudarAba(aba) { document.getElementById('abaMeus').classList.toggle('hidden', aba!=='meus'); document.getElementById('abaPostar').classList.toggle('hidden', aba!=='postar'); document.getElementById('btnTabMeus').classList.toggle('active', aba==='meus'); document.getElementById('btnTabPostar').classList.toggle('active', aba==='postar'); }
+        async function apagarOferta(id) { if(confirm("Apagar?")) { await _s.from('ofertas').delete().eq('id', id); carregarMinhasOfertas(); } }
     </script>
 </body>
 </html>
