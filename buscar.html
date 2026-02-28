@@ -9,7 +9,8 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
-        body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
+        /* Remoção do CSS de modo claro */
+        
         body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; }
         .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
         .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
@@ -37,7 +38,6 @@
         .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 16px; transition: 0.3s; letter-spacing: 0.05em; }
         .buy-button:hover { background: #005bb5; }
         .hidden { display: none !important; }
-        .theme-toggle { background: var(--input); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 50px; cursor: pointer; font-size: 14px; font-weight: 700; }
         
         .btn-header { display: flex; align-items: center; justify-content: center; border-radius: 12px; height: 38px; padding: 0 12px; transition: 0.3s; border: 1px solid var(--border); text-decoration: none; gap: 6px; }
         .btn-calc-top { background: rgba(0, 113, 227, 0.1); color: #0071e3; }
@@ -67,7 +67,6 @@
 
         /* CLASSE DA BOLINHA DE COR */
         .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
-        body.light-mode .color-dot { border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 0 3px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
@@ -160,14 +159,25 @@
         </div>
     </div>
 
-    <div id="historicoModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
-        <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-blue-500 rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
-            <button onclick="fecharHistorico()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+    <div id="modalFipe" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
+        <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-[#0071e3] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+            <button onclick="fecharModalFipe()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
             <div class="text-center mb-4 mt-2">
-                <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">📈 Histórico de Preço Fipe</h3>
-                <p id="historicoNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
+                <h3 class="text-sm font-black uppercase text-[#0071e3] tracking-widest">📊 Fipe do iPhone</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase">Preço médio mercado (7 Dias)</p>
             </div>
-            <div id="listaHistorico" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll">
+            
+            <div class="flex flex-col gap-2 mb-4 border-b border-[#38383a] pb-4">
+                <select id="fipe_prod" class="apple-input w-full" onchange="atualizarFiltrosFipe()"><option value="">Selecione o Modelo...</option></select>
+                <select id="fipe_cap" class="apple-input w-full"><option value="">Selecione a Memória...</option></select>
+                <select id="fipe_cor" class="apple-input w-full"><option value="">Selecione a Cor...</option></select>
+                <select id="fipe_cond" class="apple-input w-full">
+                    <option value="">Condição...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="Apple As Is">Apple As Is</option><option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option>
+                </select>
+                <button onclick="calcularFipe()" class="bg-[#0071e3] text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-blue-600 mt-2">Consultar Fipe</button>
+            </div>
+
+            <div id="listaFipe" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll">
                 </div>
         </div>
     </div>
@@ -198,13 +208,15 @@
             </a>
         </div>
 
-        <div class="flex gap-4 items-center">
+        <div class="flex gap-4 items-center flex-wrap justify-end">
+            <button onclick="abrirModalFipe()" class="relative text-[10px] text-blue-500 font-black uppercase hover:text-blue-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
+                📊 Fipe 7 Dias
+            </button>
             <button onclick="abrirSininho()" class="relative text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
                 🔔 Alertas
                 <span id="badgeSininho" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center shadow-lg">0</span>
             </button>
 
-            <button onclick="toggleTheme()" id="themeBtn" class="theme-toggle">🌙</button>
             <button onclick="abrirConta()" class="text-[10px] text-blue-400 font-black uppercase hover:text-white flex items-center gap-1">Conta</button>
             <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
         </div>
@@ -262,15 +274,7 @@
         let currentUsdtRate = 0; 
         let meusAlertas = []; 
 
-        function toggleTheme() {
-            const b = document.body; b.classList.toggle('light-mode');
-            const isLight = b.classList.contains('light-mode');
-            document.getElementById('themeBtn').innerText = isLight ? "☀️" : "🌙";
-            localStorage.setItem('iFipe_Theme', isLight ? 'light' : 'dark');
-        }
-
         window.onload = async () => {
-            if(localStorage.getItem('iFipe_Theme') === 'light') toggleTheme();
             const token = localStorage.getItem('iFipe_Token');
             if(!token) { window.location.replace('index.html'); } 
             else {
@@ -399,33 +403,58 @@
         function abrirSininho() { document.getElementById('sininhoModal').classList.remove('hidden'); processarNotificacoesSininho(); }
         function fecharSininho() { document.getElementById('sininhoModal').classList.add('hidden'); }
 
-        // --- NOVO HISTÓRICO "FIPE" (MÉDIA DE MERCADO 7 DIAS) ---
-        async function abrirHistorico(ofertaId, nome) {
-            document.getElementById('historicoNome').innerText = nome;
-            document.getElementById('historicoModal').classList.remove('hidden');
-            const div = document.getElementById('listaHistorico');
+        // --- SISTEMA FIPE 7 DIAS (NOVO) ---
+        function abrirModalFipe() {
+            document.getElementById('modalFipe').classList.remove('hidden');
+            document.getElementById('fipe_prod').innerHTML = '<option value="">Selecione o Modelo...</option>' + todosProdutosMestre.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('listaFipe').innerHTML = '';
+        }
+        function fecharModalFipe() { document.getElementById('modalFipe').classList.add('hidden'); }
+        
+        function atualizarFiltrosFipe() {
+            const pid = document.getElementById('fipe_prod').value;
+            const vars = pid ? gradeVariacoes.filter(x => x.produto_id == pid) : [];
+            const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
+            const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
+            
+            document.getElementById('fipe_cap').innerHTML = '<option value="">Selecione a Memória...</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('fipe_cor').innerHTML = '<option value="">Selecione a Cor...</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        async function calcularFipe() {
+            const pid = document.getElementById('fipe_prod').value;
+            const cap = document.getElementById('fipe_cap').value;
+            const cor = document.getElementById('fipe_cor').value;
+            const cond = document.getElementById('fipe_cond').value;
+            const div = document.getElementById('listaFipe');
+
+            if(!pid || !cap || !cor || !cond) {
+                return alert("Por favor, preencha todos os campos para consultar a Fipe.");
+            }
+
             div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Calculando média de mercado (7 dias)...</p>';
 
-            const { data: ofertaAtual, error: errOferta } = await _s.from('ofertas').select('variacao_id, condicao').eq('id', ofertaId).single();
+            const varObj = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && x.cor == cor);
             
-            if (errOferta || !ofertaAtual) {
-                div.innerHTML = '<p class="text-[10px] text-red-500 italic text-center py-6 font-bold">Erro ao localizar o produto no banco de dados.</p>';
+            if(!varObj) {
+                div.innerHTML = '<p class="text-[10px] text-red-500 italic text-center py-6 font-bold">Variação não encontrada no banco de dados.</p>';
                 return;
             }
 
+            const varId = varObj.id;
             const seteDiasAtras = new Date();
             seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
             const dataFiltro = seteDiasAtras.toISOString();
 
             const { data: historicosGlobais, error: errHist } = await _s.from('historico_precos')
                 .select('preco, moeda, registrado_em, oferta_id, ofertas!inner(variacao_id, condicao)')
-                .eq('ofertas.variacao_id', ofertaAtual.variacao_id)
-                .eq('ofertas.condicao', ofertaAtual.condicao)
+                .eq('ofertas.variacao_id', varId)
+                .eq('ofertas.condicao', cond)
                 .gte('registrado_em', dataFiltro)
                 .order('registrado_em', { ascending: false });
 
             if (errHist || !historicosGlobais || historicosGlobais.length === 0) {
-                div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Ainda não há volume de dados para calcular a Fipe deste aparelho.</p>';
+                div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Ainda não há volume de dados suficiente para calcular a Fipe deste aparelho.</p>';
                 return;
             }
 
@@ -464,8 +493,7 @@
 
             div.innerHTML = htmlFinal;
         }
-
-        function fecharHistorico() { document.getElementById('historicoModal').classList.add('hidden'); }
+        // -----------------------------------------------
 
         function mostrarSugestoes(termo) {
             const div = document.getElementById('sugestoesBusca');
@@ -540,6 +568,7 @@
 
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
 
+        // FUNÇÃO DE MAPEAMENTO DE CORES
         function getAppleColorHex(colorName) {
             const search = (colorName || '').toUpperCase();
             if (search.includes('MIDNIGHT') || search.includes('ESCURA')) return '#191919';
@@ -668,10 +697,6 @@
                     <div class="flex justify-between items-center pt-2 pb-1 border-t border-[#38383a] text-gray-400 mt-1">
                         <button onclick="toggleLike(this, ${o.id})" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors like-btn ${corLike}">
                             <span>${textoLike}</span>
-                        </button>
-                        
-                        <button onclick="abrirHistorico(${o.id}, '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors">
-                            📈 Histórico
                         </button>
 
                         <button onclick="abrirComentarios(${o.id}, '${escapeString(o.variacoes.produtos_mestre.nome)}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors">Perguntas</button>
