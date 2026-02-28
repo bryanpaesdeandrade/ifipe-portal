@@ -14,7 +14,7 @@
         .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 13px; transition: 0.3s; }
         .apple-input:focus { border-color: #0071e3; }
-        .apple-input:disabled { opacity: 0.4; cursor: not-allowed; } /* Estilo para o Passo a Passo */
+        .apple-input:disabled { opacity: 0.4; cursor: not-allowed; }
         
         .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 11px; transition: 0.3s; }
         .apple-button:hover { background: #0071e3; color: #fff; }
@@ -37,12 +37,6 @@
         .btn-wpp-float:hover { width: 170px; padding-left: 18px; justify-content: flex-start; }
         .btn-wpp-float:hover .wpp-text { opacity: 1; }
 
-        .btn-calc-float { position: fixed; bottom: 90px; right: 20px; background-color: #0071e3; color: #fff; width: 60px; height: 60px; border-radius: 50px; display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 5px 20px rgba(0,113,227,0.4); z-index: 1000; transition: width 0.3s ease; overflow: hidden; white-space: nowrap; cursor: pointer; border: none; }
-        .btn-calc-float svg { flex-shrink: 0; width: 26px; height: 26px; fill: #fff; }
-        .calc-text { font-size: 12px; font-weight: 900; text-transform: uppercase; margin-left: 10px; opacity: 0; transition: 0.3s; }
-        .btn-calc-float:hover { width: 140px; padding-left: 18px; justify-content: flex-start; }
-        .btn-calc-float:hover .calc-text { opacity: 1; }
-
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #0071e3; border-radius: 10px; }
@@ -59,9 +53,14 @@
         .color-dot-preview { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
 
         /* Estilo do Passo a Passo */
-        .step-label { font-size: 9px; font-weight: 900; color: #86868b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; display: block; }
-        .step-block { margin-bottom: 15px; border-left: 2px solid #38383a; padding-left: 15px; transition: 0.3s; }
-        .step-block.active { border-left-color: #0071e3; }
+        .step-label { font-size: 9px; font-weight: 900; color: #86868b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; }
+        .step-block { margin-bottom: 15px; border-left: 2px solid #38383a; padding-left: 15px; transition: 0.3s; opacity: 0.4; pointer-events: none; }
+        .step-block.active { border-left-color: #0071e3; opacity: 1; pointer-events: auto; }
+        
+        .btn-tipo { background: #2c2c2e; border: 2px solid #38383a; color: #fff; padding: 12px; rounded-2xl; font-weight: 900; text-transform: uppercase; font-size: 11px; cursor: pointer; transition: 0.3s; width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+        .btn-tipo:hover { border-color: #86868b; }
+        .btn-tipo.active { background: rgba(0, 113, 227, 0.1); border-color: #0071e3; color: #0071e3; }
+        .btn-tipo span { font-size: 20px; }
     </style>
 </head>
 <body id="appBody">
@@ -136,7 +135,7 @@
                         <h3 class="text-xs font-black uppercase text-blue-500 italic mb-2">Suas Conquistas 🏆</h3>
                         <p class="text-[8px] text-gray-400 uppercase mb-3 font-bold tracking-widest">Seu nível de poder no iFipe</p>
                         <div id="blocoInsignias" class="flex flex-wrap gap-1">
-                            <span class="text-[9px] text-gray-500 italic">Carregando status...</span>
+                            <span class="text-[9px] text-gray-500 italic">A carregar status...</span>
                         </div>
                     </div>
 
@@ -156,82 +155,112 @@
                     </div>
 
                     <div class="apple-card">
-                        <h2 class="text-sm font-black italic mb-4 uppercase text-blue-500">Publicar Novo PRODUTO</h2>
+                        <h2 class="text-sm font-black italic mb-4 uppercase text-blue-500">Publicar Produto</h2>
+                        
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            <button type="button" id="btnTipoNovo" class="btn-tipo" onclick="selecionarTipoAnuncio('Novo')">
+                                <span>📦</span>
+                                Novo
+                            </button>
+                            <button type="button" id="btnTipoSemi" class="btn-tipo" onclick="selecionarTipoAnuncio('Seminovo')">
+                                <span>♻️</span>
+                                Seminovo
+                            </button>
+                        </div>
+
                         <form id="priceForm" onsubmit="salvarOferta(event)">
+                            <input type="hidden" id="tipo_anuncio_selecionado" value="">
                             
-                            <div class="step-block active" id="bloco_passo1">
-                                <span class="step-label">1. Categoria</span>
-                                <select id="filtro_grupo" class="apple-input mb-0" onchange="liberarPasso2()" required>
-                                    <option value="" disabled selected>Selecione...</option>
-                                    <option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="4">MACBOOK</option><option value="3">IPAD</option>
-                                </select>
-                            </div>
-
-                            <div class="step-block" id="bloco_passo2">
-                                <span class="step-label">2. Condição</span>
-                                <select id="condicao" class="apple-input mb-0" onchange="liberarPasso3()" required disabled>
-                                    <option value="" disabled selected>Selecione...</option>
-                                    <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
-                                    <option value="CPO">CPO</option><option value="AS IS +">AS IS +</option>
-                                    <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
-                                </select>
-                            </div>
-
-                            <div class="step-block" id="bloco_passo3">
-                                <span class="step-label">3. Modelo</span>
-                                <select id="produto_id" class="apple-input mb-0" onchange="liberarPasso4()" required disabled>
+                            <div class="step-block" id="bloco_categoria">
+                                <span class="step-label">1. Selecione a Categoria</span>
+                                <select id="filtro_grupo" class="apple-input mb-0" onchange="liberarModelos()" required>
                                     <option value="" disabled selected>Aguardando...</option>
+                                    <option value="1">IPHONE</option>
+                                    <option value="2">APPLE WATCH</option>
+                                    <option value="4">MACBOOK</option>
+                                    <option value="3">IPAD</option>
+                                    <option value="6">ACESSÓRIOS</option>
                                 </select>
                             </div>
 
-                            <div class="step-block" id="bloco_passo4">
-                                <span class="step-label">4. Memória</span>
-                                <select id="f_cap" class="apple-input mb-0" onchange="liberarPasso5()" required disabled>
-                                    <option value="" disabled selected>Aguardando...</option>
+                            <div class="step-block" id="bloco_modelo">
+                                <span class="step-label">2. Escolha o Modelo</span>
+                                <select id="produto_id" class="apple-input mb-0" onchange="liberarMemorias()" required disabled>
+                                    <option value="" disabled selected>Aguardando categoria...</option>
                                 </select>
                             </div>
 
-                            <div class="step-block" id="bloco_passo5">
-                                <span class="step-label">5. Cor</span>
-                                <select id="f_cor" class="apple-input mb-0" onchange="liberarPasso6()" required disabled>
-                                    <option value="" disabled selected>Aguardando...</option>
+                            <div class="step-block" id="bloco_memoria">
+                                <span class="step-label">3. Qual a Memória?</span>
+                                <select id="f_cap" class="apple-input mb-0" onchange="liberarCores()" required disabled>
+                                    <option value="" disabled selected>Aguardando modelo...</option>
                                 </select>
                             </div>
 
-                            <div class="step-block" id="bloco_passo6">
-                                <span class="step-label">6. Detalhes Finais</span>
-                                <div id="detalhesFinais" style="display: none; opacity: 0; transition: opacity 0.5s;">
-                                    <input type="number" id="quantidade" class="apple-input mb-2" placeholder="Quantidade Estoque" min="1" required>
-                                    
-                                    <select id="saude_bateria" class="apple-input mb-2">
-                                        <option value="" selected>Saúde Bateria (Seminovos)</option>
-                                        <option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option>
-                                        <option value="ACIMA DE 90%">ACIMA DE 90%</option><option value="ACIMA DE 95%">ACIMA DE 95%</option>
-                                        <option value="BATERIA EM 100%">BATERIA EM 100%</option>
+                            <div class="step-block" id="bloco_cor">
+                                <span class="step-label">4. Cor Exata</span>
+                                <select id="f_cor" class="apple-input mb-0" onchange="liberarDetalhes()" required disabled>
+                                    <option value="" disabled selected>Aguardando memória...</option>
+                                </select>
+                            </div>
+
+                            <div class="step-block" id="bloco_detalhes">
+                                <span class="step-label">5. Detalhes Finais</span>
+                                
+                                <div id="zona_seminovo" class="hidden mb-3 p-3 bg-[#2c2c2e] rounded-xl border border-[#38383a]">
+                                    <label class="step-label text-[8px] mb-1">Qual o estado do aparelho?</label>
+                                    <select id="condicao_semi" class="apple-input mb-2 text-[11px]">
+                                        <option value="Seminovo">Seminovo Padrão</option>
+                                        <option value="CPO">CPO (Recondicionado Apple)</option>
+                                        <option value="AS IS +">AS IS +</option>
+                                        <option value="GRADE A">GRADE A</option>
+                                        <option value="GRADE B">GRADE B</option>
+                                        <option value="GRADE C">GRADE C</option>
+                                        <option value="REPASSE DE CLIENTE">Repasse de Cliente</option>
                                     </select>
                                     
-                                    <input type="text" id="garantia" class="apple-input mb-2" placeholder="Garantia (Ex: 1 ANO APPLE)">
-                                    
-                                    <select id="regiao_id" class="apple-input mb-2" required>
+                                    <label class="step-label text-[8px] mb-1">Saúde da Bateria (%)</label>
+                                    <select id="saude_bateria" class="apple-input mb-2 text-[11px]">
+                                        <option value="" selected disabled>Selecione a Bateria...</option>
+                                        <option value="ABAIXO DE 85%">Abaixo de 85%</option>
+                                        <option value="ACIMA DE 85%">Acima de 85%</option>
+                                        <option value="ACIMA DE 90%">Acima de 90%</option>
+                                        <option value="ACIMA DE 95%">Acima de 95%</option>
+                                        <option value="BATERIA EM 100%">100%</option>
+                                    </select>
+
+                                    <label class="step-label text-[8px] mb-1">Garantia Oferecida</label>
+                                    <input type="text" id="garantia_semi" class="apple-input mb-0 text-[11px]" placeholder="Ex: 3 MESES DA LOJA">
+                                </div>
+
+                                <div id="zona_novo" class="hidden mb-3 p-3 bg-[rgba(50,215,75,0.1)] rounded-xl border border-[#32d74b]">
+                                    <p class="text-[9px] text-[#32d74b] font-black uppercase text-center mb-1">Configuração Automática (NOVO)</p>
+                                    <p class="text-[8px] text-gray-400 text-center mb-0">Bateria 100% | 1 Ano de Garantia Apple</p>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-2 mb-2">
+                                    <input type="number" id="quantidade" class="apple-input mb-0" placeholder="Qtd Estoque" min="1" required>
+                                    <select id="regiao_id" class="apple-input mb-0 text-[11px]" required>
                                         <option value="" disabled selected>Origem...</option>
                                     </select>
-                                    
-                                    <div class="grid grid-cols-2 gap-2 mb-2">
-                                        <input type="text" id="preco_brl" class="apple-input" placeholder="Preço R$" oninput="mascararMoeda(this); limparPreco('brl')">
-                                        <input type="text" id="preco_usd" class="apple-input" placeholder="Preço $" oninput="mascararMoeda(this); limparPreco('usd')">
-                                    </div>
-                                    
-                                    <div class="mt-2 p-3 bg-[#2c2c2e] rounded-xl grid grid-cols-2 gap-2 border border-[#38383a]">
-                                        <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_pix"> PIX</label>
-                                        <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_usdt"> USDT</label>
-                                        <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_nota"> NF</label>
-                                        <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_proposta"> NEGOCIA QTD</label>
-                                        <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_envio"> FAZ ENVIO</label>
-                                        <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_coleta"> ACEITA COLETA</label>
-                                        <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="add_boy"> MOTOBOY</label>
-                                    </div>
-                                    <button type="submit" id="btnSalvarAnuncio" class="apple-button w-full bg-blue-600 text-white mt-4">Anunciar Agora</button>
                                 </div>
+                                
+                                <div class="grid grid-cols-2 gap-2 mb-2">
+                                    <input type="text" id="preco_brl" class="apple-input text-green-400 font-bold" placeholder="Preço R$" oninput="mascararMoeda(this); limparPreco('brl')">
+                                    <input type="text" id="preco_usd" class="apple-input text-blue-400 font-bold" placeholder="Preço $" oninput="mascararMoeda(this); limparPreco('usd')">
+                                </div>
+                                
+                                <div class="mt-2 p-3 bg-[#2c2c2e] rounded-xl grid grid-cols-2 gap-2 border border-[#38383a]">
+                                    <label class="text-[9px] flex items-center gap-2 m-0"><input type="checkbox" id="add_pix"> PIX</label>
+                                    <label class="text-[9px] flex items-center gap-2 m-0"><input type="checkbox" id="add_usdt"> USDT</label>
+                                    <label class="text-[9px] flex items-center gap-2 m-0"><input type="checkbox" id="add_nota"> NF</label>
+                                    <label class="text-[9px] flex items-center gap-2 m-0"><input type="checkbox" id="add_proposta"> NEG. QTD</label>
+                                    <label class="text-[9px] flex items-center gap-2 m-0"><input type="checkbox" id="add_envio"> ENVIO</label>
+                                    <label class="text-[9px] flex items-center gap-2 m-0"><input type="checkbox" id="add_coleta"> COLETA</label>
+                                    <label class="text-[9px] flex items-center gap-2 m-0 col-span-2"><input type="checkbox" id="add_boy"> MOTOBOY SP</label>
+                                </div>
+                                
+                                <button type="submit" id="btnSalvarAnuncio" class="apple-button w-full bg-blue-600 text-white mt-4 hidden">Anunciar Agora</button>
                             </div>
 
                         </form>
@@ -317,8 +346,8 @@
                     </div>
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <div><label class="text-[8px] text-gray-500 uppercase font-black">Condição</label><select id="edit_cond" class="apple-input">
-                            <option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="AS IS +">AS IS +</option>
-                            <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
+                            <option value="Novo">Novo</option><option value="Seminovo">Seminovo Padrão</option><option value="CPO">CPO</option><option value="AS IS +">AS IS +</option>
+                            <option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
                         </select></div>
                         <div><label class="text-[8px] text-gray-500 uppercase font-black">Qtd</label><input type="number" id="edit_qtd" class="apple-input"></div>
                     </div>
@@ -339,9 +368,9 @@
                         <div><label class="text-[8px] text-gray-500 font-bold uppercase">Preço</label><input type="text" id="bulk_preco" class="apple-input" placeholder="Novo Preço" oninput="mascararMoeda(this)"></div>
                         <div><label class="text-[8px] text-gray-500 font-bold uppercase">Quantidade</label><input type="number" id="bulk_qtd" class="apple-input" placeholder="Nova Qtd"></div>
                         <div><label class="text-[8px] text-gray-500 font-bold uppercase">Condição</label><select id="bulk_condicao" class="apple-input">
-                                <option value="">Manter...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
+                                <option value="">Manter...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo Padrão</option>
                                 <option value="CPO">CPO</option><option value="AS IS +">AS IS +</option>
-                                <option value="GRADE A LEILAO">GRADE A LEILÃO</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
+                                <option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option><option value="REPASSE DE CLIENTE">REPASSE DE CLIENTE</option>
                             </select></div>
                         <div><label class="text-[8px] text-gray-500 font-bold uppercase">Bateria</label><select id="bulk_bateria" class="apple-input">
                                 <option value="">Manter...</option><option value="ABAIXO DE 85%">ABAIXO DE 85%</option><option value="ACIMA DE 85%">ACIMA DE 85%</option>
@@ -378,37 +407,36 @@
         function getAppleColorHex(colorName) {
             const search = (colorName || '').toUpperCase();
             if (search.includes('MIDNIGHT') || search.includes('ESCURA')) return '#191919';
-            if (search.includes('PRETO') || search.includes('BLACK')) return '#000000';
-            if (search.includes('BRANCO') || search.includes('WHITE')) return '#FFFFFF';
+            if (search.includes('PRETO') || search.includes('BLACK') || search.includes('ÔNIX')) return '#000000';
+            if (search.includes('BRANCO') || search.includes('WHITE') || search.includes('NUVEM')) return '#FFFFFF';
             if (search.includes('ESTELAR') || search.includes('STARLIGHT')) return '#faf9f6';
-            if (search.includes('PRATA') || search.includes('SILVER') || search.includes('PRATEADO')) return '#e3e4e5';
+            if (search.includes('PRATA') || search.includes('SILVER') || search.includes('PRATEADO') || search.includes('GELO')) return '#e3e4e5';
             if (search.includes('DOURADO') || search.includes('GOLD')) {
                 if (search.includes('ROSA') || search.includes('ROSE')) return '#e6c7c2';
                 return '#fad7bd';
             }
-            if (search.includes('AZUL') || search.includes('BLUE')) return '#215e7c';
-            if (search.includes('VERDE') || search.includes('GREEN')) return '#505c4c';
-            if (search.includes('ROXO') || search.includes('PURPLE')) return '#b1b1cc';
+            if (search.includes('AZUL') || search.includes('BLUE') || search.includes('CÉU') || search.includes('NÉVOA') || search.includes('INTENSO')) return '#215e7c';
+            if (search.includes('VERDE') || search.includes('GREEN') || search.includes('SAFIRA') || search.includes('MUSGO') || search.includes('SÁLVIA')) return '#505c4c';
+            if (search.includes('ROXO') || search.includes('PURPLE') || search.includes('LAVANDA')) return '#b1b1cc';
             if (search.includes('AMARELO') || search.includes('YELLOW')) return '#f9e479';
             if (search.includes('VERMELHO') || search.includes('RED')) return '#a50011';
-            if (search.includes('LARANJA') || search.includes('ORANGE')) return '#ff9500';
+            if (search.includes('LARANJA') || search.includes('ORANGE') || search.includes('CÓSMICO')) return '#ff9500';
             if (search.includes('ROSA') || search.includes('PINK')) return '#fae0d8';
-            if (search.includes('TITAN') || search.includes('CINZA') || search.includes('GRAY')) return '#bcbab5'; 
+            if (search.includes('TITAN') || search.includes('CINZA') || search.includes('GRAY') || search.includes('AREIA')) return '#bcbab5'; 
             return '#808080'; 
         }
 
-        // NOVO: Função para o WhatsApp (Emoji por cor)
         function getEmojiForColor(colorName) {
             const search = (colorName || '').toUpperCase();
-            if (search.includes('PRETO') || search.includes('BLACK') || search.includes('MIDNIGHT')) return '⚫';
-            if (search.includes('BRANCO') || search.includes('WHITE') || search.includes('STARLIGHT') || search.includes('PRATA') || search.includes('SILVER')) return '⚪';
-            if (search.includes('AZUL') || search.includes('BLUE')) return '🔵';
-            if (search.includes('VERDE') || search.includes('GREEN')) return '🟢';
-            if (search.includes('ROXO') || search.includes('PURPLE')) return '🟣';
+            if (search.includes('PRETO') || search.includes('BLACK') || search.includes('MIDNIGHT') || search.includes('ÔNIX')) return '⚫';
+            if (search.includes('BRANCO') || search.includes('WHITE') || search.includes('STARLIGHT') || search.includes('PRATA') || search.includes('SILVER') || search.includes('GELO') || search.includes('NUVEM')) return '⚪';
+            if (search.includes('AZUL') || search.includes('BLUE') || search.includes('CÉU') || search.includes('NÉVOA') || search.includes('INTENSO') || search.includes('ULTRAMARINO')) return '🔵';
+            if (search.includes('VERDE') || search.includes('GREEN') || search.includes('SAFIRA') || search.includes('MUSGO') || search.includes('SÁLVIA')) return '🟢';
+            if (search.includes('ROXO') || search.includes('PURPLE') || search.includes('LAVANDA')) return '🟣';
             if (search.includes('VERMELHO') || search.includes('RED')) return '🔴';
             if (search.includes('DOURADO') || search.includes('GOLD') || search.includes('AMARELO') || search.includes('YELLOW')) return '🟡';
-            if (search.includes('LARANJA') || search.includes('ORANGE')) return '🟠';
-            if (search.includes('TITAN') || search.includes('CINZA') || search.includes('GRAY')) return '🔘';
+            if (search.includes('LARANJA') || search.includes('ORANGE') || search.includes('CÓSMICO')) return '🟠';
+            if (search.includes('TITAN') || search.includes('CINZA') || search.includes('GRAY') || search.includes('AREIA')) return '🔘';
             return '📱';
         }
 
@@ -480,102 +508,99 @@
             atualizarLista();
         }
 
-        // --- INJEÇÃO WIZARD CASCATA (NOVO CADASTRO) ---
-        function limparECongelar(passo) {
-            if(passo <= 2) {
-                document.getElementById('condicao').value = "";
-                document.getElementById('condicao').disabled = true;
-                document.getElementById('bloco_passo2').classList.remove('active');
+        // --- MÁQUINA DE CASCATA (WIZARD) ---
+        function selecionarTipoAnuncio(tipo) {
+            document.getElementById('tipo_anuncio_selecionado').value = tipo;
+            
+            document.getElementById('btnTipoNovo').classList.remove('active');
+            document.getElementById('btnTipoSemi').classList.remove('active');
+            
+            if(tipo === 'Novo') {
+                document.getElementById('btnTipoNovo').classList.add('active');
+                document.getElementById('zona_novo').classList.remove('hidden');
+                document.getElementById('zona_seminovo').classList.add('hidden');
+                document.getElementById('saude_bateria').required = false;
+            } else {
+                document.getElementById('btnTipoSemi').classList.add('active');
+                document.getElementById('zona_novo').classList.add('hidden');
+                document.getElementById('zona_seminovo').classList.remove('hidden');
+                document.getElementById('saude_bateria').required = true;
             }
-            if(passo <= 3) {
-                document.getElementById('produto_id').innerHTML = '<option value="" disabled selected>Aguardando...</option>';
+
+            document.getElementById('filtro_grupo').innerHTML = '<option value="" disabled selected>Selecione a Categoria...</option><option value="1">IPHONE</option>';
+            document.getElementById('bloco_categoria').classList.add('active');
+            
+            resetWizardAbaixoDe(2);
+        }
+
+        function resetWizardAbaixoDe(nivel) {
+            if (nivel <= 3) {
+                document.getElementById('produto_id').innerHTML = '<option value="" disabled selected>Aguardando categoria...</option>';
                 document.getElementById('produto_id').disabled = true;
-                document.getElementById('bloco_passo3').classList.remove('active');
+                document.getElementById('bloco_modelo').classList.remove('active');
             }
-            if(passo <= 4) {
-                document.getElementById('f_cap').innerHTML = '<option value="" disabled selected>Aguardando...</option>';
+            if (nivel <= 4) {
+                document.getElementById('f_cap').innerHTML = '<option value="" disabled selected>Aguardando modelo...</option>';
                 document.getElementById('f_cap').disabled = true;
-                document.getElementById('bloco_passo4').classList.remove('active');
+                document.getElementById('bloco_memoria').classList.remove('active');
             }
-            if(passo <= 5) {
-                document.getElementById('f_cor').innerHTML = '<option value="" disabled selected>Aguardando...</option>';
+            if (nivel <= 5) {
+                document.getElementById('f_cor').innerHTML = '<option value="" disabled selected>Aguardando memória...</option>';
                 document.getElementById('f_cor').disabled = true;
-                document.getElementById('bloco_passo5').classList.remove('active');
+                document.getElementById('bloco_cor').classList.remove('active');
             }
-            if(passo <= 6) {
-                document.getElementById('detalhesFinais').style.opacity = 0;
-                setTimeout(() => document.getElementById('detalhesFinais').style.display = 'none', 300);
-                document.getElementById('bloco_passo6').classList.remove('active');
+            if (nivel <= 6) {
+                document.getElementById('bloco_detalhes').classList.remove('active');
+                document.getElementById('btnSalvarAnuncio').classList.add('hidden');
             }
         }
 
-        function liberarPasso2() {
-            limparECongelar(2);
-            document.getElementById('condicao').disabled = false;
-            document.getElementById('bloco_passo2').classList.add('active');
-        }
-
-        function liberarPasso3() {
-            limparECongelar(3);
+        function liberarModelos() {
+            resetWizardAbaixoDe(3);
             const catId = document.getElementById('filtro_grupo').value;
             const filtrados = produtosMestre.filter(x => x.grupo_id == catId);
             document.getElementById('produto_id').innerHTML = '<option value="" disabled selected>Escolha o Modelo...</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('produto_id').disabled = false;
-            document.getElementById('bloco_passo3').classList.add('active');
-            checarGarantia(); // Regra automática da garantia baseada na condição
+            document.getElementById('bloco_modelo').classList.add('active');
         }
 
-        function liberarPasso4() {
-            limparECongelar(4);
+        function liberarMemorias() {
+            resetWizardAbaixoDe(4);
             const pid = document.getElementById('produto_id').value;
             const vars = gradeVariacoes.filter(x => x.produto_id == pid);
             const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))];
-            
-            document.getElementById('f_cap').innerHTML = '<option value="" disabled selected>Escolha a Memória...</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('f_cap').innerHTML = '<option value="" disabled selected>Qual a Memória?</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
             document.getElementById('f_cap').disabled = false;
-            document.getElementById('bloco_passo4').classList.add('active');
+            document.getElementById('bloco_memoria').classList.add('active');
         }
 
-        function liberarPasso5() {
-            limparECongelar(5);
+        function liberarCores() {
+            resetWizardAbaixoDe(5);
             const pid = document.getElementById('produto_id').value;
             const cap = document.getElementById('f_cap').value;
             const vars = gradeVariacoes.filter(x => x.produto_id == pid && x.capacidade == cap);
             const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))];
             
-            document.getElementById('f_cor').innerHTML = '<option value="" disabled selected>Escolha a Cor...</option><option value="MIXER COLORS">MIXER COLORS (Várias)</option>' + cores.map(c => {
+            document.getElementById('f_cor').innerHTML = '<option value="" disabled selected>Qual a Cor?</option><option value="MIX COLORS">🌈 MIX COLORS (Para Lotes)</option>' + cores.filter(c => c !== 'MIX COLORS').map(c => {
                 let emoji = getEmojiForColor(c);
                 return `<option value="${c}">${emoji} ${c}</option>`;
             }).join('');
             document.getElementById('f_cor').disabled = false;
-            document.getElementById('bloco_passo5').classList.add('active');
+            document.getElementById('bloco_cor').classList.add('active');
         }
 
-        function liberarPasso6() {
-            document.getElementById('bloco_passo6').classList.add('active');
-            const df = document.getElementById('detalhesFinais');
-            df.style.display = 'block';
-            setTimeout(() => df.style.opacity = 1, 50);
-        }
-
-        function checarGarantia() { 
-            const cond = document.getElementById('condicao').value;
-            const g = document.getElementById('garantia');
-            const cat = document.getElementById('filtro_grupo').value; 
-            if(cond === 'Novo' && ['1','2','4','5'].includes(cat)) { 
-                g.value = "1 ANO GARANTIA APPLE"; 
-                g.readOnly = true; 
-                g.style.opacity = "0.7";
-            } else { 
-                g.readOnly = false; 
-                g.style.opacity = "1";
-            } 
+        function liberarDetalhes() {
+            document.getElementById('bloco_detalhes').classList.add('active');
+            document.getElementById('btnSalvarAnuncio').classList.remove('hidden');
         }
 
         async function salvarOferta(e) { 
             e.preventDefault(); 
             const btn = document.getElementById('btnSalvarAnuncio');
-            btn.disabled = true; btn.innerText = "Publicando...";
+            btn.disabled = true; btn.innerText = "A Publicar...";
+
+            const tipo = document.getElementById('tipo_anuncio_selecionado').value;
+            if(!tipo) return alert("Selecione se o aparelho é Novo ou Seminovo no topo da tela.");
 
             const pid = document.getElementById('produto_id').value;
             const cap = document.getElementById('f_cap').value;
@@ -583,10 +608,10 @@
 
             if(!pid || !cap || !cor) {
                 btn.disabled = false; btn.innerText = "Anunciar Agora";
-                return alert("Siga todo o passo a passo de Modelo, Memória e Cor.");
+                return alert("Preencha Modelo, Memória e Cor.");
             }
 
-            let v = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && (cor === 'MIXER COLORS' || x.cor == cor)); 
+            let v = gradeVariacoes.find(x => x.produto_id == pid && x.capacidade == cap && x.cor == cor); 
             if(!v) v = gradeVariacoes.find(x => x.produto_id == pid); 
             
             const pBrl = parsePreco(document.getElementById('preco_brl').value);
@@ -597,30 +622,40 @@
                  return alert("Insira um preço válido em Real ou Dólar.");
             }
 
+            let condicaoFinal = tipo === 'Novo' ? 'Novo' : document.getElementById('condicao_semi').value;
+            let bateriaFinal = tipo === 'Novo' ? 'BATERIA EM 100%' : document.getElementById('saude_bateria').value;
+            let garantiaFinal = tipo === 'Novo' ? '1 ANO GARANTIA APPLE' : document.getElementById('garantia_semi').value;
+
             await _s.from('ofertas').insert([{ 
                 fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value, 
                 preco: pBrl || pUsd, moeda: pBrl > 0 ? 'BRL' : 'USD', 
                 quantidade: parseInt(document.getElementById('quantidade').value), 
-                condicao: document.getElementById('condicao').value, 
-                garantia: document.getElementById('garantia').value, 
-                saude_bateria: document.getElementById('saude_bateria').value, 
-                cores_variadas: cor === 'MIXER COLORS', 
+                condicao: condicaoFinal, 
+                garantia: garantiaFinal, 
+                saude_bateria: bateriaFinal, 
+                cores_variadas: cor === 'MIX COLORS', 
                 aceita_pix: document.getElementById('add_pix').checked, aceita_usdt: document.getElementById('add_usdt').checked, emite_nota: document.getElementById('add_nota').checked, aceita_proposta: document.getElementById('add_proposta').checked, faz_envio: document.getElementById('add_envio').checked, aceita_coleta: document.getElementById('add_coleta').checked, tem_boy: document.getElementById('add_boy').checked, 
                 data_alteracao_preco: new Date().toISOString() 
             }]); 
             
             btn.disabled = false; btn.innerText = "Anunciar Agora";
             e.target.reset(); 
-            limparECongelar(1); // Reseta a esteira
+            
+            // Reseta UI
+            document.getElementById('tipo_anuncio_selecionado').value = "";
+            document.getElementById('btnTipoNovo').classList.remove('active');
+            document.getElementById('btnTipoSemi').classList.remove('active');
+            document.getElementById('bloco_categoria').classList.remove('active');
+            resetWizardAbaixoDe(2);
+            
             atualizarLista();
-            alert("Produto Publicado com Sucesso!"); 
+            alert("Aparelho adicionado ao seu estoque com sucesso!"); 
         }
-        // ----------------------------------------------
 
         // --- FUNÇÃO COPIAR ESTOQUE PARA WHATSAPP ---
         function copiarEstoqueWhatsApp() {
             if(!ofertasAtuais || ofertasAtuais.length === 0) {
-                return alert("Você ainda não tem nenhum anúncio ativo para copiar.");
+                return alert("Você não possui anúncios ativos para copiar.");
             }
 
             let text = `*Estoque Atualizado - ${loja.nome}*\n\n`;
@@ -631,19 +666,18 @@
                let precoFormat = `${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
                
                text += `📱 *${nomeLimpo} ${o.variacoes.capacidade}*\n`;
-               text += `${emojiCor} Cor: ${o.cores_variadas ? 'Mixer Colors' : o.variacoes.cor}\n`;
+               text += `${emojiCor} Cor: ${o.cores_variadas ? 'Mix Colors' : o.variacoes.cor}\n`;
                text += `📦 Cond: ${o.condicao}\n`;
                text += `💰 *Por: ${precoFormat}* (Qtd: ${o.quantidade})\n\n`;
             });
 
-            // Se o whatsapp estiver preenchido com DDI, ajusta link
-            let numeroLimpo = loja.whatsapp.replace(/\D/g, '');
-            text += `👉 Fale com a gente: wa.me/${numeroLimpo}`;
+            let numeroLimpo = loja.whatsapp ? loja.whatsapp.replace(/\D/g, '') : '';
+            if(numeroLimpo) text += `👉 Fale com a gente: wa.me/${numeroLimpo}`;
 
             navigator.clipboard.writeText(text).then(() => {
-                alert("✅ Estoque copiado com sucesso! Agora é só colar no WhatsApp.");
+                alert("✅ Estoque copiado! Abra o seu WhatsApp e cole (Ctrl+V).");
             }).catch(err => {
-                alert("Erro ao copiar o texto. Tente novamente.");
+                alert("Erro ao copiar o texto.");
             });
         }
         // ----------------------------------------------
@@ -667,7 +701,7 @@
 
         async function atualizarLista() {
             const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), comentarios(id)').eq('fornecedor_id', loja.id).order('criado_em', {ascending: false});
-            ofertasAtuais = data || []; // Guarda na variável global para o botão de Copiar WhatsApp
+            ofertasAtuais = data || []; 
 
             let menoresPrecos = {};
             let totalEstoque = 0;
@@ -714,7 +748,7 @@
                     <td><input type="checkbox" class="offer-check" value="${o.id}"></td>
                     <td>
                         <span class="font-black text-blue-500">${colorDot} ${o.variacoes.produtos_mestre.nome}</span><br>
-                        <span class="text-[10px] text-gray-400 font-bold uppercase">${o.variacoes.capacidade} | ${o.cores_variadas ? '🟠 MIXER' : o.variacoes.cor}</span><br>
+                        <span class="text-[10px] text-gray-400 font-bold uppercase">${o.variacoes.capacidade} | ${o.cores_variadas ? '🟠 MIX COLORS' : o.variacoes.cor}</span><br>
                         <button onclick="abrirModalPerguntas(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="text-[9px] font-black text-yellow-500 uppercase mt-1 hover:underline">
                             💬 Perguntas (${o.comentarios ? o.comentarios.length : 0})
                         </button>
@@ -738,7 +772,7 @@
             calcularInsignias(totalEstoque, totalPerguntas); 
         }
 
-        // Funções Originais Intactas Abaixo
+        // --- Funções Auxiliares Intactas ---
         async function abrirModalPerguntas(ofertaId, nomeProd) { document.getElementById('atendimento_oferta_id').value = ofertaId; document.getElementById('perguntaProdutoNome').innerText = nomeProd; document.getElementById('perguntasModal').classList.remove('hidden'); await carregarPerguntas(ofertaId); }
         function fecharModalPerguntas() { document.getElementById('perguntasModal').classList.add('hidden'); }
         async function carregarPerguntas(ofertaId) { const div = document.getElementById('listaAtendimento'); div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6">Buscando mensagens...</p>'; const { data } = await _s.from('comentarios').select('*').eq('oferta_id', ofertaId).order('criado_em', { ascending: true }); if(!data || data.length === 0) { div.innerHTML = '<p class="text-[10px] text-gray-500 italic text-center py-6 uppercase font-bold tracking-widest">Nenhuma pergunta recebida.</p>'; return; } div.innerHTML = data.map(c => `<div class="p-3 rounded-xl border border-[#38383a] ${c.is_vendedor ? 'bg-blue-900/20 ml-6' : 'bg-[#2c2c2e] mr-6'}"><div class="flex justify-between items-center mb-1.5"><span class="text-[9px] font-black uppercase ${c.is_vendedor ? 'text-blue-400' : 'text-gray-400'}">${c.is_vendedor ? 'Sua Resposta Oficial' : (c.autor_nome || 'Cliente')}</span><button onclick="excluirMensagem(${c.id}, ${ofertaId})" class="text-[7px] text-red-500 font-black uppercase">[ Apagar ]</button></div><p class="text-[11px] text-gray-300 font-bold leading-relaxed">${c.texto}</p></div>`).join(''); div.scrollTop = div.scrollHeight; }
@@ -752,8 +786,7 @@
         async function salvarConta(e) { e.preventDefault(); const { data } = await _s.from('fornecedores').update({ nome: document.getElementById('c_nome').value, whatsapp: document.getElementById('c_whats').value, senha: document.getElementById('c_senha').value }).eq('id', loja.id).select().single(); if(data) { loja = data; document.getElementById('nomeLoja').innerText = loja.nome; } alert("Dados atualizados!"); fecharConta(); }
         async function salvarRapido(id, campo, valor) { let v = (campo === 'preco') ? parsePreco(valor) : parseInt(valor); if(isNaN(v)) return; await _s.from('ofertas').update({ [campo]: v, data_alteracao_preco: new Date().toISOString() }).eq('id', id); atualizarLista(); }
         async function salvarBulkChanges(e) { e.preventDefault(); const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length) return; const newPreco = parsePreco(document.getElementById('bulk_preco').value); const newQtd = document.getElementById('bulk_qtd').value; const newCond = document.getElementById('bulk_condicao').value; const newBat = document.getElementById('bulk_bateria').value; const newGar = document.getElementById('bulk_garantia').value; const bPix = document.getElementById('bulk_pix').value; const bUsdt = document.getElementById('bulk_usdt').value; const bNota = document.getElementById('bulk_nota').value; const bProp = document.getElementById('bulk_proposta').value; const bEnvio = document.getElementById('bulk_envio').value; const bColeta = document.getElementById('bulk_coleta').value; const bBoy = document.getElementById('bulk_boy').value; let up = {}; if(newPreco > 0) up.preco = newPreco; if(newQtd) up.quantidade = parseInt(newQtd); if(newCond) up.condicao = newCond; if(newBat) up.saude_bateria = newBat; if(newGar) up.garantia = newGar; if(bPix !== "") up.aceita_pix = bPix === "1"; if(bUsdt !== "") up.aceita_usdt = bUsdt === "1"; if(bNota !== "") up.emite_nota = bNota === "1"; if(bProp !== "") up.aceita_proposta = bProp === "1"; if(bEnvio !== "") up.faz_envio = bEnvio === "1"; if(bColeta !== "") up.aceita_coleta = bColeta === "1"; if(bBoy !== "") up.tem_boy = bBoy === "1"; if(Object.keys(up).length && ids.length) { up.data_alteracao_preco = new Date().toISOString(); await _s.from('ofertas').update(up).in('id', ids); fecharBulkEdit(); atualizarLista(); alert("Massa atualizada!"); } }
-        function checarGarantiaModal() { const cond = document.getElementById('edit_cond').value, g = document.getElementById('edit_gar'), prod = produtosMestre.find(p => p.id == document.getElementById('edit_produto_id').value); if(cond === 'Novo' && prod && ['1','2','4','5'].includes(prod.grupo_id.toString())) { g.value = "1 ANO GARANTIA APPLE"; g.readOnly = true; } else { g.readOnly = false; } }
-        async function abrirEdicaoCompleta(id) { const { data: o } = await _s.from('ofertas').select('*, variacoes(*)').eq('id', id).single(); document.getElementById('edit_id').value = o.id; document.getElementById('edit_produto_id').value = o.variacoes.produto_id; document.getElementById('edit_capacidade').value = o.variacoes.capacidade; document.getElementById('edit_preco').value = o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2}); document.getElementById('edit_qtd').value = o.quantidade; document.getElementById('edit_cond').value = o.condicao; document.getElementById('edit_gar').value = o.garantia || ''; const coresDisp = gradeVariacoes.filter(v => v.produto_id == o.variacoes.produto_id && v.capacidade == o.variacoes.capacidade); document.getElementById('edit_cor').innerHTML = coresDisp.map(v => `<option value="${v.cor}" ${v.cor == o.variacoes.cor ? 'selected' : ''}>${v.cor}</option>`).join(''); document.getElementById('editModal').classList.remove('hidden'); checarGarantiaModal(); }
+        async function abrirEdicaoCompleta(id) { const { data: o } = await _s.from('ofertas').select('*, variacoes(*)').eq('id', id).single(); document.getElementById('edit_id').value = o.id; document.getElementById('edit_produto_id').value = o.variacoes.produto_id; document.getElementById('edit_capacidade').value = o.variacoes.capacidade; document.getElementById('edit_preco').value = o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2}); document.getElementById('edit_qtd').value = o.quantidade; document.getElementById('edit_cond').value = o.condicao; document.getElementById('edit_gar').value = o.garantia || ''; const coresDisp = gradeVariacoes.filter(v => v.produto_id == o.variacoes.produto_id && v.capacidade == o.variacoes.capacidade); document.getElementById('edit_cor').innerHTML = coresDisp.map(v => `<option value="${v.cor}" ${v.cor == o.variacoes.cor ? 'selected' : ''}>${v.cor}</option>`).join(''); document.getElementById('editModal').classList.remove('hidden'); }
         async function salvarEdicaoCompleta(e) { e.preventDefault(); const id = document.getElementById('edit_id').value; const corSel = document.getElementById('edit_cor').value; const v = gradeVariacoes.find(x => x.produto_id == document.getElementById('edit_produto_id').value && x.capacidade == document.getElementById('edit_capacidade').value && x.cor == corSel); const { data: antiga } = await _s.from('ofertas').select('preco').eq('id', id).single(); await _s.from('ofertas').update({ preco: parsePreco(document.getElementById('edit_preco').value), preco_anterior: antiga.preco, quantidade: parseInt(document.getElementById('edit_qtd').value), condicao: document.getElementById('edit_cond').value, garantia: document.getElementById('edit_gar').value, variacao_id: v.id, data_alteracao_preco: new Date().toISOString() }).eq('id', id); fecharModalEdit(); atualizarLista(); }
         async function bulkDuplicate() { const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length) return alert("Selecione!"); const { data: originais } = await _s.from('ofertas').select('*').in('id', ids); await _s.from('ofertas').insert(originais.map(o => { const { id, criado_em, ...resto } = o; return resto; })); atualizarLista(); }
         async function bulkDelete() { const ids = Array.from(document.querySelectorAll('.offer-check:checked')).map(c => parseInt(c.value)); if(!ids.length || !confirm("Apagar?")) return; await _s.from('ofertas').delete().in('id', ids); atualizarLista(); }
