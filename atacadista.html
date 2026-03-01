@@ -315,6 +315,8 @@
         const rndUp = v => Math.ceil(v / 10) * 10;
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
         const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
+        
+        const getAppleColorHex = c => { let s=(c||'').toUpperCase(); if(s.includes('PRETO')||s.includes('BLACK')||s.includes('MEIA-NOITE')||s.includes('GRAFITE')) return '#191919'; if(s.includes('BRANCO')||s.includes('WHITE')||s.includes('ESTELAR')||s.includes('PRATEADO')) return '#f5f5f7'; if(s.includes('AZUL')||s.includes('SIERRA')) return '#215e7c'; if(s.includes('VERDE')||s.includes('ALPINO')) return '#505c4c'; if(s.includes('NATURAL')) return '#8c8c88'; if(s.includes('DESERTO')||s.includes('DOURADO')) return '#ccb390'; if(s.includes('ROSA')) return '#e6c7c2'; if(s.includes('ROXO')) return '#5c5b57'; return '#808080'; };
 
         window.onload = async () => {
             const token = localStorage.getItem('iFipe_Anunciante');
@@ -531,7 +533,7 @@
             fecharBulk(); upTab();
         }
 
-        // --- COPIAR LISTA WPP (ESTILO PODEROSO E DINÂMICO) ---
+        // --- COPIAR LISTA WPP ---
         async function copiarListaWhatsApp() {
             if (!ofertas || ofertas.length === 0) return alert("Sua lista de ofertas está vazia.");
 
@@ -540,21 +542,18 @@
             let seminovos = ofertas.filter(o => o.condicao !== 'Novo');
 
             const formatarMoeda = (val) => val.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            let cidade = loja.cidade ? `📍 ${loja.cidade}` : '';
-            let nomeLoja = loja.nome ? loja.nome.toUpperCase() : 'ATACADISTA';
+            let cidadeText = loja.cidade ? ` ${loja.cidade.toUpperCase()}` : '';
 
             // Saudação Dinâmica
             let hora = new Date().getHours();
-            let saudacao = "Bom dia";
-            if(hora >= 12 && hora < 18) saudacao = "Boa tarde";
-            else if(hora >= 18) saudacao = "Boa noite";
+            let saudacao = "BOM DIA";
+            if(hora >= 12 && hora < 18) saudacao = "BOA TARDE";
+            else if(hora >= 18) saudacao = "BOA NOITE";
 
-            // Cabeçalho
-            text += `*${saudacao}*\n\n`;
-            text += `🚀 *${nomeLoja}* 🔥\n\n`;
+            text += `*${saudacao} 🚀🔥*\n\n`;
 
             if (novos.length > 0) {
-                text += `*Pronta entrega Novos* ${cidade}\n\n`;
+                text += `*PRONTA ENTREGA NOVOS${cidadeText}* 📍\n\n`;
                 
                 let groupedNovos = {};
                 novos.forEach(o => {
@@ -567,26 +566,28 @@
                     text += `${key}\n`;
                     groupedNovos[key].forEach(o => {
                         let pricePrefix = o.moeda === 'BRL' ? 'R$' : '$';
-                        text += `(${o.quantidade}) ${o.variacoes.cor} ${pricePrefix} ${formatarMoeda(o.preco)}\n`;
+                        text += `(${o.quantidade}) ${o.variacoes.cor.toUpperCase()} ${pricePrefix} ${formatarMoeda(o.preco)}\n`;
                     });
                     text += `\n`;
                 }
             }
 
             if (seminovos.length > 0) {
-                text += `*Pronta entrega Seminovos* ${cidade}\n\n`;
+                text += `*PRONTA ENTREGA SEMINOVOS*\n\n`; // Sem cidade repetida
                 seminovos.forEach(o => {
                     let pricePrefix = o.moeda === 'BRL' ? 'R$' : '$';
                     let bat = o.saude_bateria ? ` 🔋 ${o.saude_bateria}` : '';
                     let gar = o.garantia ? ` 🛡️ ${o.garantia}` : '';
-                    text += `* (${o.quantidade}) ${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade} ${o.variacoes.cor}${bat}${gar} ${pricePrefix} ${formatarMoeda(o.preco)}*\n`;
+                    // Formato cravado: * (1) iPhone 11 128GB AMARELO 🔋 Acima de 85% $ 1.999,90*
+                    text += `* (${o.quantidade}) ${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade} ${o.variacoes.cor.toUpperCase()}${bat}${gar} ${pricePrefix} ${formatarMoeda(o.preco)}*\n`;
                 });
                 text += `\n`;
             }
 
             let linkZap = loja.whatsapp ? `https://wa.me/${loja.whatsapp.replace(/\D/g, '')}` : 'Nosso WhatsApp';
             text += `Fale com a gente agora mesmo: ${linkZap}\n\n`;
-            text += `Lista Gerada pelo iFipe - *A Fipe do iPhone 📲*`;
+            text += `Lista Gerada pelo iFipe - *A Fipe do iPhone 📲*\n\n`;
+            text += `https://ifipe.com.br/`;
 
             try {
                 await navigator.clipboard.writeText(text);
