@@ -81,7 +81,7 @@
         <div class="master-menu">
             <button class="menu-btn active" onclick="switchView('v-atacadistas', this)">🏢 ATACADISTAS</button>
             <button class="menu-btn" onclick="switchView('v-clientes', this)">👥 CLIENTES</button>
-            <button class="menu-btn" onclick="switchView('v-anuncios', this)">📢 GESTÃO GLOBAL (ANÚNCIOS)</button>
+            <button class="menu-btn" onclick="switchView('v-anuncios', this)">📢 GESTÃO GLOBAL</button>
             <button class="menu-btn" onclick="switchView('v-selos', this)">🛡️ GESTÃO SELOS</button>
             <button class="menu-btn" onclick="switchView('v-calculadora', this)">🧮 CALCULADORA VIP 2.0</button>
             <button class="menu-btn" onclick="switchView('v-conta', this)">⚙️ MINHA CONTA</button>
@@ -105,7 +105,7 @@
                                 <th>LOJA / LOCAL</th>
                                 <th>WHATSAPP / CONTATO</th>
                                 <th>SENHA (MASTER)</th>
-                                <th>INSÍGNIAS</th>
+                                <th>INSÍGNIAS (AUTO/MANUAL)</th>
                                 <th>STATUS / SELO</th>
                                 <th class="text-right">AÇÕES</th>
                             </tr>
@@ -122,6 +122,7 @@
                     <h2 class="text-sm font-black text-white">BASE COMPLETA: CLIENTES (BUSCADORES)</h2>
                     <div class="flex gap-2 w-1/2 justify-end">
                         <input type="text" placeholder="🔍 FILTRAR CLIENTES..." class="apple-input !w-1/2 !py-2" onkeyup="filterTable('listCli', this.value)">
+                        <button onclick="abrirModalCliNovo()" class="btn-master bg-white text-black hover:bg-zinc-300">+ NOVO CLIENTE</button>
                         <button onclick="bulkCliModal()" class="btn-master bg-zinc-800 text-white">⚙️ AÇÕES EM MASSA</button>
                     </div>
                 </div>
@@ -131,7 +132,8 @@
                             <tr>
                                 <th width="30"><input type="checkbox" onclick="selAll(this, '.chk-cli')"></th>
                                 <th>NOME / ID</th>
-                                <th>EMAIL / CONTATO</th>
+                                <th>LOCALIZAÇÃO</th>
+                                <th>EMAIL / WHATSAPP</th>
                                 <th>SENHA (MASTER)</th>
                                 <th>LOGINS / INSÍGNIAS</th>
                                 <th class="text-right">AÇÃO</th>
@@ -146,27 +148,17 @@
         <div id="v-anuncios" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
-                    <div>
-                        <h2 class="text-sm font-black text-white">GESTÃO GLOBAL DE ANÚNCIOS</h2>
-                        <p class="text-[10px] text-zinc-500 font-bold mt-1">Ferramenta unificada. Lançamento e edição operando sob o mesmo fluxo do Atacadista.</p>
-                    </div>
+                    <div><h2 class="text-sm font-black text-white">GESTÃO GLOBAL DE ANÚNCIOS</h2><p class="text-[10px] text-zinc-500 font-bold mt-1">Lançamento por nome e estrutura 100% Atacadista.</p></div>
                     <div class="flex gap-2">
                         <input type="text" placeholder="🔍 FILTRAR ANÚNCIOS..." class="apple-input !py-2" onkeyup="filterTable('listAnu', this.value)">
-                        <button onclick="abrirModalGestaoAnuncio()" class="btn-master !bg-blue-600">➕ LANÇAR ANÚNCIO (POR NOME)</button>
+                        <button onclick="abrirModalGestaoAnuncio()" class="btn-master !bg-blue-600">➕ LANÇAR ANÚNCIO</button>
                         <button onclick="loadAnuncios()" class="btn-master bg-zinc-800">ATUALIZAR BASE</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table>
                         <thead>
-                            <tr>
-                                <th>REGISTRO</th>
-                                <th>PRODUTO / VARIAÇÃO</th>
-                                <th>CONDIÇÃO</th>
-                                <th>PREÇO / MOEDA</th>
-                                <th>ESTOQUE</th>
-                                <th class="text-right">INTERVENÇÃO</th>
-                            </tr>
+                            <tr><th>REGISTRO</th><th>PRODUTO / VARIAÇÃO</th><th>CONDIÇÃO</th><th>PREÇO / MOEDA</th><th>ESTOQUE</th><th class="text-right">INTERVENÇÃO</th></tr>
                         </thead>
                         <tbody id="listAnu"></tbody>
                     </table>
@@ -178,19 +170,14 @@
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
                     <h2 class="text-sm font-black text-white">GESTÃO DE PATENTES E INSÍGNIAS (FIPE 1.0)</h2>
-                    <button onclick="syncAutomatedBadges()" class="btn-master bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]">⚙️ SINCRONIZAR PATENTES (AUTO)</button>
+                    <button onclick="syncAutomatedBadges()" class="btn-master bg-blue-600">⚙️ SINCRONIZAR PATENTES (AUTO)</button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
                         <h3 class="text-[10px] font-black text-purple-400 mb-4">ATRIBUIÇÃO DE INSÍGNIAS MANUAIS</h3>
-                        <p class="text-[8px] text-zinc-500 mb-4">Identificação 100% por NOME. Todas as patentes liberadas.</p>
-                        
-                        <select id="seloTableSel" class="apple-input mb-3" onchange="loadUsersForSelo()">
-                            <option value="fornecedores">🏢 ATACADISTAS (NOME DA LOJA)</option>
-                            <option value="clientes_buscador">👥 CLIENTES (NOME DO CLIENTE)</option>
-                        </select>
+                        <p class="text-[8px] text-zinc-500 mb-4">Escolha por NOME para atribuir títulos manualmente.</p>
+                        <select id="seloTableSel" class="apple-input mb-3" onchange="loadUsersForSelo()"><option value="fornecedores">🏢 ATACADISTAS</option><option value="clientes_buscador">👥 CLIENTES</option></select>
                         <select id="seloUser" class="apple-input mb-3"></select>
-                        
                         <select id="seloNovaInsigniaAta" class="apple-input mb-3 border-purple-500">
                             <option value="">-- INSÍGNIAS P/ ATACADISTAS --</option>
                             <option value="50 APARELHOS EM ESTOQUE - MAGNATA IPHONE">50 APARELHOS EM ESTOQUE - MAGNATA IPHONE</option>
@@ -203,7 +190,6 @@
                             <option value="10 RECOMENDACAO - ATACADISTA FAMOSIN 😎">10 RECOMENDAÇÕES - ATACADISTA FAMOSIN 😎</option>
                             <option value="10 COMPARTILHAMENTOS NO MESMO ANUNCIO - CELEBRIDADE">10 COMPARTILHAMENTOS - CELEBRIDADE</option>
                         </select>
-                        
                         <select id="seloNovaInsigniaCli" class="apple-input mb-3 border-purple-500 hidden">
                             <option value="">-- INSÍGNIAS P/ CLIENTES --</option>
                             <option value="1 LOGIN: LOJISTA EXPERTO">1 LOGIN: LOJISTA EXPERTO</option>
@@ -214,21 +200,13 @@
                             <option value="100 LOGIN: OPORTUNISTA">100 LOGINS: OPORTUNISTA</option>
                             <option value="150 LOGIN: SO DA PREJUIZO">150 LOGINS: SÓ DÁ PREJUÍZO</option>
                             <option value="200 LOGIN: MUQUIRANA">200 LOGINS: MUQUIRANA</option>
-                            <option value="250 LOGIN: LISEIRA">250 LOGINS: LISEIRA</option>
+                            <option value="250 LOGIN: LISEIRA">250 LOGIN: LISEIRA</option>
                             <option value="300 LOGIN: CAINHA">300 LOGINS: CÃINHA</option>
                             <option value="350 LOGIN: DURO IGUAL UM COCO">350 LOGINS: DURO IGUAL UM COCO</option>
                             <option value="400 LOGIN: PASSANDO FOME">400 LOGINS: PASSANDO FOME</option>
                             <option value="500 LOGIN: PREÇO DE MIAMI NO BRASIL 🤡">500 LOGINS: PREÇO DE MIAMI NO BRASIL 🤡</option>
                         </select>
-                        
-                        <div class="flex gap-2">
-                            <button onclick="addInsignia()" class="btn-master w-1/2 !bg-purple-600">+ ATRIBUIR INSÍGNIA</button>
-                            <button onclick="clearInsignias()" class="btn-master w-1/2 bg-zinc-800">LIMPAR TODAS</button>
-                        </div>
-                    </div>
-                    <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-                        <h3 class="text-[10px] font-black text-blue-400 mb-4">REGRAS DE SINCRONIZAÇÃO (AUTO)</h3>
-                        <p class="text-[8px] text-zinc-400">Varredura obedece 100% o manual FIPE 1.0. Patentes manuais não listadas em volume são preservadas em atualizações automáticas.</p>
+                        <div class="flex gap-2"><button onclick="addInsignia()" class="btn-master w-1/2 !bg-purple-600">+ ATRIBUIR</button><button onclick="clearInsignias()" class="btn-master w-1/2 bg-zinc-800">LIMPAR TODAS</button></div>
                     </div>
                 </div>
             </div>
@@ -238,22 +216,10 @@
             <div class="apple-card max-w-lg mx-auto">
                 <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">🧮 CALCULADORA VIP 2.0</h2>
                 <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
-                    <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
-                        <span class="text-[10px] text-zinc-500 font-bold">TAXA ORÁCULO ATUAL (+ R$ 0,06):</span>
-                        <span id="calcOraculoDisplay" class="text-sm font-mono text-green-400 font-black">R$ 0.00</span>
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-black text-zinc-400">VALOR DO PRODUTO (US$)</label>
-                        <input type="number" id="calcValorUsd" class="apple-input mt-2" placeholder="Ex: 850" oninput="runCalcVip()">
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-black text-zinc-400">SPREAD / LUCRO EXTRA (%)</label>
-                        <input type="number" id="calcLucro" class="apple-input mt-2" value="0" oninput="runCalcVip()">
-                    </div>
-                    <div class="bg-black border border-blue-900/50 p-4 rounded-lg text-center mt-4">
-                        <span class="text-[9px] text-blue-500 font-black block mb-1">VALOR FINAL EM REAIS</span>
-                        <span id="calcResultDisplay" class="text-2xl font-black text-white font-mono">R$ 0,00</span>
-                    </div>
+                    <div class="flex justify-between items-center border-b border-zinc-800 pb-2"><span class="text-[10px] text-zinc-500 font-bold">TAXA ORÁCULO ATUAL (+ R$ 0,06):</span><span id="calcOraculoDisplay" class="text-sm font-mono text-green-400 font-black">R$ 0.00</span></div>
+                    <div><label class="text-[9px] font-black text-zinc-400">VALOR DO PRODUTO (US$)</label><input type="number" id="calcValorUsd" class="apple-input mt-2" oninput="runCalcVip()"></div>
+                    <div><label class="text-[9px] font-black text-zinc-400">SPREAD / LUCRO EXTRA (%)</label><input type="number" id="calcLucro" class="apple-input mt-2" value="0" oninput="runCalcVip()"></div>
+                    <div class="bg-black border border-blue-900/50 p-4 rounded-lg text-center mt-4"><span class="text-[9px] text-blue-500 font-black block mb-1">VALOR FINAL EM REAIS</span><span id="calcResultDisplay" class="text-2xl font-black text-white font-mono">R$ 0,00</span></div>
                 </div>
             </div>
         </div>
@@ -262,15 +228,11 @@
             <div class="apple-card max-w-md mx-auto">
                 <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">CREDENCIAIS ABSOLUTAS DO MASTER</h2>
                 <form onsubmit="updateMaster(event)" class="space-y-4">
-                    <input type="password" id="mNewPass" class="apple-input" placeholder="Nova chave absoluta..." required>
-                    <button type="submit" class="btn-master w-full !bg-red-600">APLICAR NOVA CHAVE MESTRA</button>
+                    <input type="password" id="mNewPass" class="apple-input" placeholder="Nova chave absoluta..." required><button type="submit" class="btn-master w-full !bg-red-600">APLICAR</button>
                 </form>
             </div>
         </div>
-
     </div>
-
-    <button id="scrollTopBtn" onclick="window.scrollTo({top:0, behavior:'smooth'})" class="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg">▲</button>
 
     <div id="modalAta" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a] max-h-[90vh] overflow-y-auto">
@@ -278,57 +240,36 @@
             <form onsubmit="saveAta(event)" class="space-y-3">
                 <input type="hidden" id="mAtaId">
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="col-span-2"><label class="text-[8px] text-red-500 font-bold">NOME DA LOJA (Maiúsculo Automático)</label><input type="text" id="mAtaNome" class="apple-input" onkeyup="this.value = this.value.toUpperCase()" required></div>
+                    <div class="col-span-2"><label class="text-[8px] text-red-500 font-bold">NOME DA LOJA (MAIÚSCULO)</label><input type="text" id="mAtaNome" class="apple-input" onkeyup="this.value = this.value.toUpperCase()" required></div>
                     <div><label class="text-[8px] text-red-500 font-bold">WHATSAPP</label><input type="text" id="mAtaWhats" class="apple-input" required></div>
                     <div><label class="text-[8px] text-zinc-500 font-bold">EMAIL</label><input type="text" id="mAtaEmail" class="apple-input"></div>
-                    <div class="col-span-2"><label class="text-[8px] text-blue-500 font-bold">PAÍS</label><select id="mAtaPais" class="apple-input mt-1" onchange="toggleLocationFields()" required><option value="Brasil">🇧🇷 BRASIL</option><option value="EUA">🇺🇸 EUA</option><option value="Paraguai">🇵🇾 PARAGUAI</option></select></div>
-                    <div id="divEstado" class="col-span-1"><label class="text-[8px] text-zinc-500 font-bold">ESTADO (UF)</label><select id="mAtaEst" class="apple-input mt-1" onchange="loadCidades()"><option value="">Selecione...</option><option value="AC">Acre</option><option value="AL">Alagoas</option><option value="AP">Amapá</option><option value="AM">Amazonas</option><option value="BA">Bahia</option><option value="CE">Ceará</option><option value="DF">Distrito Federal</option><option value="ES">Espírito Santo</option><option value="GO">Goiás</option><option value="MA">Maranhão</option><option value="MT">Mato Grosso</option><option value="MS">Mato Grosso do Sul</option><option value="MG">Minas Gerais</option><option value="PA">Pará</option><option value="PB">Paraíba</option><option value="PR">Paraná</option><option value="PE">Pernambuco</option><option value="PI">Piauí</option><option value="RJ">Rio de Janeiro</option><option value="RN">Rio Grande do Norte</option><option value="RS">Rio Grande do Sul</option><option value="RO">Rondônia</option><option value="RR">Roraima</option><option value="SC">Santa Catarina</option><option value="SP">São Paulo</option><option value="SE">Sergipe</option><option value="TO">Tocantins</option></select></div>
-                    <div id="divCidade" class="col-span-1"><label class="text-[8px] text-zinc-500 font-bold">CIDADE</label><select id="mAtaCid" class="apple-input mt-1"><option value="">Estado primeiro</option></select></div>
+                    <div class="col-span-2"><label class="text-[8px] text-blue-500 font-bold">PAÍS</label><select id="mAtaPais" class="apple-input mt-1" onchange="toggleLocationFields('Ata')" required><option value="Brasil">🇧🇷 BRASIL</option><option value="EUA">🇺🇸 EUA</option><option value="Paraguai">🇵🇾 PARAGUAI</option></select></div>
+                    <div id="divEstadoAta" class="col-span-1"><label class="text-[8px] text-zinc-500 font-bold">ESTADO (UF)</label><select id="mAtaEst" class="apple-input mt-1" onchange="loadCidades('Ata')"><option value="">Selecione...</option><option value="AC">Acre</option><option value="AL">Alagoas</option><option value="AP">Amapá</option><option value="AM">Amazonas</option><option value="BA">Bahia</option><option value="CE">Ceará</option><option value="DF">Distrito Federal</option><option value="ES">Espírito Santo</option><option value="GO">Goiás</option><option value="MA">Maranhão</option><option value="MT">Mato Grosso</option><option value="MS">Mato Grosso do Sul</option><option value="MG">Minas Gerais</option><option value="PA">Pará</option><option value="PB">Paraíba</option><option value="PR">Paraná</option><option value="PE">Pernambuco</option><option value="PI">Piauí</option><option value="RJ">Rio de Janeiro</option><option value="RN">Rio Grande do Norte</option><option value="RS">Rio Grande do Sul</option><option value="RO">Rondônia</option><option value="RR">Roraima</option><option value="SC">Santa Catarina</option><option value="SP">São Paulo</option><option value="SE">Sergipe</option><option value="TO">Tocantins</option></select></div>
+                    <div id="divCidadeAta" class="col-span-1"><label class="text-[8px] text-zinc-500 font-bold">CIDADE</label><select id="mAtaCid" class="apple-input mt-1"><option value="">Estado primeiro</option></select></div>
                     <div class="col-span-2"><label class="text-[8px] text-red-500 font-bold">SENHA</label><input type="text" id="mAtaSenha" class="apple-input border-red-500 mt-1" required></div>
                 </div>
-                <div class="flex gap-4 bg-zinc-900 p-3 rounded-lg border border-zinc-800 mt-2">
-                    <label class="text-[9px] font-black flex items-center gap-1"><input type="checkbox" id="mAtaAtivo"> CONTA ATIVA</label>
-                    <label class="text-[9px] font-black flex items-center gap-1 text-blue-400"><input type="checkbox" id="mAtaVeri"> SELO VERIFICADO</label>
-                </div>
+                <div class="flex gap-4 bg-zinc-900 p-3 rounded-lg border border-zinc-800 mt-2"><label class="text-[9px] font-black flex items-center gap-1"><input type="checkbox" id="mAtaAtivo"> CONTA ATIVA</label><label class="text-[9px] font-black flex items-center gap-1 text-blue-400"><input type="checkbox" id="mAtaVeri"> SELO VERIFICADO</label></div>
                 <div class="flex gap-2 pt-2"><button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button><button type="submit" class="btn-master w-2/3">SALVAR</button></div>
             </form>
         </div>
     </div>
 
-    <div id="modalBulkAta" class="hidden modal-overlay">
-        <div class="apple-card w-full max-w-sm bg-[#050505]">
-            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (ATACADISTAS)</h3>
-            <input type="text" id="bulkAtaSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS">
-            <button onclick="runBulk('fornecedores', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button>
-            <button onclick="runBulk('fornecedores', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button>
-            <button onclick="runBulk('fornecedores', 'desativar')" class="btn-master w-full bg-zinc-700 mb-2">DESATIVAR SELECIONADOS</button>
-            <button onclick="runBulk('fornecedores', 'verificar')" class="btn-master w-full border border-blue-600 text-blue-500 bg-transparent mb-4">APLICAR SELO VERIFICADO</button>
-            <button onclick="runBulk('fornecedores', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVAMENTE</button>
-            <button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button>
-        </div>
-    </div>
-
-    <div id="modalBulkCli" class="hidden modal-overlay">
-        <div class="apple-card w-full max-w-sm bg-[#050505]">
-            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (CLIENTES)</h3>
-            <input type="text" id="bulkCliSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS">
-            <button onclick="runBulk('clientes_buscador', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button>
-            <button onclick="runBulk('clientes_buscador', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVAMENTE</button>
-            <button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button>
-        </div>
-    </div>
-
     <div id="modalCli" class="hidden modal-overlay">
-        <div class="apple-card w-full max-w-sm bg-[#050505] border-[#38383a]">
+        <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a] max-h-[90vh] overflow-y-auto">
             <h3 id="mCliTitle" class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">INTERVENÇÃO NO CLIENTE</h3>
             <form onsubmit="saveCli(event)" class="space-y-3">
                 <input type="hidden" id="mCliId">
-                <div><label class="text-[8px] text-zinc-500 font-bold">NOME DO CLIENTE</label><input type="text" id="mCliNome" class="apple-input" onkeyup="this.value = this.value.toUpperCase()"></div>
-                <div><label class="text-[8px] text-zinc-500 font-bold">WHATSAPP</label><input type="text" id="mCliWhats" class="apple-input"></div>
-                <div><label class="text-[8px] text-zinc-500 font-bold">EMAIL</label><input type="text" id="mCliEmail" class="apple-input"></div>
-                <div><label class="text-[8px] text-blue-500 font-bold">CONTAGEM DE LOGINS (MANUAL)</label><input type="number" id="mCliLogins" class="apple-input" placeholder="0"></div>
-                <div><label class="text-[8px] text-red-500 font-bold">SENHA</label><input type="text" id="mCliSenha" class="apple-input border-red-500" required></div>
-                <div class="flex gap-2 pt-2"><button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button><button type="submit" class="btn-master w-2/3">SALVAR</button></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="col-span-2"><label class="text-[8px] text-red-500 font-bold">NOME COMPLETO (MAIÚSCULO)</label><input type="text" id="mCliNome" class="apple-input" onkeyup="this.value = this.value.toUpperCase()" required></div>
+                    <div><label class="text-[8px] text-red-500 font-bold">WHATSAPP</label><input type="text" id="mCliWhats" class="apple-input" required></div>
+                    <div><label class="text-[8px] text-zinc-500 font-bold">EMAIL</label><input type="text" id="mCliEmail" class="apple-input"></div>
+                    <div class="col-span-2 border-t border-zinc-800 pt-2"><label class="text-[8px] text-blue-500 font-bold">LOCALIZAÇÃO (PADRÃO GOVERNANÇA)</label></div>
+                    <div class="col-span-2"><select id="mCliPais" class="apple-input" onchange="toggleLocationFields('Cli')" required><option value="Brasil">🇧🇷 BRASIL</option><option value="EUA">🇺🇸 EUA</option><option value="Paraguai">🇵🇾 PARAGUAI</option></select></div>
+                    <div id="divEstadoCli" class="col-span-1"><label class="text-[8px] text-zinc-500 font-bold">ESTADO (UF)</label><select id="mCliEst" class="apple-input" onchange="loadCidades('Cli')"><option value="">Selecione...</option><option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option><option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option><option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option></select></div>
+                    <div id="divCidadeCli" class="col-span-1"><label class="text-[8px] text-zinc-500 font-bold">CIDADE</label><select id="mCliCid" class="apple-input"><option value="">Selecione estado</option></select></div>
+                    <div class="col-span-2 border-t border-zinc-800 pt-2"><label class="text-[8px] text-red-500 font-bold">SENHA DE ACESSO</label><input type="text" id="mCliSenha" class="apple-input border-red-500" required></div>
+                </div>
+                <div class="flex gap-2 pt-4"><button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button><button type="submit" class="btn-master w-2/3">SALVAR CLIENTE</button></div>
             </form>
         </div>
     </div>
@@ -337,64 +278,30 @@
         <div class="apple-card w-full max-w-2xl bg-[#050505] border-[#38383a] max-h-[90vh] overflow-y-auto">
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">➕ LANÇAMENTO DE ANÚNCIO (FLUXO ATACADISTA)</h3>
             <form onsubmit="gestaoAddAnuncio(event)" class="space-y-4">
-                <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
-                    <label class="text-[9px] font-black text-zinc-400">1. SELECIONE A LOJA ALVO (NOME)</label>
-                    <select id="gLoja" class="apple-input mt-2" required></select>
-                </div>
-                
-                <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3">
-                    <label class="text-[9px] font-black text-zinc-400 block border-b border-zinc-800 pb-2">2. ESTRUTURA SEPARADA (SELECIONÁVEL)</label>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div><label class="text-[8px] font-black text-zinc-500">MODELO</label><select id="gModelo" class="apple-input" onchange="loadCapacidades()" required><option value="">Selecione...</option></select></div>
-                        <div><label class="text-[8px] font-black text-zinc-500">CAPACIDADE</label><select id="gCapacidade" class="apple-input" onchange="loadCores()" required><option value="">Modelo primeiro</option></select></div>
-                        <div><label class="text-[8px] font-black text-zinc-500">COR</label><select id="gCor" class="apple-input" required><option value="">Capacidade primeiro</option></select></div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-zinc-900 border border-zinc-800 p-4 rounded-xl">
-                    <div>
-                        <label class="text-[9px] font-black text-yellow-500">CONDIÇÃO</label>
-                        <select id="gCondicao" class="apple-input mt-1 border-yellow-500" required>
-                            <option value="NOVO">NOVO</option>
-                            <option value="SEMINOVO">SEMINOVO</option>
-                            <option value="CPO">CPO</option>
-                            <option value="GRADE A">GRADE A</option>
-                            <option value="GRADE B">GRADE B</option>
-                            <option value="GRADE C">GRADE C</option>
-                        </select>
-                    </div>
-                    <div><label class="text-[9px] font-black text-zinc-400">ESTOQUE</label><input type="number" id="gQtd" class="apple-input mt-1" required min="0"></div>
-                    <div>
-                        <label class="text-[9px] font-black text-red-500">MOEDA (SEPARADA)</label>
-                        <select id="gMoeda" class="apple-input mt-1 border-red-500" required>
-                            <option value="USD">USD</option>
-                            <option value="BRL">BRL</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[9px] font-black text-zinc-400">PREÇO UNITÁRIO <span id="hintSpread" class="text-green-500"></span></label>
-                        <input type="number" step="0.01" id="gPreco" class="apple-input mt-1" required min="0">
-                    </div>
-                </div>
-                <div class="flex gap-2 pt-2"><button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button><button type="submit" class="btn-master w-2/3 !bg-blue-600">PUBLICAR ANÚNCIO</button></div>
+                <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl"><label class="text-[9px] font-black text-zinc-400">1. LOJA ALVO (POR NOME)</label><select id="gLoja" class="apple-input mt-2" required></select></div>
+                <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl space-y-3"><label class="text-[9px] font-black text-zinc-400 block border-b border-zinc-800 pb-2">2. ESTRUTURA SEPARADA (PRODUTO)</label><div class="grid grid-cols-1 md:grid-cols-3 gap-3"><div><label class="text-[8px] font-black text-zinc-500">MODELO</label><select id="gModelo" class="apple-input" onchange="loadCapacidades()" required><option value="">Selecione...</option></select></div><div><label class="text-[8px] font-black text-zinc-500">CAPACIDADE</label><select id="gCapacidade" class="apple-input" onchange="loadCores()" required><option value="">Modelo primeiro</option></select></div><div><label class="text-[8px] font-black text-zinc-500">COR</label><select id="gCor" class="apple-input" required><option value="">Capacidade primeiro</option></select></div></div></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-zinc-900 border border-zinc-800 p-4 rounded-xl"><div><label class="text-[9px] font-black text-yellow-500">CONDIÇÃO</label><select id="gCondicao" class="apple-input mt-1 border-yellow-500" required><option value="NOVO">NOVO</option><option value="SEMINOVO">SEMINOVO</option><option value="CPO">CPO</option><option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option></select></div><div><label class="text-[9px] font-black text-zinc-400">ESTOQUE</label><input type="number" id="gQtd" class="apple-input mt-1" required min="0"></div><div><label class="text-[9px] font-black text-red-500">MOEDA (BRL/USD)</label><select id="gMoeda" class="apple-input mt-1 border-red-500" required><option value="BRL">BRL</option><option value="USD">USD</option></select></div><div><label class="text-[9px] font-black text-zinc-400">PREÇO UNITÁRIO</label><input type="number" step="0.01" id="gPreco" class="apple-input mt-1" required min="0"></div></div>
+                <div class="flex gap-2 pt-2"><button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button><button type="submit" class="btn-master w-2/3 !bg-blue-600">PUBLICAR</button></div>
             </form>
         </div>
     </div>
 
+    <div id="modalBulkAta" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505]"><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (ATACADISTAS)</h3><input type="text" id="bulkAtaSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('fornecedores', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('fornecedores', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR</button><button onclick="runBulk('fornecedores', 'desativar')" class="btn-master w-full bg-zinc-700 mb-2">DESATIVAR</button><button onclick="runBulk('fornecedores', 'verificar')" class="btn-master w-full border border-blue-600 text-blue-500 bg-transparent mb-4">VERIFICAR</button><button onclick="runBulk('fornecedores', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button><button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button></div></div>
+    <div id="modalBulkCli" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505]"><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (CLIENTES)</h3><input type="text" id="bulkCliSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('clientes_buscador', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('clientes_buscador', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button><button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button></div></div>
+
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let dbAta = [], dbCli = [], dbAnu = [], dbVar = [];
-        let currentOracleUsdt = 0;
+        let dbAta = [], dbCli = [], dbAnu = [], dbVar = [], currentOracleUsdt = 0;
 
-        const mockCidades = { "SP": ["São Paulo", "Guarulhos", "Campinas"], "RJ": ["Rio de Janeiro", "Niterói"], "MG": ["Belo Horizonte"], "PR": ["Curitiba"], "SC": ["Florianópolis"], "RS": ["Porto Alegre"] };
-        function loadCidades() { const est = document.getElementById('mAtaEst').value; const sel = document.getElementById('mAtaCid'); sel.innerHTML = '<option value="">Cidades disponíveis...</option>'; if(mockCidades[est]) { mockCidades[est].forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`); } else if(est) { sel.innerHTML += `<option value="Capital">Capital</option><option value="Interior">Interior</option>`; } }
+        const mockCidades = { "SP": ["São Paulo", "Guarulhos", "Campinas"], "RJ": ["Rio de Janeiro", "Niterói"], "MG": ["Belo Horizonte"], "PR": ["Curitiba"], "SC": ["Florianópolis"], "RS": ["Porto Alegre"], "GO": ["Goiânia"], "MT": ["Cuiabá"] };
+        function loadCidades(tipo) { const est = document.getElementById(`m${tipo}Est`).value; const sel = document.getElementById(`m${tipo}Cid`); sel.innerHTML = '<option value="">Cidades...</option>'; if(mockCidades[est]) { mockCidades[est].forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`); } else if(est) { sel.innerHTML += `<option value="Capital">Capital</option><option value="Interior">Interior</option>`; } }
+        function toggleLocationFields(tipo) { const p = document.getElementById(`m${tipo}Pais`).value; const s = document.getElementById(`divEstado${tipo}`); const c = document.getElementById(`divCidade${tipo}`); if(p === 'Brasil') { s.classList.remove('hidden'); c.classList.remove('hidden'); } else { s.classList.add('hidden'); c.classList.add('hidden'); } }
 
         function getMasterPass() { return localStorage.getItem('Master_Custom_Pass') || 'ifipemaster2026'; }
         function checkAuth() { if(localStorage.getItem('iFipe_Master_Auth') === 'gov_absoluto') { document.getElementById('masterAuth').classList.add('hidden'); document.getElementById('masterApp').classList.remove('hidden'); renderSystemStatus(); initMaster(); } else { document.getElementById('masterAuth').classList.remove('hidden'); document.getElementById('masterApp').classList.add('hidden'); } }
         function tryLogin() { if(document.getElementById('mPass').value === getMasterPass()) { localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto'); checkAuth(); } else { document.getElementById('mLoginMsg').innerText = "ACESSO BLOQUEADO."; } }
         function masterLogout() { localStorage.removeItem('iFipe_Master_Auth'); checkAuth(); }
-        function updateMaster(e) { e.preventDefault(); const n = document.getElementById('mNewPass').value; if(n) { localStorage.setItem('Master_Custom_Pass', n); alert("SENHA MASTER ALTERADA."); document.getElementById('mNewPass').value = ''; } }
-        
+        function updateMaster(e) { e.preventDefault(); const n = document.getElementById('mNewPass').value; if(n) { localStorage.setItem('Master_Custom_Pass', n); alert("SENHA ALTERADA."); document.getElementById('mNewPass').value = ''; } }
         function toggleSysStatus() { const isAtivo = localStorage.getItem('iFipe_Status') !== 'off'; localStorage.setItem('iFipe_Status', isAtivo ? 'off' : 'on'); renderSystemStatus(); alert(`SISTEMA ALTERADO PARA: ${isAtivo ? 'OFF' : 'ON'}`); }
         function renderSystemStatus() { const btn = document.getElementById('sysOnOffBtn'); if(localStorage.getItem('iFipe_Status') !== 'off') { btn.className = "btn-master !bg-green-600 px-3 py-1 text-[9px] ml-2"; btn.innerText = "SISTEMA: ON"; } else { btn.className = "btn-master btn-danger px-3 py-1 text-[9px] ml-2"; btn.innerText = "SISTEMA: OFF (ATUALIZANDO)"; } }
         function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden')); }
@@ -404,13 +311,9 @@
 
         async function initMaster() {
             new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
-                let bin = parseFloat(JSON.parse(e.data).c);
-                currentOracleUsdt = bin + 0.06; 
-                document.getElementById('tBin').innerText = `R$ ${bin.toFixed(4)}`;
-                document.getElementById('tUsdt').innerText = `R$ ${currentOracleUsdt.toFixed(4)}`;
-                document.getElementById('calcOraculoDisplay').innerText = `R$ ${currentOracleUsdt.toFixed(4)}`;
-                document.getElementById('hintSpread').innerText = `(+ R$ 0,06)`;
-                runCalcVip();
+                let bin = parseFloat(JSON.parse(e.data).c); currentOracleUsdt = bin + 0.06;
+                document.getElementById('tBin').innerText = `R$ ${bin.toFixed(4)}`; document.getElementById('tUsdt').innerText = `R$ ${currentOracleUsdt.toFixed(4)}`;
+                document.getElementById('calcOraculoDisplay').innerText = `R$ ${currentOracleUsdt.toFixed(4)}`; runCalcVip();
             };
             await loadAll();
         }
@@ -424,10 +327,8 @@
             ]);
             dbAta = f.data || []; dbCli = c.data || []; dbAnu = o.data || []; dbVar = v.data || [];
             renderAta(); renderCli(); renderAnu();
-            
-            document.getElementById('gLoja').innerHTML = '<option value="">SELECIONE A LOJA (POR NOME)...</option>' + dbAta.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
-            let uM = []; let mM = new Set();
-            dbVar.forEach(va => { if(va.produtos_mestre && !mM.has(va.produtos_mestre.id)) { mM.add(va.produtos_mestre.id); uM.push(va.produtos_mestre); } });
+            document.getElementById('gLoja').innerHTML = '<option value="">SELECIONE A LOJA...</option>' + dbAta.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+            let uM = []; let mM = new Set(); dbVar.forEach(va => { if(va.produtos_mestre && !mM.has(va.produtos_mestre.id)) { mM.add(va.produtos_mestre.id); uM.push(va.produtos_mestre); } });
             uM.sort((a,b) => a.nome.localeCompare(b.nome));
             document.getElementById('gModelo').innerHTML = '<option value="">SELECIONE O MODELO...</option>' + uM.map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
         }
@@ -435,62 +336,30 @@
         function loadCapacidades() { const m = parseInt(document.getElementById('gModelo').value); const s = document.getElementById('gCapacidade'); s.innerHTML = '<option value="">Selecione...</option>'; document.getElementById('gCor').innerHTML = '<option value="">Capacidade primeiro</option>'; if(!m) return; let caps = new Set(); dbVar.filter(v => v.produtos_mestre && v.produtos_mestre.id === m).forEach(v => { if(v.capacidade) caps.add(v.capacidade); }); Array.from(caps).sort().forEach(cap => s.innerHTML += `<option value="${cap}">${cap}</option>`); }
         function loadCores() { const m = parseInt(document.getElementById('gModelo').value); const c = document.getElementById('gCapacidade').value; const s = document.getElementById('gCor'); s.innerHTML = '<option value="">Selecione...</option>'; if(!m || !c) return; let cores = new Set(); dbVar.filter(v => v.produtos_mestre && v.produtos_mestre.id === m && v.capacidade === c).forEach(v => { if(v.cor) cores.add(v.cor); }); Array.from(cores).sort().forEach(cor => s.innerHTML += `<option value="${cor}">${cor}</option>`); }
 
-        function toggleLocationFields() { const p = document.getElementById('mAtaPais').value; const s = document.getElementById('divEstado'); const c = document.getElementById('divCidade'); if(p === 'Brasil') { s.classList.remove('hidden'); c.classList.remove('hidden'); document.getElementById('mAtaEst').required = true; document.getElementById('mAtaCid').required = true; } else { s.classList.add('hidden'); c.classList.add('hidden'); document.getElementById('mAtaEst').required = false; document.getElementById('mAtaCid').required = false; document.getElementById('mAtaEst').value = ''; document.getElementById('mAtaCid').value = ''; } }
-
-        function renderAta() { document.getElementById('listAta').innerHTML = dbAta.map(a => { let l = a.pais === 'Brasil' ? `${a.cidade||'-'} / ${a.estado||'-'}` : (a.pais === 'EUA' ? '🇺🇸 EUA' : '🇵🇾 PARAGUAI'); let b = (a.insignia_manual || []).map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); return `<tr><td><input type="checkbox" class="chk-ata" value="${a.id}"></td><td><span class="font-black text-white text-xs">${a.nome}</span><br><span class="text-[8px] text-zinc-500">${l}</span></td><td class="font-mono text-[9px] text-zinc-400 w-24">${a.whatsapp||'--'}</td><td class="font-mono text-red-400 text-[10px] w-24">${a.senha||'ERRO'}</td><td class="max-w-[150px] leading-tight">${b||'<span class="text-zinc-600 text-[8px]">NENHUMA</span>'}</td><td class="w-24"><span class="badge ${a.ativo?'b-green':'b-red'} mb-1">${a.ativo?'ATIVO':'INATIVO'}</span><br><span class="badge ${a.verificado?'b-blue':'bg-zinc-800 text-zinc-500'}">${a.verificado?'VERIFICADO ✅':'SEM SELO'}</span></td><td class="text-right w-24"><button onclick="editAta(${a.id})" class="bg-zinc-800 text-white px-3 py-2 rounded text-[8px] font-black">EDITAR</button></td></tr>`; }).join(''); }
-        function abrirModalAta() { document.getElementById('mAtaTitle').innerText = "NOVO ATACADISTA"; document.getElementById('mAtaId').value=''; document.getElementById('mAtaNome').value=''; document.getElementById('mAtaWhats').value=''; document.getElementById('mAtaEmail').value=''; document.getElementById('mAtaPais').value='Brasil'; toggleLocationFields(); document.getElementById('mAtaEst').value=''; document.getElementById('mAtaCid').innerHTML='<option value="">Selecione o Estado primeiro</option>'; document.getElementById('mAtaSenha').value=''; document.getElementById('modalAta').classList.remove('hidden'); }
-        function editAta(id) { const a = dbAta.find(x => x.id == id); document.getElementById('mAtaTitle').innerText = `EDITANDO: ${a.nome}`; document.getElementById('mAtaId').value = a.id; document.getElementById('mAtaNome').value = a.nome; document.getElementById('mAtaWhats').value = a.whatsapp||''; document.getElementById('mAtaEmail').value = a.email||''; document.getElementById('mAtaPais').value = a.pais||'Brasil'; toggleLocationFields(); if(a.pais==='Brasil'||!a.pais){ document.getElementById('mAtaEst').value = a.estado||''; loadCidades(); document.getElementById('mAtaCid').value = a.cidade||''; } document.getElementById('mAtaSenha').value = a.senha||''; document.getElementById('mAtaAtivo').checked = a.ativo; document.getElementById('mAtaVeri').checked = a.verificado; document.getElementById('modalAta').classList.remove('hidden'); }
+        function renderAta() { document.getElementById('listAta').innerHTML = dbAta.map(a => { let l = a.pais === 'Brasil' ? `${a.cidade||'-'} / ${a.estado||'-'}` : (a.pais === 'EUA' ? '🇺🇸 EUA' : '🇵🇾 PARAGUAI'); let b = (a.insignia_manual || []).map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); return `<tr><td><input type="checkbox" class="chk-ata" value="${a.id}"></td><td><span class="font-black text-white text-xs">${a.nome}</span><br><span class="text-[8px] text-zinc-500">${l}</span></td><td class="font-mono text-[9px] text-zinc-400">${a.whatsapp||'--'}</td><td class="font-mono text-red-400 text-[10px]">${a.senha||'--'}</td><td>${b||'-'}</td><td><span class="badge ${a.ativo?'b-green':'b-red'}">${a.ativo?'ATIVO':'OFF'}</span><br><span class="badge ${a.verificado?'b-blue':'bg-zinc-800'}">${a.verificado?'VERI':'SEM'}</span></td><td class="text-right"><button onclick="editAta(${a.id})" class="bg-zinc-800 text-white px-3 py-1 rounded text-[8px] font-black">EDITAR</button></td></tr>`; }).join(''); }
+        function abrirModalAta() { document.getElementById('mAtaTitle').innerText = "NOVO ATACADISTA"; document.getElementById('mAtaId').value=''; document.getElementById('mAtaNome').value=''; document.getElementById('mAtaWhats').value=''; document.getElementById('mAtaEmail').value=''; document.getElementById('mAtaPais').value='Brasil'; toggleLocationFields('Ata'); document.getElementById('mAtaSenha').value=''; document.getElementById('modalAta').classList.remove('hidden'); }
+        function editAta(id) { const a = dbAta.find(x => x.id == id); document.getElementById('mAtaTitle').innerText = `EDITANDO: ${a.nome}`; document.getElementById('mAtaId').value = a.id; document.getElementById('mAtaNome').value = a.nome; document.getElementById('mAtaWhats').value = a.whatsapp||''; document.getElementById('mAtaEmail').value = a.email||''; document.getElementById('mAtaPais').value = a.pais||'Brasil'; toggleLocationFields('Ata'); if(a.pais==='Brasil'){ document.getElementById('mAtaEst').value = a.estado||''; loadCidades('Ata'); document.getElementById('mAtaCid').value = a.cidade||''; } document.getElementById('mAtaSenha').value = a.senha||''; document.getElementById('mAtaAtivo').checked = a.ativo; document.getElementById('mAtaVeri').checked = a.verificado; document.getElementById('modalAta').classList.remove('hidden'); }
         async function saveAta(e) { e.preventDefault(); const d = { nome: document.getElementById('mAtaNome').value.toUpperCase(), whatsapp: document.getElementById('mAtaWhats').value, email: document.getElementById('mAtaEmail').value, pais: document.getElementById('mAtaPais').value, estado: document.getElementById('mAtaPais').value==='Brasil'?document.getElementById('mAtaEst').value:null, cidade: document.getElementById('mAtaPais').value==='Brasil'?document.getElementById('mAtaCid').value:null, ativo: document.getElementById('mAtaAtivo').checked, verificado: document.getElementById('mAtaVeri').checked, senha: document.getElementById('mAtaSenha').value }; const id = document.getElementById('mAtaId').value; if(id) await _s.from('fornecedores').update(d).eq('id', id); else await _s.from('fornecedores').insert([d]); fecharModais(); loadAll(); }
-        function bulkAtaModal() { if(!document.querySelectorAll('.chk-ata:checked').length) return alert("Selecione."); document.getElementById('modalBulkAta').classList.remove('hidden'); }
 
-        function renderCli() { document.getElementById('listCli').innerHTML = dbCli.map(c => { let n = c.nome || c.email || c.whatsapp || 'SEM NOME'; let b = (c.insignia_manual || []).map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); return `<tr><td><input type="checkbox" class="chk-cli" value="${c.id}"></td><td><span class="font-black text-white text-xs">${n}</span><br><span class="text-[8px] text-zinc-500 font-mono">ID #${c.id}</span></td><td class="font-mono text-[9px] text-zinc-400">${c.whatsapp||'--'}</td><td class="font-mono text-red-400 text-[10px]">${c.senha||'ERRO'}</td><td class="max-w-[150px] leading-tight"><span class="text-[9px] text-zinc-500 block mb-1">LOGINS: ${c.logins_count||0}</span>${b||'<span class="text-zinc-600 text-[8px]">NENHUMA</span>'}</td><td class="text-right w-24"><button onclick="editCli(${c.id})" class="bg-zinc-800 text-white px-3 py-2 rounded text-[8px] font-black">EDITAR</button></td></tr>`; }).join(''); }
-        function editCli(id) { const c = dbCli.find(x => x.id == id); document.getElementById('mCliId').value = c.id; document.getElementById('mCliNome').value = c.nome||''; document.getElementById('mCliWhats').value = c.whatsapp||''; document.getElementById('mCliEmail').value = c.email||''; document.getElementById('mCliLogins').value = c.logins_count||0; document.getElementById('mCliSenha').value = c.senha||''; document.getElementById('modalCli').classList.remove('hidden'); }
-        async function saveCli(e) { e.preventDefault(); const d = { nome: document.getElementById('mCliNome').value.toUpperCase(), whatsapp: document.getElementById('mCliWhats').value, email: document.getElementById('mCliEmail').value, logins_count: document.getElementById('mCliLogins').value, senha: document.getElementById('mCliSenha').value }; await _s.from('clientes_buscador').update(d).eq('id', document.getElementById('mCliId').value); fecharModais(); loadAll(); }
-        function bulkCliModal() { if(!document.querySelectorAll('.chk-cli:checked').length) return alert("Selecione."); document.getElementById('modalBulkCli').classList.remove('hidden'); }
+        function renderCli() { document.getElementById('listCli').innerHTML = dbCli.map(c => { let n = c.nome || c.email || c.whatsapp || 'SEM NOME'; let local = c.pais === 'Brasil' ? `${c.cidade||'-'} / ${c.estado||'-'}` : (c.pais || 'Não definido'); let b = (c.insignia_manual || []).map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); return `<tr><td><input type="checkbox" class="chk-cli" value="${c.id}"></td><td><span class="font-black text-white text-xs">${n}</span><br><span class="text-[8px] text-zinc-500 font-mono">ID #${c.id}</span></td><td class="text-[9px] text-zinc-400">${local}</td><td class="font-mono text-[9px] text-zinc-400">${c.whatsapp||c.email||'--'}</td><td class="font-mono text-red-400 text-[10px]">${c.senha||'--'}</td><td class="max-w-[150px]"><span class="text-[9px] text-zinc-500 block mb-1">LOGINS: ${c.logins_count||0}</span>${b||'-'}</td><td class="text-right"><button onclick="editCli(${c.id})" class="bg-zinc-800 text-white px-3 py-1 rounded text-[8px] font-black">EDITAR</button></td></tr>`; }).join(''); }
+        function abrirModalCliNovo() { document.getElementById('mCliTitle').innerText = "CRIAR NOVO CLIENTE BUSCADOR"; document.getElementById('mCliId').value=''; document.getElementById('mCliNome').value=''; document.getElementById('mCliWhats').value=''; document.getElementById('mCliEmail').value=''; document.getElementById('mCliPais').value='Brasil'; toggleLocationFields('Cli'); document.getElementById('mCliSenha').value=''; document.getElementById('modalCli').classList.remove('hidden'); }
+        function editCli(id) { const c = dbCli.find(x => x.id == id); document.getElementById('mCliTitle').innerText = `EDITANDO: ${c.nome}`; document.getElementById('mCliId').value = c.id; document.getElementById('mCliNome').value = c.nome||''; document.getElementById('mCliWhats').value = c.whatsapp||''; document.getElementById('mCliEmail').value = c.email||''; document.getElementById('mCliPais').value = c.pais || 'Brasil'; toggleLocationFields('Cli'); if(c.pais === 'Brasil'){ document.getElementById('mCliEst').value = c.estado||''; loadCidades('Cli'); document.getElementById('mCliCid').value = c.cidade||''; } document.getElementById('mCliLogins').value = c.logins_count||0; document.getElementById('mCliSenha').value = c.senha||''; document.getElementById('modalCli').classList.remove('hidden'); }
+        async function saveCli(e) { e.preventDefault(); const d = { nome: document.getElementById('mCliNome').value.toUpperCase(), whatsapp: document.getElementById('mCliWhats').value, email: document.getElementById('mCliEmail').value, pais: document.getElementById('mCliPais').value, estado: document.getElementById('mCliPais').value==='Brasil'?document.getElementById('mCliEst').value:null, cidade: document.getElementById('mCliPais').value==='Brasil'?document.getElementById('mCliCid').value:null, logins_count: document.getElementById('mCliLogins').value, senha: document.getElementById('mCliSenha').value }; const id = document.getElementById('mCliId').value; if(id) await _s.from('clientes_buscador').update(d).eq('id', id); else await _s.from('clientes_buscador').insert([d]); fecharModais(); loadAll(); }
 
-        async function runBulk(t, a) { const cls = t === 'fornecedores' ? '.chk-ata:checked' : '.chk-cli:checked'; let ids = Array.from(document.querySelectorAll(cls)).map(c => parseInt(c.value)); if(a === 'apagar') { if(confirm("APAGAR DEFINITIVO?")) await _s.from(t).delete().in('id', ids); } else if (a === 'senha') { const s = document.getElementById(t==='fornecedores'?'bulkAtaSenha':'bulkCliSenha').value; if(!s) return alert("Digite senha."); await _s.from(t).update({senha: s}).in('id', ids); } else if(t === 'fornecedores') { let u = {}; if(a==='ativar') u.ativo=true; if(a==='desativar') u.ativo=false; if(a==='verificar') u.verificado=true; await _s.from(t).update(u).in('id', ids); } fecharModais(); loadAll(); }
+        async function runBulk(t, a) { const cls = t === 'fornecedores' ? '.chk-ata:checked' : '.chk-cli:checked'; let ids = Array.from(document.querySelectorAll(cls)).map(c => parseInt(c.value)); if(a === 'apagar') { if(confirm("APAGAR?")) await _s.from(t).delete().in('id', ids); } else if (a === 'senha') { const s = document.getElementById(t==='fornecedores'?'bulkAtaSenha':'bulkCliSenha').value; if(!s) return alert("Digite senha."); await _s.from(t).update({senha: s}).in('id', ids); } else if(t === 'fornecedores') { let u = {}; if(a==='ativar') u.ativo=true; if(a==='desativar') u.ativo=false; if(a==='verificar') u.verificado=true; await _s.from(t).update(u).in('id', ids); } fecharModais(); loadAll(); }
 
-        // GESTÃO GLOBAL ANÚNCIOS + INSÍGNIAS NO ANÚNCIO
-        function renderAnu() {
-            const tbody = document.getElementById('listAnu');
-            if(!dbAnu.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Nenhum anúncio.</td></tr>'; return; }
-            let grouped = {}; dbAnu.forEach(a => { let fNome = a.fornecedores ? a.fornecedores.nome : 'LOJA DESCONHECIDA'; if(!grouped[fNome]) grouped[fNome] = { ads: [], badges: a.fornecedores?.insignia_manual || [] }; grouped[fNome].ads.push(a); });
-            let html = '';
-            for(let loja in grouped) {
-                let lojistaBadges = grouped[loja].badges.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 text-[7px]">${i}</span>`).join('');
-                html += `<tr class="group-header bg-[#141415] border-y border-zinc-800"><td colspan="6" class="font-black text-blue-500 py-3">🏢 ${loja} <span class="ml-2">${lojistaBadges}</span></td></tr>`;
-                grouped[loja].ads.forEach(a => {
-                    let d = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '--';
-                    let p = a.variacoes ? `${a.variacoes.produtos_mestre?.nome} ${a.variacoes.capacidade} <span class="text-zinc-500">${a.variacoes.cor}</span>` : 'Indisponível';
-                    let c = a.condicao || 'NOVO';
-                    html += `<tr><td class="text-[9px] text-zinc-400 font-mono">${d}</td><td class="text-[10px] font-bold text-white">${p}</td><td class="text-[9px] font-bold ${c==='NOVO'?'text-blue-400':'text-yellow-500'}">${c}</td><td class="font-mono text-white text-[10px]">${a.moeda} ${a.preco}</td><td><span class="badge bg-zinc-800 text-zinc-400">${a.quantidade} UN</span></td><td class="text-right"><button onclick="delAnu(${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black">APAGAR</button></td></tr>`;
-                });
-            }
-            tbody.innerHTML = html;
-        }
-        async function delAnu(id) { if(confirm("Apagar anúncio?")) { await _s.from('ofertas').delete().eq('id', id); loadAll(); } }
-        async function loadAnuncios() { await loadAll(); }
+        function renderAnu() { const tbody = document.getElementById('listAnu'); if(!dbAnu.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Vazio.</td></tr>'; return; } let grouped = {}; dbAnu.forEach(a => { let fNome = a.fornecedores ? a.fornecedores.nome : 'DESCONHECIDO'; if(!grouped[fNome]) grouped[fNome] = { ads: [], b: a.fornecedores?.insignia_manual || [] }; grouped[fNome].ads.push(a); }); let html = ''; for(let loja in grouped) { let b = grouped[loja].b.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 text-[7px]">${i}</span>`).join(''); html += `<tr class="group-header bg-[#141415] border-y border-zinc-800"><td colspan="6" class="font-black text-blue-500 py-3">🏢 ${loja} ${b}</td></tr>`; grouped[loja].ads.forEach(a => { let d = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '--'; let p = a.variacoes ? `${a.variacoes.produtos_mestre?.nome} ${a.variacoes.capacidade} <span class="text-zinc-500">${a.variacoes.cor}</span>` : 'Indisponível'; let c = a.condicao || 'NOVO'; html += `<tr><td>${d}</td><td>${p}</td><td>${c}</td><td class="font-mono text-white">${a.moeda} ${a.preco}</td><td><span class="badge bg-zinc-800">${a.quantidade} UN</span></td><td class="text-right"><button onclick="delAnu(${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black">X</button></td></tr>`; }); } tbody.innerHTML = html; }
+        async function delAnu(id) { if(confirm("Apagar?")) { await _s.from('ofertas').delete().eq('id', id); loadAll(); } }
+        function abrirModalGestaoAnuncio() { document.getElementById('gModelo').value = ''; document.getElementById('modalGestaoAnuncio').classList.remove('hidden'); }
+        async function gestaoAddAnuncio(e) { e.preventDefault(); const mId = parseInt(document.getElementById('gModelo').value); const c = document.getElementById('gCapacidade').value; const cor = document.getElementById('gCor').value; const v = dbVar.find(x => x.produtos_mestre?.id === mId && x.capacidade === c && x.cor === cor); if(!v) return alert("Inválido."); const payload = { fornecedor_id: document.getElementById('gLoja').value, variacao_id: v.id, condicao: document.getElementById('gCondicao').value, quantidade: document.getElementById('gQtd').value, moeda: document.getElementById('gMoeda').value, preco: document.getElementById('gPreco').value }; const { error } = await _s.from('ofertas').insert([payload]); if(error) alert(error.message); else { alert("Publicado!"); fecharModais(); e.target.reset(); loadAll(); } }
 
-        function abrirModalGestaoAnuncio() { document.getElementById('gModelo').value = ''; document.getElementById('gCapacidade').innerHTML = '<option value="">Selecione...</option>'; document.getElementById('gCor').innerHTML = '<option value="">Selecione...</option>'; document.getElementById('modalGestaoAnuncio').classList.remove('hidden'); }
-        async function gestaoAddAnuncio(e) { e.preventDefault(); const mId = parseInt(document.getElementById('gModelo').value); const c = document.getElementById('gCapacidade').value; const cor = document.getElementById('gCor').value; const v = dbVar.find(x => x.produtos_mestre && x.produtos_mestre.id === mId && x.capacidade === c && x.cor === cor); if(!v) return alert("Variação inválida."); const payload = { fornecedor_id: document.getElementById('gLoja').value, variacao_id: v.id, condicao: document.getElementById('gCondicao').value, quantidade: document.getElementById('gQtd').value, moeda: document.getElementById('gMoeda').value, preco: document.getElementById('gPreco').value }; const { error } = await _s.from('ofertas').insert([payload]); if(error) alert(error.message); else { alert("Publicado!"); fecharModais(); e.target.reset(); loadAll(); } }
-
-        // --- SELOS POR NOME ---
-        function loadUsersForSelo() {
-            const t = document.getElementById('seloTableSel').value; const sel = document.getElementById('seloUser');
-            if(t === 'fornecedores') {
-                sel.innerHTML = dbAta.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
-                document.getElementById('seloNovaInsigniaAta').classList.remove('hidden'); document.getElementById('seloNovaInsigniaCli').classList.add('hidden');
-            } else {
-                sel.innerHTML = dbCli.map(c => `<option value="${c.id}">${c.nome || c.email || c.whatsapp || 'SEM NOME'}</option>`).join('');
-                document.getElementById('seloNovaInsigniaAta').classList.add('hidden'); document.getElementById('seloNovaInsigniaCli').classList.remove('hidden');
-            }
-        }
-        async function addInsignia() { const t = document.getElementById('seloTableSel').value; const id = document.getElementById('seloUser').value; const s = t === 'fornecedores' ? document.getElementById('seloNovaInsigniaAta') : document.getElementById('seloNovaInsigniaCli'); if(!id || !s.value) return alert("Preencha."); const u = (t === 'fornecedores' ? dbAta : dbCli).find(x => x.id == id); let curr = u.insignia_manual || []; if(!curr.includes(s.value)) curr.push(s.value); await _s.from(t).update({insignia_manual: curr}).eq('id', id); s.value = ''; alert("Aplicado!"); loadAll(); }
+        function loadUsersForSelo() { const t = document.getElementById('seloTableSel').value; const sel = document.getElementById('seloUser'); if(t === 'fornecedores') { sel.innerHTML = dbAta.map(a => `<option value="${a.id}">${a.nome}</option>`).join(''); document.getElementById('seloNovaInsigniaAta').classList.remove('hidden'); document.getElementById('seloNovaInsigniaCli').classList.add('hidden'); } else { sel.innerHTML = dbCli.map(c => `<option value="${c.id}">${c.nome || c.email || c.whatsapp}</option>`).join(''); document.getElementById('seloNovaInsigniaAta').classList.add('hidden'); document.getElementById('seloNovaInsigniaCli').classList.remove('hidden'); } }
+        async function addInsignia() { const t = document.getElementById('seloTableSel').value; const id = document.getElementById('seloUser').value; const s = t === 'fornecedores' ? document.getElementById('seloNovaInsigniaAta') : document.getElementById('seloNovaInsigniaCli'); if(!id || !s.value) return; const u = (t === 'fornecedores' ? dbAta : dbCli).find(x => x.id == id); let curr = u.insignia_manual || []; if(!curr.includes(s.value)) curr.push(s.value); await _s.from(t).update({insignia_manual: curr}).eq('id', id); s.value = ''; alert("Aplicado!"); loadAll(); }
         async function clearInsignias() { const t = document.getElementById('seloTableSel').value; const id = document.getElementById('seloUser').value; if(confirm("Limpar?")) { await _s.from(t).update({insignia_manual: []}).eq('id', id); loadAll(); } }
 
         async function syncAutomatedBadges() {
-            if(!confirm("Sincronizar patentes?")) return;
-            for(let c of dbCli) { let l = c.logins_count || 0; let p = ""; if(l>=500) p="500 LOGIN: PREÇO DE MIAMI NO BRASIL 🤡"; else if(l>=400) p="400 LOGIN: PASSANDO FOME"; else if(l>=350) p="350 LOGIN: DURO IGUAL UM COCO"; else if(l>=300) p="300 LOGIN: CAINHA"; else if(l>=250) p="250 LOGIN: LISEIRA"; else if(l>=200) p="200 LOGIN: MUQUIRANA"; else if(l>=150) p="150 LOGIN: SO DA PREJUIZO"; else if(l>=100) p="100 LOGIN: OPORTUNISTA"; else if(l>=50) p="50 LOGIN: SO COMPRA MATANDO"; else if(l>=30) p="30 LOGIN: TUBARÃO"; else if(l>=20) p="20 LOGIN: AGUIA"; else if(l>=10) p="10 LOGIN: PEGOU A SENHA"; else if(l>=1) p="1 LOGIN: LOJISTA EXPERTO"; if(p) { let n = (c.insignia_manual||[]).filter(i=>!i.includes("LOGIN:")); n.push(p); await _s.from('clientes_buscador').update({insignia_manual: n}).eq('id', c.id); } }
+            if(!confirm("Sincronizar patentes FIPE 1.0?")) return;
+            for(let c of dbCli) { let l = c.logins_count || 0; let p = ""; if(l>=500) p="500 LOGINS: PREÇO DE MIAMI NO BRASIL 🤡"; else if(l>=400) p="400 LOGINS: PASSANDO FOME"; else if(l>=350) p="350 LOGINS: DURO IGUAL UM COCO"; else if(l>=300) p="300 LOGINS: CÃINHA"; else if(l>=250) p="250 LOGINS: LISEIRA"; else if(l>=200) p="200 LOGINS: MUQUIRANA"; else if(l>=150) p="150 LOGINS: SÓ DÁ PREJUÍZO"; else if(l>=100) p="100 LOGINS: OPORTUNISTA"; else if(l>=50) p="50 LOGINS: SÓ COMPRA MATANDO"; else if(l>=30) p="30 LOGINS: TUBARÃO"; else if(l>=20) p="20 LOGINS: ÁGUIA"; else if(l>=10) p="10 LOGINS: PEGOU A SENHA"; else if(l>=1) p="1 LOGIN: LOJISTA EXPERTO"; if(p) { let n = (c.insignia_manual||[]).filter(i=>!i.includes("LOGIN:")); n.push(p); await _s.from('clientes_buscador').update({insignia_manual: n}).eq('id', c.id); } }
             let sM = {}; dbAnu.forEach(a => { let f = a.fornecedor_id; if(!sM[f]) sM[f]=0; sM[f]+=a.quantidade||0; });
             for(let f of dbAta) { let q = sM[f.id]||0; let p = ""; if(q>=1000) p="1.000 APARELHOS EM ESTOQUE - KHALIFA DO IPHONE"; else if(q>=700) p="700 APARELHOS EM ESTOQUE - SULTÃO DO IPHONE"; else if(q>=500) p="500 APARELHOS EM ESTOQUE - SHEIKH DO IPHONE"; else if(q>=200) p="200 APARELHOS EM ESTOQUE - EMIR DO IPHONE"; else if(q>=100) p="100 APARELHOS EM ESTOQUE - REI DO IPHONE"; else if(q>=50) p="50 APARELHOS EM ESTOQUE - MAGNATA IPHONE"; if(p) { let n = (f.insignia_manual||[]).filter(i=>!i.includes("APARELHOS EM ESTOQUE")); n.push(p); await _s.from('fornecedores').update({insignia_manual: n}).eq('id', f.id); } }
             alert("SINCRONIZADO!"); loadAll();
@@ -498,7 +367,6 @@
 
         function runCalcVip() { const u = parseFloat(document.getElementById('calcValorUsd').value)||0; const l = parseFloat(document.getElementById('calcLucro').value)||0; if(currentOracleUsdt>0) { document.getElementById('calcResultDisplay').innerText = `R$ ${((u * currentOracleUsdt) * (1+(l/100))).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}`; } }
         window.addEventListener('scroll', () => { document.getElementById('scrollTopBtn').classList.toggle('show', window.scrollY > 300); });
-        
         checkAuth();
     </script>
 </body>
