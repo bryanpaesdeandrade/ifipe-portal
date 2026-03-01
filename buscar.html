@@ -3,342 +3,375 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - BUSCADOR DE ATACADO</title>
+    <title>iFipe - Buscador VIP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --blue: #0071e3; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, sans-serif; margin:0; text-transform: uppercase; }
-        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.2rem; transition: 0.3s; position: relative; }
-        .apple-card:hover { border-color: var(--blue); transform: translateY(-4px); }
-        .apple-input { background: #2c2c2e; border: 1px solid var(--border); border-radius: 12px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 11px; text-transform: uppercase; text-align: center; }
-        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 12px; cursor: pointer; border: none; font-size: 10px; transition: 0.3s; }
-        .color-dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.4); display: inline-block; vertical-align: middle; box-shadow: 0 0 5px #000; margin-right: 6px; }
-        .price-tag { font-family: 'JetBrains Mono'; font-weight: 800; color: #32d74b; font-size: 1.3rem; }
-        .tag-status { font-size: 8px; font-weight: 900; padding: 4px 8px; border-radius: 50px; display: inline-block; margin-bottom: 5px; }
+        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
+        body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; text-transform: uppercase; }
         
-        /* MOLDURAS (TAGS) - iFipe 1.0 Style */
-        .mini-tag { font-size: 7px; font-weight: 900; padding: 3px 6px; border-radius: 4px; background: #2c2c2e; color: #86868b; border: 1px solid var(--border); }
-        .mini-tag.active { color: #fff; border-color: var(--blue); background: rgba(0, 113, 227, 0.2); }
-        .mini-tag.pix { color: #32bcad; border-color: #32bcad; background: rgba(50, 188, 173, 0.1); }
+        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
+        .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
+        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; text-transform: uppercase; }
+        
+        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px; transition: 0.3s; position: relative; display: flex; flex-direction: column; }
+        .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
+
+        .tag-status { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 50px; letter-spacing: 0.05em; display: inline-block; margin-bottom: 3px; }
+        .tag-menor { background: #ff3b30; color: #fff; }
+        .tag-poucas { background: #ffcc00; color: #000; }
+        .tag-muitas { background: #0071e3; color: #fff; }
+        .tag-estoque-alto { background: #32d74b; color: #000; }
+
+        .mini-tag { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 6px; border-radius: 6px; background: var(--input); color: #86868b; border: 1px solid var(--border); display: inline-flex; align-items: center; justify-content: center; }
+        .mini-tag.active { color: #fff; border-color: #0071e3; background: rgba(0, 113, 227, 0.2); }
         .mini-tag.usdt { color: #32d74b; border-color: #32d74b; background: rgba(50, 215, 75, 0.1); }
         .mini-tag.lote { color: #f59e0b; border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
         .mini-tag.bat { color: #32d74b; border-color: #32d74b; background: rgba(50, 215, 75, 0.1); }
+        .mini-tag.gar { color: #ffcc00; border-color: #ffcc00; background: rgba(255, 204, 0, 0.1); }
         .mini-tag.fab { color: #d2d2d7; border-color: #86868b; background: rgba(134, 134, 139, 0.1); }
-
-        .badge-verificado { font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 4px; background: rgba(50, 215, 75, 0.2); color: #32d74b; border: 1px solid #32d74b; margin-left: 4px; display: inline-flex; align-items: center; gap: 2px; }
-        .insignia-badge { font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; border: 1px solid rgba(255,255,255,0.2); }
-        .califa { color: #f43f5e; border-color: #f43f5e; background: rgba(244, 63, 94, 0.1); }
-        .rei { color: #3b82f6; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
-        .magnata { color: #f59e0b; border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
-
-        #badgeSino { background: #ff3b30; color: #fff; font-size: 8px; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: absolute; top: -5px; right: -5px; font-weight: 900; }
+        .mini-tag.pix { color: #32bcad; border-color: #32bcad; background: rgba(50, 188, 173, 0.1); }
+        
+        .price-text { font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.05em; text-align: right; font-family: 'JetBrains Mono', monospace; }
+        
+        .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 16px; transition: 0.3s; letter-spacing: 0.05em; }
+        .buy-button:hover { background: #005bb5; }
         .hidden { display: none !important; }
         
-        #btnSubir { position: fixed; bottom: 20px; right: 20px; background: var(--blue); color: #fff; font-weight: 900; font-size: 10px; padding: 12px 18px; border-radius: 50px; cursor: pointer; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.3s; border: none; }
-        #btnSubir.show { opacity: 1; pointer-events: auto; }
+        .btn-header { display: flex; align-items: center; justify-content: center; border-radius: 12px; height: 38px; padding: 0 12px; transition: 0.3s; border: 1px solid var(--border); text-decoration: none; gap: 6px; cursor: pointer; }
+        .btn-calc-top { background: rgba(0, 113, 227, 0.1); color: #0071e3; }
+        .btn-calc-top:hover { background: #0071e3; color: #fff; }
+        .btn-header span { font-size: 10px; font-weight: 900; text-transform: uppercase; }
+
         .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #0071e3; border-radius: 10px; }
+
+        .btn-scroll-top { position: fixed; bottom: 80px; right: 20px; background-color: var(--card); border: 1px solid var(--border); color: var(--text); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 999; transition: 0.3s; opacity: 0; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .btn-scroll-top.show { opacity: 1; pointer-events: auto; }
+        .btn-scroll-top:hover { background-color: #0071e3; border-color: #0071e3; color: #fff; }
+
+        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
     </style>
 </head>
-<body class="p-4 md:p-6">
+<body id="appBody">
 
-    <button id="btnSubir" onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ SUBIR</button>
-
-    <nav class="max-w-[1400px] mx-auto bg-black border-b border-[#38383a] p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-6 rounded-2xl">
-        <div class="flex items-center gap-6">
-            <h1 class="text-3xl font-black italic">iFipe</h1>
-            <div class="flex gap-4 border-l border-[#38383a] pl-4">
-                <button onclick="abrirFipe()" class="text-[9px] font-black text-blue-400 uppercase border border-blue-900/50 px-3 py-1.5 rounded-full bg-blue-900/10">📊 PREÇO MÉDIO</button>
-                <div class="relative">
-                    <button onclick="abrirSininho()" class="text-[9px] font-black text-yellow-500 uppercase border border-yellow-900/50 px-3 py-1.5 rounded-full bg-yellow-900/10">🔔 MEUS ALERTAS</button>
-                    <span id="badgeSino" class="hidden">0</span>
+    <div id="calcModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[2000] px-4">
+        <div class="w-full max-w-[380px] bg-[#1c1c1e] border-2 border-[#38383a] rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="fecharCalc()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+            <div class="text-center mb-5 mt-2">
+                <h2 class="text-lg font-black italic text-white">Calculadora VIP</h2>
+                <p class="text-[9px] text-blue-500 font-black uppercase mt-2 tracking-widest leading-relaxed">Coloque o preço em Dólar e saiba o custo</p>
+            </div>
+            <div class="bg-[#0a0a0a] border-2 border-[#2c2c2e] rounded-2xl p-4 text-right mb-4 relative shadow-inner">
+                <span class="absolute top-3 left-4 text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final (R$)</span>
+                <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-4 tracking-tighter">R$ 0,00</div>
+            </div>
+            <div class="relative mb-4">
+                <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
+                <input type="number" id="calcUsd" class="w-full bg-[#151516] border-2 border-[#38383a] rounded-xl py-4 pl-12 pr-4 font-mono text-xl font-black text-white outline-none focus:border-[#0071e3] text-center transition-colors" placeholder="Custo (USD)" oninput="calcularImportacao()">
+            </div>
+            <div class="bg-black/40 border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase text-gray-500 tracking-wide">
+                <div class="flex justify-between items-center mb-3 border-b border-[#2c2c2e] pb-3">
+                    <span>Taxa Binance</span>
+                    <span id="tickerCalc" class="font-mono text-[11px] text-[#32d74b]">R$ --</span>
+                </div>
+                <div class="flex justify-between items-center mb-3 border-b border-[#2c2c2e] pb-3 gap-2">
+                    <span style="font-size: 8px; line-height: 1.3; max-width: 65%;">Taxa com Oráculo (+0,06)</span>
+                    <span id="calcTaxaEfetiva" class="font-mono text-[11px] text-[#32d74b]">R$ --</span>
+                </div>
+                <div class="flex justify-center mt-2 pt-1">
+                    <span class="text-[#0071e3]">🔒 Frete PY X Brasil incluso</span>
                 </div>
             </div>
         </div>
-        <div class="flex flex-wrap gap-4 items-center">
-            <div class="text-right"><p class="text-[7px] text-gray-500 font-bold">ÍNDICE BINANCE REAL</p><p id="tBin" class="text-xs font-mono font-black text-yellow-400">R$ --</p></div>
-            <a href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="bg-green-900/30 text-green-400 px-4 py-2 rounded-xl border border-green-500/50 font-black text-[9px] hover:bg-green-900/50 transition flex items-center">
-                COMPRAR USDT COM ORÁCULO <span id="tOra" class="text-xs font-mono ml-2 text-green-300">R$ --</span>
+    </div>
+
+    <div id="alertaModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
+        <div class="w-full max-w-[350px] bg-[#1c1c1e] border border-yellow-500 rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="fecharAlerta()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+            <div class="text-center mb-4 mt-2">
+                <h3 class="text-sm font-black uppercase text-yellow-500 tracking-widest">Criar Alerta de Preço 🔔</h3>
+                <p class="text-[10px] text-gray-400 font-bold mt-1 uppercase">Seja avisado no sino</p>
+            </div>
+            <select id="alerta_prod_id" class="apple-input w-full mb-2" onchange="atualizarFiltrosAlerta()"><option value="">Selecione o Modelo...</option></select>
+            <select id="alerta_cap" class="apple-input w-full mb-2" disabled><option value="">Selecione a Memória...</option></select>
+            <select id="alerta_cor" class="apple-input w-full mb-2" disabled><option value="">Selecione a Cor...</option></select>
+            <select id="alerta_cond" class="apple-input w-full mb-4"><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select>
+            
+            <label class="text-[8px] text-gray-500 font-bold uppercase mb-1 block">Me avise quando baixar para (R$):</label>
+            <input type="number" id="alerta_preco" class="apple-input w-full mb-4" placeholder="Ex: 3500">
+            <button onclick="gravarAlerta()" class="bg-yellow-500 text-black font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-yellow-400">Ativar Alerta</button>
+        </div>
+    </div>
+
+    <div id="sininhoModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
+        <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-yellow-500/50 rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+            <button onclick="fecharSininho()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+            <div class="text-center mb-4 mt-2">
+                <h3 class="text-sm font-black uppercase text-yellow-500 tracking-widest">Seus Alertas Ativos 🔔</h3>
+            </div>
+            <div id="listaNotificacoes" class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scroll"></div>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <div class="flex items-center gap-2 sm:gap-3">
+            <h1 class="text-2xl font-black italic m-0 mr-2">iFipe</h1>
+            <button onclick="abrirCalc()" class="btn-header btn-calc-top">
+                <span>Calculadora VIP</span>
+            </button>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 bg-[#1c1c1e] p-2 px-3 rounded-xl border border-[#38383a]">
+            <div class="flex items-center gap-2">
+                <span class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Binance USDT/BRL</span>
+                <span class="text-[14px] font-black text-[#32d74b] font-mono" id="ticker">$ --</span>
+            </div>
+            <a href="https://wa.me/15616760652?text=Quero%20comprar%20USDT" target="_blank" class="bg-[#ffcc00] text-black flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-yellow-400 transition-colors no-underline">
+                <span class="text-[8px] sm:text-[9px] font-black uppercase">Comprar USDT c/ Oráculo</span>
+                <span class="bg-black text-yellow-500 px-1.5 py-0.5 rounded text-[10px] font-mono font-black" id="oraculoRate">R$ --</span>
             </a>
-            <button onclick="logout()" class="text-[9px] text-red-500 font-black border border-red-500/20 px-4 py-2 rounded-full">SAIR</button>
+        </div>
+
+        <div class="flex gap-2 sm:gap-4 items-center flex-wrap justify-end">
+            <button onclick="abrirModalCriarAlerta()" class="relative text-[9px] sm:text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
+                ➕ Criar Alerta
+            </button>
+            <button onclick="abrirSininho()" class="relative text-[9px] sm:text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
+                🔔 Meus Alertas
+                <span id="badgeSininho" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center shadow-lg">0</span>
+            </button>
+            <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
         </div>
     </nav>
 
-    <main class="max-w-[1400px] mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-            <div class="lg:col-span-8 apple-card">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xs font-black text-blue-500 italic">BUSCA INTELIGENTE</h3>
-                    <button onclick="abrirAlertaModal()" class="bg-yellow-500 text-black font-black px-4 py-1.5 rounded-full text-[9px]">➕ CRIAR ALERTA DE PREÇO</button>
-                </div>
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    <input type="text" id="q" class="apple-input col-span-2 md:col-span-1" placeholder="BUSCAR..." oninput="filtrar()">
-                    <select id="fMod" class="apple-input" onchange="filtrar()"><option value="">TODOS OS MODELOS</option></select>
-                    <select id="fCap" class="apple-input" onchange="filtrar()"><option value="">MEMÓRIA</option></select>
-                    <select id="fCond" class="apple-input" onchange="filtrar()"><option value="">CONDIÇÃO</option><option value="Novo">NOVO</option><option value="Seminovo">SEMINOVO</option></select>
-                    <select id="fCor" class="apple-input" onchange="filtrar()"><option value="">CORES</option></select>
-                </div>
+    <main class="max-w-7xl mx-auto px-4 pb-20 pt-8">
+        
+        <div class="relative w-full max-w-3xl mx-auto mb-6 z-[150]">
+            <div class="flex items-center bg-white border-4 border-[#0071e3] rounded-full overflow-hidden shadow-2xl">
+                <input type="text" id="buscaTexto" class="w-full bg-white text-black px-6 py-4 outline-none font-black uppercase text-sm placeholder-gray-400" placeholder="ENCONTRE O MELHOR PREÇO" oninput="renderizarRanking()">
             </div>
+        </div>
 
-            <div class="lg:col-span-4 apple-card border-green-600/30 bg-green-600/5 flex flex-col justify-center">
-                <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-[10px] font-black text-green-500 italic text-center">CALCULADORA VIP IPHONE</h3>
-                    <input type="number" id="cUsd" class="apple-input font-mono font-bold !bg-black w-24 !p-2" placeholder="US$" oninput="execCalc()">
-                </div>
-                <div class="grid grid-cols-2 gap-2 text-[9px] font-black">
-                    <div class="bg-black p-2 rounded-lg border border-[#38383a] text-center col-span-2">
-                        <span class="text-gray-400 block mb-1">CUSTO FINAL BRASIL</span>
-                        <span id="res_custo" class="text-sm font-mono text-[#32d74b]">R$ 0,00</span>
-                    </div>
-                    <div class="flex justify-between bg-[#1c1c1e] p-2 rounded-lg border border-[#38383a]"><span>ALTO ATA</span><span id="res_alto" class="text-white">R$ 0,00</span></div>
-                    <div class="flex justify-between bg-[#1c1c1e] p-2 rounded-lg border border-[#38383a]"><span>ATACADO</span><span id="res_ata" class="text-yellow-400">R$ 0,00</span></div>
-                    <div class="flex justify-between bg-[#1c1c1e] p-2 rounded-lg border border-[#38383a]"><span>ATACAREJO</span><span id="res_atcrj" class="text-orange-400">R$ 0,00</span></div>
-                    <div class="flex justify-between bg-[#1c1c1e] p-2 rounded-lg border border-[#38383a]"><span>VAREJO</span><span id="res_var" class="text-blue-400">R$ 0,00</span></div>
-                </div>
+        <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6 mt-0">
+            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Aparelho</label><select id="f_prod" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
+            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Condição</label>
+                <select id="f_cond" class="apple-input" onchange="renderizarRanking()">
+                    <option value="">Todas</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option>
+                </select>
             </div>
+            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Memória</label><select id="f_cap" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cor</label><select id="f_cor" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Origem</label><select id="f_reg" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
+            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Atacadista</label><select id="f_lojista" class="apple-input" onchange="renderizarRanking()"><option value="">Todos</option></select></div>
+            <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cidade</label><select id="f_cid" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
         </div>
 
         <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
     </main>
 
-    <div id="modalAlerta" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[3000] p-4">
-        <div class="apple-card max-w-[400px] w-full border-yellow-500 text-center">
-            <h3 class="text-sm font-black text-yellow-500 mb-4">CRIAR ALERTA DE PREÇO</h3>
-            <p class="text-[9px] text-gray-400 mb-4 font-bold">PREENCHA AS CARACTERÍSTICAS EXATAS</p>
-            <div class="space-y-3 mb-4 text-left">
-                <select id="aMod" class="apple-input" onchange="liberarMemoriaAlerta()"><option value="">1. MODELO...</option></select>
-                <select id="aCap" class="apple-input" onchange="liberarCorAlerta()" disabled><option value="">2. MEMÓRIA...</option></select>
-                <select id="aCor" class="apple-input" disabled><option value="">3. COR...</option></select>
-                <select id="aCond" class="apple-input"><option value="Novo">NOVO</option><option value="Seminovo">SEMINOVO</option><option value="CPO">CPO APPLE</option></select>
-                <input type="number" id="aPreco" class="apple-input text-yellow-500 font-bold" placeholder="AVISAR ABAIXO DE R$..." min="1">
-            </div>
-            <button onclick="salvarAlerta()" class="apple-button bg-yellow-500 text-black w-full mb-2">ATIVAR SINO DE ALERTA</button>
-            <button onclick="document.getElementById('modalAlerta').classList.add('hidden')" class="text-[9px] text-gray-500 font-black">CANCELAR</button>
-        </div>
-    </div>
-
-    <div id="modalAlertasAtivos" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[3000] p-4">
-        <div class="apple-card max-w-[400px] w-full border-yellow-500">
-            <h3 class="text-sm font-black text-yellow-500 mb-4 text-center italic">MEUS ALERTAS</h3>
-            <div id="listaAlertas" class="space-y-2 max-h-60 overflow-y-auto custom-scroll"></div>
-            <button onclick="document.getElementById('modalAlertasAtivos').classList.add('hidden')" class="apple-button bg-gray-600 text-white w-full mt-4">FECHAR</button>
-        </div>
-    </div>
-
-    <div id="modalFipe" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[3000] p-4">
-        <div class="apple-card max-w-[450px] w-full border-blue-500 flex flex-col max-h-[80vh]">
-            <h3 class="text-sm font-black text-blue-400 mb-4 text-center italic tracking-widest">📊 PREÇO MÉDIO DE MERCADO</h3>
-            <div id="fipeContent" class="flex-1 overflow-y-auto custom-scroll space-y-2 pr-2"></div>
-            <button onclick="document.getElementById('modalFipe').classList.add('hidden')" class="apple-button bg-gray-600 text-white w-full mt-4">FECHAR JANELA</button>
-        </div>
-    </div>
+    <button id="scrollTopBtn" class="btn-scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">⬆️</button>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let todas = [], prods = [], vars = [], rate = 0, user = null, alertas = [], ranks = {};
+        let ofertasAtuais = [], todosProdutosMestre = [], gradeVariacoes = [], meusAlertas = [], clienteLogado = null;
+        let currentUsdtRate = 0, rateOraculo = 0;
+        let ranks = {};
 
         const rnd10 = v => Math.round(v / 10) * 10;
-        const getHex = c => { let s=(c||'').toUpperCase(); if(s.includes('PRETO')) return '#191919'; if(s.includes('BRANCO')) return '#f5f5f7'; if(s.includes('AZUL')) return '#215e7c'; if(s.includes('NATURAL')) return '#8c8c88'; if(s.includes('DESERTO')||s.includes('DOURADO')) return '#ccb390'; return '#808080'; };
-        const getBandeira = pais => { let p = (pais||'').toUpperCase(); if(p.includes('BRASIL')) return '🇧🇷'; if(p.includes('EUA')) return '🇺🇸'; if(p.includes('PARAGUAI')) return '🇵🇾'; if(p.includes('DUBAI')) return '🇦🇪'; return '🌎'; };
+        const rndUp = v => Math.ceil(v / 10) * 10;
 
-        async function init() {
+        const getAppleColorHex = c => { let s=(c||'').toUpperCase(); if(s.includes('PRETO')||s.includes('BLACK')) return '#191919'; if(s.includes('BRANCO')||s.includes('WHITE')) return '#f5f5f7'; if(s.includes('AZUL')) return '#215e7c'; if(s.includes('VERDE')) return '#505c4c'; if(s.includes('NATURAL')) return '#8c8c88'; if(s.includes('DESERTO')||s.includes('DOURADO')) return '#ccb390'; if(s.includes('ROSA')) return '#e6c7c2'; return '#808080'; };
+        const getBandeira = pais => { let p = (pais||'').toUpperCase(); if(p.includes('BRASIL')) return '🇧🇷'; if(p.includes('EUA')) return '🇺🇸'; if(p.includes('PARAGUAI')) return '🇵🇾'; if(p.includes('CHINA')) return '🇨🇳'; return '🌎'; };
+
+        window.onload = async () => {
             const token = localStorage.getItem('iFipe_Token');
-            if(!token) return window.location.href = 'index.html';
-            const {data:cl} = await _s.from('clientes_buscador').select('*').eq('id', token).single();
-            user = cl;
+            if(!token) { window.location.replace('index.html'); return; }
+            const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
+            clienteLogado = data;
 
-            new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
-                rate = parseFloat(JSON.parse(e.data).c);
-                document.getElementById('tBin').innerText = `R$ ${rate.toFixed(4)}`;
-                document.getElementById('tOra').innerText = `R$ ${(rate+0.06).toFixed(4)}`;
-                execCalc(); render(); checkAlerts();
+            iniciarTicker();
+            await carregarBases();
+        };
+
+        function iniciarTicker() {
+            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+            socket.onmessage = (e) => {
+                currentUsdtRate = parseFloat(JSON.parse(e.data).c);
+                rateOraculo = currentUsdtRate + 0.06;
+                document.getElementById('ticker').innerText = `R$ ${currentUsdtRate.toFixed(4).replace('.',',')}`;
+                document.getElementById('oraculoRate').innerText = `R$ ${rateOraculo.toFixed(4).replace('.',',')}`;
+                document.getElementById('tickerCalc').innerText = `R$ ${currentUsdtRate.toFixed(4).replace('.',',')}`;
+                document.getElementById('calcTaxaEfetiva').innerText = `R$ ${rateOraculo.toFixed(4).replace('.',',')}`;
+                calcularImportacao();
+                renderizarRanking();
+                processarSininho();
+            };
+        }
+
+        async function carregarBases() {
+            const [p, v, r, f, o, a] = await Promise.all([
+                _s.from('produtos_mestre').select('*').order('nome'),
+                _s.from('variacoes').select('*'),
+                _s.from('regioes').select('*'),
+                _s.from('fornecedores').select('id, nome, cidade, pais, estado, verificado').eq('ativo', true),
+                _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome)), fornecedores(*), regioes(*)').eq('status_aprovacao', 'aprovado'),
+                _s.from('alertas_preco').select('*, produtos_mestre(nome)').eq('cliente_id', clienteLogado.id)
+            ]);
+
+            todosProdutosMestre = p.data; gradeVariacoes = v.data; ofertasAtuais = o.data || []; meusAlertas = a.data || [];
+
+            // Preenche Filtros 1.0
+            document.getElementById('f_prod').innerHTML += todosProdutosMestre.map(x => `<option value="${x.nome}">${x.nome}</option>`).join('');
+            document.getElementById('f_cap').innerHTML += [...new Set(gradeVariacoes.map(x=>x.capacidade))].sort().map(c=>`<option value="${c}">${c}</option>`).join('');
+            document.getElementById('f_cor').innerHTML += [...new Set(gradeVariacoes.map(x=>x.cor))].sort().map(c=>`<option value="${c}">${c}</option>`).join('');
+            document.getElementById('f_reg').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('f_cid').innerHTML += [...new Set(f.data.map(x=>x.cidade))].sort().map(c=>`<option value="${c}">${c}</option>`).join('');
+
+            // Prepara Modal Alertas
+            document.getElementById('alerta_prod_id').innerHTML += todosProdutosMestre.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+
+            // Rank para Jogo de Cadeiras
+            ofertasAtuais.forEach(of => { let id = of.fornecedores.id; if(!ranks[id]) ranks[id] = 0; ranks[id] += of.quantidade; });
+
+            renderizarRanking();
+            processarSininho();
+        }
+
+        // --- SISTEMA DE RENDERIZAÇÃO (REGRAS 2.0 NO LAYOUT 1.0) ---
+        function renderizarRanking() {
+            const txt = document.getElementById('buscaTexto').value.toUpperCase();
+            const fMod = document.getElementById('f_prod').value, fCond = document.getElementById('f_cond').value, fCap = document.getElementById('f_cap').value;
+            const fCor = document.getElementById('f_cor').value, fReg = document.getElementById('f_reg').value, fLoj = document.getElementById('f_lojista').value, fCid = document.getElementById('f_cid').value;
+
+            let filtrados = ofertasAtuais.filter(o => {
+                return (o.variacoes.produtos_mestre.nome.includes(txt) || (o.variacoes.cor && o.variacoes.cor.includes(txt))) &&
+                       (!fMod || o.variacoes.produtos_mestre.nome === fMod) && (!fCond || o.condicao === fCond) &&
+                       (!fCap || o.variacoes.capacidade === fCap) && (!fCor || o.variacoes.cor === fCor) &&
+                       (!fReg || o.regiao_id == fReg) && (!fLoj || o.fornecedor_id == fLoj) && (!fCid || o.fornecedores.cidade === fCid);
+            });
+
+            // Jogo de Cadeiras
+            const sorter = (a, b) => {
+                if(a.fornecedores.verificado !== b.fornecedores.verificado) return b.fornecedores.verificado ? 1 : -1;
+                if(ranks[a.fornecedores.id] !== ranks[b.fornecedores.id]) return ranks[b.fornecedores.id] - ranks[a.fornecedores.id];
+                return a.preco - b.preco;
             };
 
-            const [p, o, a, v] = await Promise.all([ 
-                _s.from('produtos_mestre').select('*').order('nome'), 
-                _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome)), fornecedores(*), regioes(*)').eq('status_aprovacao', 'aprovado'),
-                _s.from('alertas_preco').select('*, produtos_mestre(nome)').eq('cliente_id', user.id),
-                _s.from('variacoes').select('*')
-            ]);
-            
-            prods = p.data; vars = v.data; todas = o.data || []; alertas = a.data || [];
+            let lBRL = filtrados.filter(o => o.moeda === 'BRL').sort(sorter);
+            let lUSD = filtrados.filter(o => o.moeda === 'USD').sort(sorter);
 
-            document.getElementById('fMod').innerHTML += prods.map(x=>`<option value="${x.nome}">${x.nome}</option>`).join('');
-            document.getElementById('aMod').innerHTML += prods.map(x=>`<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('fCap').innerHTML += [...new Set(vars.map(x=>x.capacidade))].sort().map(c=>`<option value="${c}">${c}</option>`).join('');
-            document.getElementById('fCor').innerHTML += [...new Set(vars.map(x=>x.cor))].sort().map(c=>`<option value="${c}">${c}</option>`).join('');
-            
-            todas.forEach(of => { let id = of.fornecedores.id; if(!ranks[id]) ranks[id] = 0; ranks[id] += of.quantidade; });
-
-            updateSino(); render();
-        }
-
-        function execCalc() {
-            let u = parseFloat(document.getElementById('cUsd').value);
-            if(!u || !rate) return;
-            let c = (u * (rate + 0.06)) * 1.06;
-            let rndUp = v => Math.ceil(v / 10) * 10;
-            document.getElementById('res_custo').innerText = c.toLocaleString('pt-BR',{style:'currency', currency:'BRL'});
-            document.getElementById('res_alto').innerText = rndUp(c + 200).toLocaleString('pt-BR',{style:'currency', currency:'BRL'});
-            document.getElementById('res_ata').innerText = rndUp(c + 350).toLocaleString('pt-BR',{style:'currency', currency:'BRL'});
-            document.getElementById('res_atcrj').innerText = rndUp(c + 500).toLocaleString('pt-BR',{style:'currency', currency:'BRL'});
-            document.getElementById('res_var').innerText = rndUp(c + 1000).toLocaleString('pt-BR',{style:'currency', currency:'BRL'});
-        }
-
-        function filtrar() { render(); }
-
-        function render() {
-            const txt = document.getElementById('q').value.toUpperCase(), m = document.getElementById('fMod').value, cp = document.getElementById('fCap').value, cn = document.getElementById('fCond').value, cr = document.getElementById('fCor').value;
-            
-            let filtrados = todas.filter(o => (o.variacoes.produtos_mestre.nome.includes(txt) || o.variacoes.cor.includes(txt)) && (!m || o.variacoes.produtos_mestre.nome === m) && (!cp || o.variacoes.capacidade === cp) && (!cn || o.condicao === cn) && (!cr || o.variacoes.cor === cr));
-
-            let lBRL = filtrados.filter(o => o.moeda === 'BRL').sort((a,b) => {
-                if(a.fornecedores.verificado !== b.fornecedores.verificado) return b.fornecedores.verificado ? 1 : -1;
-                if(ranks[a.fornecedores.id] !== ranks[b.fornecedores.id]) return ranks[b.fornecedores.id] - ranks[a.fornecedores.id];
-                return a.preco - b.preco;
-            });
-
-            let lUSD = filtrados.filter(o => o.moeda === 'USD').sort((a,b) => {
-                if(a.fornecedores.verificado !== b.fornecedores.verificado) return b.fornecedores.verificado ? 1 : -1;
-                if(ranks[a.fornecedores.id] !== ranks[b.fornecedores.id]) return ranks[b.fornecedores.id] - ranks[a.fornecedores.id];
-                return a.preco - b.preco;
-            });
-
-            // Lógica de 4 colunas (Entrelaçando BRL e USD)
+            // 4 Colunas (2 Esquerda BRL, 2 Direita USD)
             let layout = []; let iB = 0; let iU = 0;
             while(iB < lBRL.length || iU < lUSD.length) {
-                let s1=null, s2=null, s3=null, s4=null;
-                if(iB < lBRL.length) s1 = lBRL[iB++]; else if(iU < lUSD.length) s1 = lUSD[iU++];
-                if(iB < lBRL.length) s2 = lBRL[iB++]; else if(iU < lUSD.length) s2 = lUSD[iU++];
-                if(iU < lUSD.length) s3 = lUSD[iU++]; else if(iB < lBRL.length) s3 = lBRL[iB++];
-                if(iU < lUSD.length) s4 = lUSD[iU++]; else if(iB < lBRL.length) s4 = lBRL[iB++];
-                if(s1) layout.push(s1); if(s2) layout.push(s2); if(s3) layout.push(s3); if(s4) layout.push(s4);
+                if(iB < lBRL.length) layout.push(lBRL[iB++]); if(iB < lBRL.length) layout.push(lBRL[iB++]);
+                if(iU < lUSD.length) layout.push(lUSD[iU++]); if(iU < lUSD.length) layout.push(lUSD[iU++]);
             }
 
             document.getElementById('gridGeral').innerHTML = layout.map(o => {
-                const final = rnd10(o.moeda === 'BRL' ? o.preco : (o.preco * (rate + 0.06) * 1.06));
-                let stock = ranks[o.fornecedores.id]; let insignia = '';
-                if(stock >= 1000) insignia = '<span class="insignia-badge califa">👑 CALIFA (+1K)</span>';
-                else if(stock >= 200) insignia = '<span class="insignia-badge rei">🛡️ REI (+200)</span>';
-                else if(stock >= 50) insignia = '<span class="insignia-badge magnata">💰 MAGNATA (+50)</span>';
-
-                // MOLDURAS (TAGS)
-                let m_pix = o.aceita_pix ? '<span class="mini-tag pix">💠 PIX</span>' : '';
+                let pFinal = rnd10(o.moeda === 'BRL' ? o.preco : (o.preco * rateOraculo * 1.06));
+                
+                let tagEstoque = o.quantidade <= 3 ? '<span class="tag-status tag-poucas">POUCAS UN</span>' : (o.quantidade <= 10 ? '<span class="tag-status tag-muitas">ESTOQUE BOM</span>' : '<span class="tag-status tag-estoque-alto">ALTO ESTOQUE</span>');
+                let tagCond = `<span class="tag-status ${o.condicao==='Novo'?'tag-estoque-alto':'tag-poucas'}">${o.condicao}</span>`;
+                
+                let m_pix = o.aceita_pix ? '<span class="mini-tag pix">PIX</span>' : '';
                 let m_usdt = o.aceita_usdt ? '<span class="mini-tag usdt">USDT</span>' : '';
-                let m_cole = o.aceita_coleta ? '<span class="mini-tag active">COLETA</span>' : '';
-                let m_envi = o.faz_envio ? '<span class="mini-tag active">ENVIO</span>' : '';
-                let m_nota = o.emite_nota ? '<span class="mini-tag active">NF</span>' : '';
-                let m_neg = o.aceita_proposta ? '<span class="mini-tag lote">🤝 NEGOCIA QTD</span>' : '';
-                let m_bat = o.saude_bateria ? `<span class="mini-tag bat">🔋 ${o.saude_bateria}</span>` : '';
+                let m_neg = o.aceita_proposta ? '<span class="mini-tag lote">NEGOCIA QTD</span>' : '';
+                let m_bat = o.saude_bateria ? `<span class="mini-tag bat">${o.saude_bateria}</span>` : '';
+                
+                let checkVerificado = o.fornecedores.verificado ? '<span style="color:#32d74b; font-size:10px;">✅</span>' : '';
                 let loc = `${getBandeira(o.fornecedores.pais)} | ${o.fornecedores.cidade} - ${o.fornecedores.estado}`;
 
                 return `
-                <div class="apple-card flex flex-col">
-                    <div class="flex justify-between items-start mb-2">
-                        <div>
-                            <span class="tag-status ${o.condicao==='Novo'?'bg-green-500':'bg-yellow-500'} text-black uppercase">${o.condicao}</span>
-                            <h2 class="font-black text-sm mt-1 italic">${o.variacoes.produtos_mestre.nome}</h2>
-                            <p class="text-[9px] text-gray-500 font-black">${o.variacoes.capacidade}</p>
-                        </div>
-                        <div class="text-right">
-                            <div class="color-dot" style="background:${getHex(o.variacoes.cor)}"></div>
-                            <p class="text-[6px] text-gray-500 font-bold mt-1">${o.variacoes.cor}</p>
-                        </div>
-                    </div>
+                <div class="product-card">
+                    <div class="flex flex-wrap gap-1 mb-1.5">${tagEstoque} ${tagCond}</div>
+                    <h2 class="text-lg font-black leading-tight mb-0.5">
+                        <span class="color-dot" style="background:${getAppleColorHex(o.variacoes.cor)}"></span>
+                        ${o.variacoes.produtos_mestre.nome}
+                    </h2>
+                    <p class="text-[9px] text-gray-300 font-bold uppercase tracking-wide mb-2">${o.variacoes.capacidade} | ${o.variacoes.cor}</p>
                     
-                    <div class="bg-black/40 p-3 rounded-xl mb-3 border border-white/5">
-                        <p class="text-[8px] text-gray-500 font-black">ATACADO BRASIL</p>
-                        <p class="price-tag">R$ ${final.toLocaleString('pt-BR')}</p>
-                        <p class="text-[7px] text-gray-600 font-bold">${o.moeda==='USD' ? `* CONVERSÃO DE ${o.preco} USD` : 'VALOR DIRETO EM REAIS'}</p>
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        <span class="mini-tag active">${o.regioes.bandeira} ORIGEM ${o.regioes.nome}</span>
+                        ${m_pix} ${m_usdt} ${m_bat} ${m_neg}
                     </div>
 
-                    <div class="flex flex-wrap gap-1 mb-3">
-                        <span class="mini-tag fab">${o.regioes.bandeira} ORIGEM: ${o.regioes.nome}</span>
-                        ${m_bat} ${m_pix} ${m_usdt} ${m_nota} ${m_envi} ${m_cole} ${m_neg}
-                    </div>
-
-                    <div class="mt-auto border-t border-white/5 pt-3">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="text-[7px] text-[#25d366] font-black uppercase flex items-center">
-                                    ${o.fornecedores.nome} 
-                                    ${o.fornecedores.verificado?'<span class="badge-verificado"><span>✓</span> VERIFICADO</span>':''}
-                                </p>
-                                <p class="text-[7px] text-gray-500 uppercase mt-0.5">${loc}</p>
-                                ${insignia}
-                            </div>
-                            <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=VIM%20PELO%20IFIPE" target="_blank" class="bg-blue-600 text-white px-3 py-2 rounded-lg text-[9px] font-black">CHAMAR</a>
+                    <div class="mt-auto border-t border-[#38383a] pt-2 flex justify-between items-end">
+                        <div class="flex-1 overflow-hidden pr-2">
+                            <div class="text-[11px] text-[#25d366] font-black uppercase tracking-widest truncate">${o.fornecedores.nome} ${checkVerificado}</div>
+                            <div class="flex items-center mt-1"><span class="text-[8px] text-white font-black uppercase tracking-widest bg-[#2c2c2e] border border-[#38383a] px-2 py-0.5 rounded-md truncate">${loc}</span></div>
                         </div>
+                        <div class="price-text flex-shrink-0">R$ ${pFinal.toLocaleString('pt-BR')}</div>
                     </div>
+                    <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=VIM%20PELO%20IFIPE" target="_blank" class="buy-button">COMPRAR NO WHATSAPP</a>
                 </div>`;
             }).join('');
         }
 
-        // ALERTA CASCADE
-        function liberarMemoriaAlerta() {
-            let p = document.getElementById('aMod').value;
-            let caps = [...new Set(vars.filter(v => v.produto_id == p).map(v => v.capacidade))];
-            document.getElementById('aCap').innerHTML = '<option value="">2. MEMÓRIA...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join('');
-            document.getElementById('aCap').disabled = false;
-        }
-        function liberarCorAlerta() {
-            let p = document.getElementById('aMod').value, c = document.getElementById('aCap').value;
-            let cores = vars.filter(v => v.produto_id == p && v.capacidade == c).map(v => v.cor);
-            document.getElementById('aCor').innerHTML = '<option value="">3. COR...</option>' + cores.map(co=>`<option value="${co}">${co}</option>`).join('');
-            document.getElementById('aCor').disabled = false;
+        // --- CALCULADORA VIP (MODAL) ---
+        function abrirCalc() { document.getElementById('calcModal').classList.remove('hidden'); calcularImportacao(); }
+        function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
+        function calcularImportacao() {
+            const v = parseFloat(document.getElementById('calcUsd').value.replace(',','.'));
+            if(isNaN(v) || rateOraculo === 0) { document.getElementById('calcResult').innerText = "R$ 0,00"; return; }
+            const cFinal = (v * rateOraculo) * 1.06;
+            document.getElementById('calcResult').innerText = cFinal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
         }
 
-        function abrirAlertaModal() { document.getElementById('modalAlerta').classList.remove('hidden'); }
-        async function salvarAlerta() {
-            const p = document.getElementById('aMod').value, cp = document.getElementById('aCap').value, co = document.getElementById('aCor').value, cd = document.getElementById('aCond').value, pr = document.getElementById('aPreco').value;
-            if(!p || !cp || !co || pr < 1) return alert("PREENCHA TODOS OS DADOS DO APARELHO!");
-            await _s.from('alertas_preco').insert([{ cliente_id: user.id, produto_id: p, capacidade: cp, cor: co, condicao: cd, preco_desejado: pr }]);
-            alert("ALERTA SALVO! VOCÊ SERÁ AVISADO NO SINO."); window.location.reload();
+        // --- ALERTAS DE PREÇO (MODAL + SINO) ---
+        function abrirModalCriarAlerta() { document.getElementById('alertaModal').classList.remove('hidden'); }
+        function fecharAlerta() { document.getElementById('alertaModal').classList.add('hidden'); }
+        function atualizarFiltrosAlerta() {
+            let p = document.getElementById('alerta_prod_id').value;
+            let caps = [...new Set(gradeVariacoes.filter(v=>v.produto_id==p).map(v=>v.capacidade))];
+            document.getElementById('alerta_cap').innerHTML = '<option value="">MEMÓRIA...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join('');
+            document.getElementById('alerta_cap').disabled = false;
+        }
+        document.getElementById('alerta_cap').addEventListener('change', () => {
+            let p = document.getElementById('alerta_prod_id').value, c = document.getElementById('alerta_cap').value;
+            let cores = [...new Set(gradeVariacoes.filter(v=>v.produto_id==p && v.capacidade==c).map(v=>v.cor))];
+            document.getElementById('alerta_cor').innerHTML = '<option value="">COR...</option>' + cores.map(co=>`<option value="${co}">${co}</option>`).join('');
+            document.getElementById('alerta_cor').disabled = false;
+        });
+        
+        async function gravarAlerta() {
+            const p = document.getElementById('alerta_prod_id').value, cap = document.getElementById('alerta_cap').value, cor = document.getElementById('alerta_cor').value, cond = document.getElementById('alerta_cond').value, preco = document.getElementById('alerta_preco').value;
+            if(!p || !cap || !cor || preco < 1) return alert("PREENCHA TUDO CORRETAMENTE!");
+            await _s.from('alertas_preco').insert([{ cliente_id: clienteLogado.id, produto_id: p, capacidade: cap, cor: cor, condicao: cond, preco_desejado: preco }]);
+            alert("ALERTA CRIADO!"); window.location.reload();
         }
 
-        function updateSino() { const s = document.getElementById('badgeSino'); if(alertas.length > 0) { s.innerText = alertas.length; s.classList.remove('hidden'); } }
-        function checkAlerts() {
-            let atingidos = 0;
-            alertas.forEach(a => {
-                const match = todas.find(o => o.variacoes.produto_id == a.produto_id && o.variacoes.capacidade === a.capacidade && o.variacoes.cor === a.cor && o.condicao === a.condicao && rnd10(o.moeda==='BRL'?o.preco:(o.preco*(rate+0.06)*1.06)) <= a.preco_desejado);
-                if(match) atingidos++;
+        function processarSininho() {
+            let atingidos = [];
+            meusAlertas.forEach(a => {
+                let match = ofertasAtuais.find(o => o.variacoes.produto_id == a.produto_id && o.variacoes.capacidade === a.capacidade && o.variacoes.cor === a.cor && o.condicao === a.condicao && rnd10(o.moeda==='BRL'?o.preco:(o.preco*rateOraculo*1.06)) <= a.preco_desejado);
+                if(match) atingidos.push({a, o: match});
             });
-            if(atingidos > 0) { const s = document.getElementById('badgeSino'); s.innerText = atingidos; s.classList.remove('hidden'); s.classList.add('animate-pulse'); }
+
+            const badge = document.getElementById('badgeSininho');
+            if(atingidos.length > 0) { badge.innerText = atingidos.length; badge.classList.remove('hidden'); } else badge.classList.add('hidden');
+
+            const div = document.getElementById('listaNotificacoes');
+            div.innerHTML = atingidos.map(item => `
+                <div class="bg-[#2c2c2e] p-3 rounded-xl border border-green-500 relative">
+                    <p class="text-[11px] font-black text-white">${item.a.produtos_mestre.nome} ${item.a.capacidade}</p>
+                    <p class="text-[9px] text-gray-400">PEDIU: R$ ${item.a.preco_desejado}</p>
+                    <p class="text-[14px] font-black text-[#32d74b]">ACHOU POR: R$ ${rnd10(item.o.moeda==='BRL'?item.o.preco:(item.o.preco*rateOraculo*1.06)).toLocaleString('pt-BR')}</p>
+                    <button onclick="delAlerta(${item.a.id})" class="text-[8px] text-red-500 font-black mt-2">REMOVER</button>
+                </div>
+            `).join('') || '<p class="text-center text-[10px] text-gray-500 py-4">NENHUM ALERTA ATINGIDO AINDA.</p>';
         }
 
-        async function abrirSininho() {
-            const modal = document.getElementById('modalAlertasAtivos'); modal.classList.remove('hidden');
-            document.getElementById('listaAlertas').innerHTML = alertas.map(a => {
-                const match = todas.find(o => o.variacoes.produto_id == a.produto_id && o.variacoes.capacidade === a.capacidade && o.variacoes.cor === a.cor && o.condicao === a.condicao && rnd10(o.moeda==='BRL'?o.preco:(o.preco*(rate+0.06)*1.06)) <= a.preco_desejado);
-                return `
-                <div class="bg-black/50 p-3 rounded-lg border ${match ? 'border-green-500' : 'border-[#38383a]'} flex justify-between items-center">
-                    <div>
-                        <p class="text-[10px] font-black">${a.produtos_mestre.nome}</p>
-                        <p class="text-[8px] text-gray-400">${a.capacidade} | ${a.cor} | ${a.condicao}</p>
-                        <p class="text-[8px] ${match ? 'text-green-500' : 'text-yellow-500'} mt-1">ALERTA EM: R$ ${a.preco_desejado.toLocaleString('pt-BR')}</p>
-                    </div>
-                    <button onclick="delAlerta(${a.id})" class="text-[8px] text-red-500 font-black">REMOVER</button>
-                </div>`;
-            }).join('') || '<p class="text-center text-[9px] py-4 text-gray-500">SEM ALERTAS ATIVOS.</p>';
-        }
+        function abrirSininho() { document.getElementById('sininhoModal').classList.remove('hidden'); processarSininho(); }
+        function fecharSininho() { document.getElementById('sininhoModal').classList.add('hidden'); }
         async function delAlerta(id) { await _s.from('alertas_preco').delete().eq('id', id); window.location.reload(); }
 
-        function abrirFipe() {
-            document.getElementById('modalFipe').classList.remove('hidden');
-            const div = document.getElementById('fipeContent'); div.innerHTML = '<p class="text-center py-6 text-[10px]">CALCULANDO MÉDIAS...</p>';
-            const mods = [...new Set(todas.map(o => o.variacoes.produtos_mestre.nome))];
-            div.innerHTML = mods.map(m => {
-                const ofs = todas.filter(o => o.variacoes.produtos_mestre.nome === m);
-                const media = ofs.reduce((a, b) => a + (b.moeda === 'BRL' ? b.preco : b.preco * (rate+0.06) * 1.06), 0) / ofs.length;
-                return `<div class="bg-white/5 p-3 rounded-xl flex justify-between items-center"><span class="text-[10px] font-black">${m}</span><span class="text-blue-400 font-mono font-bold">R$ ${rnd10(media).toLocaleString('pt-BR')}</span></div>`;
-            }).join('');
-        }
-
-        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
-        window.onscroll = () => document.getElementById('btnSubir').classList.toggle('show', window.scrollY > 300);
-        window.onload = init;
+        window.addEventListener('scroll', () => { const b = document.getElementById('scrollTopBtn'); if(window.scrollY > 300) b.classList.add('show'); else b.classList.remove('show'); });
+        function logout() { localStorage.clear(); window.location.replace('index.html'); }
     </script>
 </body>
 </html>
