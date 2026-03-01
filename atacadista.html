@@ -28,9 +28,11 @@
         
         .moldura-sobria { font-size: 9px; font-weight: 900; padding: 3px 6px; border-radius: 6px; display: inline-flex; align-items: center; border: 1px solid #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.1); margin-right: 4px; margin-bottom: 4px; }
 
-        .mini-edit { background: transparent; border: 1px solid transparent; color: #fff; font-weight: 800; width: 60px; text-align: center; font-family: 'JetBrains Mono'; border-radius: 6px; }
-        .mini-edit:focus { border-color: var(--blue-sober); background: var(--input); outline: none; }
-        
+        /* Edição Inline Discreta */
+        .mini-edit { background: transparent; border: 1px solid transparent; color: #fff; font-weight: 900; width: 50px; text-align: center; font-family: 'JetBrains Mono'; border-radius: 6px; transition: 0.3s; border-bottom: 1px dashed rgba(255,255,255,0.3); }
+        .mini-edit:focus { border-color: var(--blue-sober); background: rgba(59, 130, 246, 0.1); outline: none; border-bottom: 1px solid var(--blue-sober); }
+        .mini-edit-preco { width: 80px; }
+
         .step-block { margin-bottom: 12px; border-left: 2px solid #38383a; padding-left: 15px; opacity: 0.3; pointer-events: none; transition: 0.3s; }
         .step-block.active { border-left-color: var(--blue-sober); opacity: 1; pointer-events: auto; }
         
@@ -151,7 +153,7 @@
                         </div>
 
                         <div class="grid grid-cols-2 gap-2 mb-2">
-                            <input type="number" id="f_qtd" class="apple-input" placeholder="QTD" min="1" required>
+                            <input type="number" id="f_qtd" class="apple-input" placeholder="QTD" min="0" required>
                             <select id="f_orig" class="apple-input" required></select>
                         </div>
                         
@@ -189,14 +191,14 @@
                         <button onclick="bulkDel()" class="bg-red-600 text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase cursor-pointer">Apagar</button>
                     </div>
                 </div>
-                <div class="overflow-x-auto custom-scroll">
+                <div class="overflow-x-auto custom-scroll mt-2">
                     <table>
                         <thead>
                             <tr>
                                 <th width="30"><input type="checkbox" onclick="selAll(this)"></th>
                                 <th>MODELO / DETALHES</th>
-                                <th class="text-center">QTD</th>
-                                <th class="text-center">PREÇO LANÇADO</th>
+                                <th class="text-center">EDITAR QTD</th>
+                                <th class="text-center">EDITAR PREÇO</th>
                             </tr>
                         </thead>
                         <tbody id="lista"></tbody>
@@ -271,7 +273,7 @@
             <form onsubmit="doBulk(event)" class="space-y-4">
                 <div class="grid grid-cols-2 gap-2">
                     <input type="text" id="b_preco" class="apple-input" placeholder="NOVO PREÇO" oninput="mascara(this)">
-                    <input type="number" id="b_qtd" class="apple-input" placeholder="NOVA QTD" min="1">
+                    <input type="number" id="b_qtd" class="apple-input" placeholder="NOVA QTD" min="0">
                     <select id="b_cond" class="apple-input">
                         <option value="">MANTER CONDIÇÃO...</option>
                         <option value="Novo">NOVO</option>
@@ -314,8 +316,6 @@
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
         const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
         
-        const getAppleColorHex = c => { let s=(c||'').toUpperCase(); if(s.includes('PRETO')||s.includes('BLACK')||s.includes('MEIA-NOITE')||s.includes('GRAFITE')) return '#191919'; if(s.includes('BRANCO')||s.includes('WHITE')||s.includes('ESTELAR')||s.includes('PRATEADO')) return '#f5f5f7'; if(s.includes('AZUL')||s.includes('SIERRA')) return '#215e7c'; if(s.includes('VERDE')||s.includes('ALPINO')) return '#505c4c'; if(s.includes('NATURAL')) return '#8c8c88'; if(s.includes('DESERTO')||s.includes('DOURADO')) return '#ccb390'; if(s.includes('ROSA')) return '#e6c7c2'; if(s.includes('ROXO')) return '#5c5b57'; return '#808080'; };
-
         window.onload = async () => {
             const token = localStorage.getItem('iFipe_Anunciante');
             if(!token) return window.location.replace('index.html');
@@ -438,10 +438,12 @@
             
             let g = tipo === 'Novo' ? '1 ANO APPLE' : document.getElementById('f_gar').value;
             let b = tipo === 'Novo' ? '' : document.getElementById('f_bat').value;
+            let q = parseInt(document.getElementById('f_qtd').value);
+            if (isNaN(q) || q < 0) q = 0;
 
             await _s.from('ofertas').insert([{
                 fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('f_orig').value,
-                preco: precoFinal, moeda: isBrl ? 'BRL' : 'USD', quantidade: Math.max(1, parseInt(document.getElementById('f_qtd').value)),
+                preco: precoFinal, moeda: isBrl ? 'BRL' : 'USD', quantidade: q,
                 condicao: tipo==='Novo'?'Novo':document.getElementById('f_cond').value,
                 saude_bateria: b,
                 garantia: g,
@@ -456,31 +458,29 @@
             document.getElementById('lista').innerHTML = ofertas.map(o => {
                 
                 let tagCond = `<span class="tag-chapada ${o.condicao==='Novo'?'tag-novo':'tag-semi'}">${o.condicao}</span>`;
-                let tagEstoque = `<span class="tag-chapada tag-cinza">QTD: ${o.quantidade}</span>`;
-                
                 let m_orig = o.regioes ? `<span class="moldura-sobria">${o.regioes.bandeira} ${o.regioes.nome}</span>` : '';
                 let m_bat = o.saude_bateria ? `<span class="moldura-sobria">🔋 ${o.saude_bateria}</span>` : '';
-                let m_pix = o.aceita_pix ? `<span class="moldura-sobria">PIX</span>` : '';
-                let m_usdt = o.aceita_usdt ? `<span class="moldura-sobria">USDT</span>` : '';
-                let m_neg = o.aceita_proposta ? `<span class="moldura-sobria">NEGOCIA QTD</span>` : '';
                 
                 let precoDisplay = o.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
+                // Edição Inline com Inputs nos TD's
                 return `
                 <tr class="hover:bg-white/5 transition border-b border-[#2c2c2e]">
                     <td><input type="checkbox" class="chk" value="${o.id}" onclick="upBulkCount()"></td>
                     <td>
-                        <div class="flex items-center mb-1">
-                            <span class="color-dot" style="background:${getAppleColorHex(o.variacoes.cor)}"></span>
-                            <p class="font-black text-[#fff] text-[12px]">${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade}</p>
-                        </div>
-                        <p class="text-[9px] text-gray-400 mb-2 font-bold ml-5">${o.variacoes.cor}</p>
-                        <div class="mb-1 ml-5">${tagCond} ${tagEstoque}</div>
-                        <div class="ml-5">${m_orig} ${m_bat} ${m_pix} ${m_usdt} ${m_neg}</div>
-                        <div class="mt-2 ml-5"><button onclick="del(${o.id})" class="text-red-500 font-bold text-[9px] hover:underline">Apagar Lançamento</button></div>
+                        <p class="font-black text-[#fff] text-[12px] mb-1">${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade}</p>
+                        <p class="text-[9px] text-gray-400 mb-2 font-bold">${o.variacoes.cor}</p>
+                        <div class="mb-1">${tagCond}</div>
+                        <div>${m_orig} ${m_bat}</div>
+                        <div class="mt-2"><button onclick="del(${o.id})" class="text-red-500 font-bold text-[9px] hover:underline">Apagar Lançamento</button></div>
                     </td>
-                    <td class="text-center"><input type="number" class="mini-edit" value="${o.quantidade}" min="1" onblur="edit(${o.id}, 'quantidade', this.value)"></td>
-                    <td class="text-center font-mono font-black text-white text-[14px]">${o.moeda==='BRL'?'R$':'$'} ${precoDisplay}</td>
+                    <td class="text-center">
+                        <input type="number" class="mini-edit" value="${o.quantidade}" min="0" onblur="edit(${o.id}, 'quantidade', this.value)">
+                    </td>
+                    <td class="text-center font-mono font-black text-white text-[14px]">
+                        ${o.moeda==='BRL'?'R$':'$'} 
+                        <input type="text" class="mini-edit mini-edit-preco" value="${precoDisplay}" oninput="mascara(this)" onblur="edit(${o.id}, 'preco', this.value)">
+                    </td>
                 </tr>`;
             }).join('');
             
@@ -492,7 +492,14 @@
         }
 
         async function edit(id, c, v) { 
-            let val = c==='preco' ? parseP(v) : Math.max(1, parseInt(v)); 
+            let val;
+            if (c === 'preco') {
+                val = parseP(v);
+                if (isNaN(val) || val < 0) val = 0;
+            } else {
+                val = parseInt(v);
+                if (isNaN(val) || val < 0) val = 0;
+            }
             await _s.from('ofertas').update({[c]:val}).eq('id',id); 
             upTab(); 
         }
@@ -527,20 +534,26 @@
             let c = document.getElementById('b_cond').value, b = document.getElementById('b_bat').value;
             let u = {}; 
             if(p) u.preco = p; 
-            if(q) u.quantidade = Math.max(1, parseInt(q));
+            if(q !== '') {
+                let qVal = parseInt(q);
+                u.quantidade = isNaN(qVal) || qVal < 0 ? 0 : qVal; // Permite o zero na edição em massa
+            }
             if(c) u.condicao = c;
             if(b) u.saude_bateria = b;
             await _s.from('ofertas').update(u).in('id', ids); 
             fecharBulk(); upTab();
         }
 
-        // --- ALGORITMO AGRUPADOR COPIAR LISTA WPP ---
+        // --- ALGORITMO AGRUPADOR COPIAR LISTA WPP (FILTRANDO ZERO) ---
         async function copiarListaWhatsApp() {
-            if (!ofertas || ofertas.length === 0) return alert("Sua lista de ofertas está vazia.");
+            // Filtro Implacável: O que tem 0 ou menos, fica de fora da lista.
+            let ofertasAtivas = ofertas.filter(o => o.quantidade > 0);
+            
+            if (!ofertasAtivas || ofertasAtivas.length === 0) return alert("Sua lista está vazia ou todos os itens estão sem estoque (Zero).");
 
             let text = "";
-            let novos = ofertas.filter(o => o.condicao === 'Novo');
-            let seminovos = ofertas.filter(o => o.condicao !== 'Novo');
+            let novos = ofertasAtivas.filter(o => o.condicao === 'Novo');
+            let seminovos = ofertasAtivas.filter(o => o.condicao !== 'Novo');
 
             const formatarMoeda = (val) => val.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             let cidadeText = loja.cidade ? ` ${loja.cidade.toUpperCase()}` : '';
@@ -561,7 +574,7 @@
                     let headerKey = `*${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade}*`;
                     if (!groupedNovos[headerKey]) groupedNovos[headerKey] = {};
                     
-                    // Chave única do item (Cor + Preço exato)
+                    // Chave única: Agrupa por Cor + Preço
                     let itemKey = `${o.variacoes.cor.toUpperCase()}_${o.preco}`;
                     if (!groupedNovos[headerKey][itemKey]) {
                         groupedNovos[headerKey][itemKey] = { cor: o.variacoes.cor.toUpperCase(), preco: o.preco, quantidade: 0 };
@@ -573,6 +586,7 @@
                     text += `${headerKey}\n`;
                     for (let itemKey in groupedNovos[headerKey]) {
                         let item = groupedNovos[headerKey][itemKey];
+                        // Trava da moeda na lista: Sempre R$
                         text += `(${item.quantidade}) ${item.cor} R$ ${formatarMoeda(item.preco)}\n`;
                     }
                     text += `\n`;
@@ -587,7 +601,6 @@
                     let bat = o.saude_bateria ? ` 🔋 ${o.saude_bateria}` : '';
                     let gar = o.garantia ? ` 🛡️ ${o.garantia}` : '';
                     
-                    // Chave única do Seminovo (Tudo precisa ser idêntico para somar)
                     let itemKey = `${o.variacoes.produtos_mestre.nome}_${o.variacoes.capacidade}_${o.variacoes.cor.toUpperCase()}_${bat}_${gar}_${o.preco}`;
                     
                     if (!groupedSemis[itemKey]) {
@@ -606,6 +619,7 @@
 
                 for (let itemKey in groupedSemis) {
                     let item = groupedSemis[itemKey];
+                    // Trava da moeda na lista: Sempre R$
                     text += `* (${item.quantidade}) ${item.nome} ${item.cap} ${item.cor}${item.bat}${item.gar} R$ ${formatarMoeda(item.preco)}*\n`;
                 }
                 text += `\n`;
