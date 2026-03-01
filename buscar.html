@@ -3,158 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - O Oráculo das Ofertas</title>
+    <title>iFipe - O Buscador VIP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --blue: #0071e3; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; }
-        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; }
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; transition: 0.3s; position: relative; height: 100%; display: flex; flex-direction: column; }
-        .product-card:hover { border-color: var(--blue); transform: translateY(-4px); }
-        .tag-status { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 50px; margin-bottom: 5px; display: inline-block; }
-        .price-text { font-size: 24px; font-weight: 800; color: #32d74b; font-family: 'JetBrains Mono', monospace; }
-        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; border: 1px solid rgba(255,255,255,0.2); }
-        .buy-button { background: var(--blue); color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; text-align: center; text-transform: uppercase; font-size: 11px; margin-top: auto; display: block; text-decoration: none; }
+        :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #38383a; --blue: #0071e3; }
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, sans-serif; margin:0; overflow-x: hidden; }
+        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; transition: 0.3s; }
+        .apple-input { background: #2c2c2e; border: 1px solid var(--border); border-radius: 12px; padding: 12px; width: 100%; color: var(--text); outline: none; font-size: 13px; text-transform: uppercase; }
+        .apple-input:focus { border-color: var(--blue); }
+        
+        /* Grid de Cores (Bolinhas HEX) */
+        .color-dot { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); display: inline-block; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        
+        /* Badges de Condição */
+        .badge { font-size: 9px; font-weight: 900; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; }
+        .badge-novo { background: #32d74b; color: #000; }
+        .badge-semi { background: #f59e0b; color: #000; }
+        
+        .price-tag { font-family: 'JetBrains Mono', monospace; font-weight: 800; color: #32d74b; font-size: 1.2rem; }
+        
+        /* Scroll e Botão Subir */
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 10px; }
+        #btnSubir { position: fixed; bottom: 20px; right: 20px; background: var(--blue); color: #fff; font-weight: 900; font-size: 10px; padding: 12px 18px; border-radius: 50px; cursor: pointer; z-index: 1000; text-transform: uppercase; border: none; transition: 0.3s; opacity: 0; pointer-events: none; }
+        #btnSubir.show { opacity: 1; pointer-events: auto; }
+
         .hidden { display: none !important; }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-8">
 
-    <nav class="nav-bar">
-        <div class="flex items-center gap-4">
-            <h1 class="text-2xl font-black italic text-red-500">iFipe</h1>
-            <div class="hidden md:flex flex-col">
-                <span class="text-[8px] text-gray-500 font-bold uppercase">USDT/BRL VIP</span>
-                <span id="tickerVip" class="text-sm font-black text-[#32d74b] font-mono">R$ --</span>
+    <button id="btnSubir" onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ SUBIR</button>
+
+    <div class="max-w-7xl mx-auto">
+        <header class="flex flex-col lg:flex-row justify-between items-center mb-10 gap-6">
+            <div>
+                <h1 class="text-3xl font-black italic">iFipe <span class="text-blue-500">VIP</span></h1>
+                <p class="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-1">Busca Avançada de Atacado</p>
             </div>
-        </div>
-        <div class="flex-1 max-w-xl mx-8">
-            <input type="text" id="buscaGeral" class="apple-input w-full" placeholder="Buscar modelo, cor ou loja..." oninput="filtrarGrid()">
-        </div>
-        <div class="flex items-center gap-4">
-            <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
-        </div>
-    </nav>
 
-    <main class="max-w-7xl mx-auto px-4 py-8">
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
-            <select id="f_cond" class="apple-input" onchange="filtrarGrid()">
-                <option value="">Condição...</option>
-                <option value="Novo">Novo</option>
-                <option value="Seminovo">Seminovo</option>
-            </select>
-            <select id="f_reg" class="apple-input" onchange="filtrarGrid()">
-                <option value="">Origem...</option>
-            </select>
-            <select id="f_lojista" class="apple-input" onchange="filtrarGrid()">
-                <option value="">Atacadista...</option>
-            </select>
-        </div>
-
-        <div id="gridOfertas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                <div class="text-center bg-[#1c1c1e] p-2 px-4 rounded-xl border border-[#38383a]">
+                    <p class="text-[8px] text-gray-500 font-black uppercase">Índice Online Binance</p>
+                    <p id="tickerBinance" class="text-xs font-mono font-black text-yellow-400">R$ --</p>
+                </div>
+                <a href="https://wa.me/15616760652?text=Oráculo%20venho%20através%20do%20iFipe%20e%20quero%20comprar%20USDT" target="_blank" class="bg-green-900/30 text-green-400 px-4 py-2 rounded-xl border border-green-500/50 font-black text-[10px] uppercase hover:bg-green-900/50 transition flex items-center gap-2">
+                    COMPRAR USDT COM ORÁCULO <span id="tVip" class="font-mono text-xs">R$ --</span>
+                </a>
+                <button onclick="logout()" class="text-[10px] text-red-500 font-black uppercase border border-red-500/20 px-4 py-2 rounded-full">Sair</button>
             </div>
-    </main>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <div class="lg:col-span-1 space-y-6">
+                
+                <div class="apple-card">
+                    <h3 class="text-xs font-black uppercase text-blue-500 mb-6 italic">Filtrar Oráculo</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Modelo de iPhone</label>
+                            <select id="filtroModelo" class="apple-input" onchange="renderizarOfertas()">
+                                <option value="">Todos os Modelos</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Memória</label>
+                                <select id="filtroCapacidade" class="apple-input" onchange="renderizarOfertas()">
+                                    <option value="">Todas</option>
+                                    <option value="64GB">64GB</option><option value="128GB">128GB</option><option value="256GB">256GB</option><option value="512GB">512GB</option><option value="1TB">1TB</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Condição</label>
+                                <select id="filtroCondicao" class="apple-input" onchange="renderizarOfertas()">
+                                    <option value="">Todas</option><option value="Novo">Novos</option><option value="Seminovo">Seminovos</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="apple-card border-green-600/30 bg-green-600/5">
+                    <h3 class="text-[10px] font-black uppercase text-green-500 italic mb-4">CALCULADORA VIP PARA IPHONE</h3>
+                    <div class="space-y-3">
+                        <input type="number" id="calc_usd" class="apple-input font-mono text-center font-bold !bg-black" placeholder="Custo PY (US$)" oninput="executarCalculadora()">
+                        
+                        <div class="bg-black p-3 rounded-xl border border-[#38383a] text-center">
+                            <span class="text-[8px] text-gray-400 uppercase block mb-1 font-bold">CUSTO ENTREGUE NO BRASIL</span>
+                            <span id="res_custo" class="text-xl font-mono font-black text-[#32d74b]">R$ 0,00</span>
+                        </div>
+
+                        <div class="space-y-2 pt-2">
+                            <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg"><span class="text-[9px] font-bold text-gray-400">ALTO ATACADO</span><span id="res_alto" class="text-xs font-mono font-black">R$ 0,00</span></div>
+                            <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg"><span class="text-[9px] font-bold text-gray-400">ATACADO</span><span id="res_atacado" class="text-xs font-mono font-black text-yellow-400">R$ 0,00</span></div>
+                            <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg"><span class="text-[9px] font-bold text-gray-400">ATACAREJO</span><span id="res_atacarejo" class="text-xs font-mono font-black text-orange-400">R$ 0,00</span></div>
+                            <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg"><span class="text-[9px] font-bold text-gray-400">VAREJO</span><span id="res_varejo" class="text-xs font-mono font-black text-blue-400">R$ 0,00</span></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="lg:col-span-3">
+                <div id="gridOfertas" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    </div>
+            </div>
+
+        </div>
+    </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let ofertasAtuais = [];
-        let currentTaxaVip = 0;
+        let todasOfertas = [], taxaVipGlobal = 0;
+
+        // Mapeamento HEX oficial para as bolinhas
+        const getHex = c => {
+            let s = (c||'').toUpperCase();
+            if(s.includes('PRETO')||s.includes('BLACK')||s.includes('MEIA-NOITE')||s.includes('GRAFITE')) return '#191919';
+            if(s.includes('BRANCO')||s.includes('WHITE')||s.includes('ESTELAR')||s.includes('NUVEM')) return '#f5f5f7';
+            if(s.includes('AZUL')||s.includes('BLUE')||s.includes('PACÍFICO')||s.includes('SIERRA')) return '#215e7c';
+            if(s.includes('VERDE')||s.includes('GREEN')||s.includes('ALPINO')) return '#505c4c';
+            if(s.includes('NATURAL')||s.includes('TITÂNIO NATURAL')) return '#8c8c88';
+            if(s.includes('DOURADO')||s.includes('GOLD')||s.includes('DESERTO')) return '#ccb390';
+            if(s.includes('ROSA')||s.includes('PINK')) return '#e6c7c2';
+            if(s.includes('ROXO')||s.includes('PURPLE')||s.includes('PROFUNDO')) return '#5c5b57';
+            if(s.includes('PRATEADO')||s.includes('SILVER')) return '#e3e4e5';
+            return '#808080';
+        };
 
         async function init() {
-            if(!localStorage.getItem('iFipe_Token')) return window.location.href = 'index.html';
-            
-            // Iniciar Ticker Binance
-            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            socket.onmessage = (e) => {
-                currentTaxaVip = parseFloat(JSON.parse(e.data).c) + 0.07;
-                document.getElementById('tickerVip').innerText = `R$ ${currentTaxaVip.toFixed(4)}`;
+            const role = localStorage.getItem('iFipe_Role');
+            if(!role) return window.location.href = 'index.html';
+
+            // Binance Ticker
+            new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
+                let b = parseFloat(JSON.parse(e.data).c);
+                taxaVipGlobal = b + 0.06;
+                document.getElementById('tickerBinance').innerText = `R$ ${b.toFixed(4)}`;
+                document.getElementById('tVip').innerText = `R$ ${taxaVipGlobal.toFixed(4)}`;
+                executarCalculadora();
             };
 
-            await carregarFiltros();
-            await carregarOfertas();
-        }
-
-        async function carregarFiltros() {
-            const [r, f] = await Promise.all([
-                _s.from('regioes').select('*').order('nome'),
-                _s.from('fornecedores').select('id, nome').eq('ativo', true).order('nome')
+            const [pData, oData] = await Promise.all([
+                _s.from('produtos_mestre').select('*').order('nome'),
+                _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome)), fornecedores(nome, verificado, whatsapp), regioes(bandeira)').eq('status_aprovacao', 'aprovado').order('preco', {ascending: true})
             ]);
-            document.getElementById('f_reg').innerHTML += r.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('f_lojista').innerHTML += f.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+
+            document.getElementById('filtroModelo').innerHTML += pData.data.map(p => `<option value="${p.nome}">${p.nome}</option>`).join('');
+            todasOfertas = oData.data || [];
+            renderizarOfertas();
         }
 
-        async function carregarOfertas() {
-            const { data } = await _s.from('ofertas').select(`
-                *,
-                fornecedores(nome, whatsapp, verificado),
-                variacoes(capacidade, cor, hex_cor, produtos_mestre(nome)),
-                regioes(nome, bandeira)
-            `)
-            .eq('status_aprovacao', 'aprovado')
-            .gt('quantidade', 0)
-            .order('preco', { ascending: true });
+        function renderizarOfertas() {
+            const mod = document.getElementById('filtroModelo').value;
+            const cap = document.getElementById('filtroCapacidade').value;
+            const con = document.getElementById('filtroCondicao').value;
 
-            ofertasAtuais = data || [];
-            renderizar(ofertasAtuais);
-        }
+            const filtradas = todasOfertas.filter(o => {
+                const matchMod = !mod || o.variacoes.produtos_mestre.nome === mod;
+                const matchCap = !cap || o.variacoes.capacidade === cap;
+                const matchCon = !con || (con === 'Novo' ? o.condicao === 'Novo' : o.condicao !== 'Novo');
+                return matchMod && matchCap && matchCon;
+            });
 
-        function renderizar(lista) {
-            const grid = document.getElementById('gridOfertas');
-            grid.innerHTML = lista.map(o => {
-                const det = o.variacoes;
-                const m = det.produtos_mestre;
-                const f = o.fornecedores;
-
+            document.getElementById('gridOfertas').innerHTML = filtradas.map(o => {
+                const precoExibicao = o.moeda === 'BRL' ? o.preco : (o.preco * taxaVipGlobal * 1.06);
+                const colorHex = getHex(o.variacoes.cor);
+                
                 return `
-                    <div class="product-card">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="tag-status bg-blue-600/20 text-blue-400 border border-blue-500/30">${o.regioes?.nome || 'BR'}</span>
-                            ${o.preco_anterior > o.preco ? '<span class="tag-status bg-green-600 text-white">📉 OPORTUNIDADE</span>' : ''}
+                <div class="apple-card hover:scale-[1.02] cursor-pointer">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="badge ${o.condicao === 'Novo' ? 'badge-novo' : 'badge-semi'}">${o.condicao}</span>
+                            <h2 class="font-black text-sm mt-1 uppercase italic">${o.variacoes.produtos_mestre.nome}</h2>
+                            <p class="text-[10px] text-gray-500 font-bold uppercase">${o.regioes.bandeira} ${o.variacoes.capacidade}</p>
                         </div>
-                        <h2 class="text-lg font-black leading-tight">
-                            <span class="color-dot" style="background:${det.hex_cor || '#555'}"></span>
-                            ${m.nome}
-                        </h2>
-                        <p class="text-[10px] text-gray-500 font-bold uppercase mt-1">${det.capacidade} | ${det.cor} | ${o.condicao}</p>
-                        
-                        <div class="my-4 flex items-baseline gap-2">
-                            <span class="price-text">${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco.toLocaleString('pt-BR')}</span>
+                        <div class="text-right">
+                            <div class="color-dot" style="background-color: ${colorHex}"></div>
+                            <p class="text-[8px] text-gray-500 font-bold uppercase mt-1">${o.variacoes.cor}</p>
                         </div>
-
-                        <div class="border-t border-[#38383a] pt-3 mb-4">
-                            <p class="text-[11px] text-[#25d366] font-black uppercase tracking-widest flex items-center gap-1">
-                                ${f.nome} ${f.verificado ? '✅' : ''}
-                            </p>
-                            <p class="text-[9px] text-gray-500 mt-1">Estoque: ${o.quantidade} unidades</p>
-                        </div>
-
-                        <a href="https://wa.me/${f.whatsapp?.replace(/\D/g,'')}?text=Olá, vi no iFipe seu ${m.nome} por ${o.preco}" target="_blank" class="buy-button">
-                            Chamar no WhatsApp
-                        </a>
                     </div>
+
+                    <div class="bg-black/40 p-3 rounded-xl mb-4 border border-white/5">
+                        <p class="text-[9px] text-gray-500 font-black uppercase">Preço Atacado</p>
+                        <p class="price-tag">R$ ${precoExibicao.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                        <p class="text-[8px] text-gray-600 font-bold uppercase">${o.moeda === 'USD' ? '* Conversão Taxa VIP + Envio' : 'Preço Final em BRL'}</p>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-[8px] text-gray-500 font-black uppercase">Lojista</p>
+                            <p class="text-[10px] font-bold">${o.fornecedores.nome} ${o.fornecedores.verificado ? '✅' : ''}</p>
+                        </div>
+                        <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}" target="_blank" class="bg-blue-600 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase hover:bg-blue-500">Chamar</a>
+                    </div>
+                    
+                    ${o.condicao !== 'Novo' ? `
+                    <div class="mt-3 pt-3 border-t border-white/5 flex gap-4">
+                         <div><p class="text-[7px] text-gray-600 font-black uppercase">Bateria</p><p class="text-[9px] font-bold">${o.saude_bateria || '--'}</p></div>
+                         <div><p class="text-[7px] text-gray-600 font-black uppercase">Garantia</p><p class="text-[9px] font-bold">${o.garantia || '--'}</p></div>
+                    </div>` : ''}
+                </div>
                 `;
             }).join('');
         }
 
-        function filtrarGrid() {
-            const busca = document.getElementById('buscaGeral').value.toLowerCase();
-            const cond = document.getElementById('f_cond').value;
-            const reg = document.getElementById('f_reg').value;
-            const loj = document.getElementById('f_lojista').value;
+        function executarCalculadora() {
+            const u = parseFloat(document.getElementById('calc_usd').value);
+            if(!u || !taxaVipGlobal) return;
 
-            const filtrados = ofertasAtuais.filter(o => {
-                const matchBusca = o.variacoes.produtos_mestre.nome.toLowerCase().includes(busca) || 
-                                   o.fornecedores.nome.toLowerCase().includes(busca);
-                const matchCond = !cond || o.condicao === cond;
-                const matchReg = !reg || o.regiao_id == reg;
-                const matchLoj = !loj || o.fornecedor_id == loj;
-                return matchBusca && matchCond && matchReg && matchLoj;
-            });
-            renderizar(filtrados);
+            const custoBase = (u * taxaVipGlobal) * 1.06;
+            const round10 = val => Math.round(val / 10) * 10;
+
+            document.getElementById('res_custo').innerText = custoBase.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+            document.getElementById('res_alto').innerText = round10(custoBase + 200).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+            document.getElementById('res_atacado').innerText = round10(custoBase + 350).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+            document.getElementById('res_atacarejo').innerText = round10(custoBase + 500).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+            document.getElementById('res_varejo').innerText = round10(custoBase + 1000).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
         }
+
+        window.onscroll = function() {
+            const btn = document.getElementById("btnSubir");
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) btn.classList.add("show");
+            else btn.classList.remove("show");
+        };
 
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
         window.onload = init;
