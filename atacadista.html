@@ -3,88 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Atacadista</title>
+    <title>iFipe Business - Painel de Vendas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #0b0b0c; --card: #1c1c1e; --text: #fff; --border: #38383a; --blue: #0071e3; }
         body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin:0; }
-        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
-        .apple-input { background: #2c2c2e; border: 1px solid var(--border); border-radius: 10px; padding: 12px; width: 100%; color: #fff; outline: none; transition: 0.3s; }
+        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; transition: 0.3s; }
+        .apple-input { background: #2c2c2e; border: 1px solid var(--border); border-radius: 10px; padding: 12px; width: 100%; color: #fff; outline: none; }
         .apple-input:focus { border-color: var(--blue); }
-        .btn-primary { background: var(--blue); color: #fff; font-weight: 800; border-radius: 12px; padding: 14px; width: 100%; transition: 0.3s; text-transform: uppercase; font-size: 12px; }
-        .btn-primary:hover { transform: scale(1.02); }
-        .btn-edit { color: #0071e3; font-weight: 800; font-size: 10px; text-transform: uppercase; }
+        .btn-primary { background: var(--blue); color: #fff; font-weight: 800; border-radius: 12px; padding: 14px; width: 100%; transition: 0.3s; text-transform: uppercase; font-size: 11px; }
+        .btn-edit { color: var(--blue); font-weight: 900; font-size: 10px; text-transform: uppercase; }
+        .maintenance-tag { background: #f59e0b; color: #000; font-size: 9px; font-weight: 900; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
         .hidden { display: none !important; }
-        .maintenance-banner { background: #f59e0b; color: #000; font-weight: 900; text-align: center; font-size: 10px; padding: 5px; text-transform: uppercase; }
     </style>
 </head>
-<body>
+<body class="p-4 md:p-8">
 
-    <div id="maintBanner" class="maintenance-banner hidden">⚠️ Sistema em modo de manutenção (Apenas usuários ativos)</div>
-
-    <div class="max-w-6xl mx-auto p-4 md:p-8">
-        <header class="flex justify-between items-center mb-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
             <div>
-                <h1 class="text-2xl font-black italic">iFipe <span class="text-blue-500">Business</span></h1>
-                <p id="nomeLoja" class="text-gray-500 font-bold uppercase text-[10px] tracking-widest">Carregando...</p>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-2xl font-black italic">iFipe <span class="text-blue-500">Business</span></h1>
+                    <span id="tagMaint" class="maintenance-tag hidden">Em Manutenção</span>
+                </div>
+                <p id="nomeLoja" class="text-gray-500 font-bold uppercase text-[9px] tracking-widest mt-1">Carregando...</p>
             </div>
-            <button onclick="logout()" class="text-red-500 font-bold text-xs uppercase border border-red-500/20 px-4 py-2 rounded-full">Sair</button>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden md:block">
+                    <p class="text-[9px] text-gray-500 font-black uppercase">Taxa VIP Atual</p>
+                    <p id="cambioVip" class="text-xs font-mono font-black text-green-500">R$ --</p>
+                </div>
+                <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase border border-red-500/20 px-4 py-2 rounded-full">Sair</button>
+            </div>
         </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
             
             <div class="lg:col-span-1">
-                <div class="apple-card sticky top-8">
-                    <h2 id="formTitle" class="font-black mb-6 uppercase italic text-blue-500">Novo Anúncio</h2>
+                <div class="apple-card sticky top-6">
+                    <h2 id="formTitle" class="font-black mb-6 uppercase italic text-blue-500">Publicar Oferta</h2>
                     <input type="hidden" id="editId">
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Modelo de iPhone</label>
+                            <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Modelo</label>
                             <select id="selProduto" class="apple-input" onchange="carregarVariacoes(this.value)">
                                 <option value="">Selecione...</option>
                             </select>
                         </div>
                         <div>
-                            <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Variação (Grade)</label>
+                            <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Grade (GB/Cor)</label>
                             <select id="selVariacao" class="apple-input">
-                                <option value="">Escolha o modelo acima...</option>
+                                <option value="">Escolha o modelo...</option>
                             </select>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Preço Final</label>
+                                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Condição</label>
+                                <select id="selCondicao" class="apple-input" onchange="toggleBateria(this.value)">
+                                    <option value="Novo">Novo</option>
+                                    <option value="Seminovo">Seminovo</option>
+                                    <option value="CPO">CPO Apple</option>
+                                </select>
+                            </div>
+                            <div id="divBateria" class="hidden">
+                                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Bateria %</label>
+                                <input type="text" id="inpBateria" class="apple-input" placeholder="Ex: 95%">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Preço</label>
                                 <input type="number" id="inpPreco" class="apple-input" placeholder="0.00">
                             </div>
                             <div>
-                                <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Moeda</label>
+                                <label class="text-[9px] font-black text-gray-500 uppercase ml-1">Moeda</label>
                                 <select id="selMoeda" class="apple-input">
                                     <option value="BRL">R$ BRL</option>
                                     <option value="USD">$ USD</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <label class="flex items-center gap-2 text-[10px] font-black bg-black/20 p-3 rounded-lg cursor-pointer">
-                                <input type="checkbox" id="checkPix" class="w-4 h-4"> PIX
+                        
+                        <div class="grid grid-cols-2 gap-2 pt-2">
+                            <label class="flex items-center gap-2 text-[9px] font-black bg-black/40 p-3 rounded-lg cursor-pointer border border-white/5">
+                                <input type="checkbox" id="checkPix"> PIX
                             </label>
-                            <label class="flex items-center gap-2 text-[10px] font-black bg-black/20 p-3 rounded-lg cursor-pointer">
-                                <input type="checkbox" id="checkUsdt" class="w-4 h-4"> USDT
+                            <label class="flex items-center gap-2 text-[9px] font-black bg-black/40 p-3 rounded-lg cursor-pointer border border-white/5">
+                                <input type="checkbox" id="checkUsdt"> USDT
                             </label>
                         </div>
 
-                        <button onclick="salvarOferta()" id="btnPost" class="btn-primary">Publicar Oferta</button>
-                        <button onclick="cancelarEdicao()" id="btnCancel" class="w-full text-[10px] font-bold text-gray-500 uppercase mt-2 hidden">Cancelar Edição</button>
+                        <button onclick="salvarOferta()" id="btnPost" class="btn-primary mt-4">Confirmar Publicação</button>
+                        <button onclick="cancelarEdicao()" id="btnCancel" class="w-full text-[9px] font-bold text-gray-500 uppercase mt-2 hidden">Cancelar Alteração</button>
                     </div>
                 </div>
             </div>
 
-            <div class="lg:col-span-2">
-                <div class="apple-card min-h-[500px]">
-                    <h2 class="font-black mb-6 uppercase italic">Meus Anúncios no Oráculo</h2>
-                    <div id="listaAnuncios" class="space-y-3">
+            <div class="lg:col-span-3">
+                <div class="apple-card min-h-[600px]">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="font-black uppercase italic">Ofertas Ativas no Buscador</h2>
+                        <div class="flex gap-2">
+                            <input type="text" id="buscaLocal" placeholder="Filtrar meus anúncios..." class="apple-input !py-1 text-xs w-48" oninput="meusAnuncios()">
+                        </div>
+                    </div>
+                    <div id="listaAnuncios" class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         </div>
                 </div>
             </div>
@@ -95,17 +121,25 @@
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let userLogado = null;
+        let listaCompleta = [];
 
         async function init() {
             const id = localStorage.getItem('iFipe_Atacadista_ID');
             if(!id) window.location.href = 'index.html';
 
+            // Ticker Binance
+            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+            socket.onmessage = (e) => {
+                const taxa = parseFloat(JSON.parse(e.data).c) + 0.07;
+                document.getElementById('cambioVip').innerText = `R$ ${taxa.toFixed(4)}`;
+            };
+
             const { data: config } = await _s.from('configuracoes').select('manutencao').eq('id', 1).single();
-            if(config.manutencao) document.getElementById('maintBanner').classList.remove('hidden');
+            if(config.manutencao) document.getElementById('tagMaint').classList.remove('hidden');
 
             const { data } = await _s.from('fornecedores').select('*').eq('id', id).single();
             userLogado = data;
-            document.getElementById('nomeLoja').innerText = data.nome + " ✅";
+            document.getElementById('nomeLoja').innerText = data.nome + " • PAINEL ATIVO";
 
             await carregarModelos();
             await meusAnuncios();
@@ -122,78 +156,86 @@
             document.getElementById('selVariacao').innerHTML = data.map(v => `<option value="${v.id}">${v.capacidade} | ${v.cor}</option>`).join('');
         }
 
+        function toggleBateria(val) {
+            document.getElementById('divBateria').classList.toggle('hidden', val === 'Novo');
+        }
+
         async function salvarOferta() {
-            const vId = document.getElementById('selVariacao').value;
-            const preco = document.getElementById('inpPreco').value;
-            const editId = document.getElementById('editId').value;
+            const btn = document.getElementById('btnPost');
+            btn.disabled = true; btn.innerText = "PROCESSANDO...";
 
             const payload = {
                 fornecedor_id: userLogado.id,
-                variacao_id: vId,
-                preco: parseFloat(preco),
+                variacao_id: document.getElementById('selVariacao').value,
+                preco: parseFloat(document.getElementById('inpPreco').value),
                 moeda: document.getElementById('selMoeda').value,
+                condicao: document.getElementById('selCondicao').value,
+                saude_bateria: document.getElementById('inpBateria').value,
                 aceita_pix: document.getElementById('checkPix').checked,
                 aceita_usdt: document.getElementById('checkUsdt').checked,
                 status_aprovacao: 'aprovado'
             };
 
-            if(editId) {
-                await _s.from('ofertas').update(payload).eq('id', editId);
-            } else {
-                await _s.from('ofertas').insert(payload);
-            }
+            const editId = document.getElementById('editId').value;
+            if(editId) await _s.from('ofertas').update(payload).eq('id', editId);
+            else await _s.from('ofertas').insert(payload);
 
+            btn.disabled = false; btn.innerText = "Publicar Oferta";
             cancelarEdicao();
             meusAnuncios();
         }
 
         async function meusAnuncios() {
+            const termo = document.getElementById('buscaLocal').value.toLowerCase();
             const { data } = await _s.from('ofertas').select('*, variacoes(id, capacidade, cor, produtos_mestre(id, nome))').eq('fornecedor_id', userLogado.id).order('criado_em', {ascending: false});
             
-            document.getElementById('listaAnuncios').innerHTML = data.map(o => `
+            document.getElementById('listaAnuncios').innerHTML = data.filter(o => o.variacoes.produtos_mestre.nome.toLowerCase().includes(termo)).map(o => `
                 <div class="bg-black/30 p-4 rounded-xl flex justify-between items-center border border-white/5 hover:border-blue-500/50 transition">
                     <div>
-                        <p class="font-black text-sm">${o.variacoes.produtos_mestre.nome}</p>
-                        <p class="text-[9px] text-gray-500 font-black uppercase">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
+                        <p class="font-black text-sm uppercase italic">${o.variacoes.produtos_mestre.nome}</p>
+                        <p class="text-[9px] text-gray-500 font-bold">${o.variacoes.capacidade} • ${o.variacoes.cor} • <span class="text-blue-400">${o.condicao}</span></p>
                     </div>
-                    <div class="flex items-center gap-6">
-                        <div class="text-right">
-                            <p class="font-mono font-black text-[#32d74b] text-lg">${o.moeda === 'BRL' ? 'R$' : '$'} ${o.preco.toLocaleString()}</p>
-                            <p class="text-[8px] text-gray-600 font-bold uppercase">${o.aceita_pix ? 'PIX' : ''} ${o.aceita_usdt ? '• USDT' : ''}</p>
+                    <div class="text-right flex items-center gap-4">
+                        <div class="font-mono font-black text-[#32d74b] text-base">
+                            ${o.moeda === 'BRL' ? 'R$' : '$'} ${o.preco.toLocaleString()}
                         </div>
-                        <div class="flex flex-col gap-2">
-                            <button onclick="prepararEdicao(${o.id}, ${o.variacoes.produtos_mestre.id}, ${o.variacoes.id}, ${o.preco}, '${o.moeda}', ${o.aceita_pix}, ${o.aceita_usdt})" class="btn-edit">Editar</button>
-                            <button onclick="deletarAnuncio(${o.id})" class="text-red-800 font-bold text-[9px] uppercase">Apagar</button>
+                        <div class="flex flex-col gap-1">
+                            <button onclick='prepararEdicao(${JSON.stringify(o)})' class="btn-edit">Editar</button>
+                            <button onclick="deletarAnuncio(${o.id})" class="text-[8px] text-red-800 font-bold uppercase">Apagar</button>
                         </div>
                     </div>
                 </div>
             `).join('');
         }
 
-        async function prepararEdicao(id, pId, vId, preco, moeda, pix, usdt) {
-            document.getElementById('formTitle').innerText = "Editando Oferta";
-            document.getElementById('editId').value = id;
-            document.getElementById('selProduto').value = pId;
-            await carregarVariacoes(pId);
-            document.getElementById('selVariacao').value = vId;
-            document.getElementById('inpPreco').value = preco;
-            document.getElementById('selMoeda').value = moeda;
-            document.getElementById('checkPix').checked = pix;
-            document.getElementById('checkUsdt').checked = usdt;
+        async function prepararEdicao(o) {
+            document.getElementById('formTitle').innerText = "Editando Anúncio";
+            document.getElementById('editId').value = o.id;
+            document.getElementById('selProduto').value = o.variacoes.produtos_mestre.id;
+            await carregarVariacoes(o.variacoes.produtos_mestre.id);
+            document.getElementById('selVariacao').value = o.variacao_id;
+            document.getElementById('selCondicao').value = o.condicao;
+            toggleBateria(o.condicao);
+            document.getElementById('inpBateria').value = o.saude_bateria || "";
+            document.getElementById('inpPreco').value = o.preco;
+            document.getElementById('selMoeda').value = o.moeda;
+            document.getElementById('checkPix').checked = o.aceita_pix;
+            document.getElementById('checkUsdt').checked = o.aceita_usdt;
             document.getElementById('btnPost').innerText = "Salvar Alterações";
             document.getElementById('btnCancel').classList.remove('hidden');
+            window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
         function cancelarEdicao() {
-            document.getElementById('formTitle').innerText = "Novo Anúncio";
+            document.getElementById('formTitle').innerText = "Publicar Oferta";
             document.getElementById('editId').value = "";
             document.getElementById('inpPreco').value = "";
-            document.getElementById('btnPost').innerText = "Publicar Oferta";
+            document.getElementById('btnPost').innerText = "Confirmar Publicação";
             document.getElementById('btnCancel').classList.add('hidden');
         }
 
         async function deletarAnuncio(id) {
-            if(confirm("Remover anúncio?")) {
+            if(confirm("Deseja remover este anúncio do buscador?")) {
                 await _s.from('ofertas').delete().eq('id', id);
                 meusAnuncios();
             }
