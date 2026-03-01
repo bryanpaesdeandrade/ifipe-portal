@@ -11,42 +11,51 @@
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --blue: #0071e3; }
         body { background: var(--bg); color: var(--text); font-family:-apple-system, sans-serif; margin:0; text-transform: uppercase; }
         .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; }
-        .apple-input { background: #2c2c2e; border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: #fff; outline: none; font-size: 11px; text-transform: uppercase; }
+        .apple-input { background: #2c2c2e; border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: #fff; outline: none; font-size: 11px; text-transform: uppercase; text-align: center; }
         .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 12px; cursor: pointer; border: none; font-size: 10px; transition: 0.3s; }
         .apple-button:hover { background: var(--blue); color: #fff; }
-        .mini-edit { background: transparent; border: 1px solid transparent; color: #32d74b; font-weight: 800; width: 70px; text-align: center; font-family: 'JetBrains Mono'; }
+        .mini-edit { background: transparent; border: 1px solid transparent; color: #32d74b; font-weight: 800; width: 60px; text-align: center; font-family: 'JetBrains Mono'; }
+        .mini-edit:focus { border-color: var(--blue); background: #2c2c2e; outline: none; }
         .step-block { margin-bottom: 12px; border-left: 2px solid #38383a; padding-left: 15px; opacity: 0.3; pointer-events: none; transition: 0.3s; }
         .step-block.active { border-left-color: var(--blue); opacity: 1; pointer-events: auto; }
         .btn-tipo { background: #2c2c2e; border: 2px solid #38383a; color: #fff; padding: 12px; border-radius: 12px; font-weight: 900; font-size: 10px; cursor: pointer; width: 100%; display: flex; flex-direction: column; align-items: center; }
         .btn-tipo.active { border-color: var(--blue); color: var(--blue); background: rgba(0,113,227,0.1); }
         table { width: 100%; border-collapse: collapse; }
-        td, th { padding: 10px; border-bottom: 1px solid #2c2c2e; font-size: 10px; text-align: left; }
-        #btnSubir { position: fixed; bottom: 20px; right: 20px; background: var(--blue); color: #fff; font-weight: 900; font-size: 10px; padding: 12px 18px; border-radius: 50px; cursor: pointer; opacity: 0; pointer-events: none; transition: 0.3s; z-index: 1000; border: none; }
-        #btnSubir.show { opacity: 1; pointer-events: auto; }
+        td, th { padding: 10px; border-bottom: 1px solid #2c2c2e; font-size: 10px; text-align: center; }
+        td:nth-child(2), th:nth-child(2) { text-align: left; }
         .hidden { display: none !important; }
+        
+        .btn-header { display: flex; align-items: center; justify-content: center; border-radius: 12px; height: 38px; padding: 0 12px; transition: 0.3s; border: 1px solid var(--border); cursor: pointer; }
+        .btn-calc-top { background: rgba(0, 113, 227, 0.1); color: #0071e3; }
+        .btn-calc-top:hover { background: #0071e3; color: #fff; }
     </style>
 </head>
 <body class="p-4 md:p-6">
-
-    <button id="btnSubir" onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ SUBIR</button>
 
     <header class="max-w-[1400px] mx-auto bg-black border-b border-[#38383a] p-4 mb-6 flex flex-col md:flex-row justify-between items-center gap-4 rounded-2xl">
         <div class="flex items-center gap-4">
             <h1 class="text-2xl font-black italic">iFipe</h1>
             <p id="dashNome" class="font-bold text-xs text-blue-400 border-l border-[#38383a] pl-4">ANUNCIANTE</p>
+            <button onclick="abrirCalc()" class="btn-header btn-calc-top ml-2 text-[9px] font-black uppercase">
+                CALCULADORA VIP
+            </button>
         </div>
         <div class="flex flex-wrap items-center gap-4">
             <div class="text-right">
                 <p class="text-[7px] text-gray-500 font-black">ÍNDICE BINANCE REAL</p>
                 <p id="tBin" class="text-xs font-mono font-black text-yellow-400">R$ --</p>
             </div>
+            <a href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="bg-green-900/30 text-green-400 px-4 py-2 rounded-xl border border-green-500/50 font-black text-[9px] hover:bg-green-900/50 transition flex items-center">
+                COMPRAR USDT COM ORÁCULO <span id="tOra" class="text-xs font-mono ml-2 text-green-300">R$ --</span>
+            </a>
             <button onclick="logout()" class="text-[10px] text-red-500 font-black border border-red-500/20 px-4 py-2 rounded-full">SAIR DO PAINEL</button>
         </div>
     </header>
 
     <main class="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
         <div class="lg:col-span-4">
-            <div class="apple-card sticky top-24">
+            <div class="apple-card sticky top-6">
                 <h2 class="text-xs font-black text-blue-500 mb-4 italic">PUBLICAR OFERTA</h2>
                 <div class="grid grid-cols-2 gap-2 mb-4">
                     <button id="btN" class="btn-tipo" onclick="selTipo('Novo')">📦 NOVO</button>
@@ -54,12 +63,13 @@
                 </div>
                 <form onsubmit="doPost(event)" class="space-y-4">
                     <input type="hidden" id="f_tipo">
-                    <div class="step-block" id="s1"><span class="step-label">1. Modelo</span><select id="f_mod" class="apple-input" onchange="libMem()" required disabled></select></div>
-                    <div class="step-block" id="s2"><span class="step-label">2. Memória</span><select id="f_cap" class="apple-input" onchange="libCor()" required disabled></select></div>
-                    <div class="step-block" id="s3"><span class="step-label">3. Cor</span><select id="f_cor" class="apple-input" onchange="libDet()" required disabled></select></div>
+                    <div class="step-block" id="s1"><span class="step-label text-[9px] font-bold text-gray-400">1. MODELO</span><select id="f_mod" class="apple-input mt-1" onchange="libMem()" required disabled></select></div>
+                    <div class="step-block" id="s2"><span class="step-label text-[9px] font-bold text-gray-400">2. MEMÓRIA</span><select id="f_cap" class="apple-input mt-1" onchange="libCor()" required disabled></select></div>
+                    <div class="step-block" id="s3"><span class="step-label text-[9px] font-bold text-gray-400">3. COR</span><select id="f_cor" class="apple-input mt-1" onchange="libDet()" required disabled></select></div>
                     <div class="step-block" id="s4">
-                        <span class="step-label">4. Detalhes</span>
-                        <div id="z_semi" class="hidden space-y-2 mb-2">
+                        <span class="step-label text-[9px] font-bold text-gray-400">4. DETALHES (QTD MÍNIMA: 1)</span>
+                        
+                        <div id="z_semi" class="hidden space-y-2 mt-1 mb-2">
                             <select id="f_cond" class="apple-input">
                                 <option value="Seminovo">SEMINOVO</option>
                                 <option value="CPO">CPO</option>
@@ -68,42 +78,45 @@
                                 <option value="Grade C">GRADE C</option>
                             </select>
                         </div>
+                        
                         <div class="grid grid-cols-2 gap-2 mb-2">
                             <select id="f_bat" class="apple-input hidden">
                                 <option value="">BATERIA...</option>
-                                <option value="Abaixo de 85%">ABAIXO DE 85%</option>
-                                <option value="Acima de 85%">ACIMA DE 85%</option>
-                                <option value="Acima de 90%">ACIMA DE 90%</option>
-                                <option value="Acima de 95%">ACIMA DE 95%</option>
-                                <option value="Bateria em 100%">BATERIA EM 100%</option>
+                                <option value="Abaixo de 85%">Abaixo de 85%</option>
+                                <option value="Acima de 85%">Acima de 85%</option>
+                                <option value="Acima de 90%">Acima de 90%</option>
+                                <option value="Acima de 95%">Acima de 95%</option>
+                                <option value="Bateria em 100%">Bateria em 100%</option>
                             </select>
                             <select id="f_gar" class="apple-input hidden">
                                 <option value="">GARANTIA...</option>
-                                <option value="Sem garantia">SEM GARANTIA</option>
-                                <option value="1 Mês">1 MÊS</option>
-                                <option value="2 Meses">2 MESES</option>
-                                <option value="3 Meses">3 MESES</option>
-                                <option value="6 Meses">6 MESES</option>
-                                <option value="12 Meses">12 MESES</option>
+                                <option value="Sem garantia">Sem garantia</option>
+                                <option value="1 Mês">1 Mês</option>
+                                <option value="2 Meses">2 Meses</option>
+                                <option value="3 Meses">3 Meses</option>
+                                <option value="6 Meses">6 Meses</option>
+                                <option value="12 Meses">12 Meses</option>
                             </select>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="number" id="f_qtd" class="apple-input" placeholder="Qtd" min="1" oninput="if(this.value<1)this.value=1" required>
+
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <input type="number" id="f_qtd" class="apple-input" placeholder="QTD" min="1" oninput="if(this.value<1)this.value=1" required>
                             <select id="f_orig" class="apple-input" required></select>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 mt-2">
-                            <input type="text" id="f_usd" class="apple-input font-bold" placeholder="$ USD" oninput="mascara(this); document.getElementById('f_brl').value=''">
-                            <input type="text" id="f_brl" class="apple-input font-bold" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('f_usd').value=''">
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <input type="text" id="f_usd" class="apple-input text-blue-400 font-bold" placeholder="$ USD" oninput="mascara(this); document.getElementById('f_brl').value=''">
+                            <input type="text" id="f_brl" class="apple-input text-green-400 font-bold" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('f_usd').value=''">
                         </div>
-                        <div class="grid grid-cols-2 gap-1 mt-2 bg-black p-2 rounded-lg border border-[#38383a]">
-                            <label class="text-[8px] flex items-center gap-1 font-black"><input type="checkbox" id="m_pix"> PIX</label>
-                            <label class="text-[8px] flex items-center gap-1 font-black"><input type="checkbox" id="m_usdt"> USDT</label>
-                            <label class="text-[8px] flex items-center gap-1 font-black"><input type="checkbox" id="m_neg"> NEGOCIA QTD</label>
-                            <label class="text-[8px] flex items-center gap-1 font-black"><input type="checkbox" id="m_envi"> ENVIO</label>
-                            <label class="text-[8px] flex items-center gap-1 font-black"><input type="checkbox" id="m_cole"> COLETA</label>
-                            <label class="text-[8px] flex items-center gap-1 font-black"><input type="checkbox" id="m_nota"> EMITE NF</label>
+
+                        <div class="grid grid-cols-2 gap-2 mt-2 bg-black p-3 rounded-lg border border-[#38383a]">
+                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_pix"> PIX</label>
+                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_usdt"> USDT</label>
+                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_neg"> NEGOCIA QTD</label>
+                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_envi"> FAZ ENVIO</label>
+                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_cole"> ACEITA COLETA</label>
+                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_nota"> EMITE NF</label>
                         </div>
-                        <button type="submit" id="btnS" class="apple-button bg-blue-600 text-white w-full mt-4 hidden">PUBLICAR AGORA</button>
+                        <button type="submit" id="btnS" class="apple-button bg-blue-600 text-white w-full mt-4 hidden">PUBLICAR ANÚNCIO</button>
                     </div>
                 </form>
             </div>
@@ -112,15 +125,25 @@
         <div class="lg:col-span-8">
             <div class="apple-card min-h-[600px] flex flex-col">
                 <div class="flex justify-between items-center mb-4 bg-blue-900/20 p-3 rounded-xl border border-blue-500/30">
-                    <span class="text-[9px] font-black uppercase"><span id="bulkCount">0</span> Selecionados</span>
+                    <span class="text-[9px] font-black uppercase text-blue-300"><span id="bulkCount">0</span> Selecionados</span>
                     <div class="flex gap-2">
-                        <button onclick="abrirBulk()" class="bg-white text-blue-600 px-3 py-1.5 rounded-full text-[8px] font-black uppercase">Editar Massa</button>
+                        <button onclick="abrirBulk()" class="bg-white text-blue-600 px-3 py-1.5 rounded-full text-[8px] font-black uppercase">Editar em Massa</button>
+                        <button onclick="bulkDup()" class="bg-blue-600 text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase">Duplicar</button>
                         <button onclick="bulkDel()" class="bg-red-600 text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase">Apagar</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table>
-                        <thead><tr><th width="30"><input type="checkbox" onclick="selAll(this)"></th><th>Modelo / Grade</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th width="30"><input type="checkbox" onclick="selAll(this)"></th>
+                                <th>MODELO / GRADE</th>
+                                <th>CONDIÇÃO</th>
+                                <th>QTD</th>
+                                <th>PREÇO</th>
+                                <th class="text-right">AÇÃO</th>
+                            </tr>
+                        </thead>
                         <tbody id="lista"></tbody>
                     </table>
                 </div>
@@ -128,25 +151,85 @@
         </div>
     </main>
 
+    <div id="calcModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000] p-4">
+        <div class="apple-card max-w-[380px] w-full border-blue-500">
+            <button onclick="fecharCalc()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+            <h3 class="text-lg font-black uppercase text-white italic mb-1 text-center">Calculadora de iPhone</h3>
+            <p class="text-[9px] text-gray-400 font-bold text-center mb-4 uppercase tracking-widest">Coloque o preço em Dólar do iPhone e saiba o preço entregue no Brasil</p>
+            
+            <div class="relative mb-4">
+                <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
+                <input type="number" id="calcUsd" class="w-full bg-[#151516] border-2 border-[#38383a] rounded-xl py-4 pl-12 pr-4 font-mono text-xl font-black text-white outline-none focus:border-[#0071e3] text-center transition-colors" placeholder="Custo (USD)" oninput="calcularImportacao()">
+            </div>
+
+            <div class="bg-[#0a0a0a] border-2 border-[#2c2c2e] rounded-2xl p-4 text-right mb-4 relative shadow-inner">
+                <span class="absolute top-3 left-4 text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final (R$)</span>
+                <div id="calcResult" class="font-mono text-3xl font-black text-[#32d74b] mt-4 tracking-tighter">R$ 0,00</div>
+            </div>
+            
+            <div class="bg-black/40 border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase tracking-wide space-y-2">
+                <div class="flex justify-between text-white"><span>ALTO ATACADO</span><span id="res_alto">R$ 0,00</span></div>
+                <div class="flex justify-between text-yellow-400"><span>ATACADO</span><span id="res_ata">R$ 0,00</span></div>
+                <div class="flex justify-between text-orange-400"><span>ATACAREJO</span><span id="res_atcrj">R$ 0,00</span></div>
+                <div class="flex justify-between text-blue-400"><span>VAREJO</span><span id="res_var">R$ 0,00</span></div>
+            </div>
+        </div>
+    </div>
+
     <div id="bulkModal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[2000] p-4">
-        <div class="apple-card max-w-[450px] w-full border-blue-500">
-            <h3 class="text-xs font-black uppercase text-blue-500 mb-4">EDIÇÃO EM MASSA</h3>
+        <div class="apple-card max-w-[500px] w-full border-blue-500">
+            <h3 class="text-xs font-black uppercase text-blue-500 mb-4 text-center">EDIÇÃO EM MASSA DE ANÚNCIOS</h3>
+            <p class="text-[9px] text-gray-400 text-center mb-4 font-bold">PREENCHA APENAS O QUE DESEJA ALTERAR NOS ITENS SELECIONADOS</p>
+            
             <form onsubmit="doBulk(event)" class="space-y-4">
                 <div class="grid grid-cols-2 gap-2">
                     <input type="text" id="b_preco" class="apple-input" placeholder="NOVO PREÇO" oninput="mascara(this)">
                     <input type="number" id="b_qtd" class="apple-input" placeholder="NOVA QTD" min="1">
+                    
+                    <select id="b_cond" class="apple-input">
+                        <option value="">MANTER CONDIÇÃO...</option>
+                        <option value="Novo">NOVO</option>
+                        <option value="Seminovo">SEMINOVO</option>
+                        <option value="CPO">CPO</option>
+                        <option value="Grade A">GRADE A</option>
+                        <option value="Grade B">GRADE B</option>
+                        <option value="Grade C">GRADE C</option>
+                    </select>
+
+                    <select id="b_bat" class="apple-input">
+                        <option value="">MANTER BATERIA...</option>
+                        <option value="Abaixo de 85%">Abaixo de 85%</option>
+                        <option value="Acima de 85%">Acima de 85%</option>
+                        <option value="Acima de 90%">Acima de 90%</option>
+                        <option value="Acima de 95%">Acima de 95%</option>
+                        <option value="Bateria em 100%">Bateria em 100%</option>
+                    </select>
+
+                    <select id="b_gar" class="apple-input col-span-2">
+                        <option value="">MANTER GARANTIA...</option>
+                        <option value="1 ANO APPLE">1 ANO APPLE (Novo)</option>
+                        <option value="Sem garantia">Sem garantia</option>
+                        <option value="1 Mês">1 Mês</option>
+                        <option value="2 Meses">2 Meses</option>
+                        <option value="3 Meses">3 Meses</option>
+                        <option value="6 Meses">6 Meses</option>
+                        <option value="12 Meses">12 Meses</option>
+                    </select>
                 </div>
+                
+                <p class="text-[8px] text-center text-gray-500 font-bold mt-2">MARQUE AS MOLDURAS QUE DESEJA APLICAR</p>
                 <div class="grid grid-cols-3 gap-2 bg-black p-3 rounded-xl border border-[#38383a]">
-                    <label class="text-[8px] font-black"><input type="checkbox" id="bk_pix"> PIX</label>
-                    <label class="text-[8px] font-black"><input type="checkbox" id="bk_usdt"> USDT</label>
-                    <label class="text-[8px] font-black"><input type="checkbox" id="bk_neg"> NEGOCIA</label>
-                    <label class="text-[8px] font-black"><input type="checkbox" id="bk_envi"> ENVIOS</label>
-                    <label class="text-[8px] font-black"><input type="checkbox" id="bk_cole"> COLETA</label>
-                    <label class="text-[8px] font-black"><input type="checkbox" id="bk_nota"> NOTA</label>
+                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_pix"> PIX</label>
+                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_usdt"> USDT</label>
+                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_neg"> NEGOCIA</label>
+                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_envi"> ENVIOS</label>
+                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_cole"> COLETA</label>
+                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_nota"> NOTA</label>
                 </div>
-                <div class="flex gap-2">
+                
+                <div class="flex gap-2 pt-2">
                     <button type="button" onclick="fecharBulk()" class="apple-button bg-gray-600 text-white w-1/3">CANCELAR</button>
-                    <button type="submit" class="apple-button bg-blue-600 text-white w-2/3">APLICAR</button>
+                    <button type="submit" class="apple-button bg-blue-600 text-white w-2/3">APLICAR EM MASSA</button>
                 </div>
             </form>
         </div>
@@ -157,6 +240,7 @@
         let loja = null, produtos = [], vars = [], rate = 0;
 
         const rnd10 = v => Math.round(v / 10) * 10;
+        const rndUp = v => Math.ceil(v / 10) * 10;
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
         const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
 
@@ -169,22 +253,52 @@
             new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
                 rate = parseFloat(JSON.parse(e.data).c);
                 document.getElementById('tBin').innerText = `R$ ${rate.toFixed(4)}`;
+                document.getElementById('tOra').innerText = `R$ ${(rate+0.06).toFixed(4)}`;
             };
 
-            const [p, v, r] = await Promise.all([ _s.from('produtos_mestre').select('*').order('id'), _s.from('variacoes').select('*'), _s.from('regioes').select('*').order('id') ]);
+            const [p, v, r] = await Promise.all([ 
+                _s.from('produtos_mestre').select('*').order('id'), 
+                _s.from('variacoes').select('*'), 
+                _s.from('regioes').select('*').order('id') 
+            ]);
             produtos = p.data; vars = v.data;
             document.getElementById('f_orig').innerHTML = '<option value="">ORIGEM...</option>' + r.data.map(x=>`<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
             upTab();
         }
 
+        // --- CALCULADORA VIP 2.0 ---
+        function abrirCalc() { document.getElementById('calcModal').classList.remove('hidden'); calcularImportacao(); }
+        function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
+        function calcularImportacao() {
+            const v = parseFloat(document.getElementById('calcUsd').value.replace(',','.'));
+            let rOraculo = rate + 0.06;
+            if(isNaN(v) || rOraculo === 0) { 
+                document.getElementById('calcResult').innerText = "R$ 0,00"; 
+                document.getElementById('res_alto').innerText = "R$ 0,00";
+                document.getElementById('res_ata').innerText = "R$ 0,00";
+                document.getElementById('res_atcrj').innerText = "R$ 0,00";
+                document.getElementById('res_var').innerText = "R$ 0,00";
+                return; 
+            }
+            const cFinal = (v * rOraculo) * 1.06;
+            document.getElementById('calcResult').innerText = cFinal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_alto').innerText = rndUp(cFinal + 200).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_ata').innerText = rndUp(cFinal + 350).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_atcrj').innerText = rndUp(cFinal + 500).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_var').innerText = rndUp(cFinal + 1000).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+        }
+
+        // --- CONTROLE DE FORMULÁRIO ---
         function selTipo(t) {
             document.getElementById('f_tipo').value = t;
-            document.getElementById('btN').classList.toggle('active', t==='Novo'); document.getElementById('btS').classList.toggle('active', t==='Seminovo');
+            document.getElementById('btN').classList.toggle('active', t==='Novo'); 
+            document.getElementById('btS').classList.toggle('active', t==='Seminovo');
             document.getElementById('z_semi').classList.toggle('hidden', t==='Novo');
             
-            // Controle Bateria e Garantia
+            // Regra Condicional Bateria/Garantia
             if(t==='Novo') {
                 document.getElementById('f_bat').style.display = 'none';
+                document.getElementById('f_bat').value = '';
                 document.getElementById('f_gar').style.display = 'none';
             } else {
                 document.getElementById('f_bat').style.display = 'block';
@@ -233,30 +347,82 @@
             document.getElementById('lista').innerHTML = (data||[]).map(o => `
                 <tr class="hover:bg-white/5">
                     <td><input type="checkbox" class="chk" value="${o.id}" onclick="upBulkCount()"></td>
-                    <td><p class="font-black text-blue-400 text-[10px]">${o.variacoes.produtos_mestre.nome}</p><p class="text-[8px] text-gray-500">${o.variacoes.capacidade} | ${o.variacoes.cor} | ${o.condicao}</p></td>
-                    <td class="text-center"><input type="number" class="mini-edit" value="${o.quantidade}" onblur="edit(${o.id}, 'quantidade', this.value)"></td>
-                    <td class="text-center">${o.moeda==='BRL'?'R$':'$'} ${rnd10(o.preco).toLocaleString('pt-BR')}</td>
-                    <td class="text-right"><button onclick="del(${o.id})" class="text-red-500 font-black text-[9px]">DEL</button></td>
+                    <td><p class="font-black text-blue-400 text-[10px]">${o.variacoes.produtos_mestre.nome}</p><p class="text-[8px] text-gray-500">${o.variacoes.capacidade} | ${o.variacoes.cor}</p></td>
+                    <td><span class="text-[9px] bg-gray-800 px-2 py-0.5 rounded">${o.condicao}</span></td>
+                    <td><input type="number" class="mini-edit" value="${o.quantidade}" min="1" onblur="edit(${o.id}, 'quantidade', this.value)"></td>
+                    <td>${o.moeda==='BRL'?'R$':'$'} ${rnd10(o.preco).toLocaleString('pt-BR')}</td>
+                    <td class="text-right">
+                        <button onclick="del(${o.id})" class="bg-red-900/50 text-red-500 px-3 py-1 rounded font-black text-[9px] hover:bg-red-600 hover:text-white transition">APAGAR</button>
+                    </td>
                 </tr>`).join('');
         }
 
         async function edit(id, c, v) { let val = c==='preco'?rnd10(parseP(v)):Math.max(1, parseInt(v)); await _s.from('ofertas').update({[c]:val}).eq('id',id); upTab(); }
-        async function del(id) { if(confirm("APAGAR?")) { await _s.from('ofertas').delete().eq('id',id); upTab(); } }
+        
+        // --- FUNÇÕES EM MASSA ---
         function selAll(m) { document.querySelectorAll('.chk').forEach(c=>c.checked=m.checked); upBulkCount(); }
         function upBulkCount() { document.getElementById('bulkCount').innerText = document.querySelectorAll('.chk:checked').length; }
         
-        function abrirBulk() { if(!document.querySelectorAll('.chk:checked').length) return alert("SELECIONE!"); document.getElementById('bulkModal').classList.remove('hidden'); }
+        async function del(id) { if(confirm("Deseja realmente apagar este anúncio?")) { await _s.from('ofertas').delete().eq('id',id); upTab(); } }
+        async function bulkDel() { 
+            let ids = Array.from(document.querySelectorAll('.chk:checked')).map(c=>parseInt(c.value)); 
+            if(ids.length && confirm(`Tem certeza que deseja APAGAR ${ids.length} anúncios?`)) { 
+                await _s.from('ofertas').delete().in('id',ids); 
+                upTab(); 
+            } 
+        }
+
+        async function bulkDup() {
+            let ids = Array.from(document.querySelectorAll('.chk:checked')).map(c=>parseInt(c.value));
+            if(!ids.length) return alert("Selecione os anúncios que deseja duplicar.");
+            
+            let qStr = prompt("Quantas cópias de cada anúncio selecionado deseja criar?", "1");
+            let q = parseInt(qStr);
+            if(isNaN(q) || q < 1) return;
+
+            const {data} = await _s.from('ofertas').select('*').in('id',ids);
+            let n = [];
+            for(let i=0; i<q; i++) {
+                data.forEach(o => {
+                    let {id, criado_em, ...rest} = o; // remove id e data de criacao para não dar conflito
+                    n.push(rest);
+                });
+            }
+            await _s.from('ofertas').insert(n);
+            alert(`${n.length} anúncios gerados com sucesso!`);
+            upTab();
+        }
+
+        function abrirBulk() { if(!document.querySelectorAll('.chk:checked').length) return alert("Selecione anúncios para editar em massa."); document.getElementById('bulkModal').classList.remove('hidden'); }
         function fecharBulk() { document.getElementById('bulkModal').classList.add('hidden'); }
+        
         async function doBulk(e) {
             e.preventDefault();
             let ids = Array.from(document.querySelectorAll('.chk:checked')).map(c=>parseInt(c.value));
-            let p=parseP(document.getElementById('b_preco').value), q=document.getElementById('b_qtd').value;
-            let u = {}; if(p) u.preco = rnd10(p); if(q) u.quantidade = Math.max(1, parseInt(q));
-            u.aceita_pix = document.getElementById('bk_pix').checked; u.aceita_usdt = document.getElementById('bk_usdt').checked; u.aceita_coleta = document.getElementById('bk_cole').checked; u.faz_envio = document.getElementById('bk_envi').checked; u.emite_nota = document.getElementById('bk_nota').checked; u.aceita_proposta = document.getElementById('bk_neg').checked;
-            await _s.from('ofertas').update(u).in('id', ids); fecharBulk(); upTab();
+            let p = parseP(document.getElementById('b_preco').value), q = document.getElementById('b_qtd').value;
+            let c = document.getElementById('b_cond').value, b = document.getElementById('b_bat').value, g = document.getElementById('b_gar').value;
+            
+            let u = {}; 
+            if(p) u.preco = rnd10(p); 
+            if(q) u.quantidade = Math.max(1, parseInt(q));
+            if(c) u.condicao = c;
+            if(b) u.saude_bateria = b;
+            if(g) u.garantia = g;
+            
+            // Booleanos (Se marcou na edição em massa, ativa no banco)
+            u.aceita_pix = document.getElementById('bk_pix').checked; 
+            u.aceita_usdt = document.getElementById('bk_usdt').checked; 
+            u.aceita_coleta = document.getElementById('bk_cole').checked; 
+            u.faz_envio = document.getElementById('bk_envi').checked; 
+            u.emite_nota = document.getElementById('bk_nota').checked; 
+            u.aceita_proposta = document.getElementById('bk_neg').checked;
+            
+            await _s.from('ofertas').update(u).in('id', ids); 
+            fecharBulk(); 
+            upTab();
         }
+        
         function logout() { localStorage.clear(); window.location.href = 'index.html'; }
-        window.onscroll = () => document.getElementById('btnSubir').classList.toggle('show', window.scrollY > 300);
         window.onload = init;
     </script>
 </body>
