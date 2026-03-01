@@ -3,180 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Buscador de Atacado</title>
+    <title>iFipe - O BUSCADOR DE PREÇOS DO ATACADO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --blue-sober: #3b82f6; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; text-transform: uppercase; }
+        :root { --bg: #000; --card: #0a0a0a; --text: #fff; --border: #2c2c2e; --blue-apple: #0071e3; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; text-transform: uppercase; }
         
-        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
-        .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; text-transform: uppercase; }
+        #loginOverlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .auth-box { border: 1px solid var(--border); padding: 40px; border-radius: 24px; background: #0a0a0a; text-align: center; width: 350px; }
         
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px; transition: 0.3s; position: relative; display: flex; flex-direction: column; }
-        .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
+        .apple-input { background: #141415; border: 1px solid var(--border); border-radius: 12px; padding: 14px; color: #fff; width: 100%; outline: none; font-size: 12px; transition: 0.3s; margin-bottom: 12px; }
+        .apple-input:focus { border-color: var(--blue-apple); }
+        
+        .btn-apple { background: var(--blue-apple); color: #fff; font-weight: 900; border-radius: 12px; padding: 14px; cursor: pointer; border: none; font-size: 11px; transition: 0.3s; width: 100%; }
+        .btn-apple:hover { opacity: 0.9; transform: scale(1.02); }
 
-        /* TAGS CHAPADAS */
-        .tag-chapada { font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; color: #fff; margin-right: 4px; margin-bottom: 4px; }
-        .tag-novo { background: #16a34a; } 
-        .tag-semi { background: #ca8a04; } 
-        .tag-cinza { background: #4b5563; }
-
-        /* MOLDURAS SÓBRIAS */
-        .moldura-sobria { font-size: 8px; font-weight: 900; padding: 3px 6px; border-radius: 6px; display: inline-flex; align-items: center; border: 1px solid #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.1); margin-right: 4px; margin-bottom: 4px; }
-
-        .price-text { font-size: 22px; font-weight: 900; color: #ffffff; letter-spacing: -0.05em; text-align: right; font-family: 'JetBrains Mono', monospace; }
-        .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 16px; transition: 0.3s; letter-spacing: 0.05em; }
+        .nav-fipe { background: rgba(5,5,5,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 15px 40px; position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
         
-        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
-        #badgeSino { background: #ff3b30; color: #fff; font-size: 8px; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: absolute; top: -5px; right: -5px; font-weight: 900; }
+        .card-anuncio { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
+        .card-anuncio:hover { border-color: #444; transform: translateY(-2px); }
+
+        .badge-insignia { background: rgba(147, 51, 234, 0.15); color: #d8b4fe; border: 1px solid #9333ea; font-size: 8px; font-weight: 900; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-right: 4px; margin-top: 6px; letter-spacing: 0.5px; }
         
-        /* Badges Lojista */
-        .badge-verificado { font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 4px; background: rgba(50, 215, 75, 0.2); color: #32d74b; border: 1px solid #32d74b; margin-left: 4px; display: inline-flex; align-items: center; }
-        .insignia-badge { font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 4px; margin-left: 4px; display: inline-flex; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); color: #d4d4d8; }
-        .califa { border-color: rgba(244, 63, 94, 0.4); color: #fb7185; }
-        .rei { border-color: rgba(59, 130, 246, 0.4); color: #60a5fa; }
-        .magnata { border-color: rgba(245, 158, 11, 0.4); color: #fbbf24; }
+        .hidden { display: none !important; }
+        .text-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .oracle-tag { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 900; }
     </style>
 </head>
 <body>
 
-    <nav class="nav-bar">
-        <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-black italic">iFipe</h1>
-            <button onclick="abrirCalc()" class="border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e] text-[9px] font-black text-blue-400">CALCULADORA DE IPHONE</button>
-        </div>
-
-        <div class="flex flex-col items-center gap-1 bg-[#1c1c1e] p-2 px-4 rounded-xl border border-[#38383a]">
-            <span class="text-[8px] text-yellow-400 font-black">BINANCE USDT/BRL REAL</span>
-            <span class="text-sm font-black text-white font-mono" id="tBin">R$ --</span>
-        </div>
-
-        <div class="flex gap-4 items-center">
-            <div class="relative">
-                <button onclick="abrirSininho()" class="text-xl">🔔</button>
-                <span id="badgeSino" class="hidden">0</span>
+    <div id="loginOverlay">
+        <div class="auth-box">
+            <h1 class="text-4xl font-black italic mb-2">iFipe</h1>
+            <p class="text-[10px] text-zinc-500 mb-8 tracking-widest font-bold">O BUSCADOR DO ATACADO</p>
+            
+            <div id="statusCheck" class="mb-6 hidden">
+                <span class="text-red-500 text-[10px] font-black bg-red-500/10 p-4 rounded-lg block border border-red-500/20">
+                    SISTEMA EM ATUALIZAÇÃO.<br>POR FAVOR, AGUARDE.
+                </span>
             </div>
-            <button onclick="logout()" class="text-red-500 font-black text-[10px]">SAIR</button>
-        </div>
-    </nav>
 
-    <main class="max-w-7xl mx-auto px-4 pb-20 pt-8">
-        <div class="relative w-full max-w-3xl mx-auto mb-6">
-            <div class="flex items-center bg-white border-4 border-[#0071e3] rounded-full overflow-hidden shadow-2xl">
-                <input type="text" id="q" class="w-full bg-white text-black px-6 py-4 outline-none font-black text-sm" placeholder="O QUE VOCÊ PROCURA HOJE?" oninput="filtrar()">
+            <div id="loginForm">
+                <input type="text" id="user" class="apple-input text-center" placeholder="WHATSAPP OU EMAIL">
+                <input type="password" id="pass" class="apple-input text-center" placeholder="SUA SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
+                <button onclick="handleLogin()" class="btn-apple mt-2">ENTRAR</button>
+                <p id="msg" class="text-[10px] font-black text-zinc-500 mt-4 h-4"></p>
             </div>
         </div>
+    </div>
 
-        <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6 mt-0">
-            <div><label class="block text-[8px] font-black text-gray-500 mb-1 text-center">APARELHO</label><select id="fMod" class="apple-input" onchange="filtrar()"><option value="">TODOS</option></select></div>
-            <div><label class="block text-[8px] font-black text-gray-500 mb-1 text-center">CONDIÇÃO</label><select id="fCond" class="apple-input" onchange="filtrar()"><option value="">TODAS</option><option value="Novo">NOVO</option><option value="Seminovo">SEMINOVO</option></select></div>
-            <div><label class="block text-[8px] font-black text-gray-500 mb-1 text-center">MEMÓRIA</label><select id="fCap" class="apple-input" onchange="filtrar()"><option value="">TODAS</option></select></div>
-            <div><label class="block text-[8px] font-black text-gray-500 mb-1 text-center">COR</label><select id="fCor" class="apple-input" onchange="filtrar()"><option value="">TODAS</option></select></div>
-            <div><label class="block text-[8px] font-black text-gray-500 mb-1 text-center">ORIGEM</label><select id="fReg" class="apple-input" onchange="filtrar()"><option value="">TODAS</option></select></div>
-            <div><label class="block text-[8px] font-black text-gray-500 mb-1 text-center">ATACADISTA</label><select id="fLoj" class="apple-input" onchange="filtrar()"><option value="">TODOS</option></select></div>
-            <div><label class="block text-[8px] font-black text-gray-500 mb-1 text-center">CIDADE</label><select id="fCid" class="apple-input" onchange="filtrar()"><option value="">TODAS</option></select></div>
-        </div>
+    <div id="app" class="hidden">
+        <nav class="nav-fipe">
+            <div class="flex items-center gap-6">
+                <h1 class="text-2xl font-black italic">iFipe</h1>
+                <div class="oracle-tag flex items-center gap-2">
+                    <span class="text-[8px] text-zinc-500">USDT ORÁCULO (+0.06):</span>
+                    <span id="oracleVal" class="text-mono text-green-400">R$ --</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-6 border-l border-zinc-800 pl-6">
+                <span id="userNameDisplay" class="text-[10px] font-black text-zinc-400"></span>
+                <button onclick="logout()" class="text-red-500 font-black text-[10px] hover:underline">SAIR</button>
+            </div>
+        </nav>
 
-        <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
-    </main>
+        <main class="p-8 max-w-[1600px] mx-auto">
+            <div class="mb-10">
+                <input type="text" id="mainSearch" class="apple-input !py-5 !text-sm !rounded-xl !bg-[#050505]" placeholder="🔍 BUSCAR MODELO, LOJA OU COR..." onkeyup="renderAds()">
+            </div>
+
+            <div id="adsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                </div>
+        </main>
+    </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let todas = [], rate = 0, user = null, vars = [], ranks = {};
+        
+        let dbAds = [];
+        let oracleRate = 0;
 
-        const getHex = c => { let s=(c||'').toUpperCase(); if(s.includes('PRETO')||s.includes('BLACK')||s.includes('MEIA-NOITE')||s.includes('GRAFITE')) return '#191919'; if(s.includes('BRANCO')||s.includes('WHITE')||s.includes('ESTELAR')||s.includes('PRATEADO')) return '#f5f5f7'; if(s.includes('AZUL')||s.includes('SIERRA')) return '#215e7c'; if(s.includes('VERDE')||s.includes('ALPINO')) return '#505c4c'; if(s.includes('NATURAL')) return '#8c8c88'; if(s.includes('DESERTO')||s.includes('DOURADO')) return '#ccb390'; if(s.includes('ROSA')) return '#e6c7c2'; if(s.includes('ROXO')) return '#5c5b57'; return '#808080'; };
-        const getBandeira = pais => { let p = (pais||'').toUpperCase(); if(p.includes('BRASIL')) return '🇧🇷'; if(p.includes('EUA')) return '🇺🇸'; if(p.includes('CHINA')) return '🇨🇳'; return '🌎'; };
-
-        async function init() {
-            const token = localStorage.getItem('iFipe_Token');
-            if(!token) return window.location.href = 'index.html';
-            const {data:cl} = await _s.from('clientes_buscador').select('*').eq('id', token).single();
-            user = cl;
-
-            new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
-                rate = parseFloat(JSON.parse(e.data).c);
-                document.getElementById('tBin').innerText = `R$ ${rate.toFixed(4)}`;
-                render();
-            };
-
-            const [p, o, v, r, f] = await Promise.all([ 
-                _s.from('produtos_mestre').select('*').order('nome'), 
-                _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome)), fornecedores(*), regioes(*)').eq('status_aprovacao', 'aprovado'),
-                _s.from('variacoes').select('*'),
-                _s.from('regioes').select('*'),
-                _s.from('fornecedores').select('*').eq('ativo', true)
-            ]);
-            
-            vars = v.data; todas = o.data || [];
-            document.getElementById('fMod').innerHTML += p.data.map(x=>`<option value="${x.nome}">${x.nome}</option>`).join('');
-            document.getElementById('fCap').innerHTML += [...new Set(vars.map(x=>x.capacidade))].sort().map(c=>`<option value="${c}">${c}</option>`).join('');
-            document.getElementById('fCor').innerHTML += [...new Set(vars.map(x=>x.cor))].sort().map(c=>`<option value="${c}">${c}</option>`).join('');
-            document.getElementById('fReg').innerHTML += r.data.map(x=>`<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
-            document.getElementById('fLoj').innerHTML += f.data.map(x=>`<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('fCid').innerHTML += [...new Set(f.data.map(x=>x.cidade))].sort().map(c=>`<option value="${c}">${c}</option>`).join('');
-
-            todas.forEach(of => { let id = of.fornecedores.id; if(!ranks[id]) ranks[id] = 0; ranks[id] += of.quantidade; });
-            render();
+        async function checkSystemStatus() {
+            const status = localStorage.getItem('iFipe_Status');
+            if(status === 'off') {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('statusCheck').classList.remove('hidden');
+                return false;
+            }
+            return true;
         }
 
-        function render() {
-            const txt = document.getElementById('q').value.toUpperCase();
-            const m = document.getElementById('fMod').value, cp = document.getElementById('fCap').value, cn = document.getElementById('fCond').value, cr = document.getElementById('fCor').value, rg = document.getElementById('fReg').value, lo = document.getElementById('fLoj').value, ci = document.getElementById('fCid').value;
+        function normalizeString(str) {
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+        }
+
+        async function handleLogin() {
+            if(!await checkSystemStatus()) return;
+
+            const uRaw = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            const msg = document.getElementById('msg');
             
-            let filtrados = todas.filter(o => {
-                return (o.variacoes.produtos_mestre.nome.includes(txt) || o.variacoes.cor.includes(txt)) &&
-                       (!m || o.variacoes.produtos_mestre.nome === m) && (!cp || o.variacoes.capacidade === cp) &&
-                       (!cn || o.condicao === cn) && (!cr || o.variacoes.cor === cr) &&
-                       (!rg || o.regiao_id == rg) && (!lo || o.fornecedor_id == lo) && (!ci || o.fornecedores.cidade === ci);
+            if(!uRaw || !p) { msg.innerText = "PREENCHA TODOS OS CAMPOS."; return; }
+
+            const u = normalizeString(uRaw);
+            msg.className = "text-[10px] font-black text-zinc-500 mt-4";
+            msg.innerText = "VERIFICANDO...";
+
+            const { data, error } = await _s.from('clientes_buscador').select('*');
+            
+            if (data) {
+                const userMatch = data.find(client => {
+                    const clientEmail = client.email ? normalizeString(client.email) : '';
+                    const clientWhats = client.whatsapp ? normalizeString(client.whatsapp) : '';
+                    return (clientEmail === u || clientWhats === u) && client.senha === p;
+                });
+
+                if (userMatch) {
+                    if (userMatch.ativo === false) {
+                        msg.className = "text-[10px] font-black text-red-500 mt-4";
+                        msg.innerText = "CONTA BLOQUEADA PELA GOVERNANÇA.";
+                        return;
+                    }
+
+                    await _s.from('clientes_buscador').update({ logins_count: (userMatch.logins_count || 0) + 1 }).eq('id', userMatch.id);
+                    localStorage.setItem('iFipe_User_Auth', userMatch.id);
+                    localStorage.setItem('iFipe_User_Name', userMatch.nome || userMatch.email || userMatch.whatsapp);
+                    initApp();
+                } else {
+                    msg.className = "text-[10px] font-black text-red-500 mt-4";
+                    msg.innerText = "CREDENCIAIS INVÁLIDAS.";
+                }
+            } else {
+                msg.className = "text-[10px] font-black text-red-500 mt-4";
+                msg.innerText = "ERRO DE CONEXÃO.";
+            }
+        }
+
+        function logout() { localStorage.removeItem('iFipe_User_Auth'); window.location.reload(); }
+
+        function initOracle() {
+            new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
+                let bin = parseFloat(JSON.parse(e.data).c);
+                oracleRate = bin + 0.06; 
+                document.getElementById('oracleVal').innerText = `R$ ${oracleRate.toFixed(4)}`;
+                renderAds(); 
+            };
+        }
+
+        async function initApp() {
+            if(!await checkSystemStatus()) return;
+            
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            document.getElementById('userNameDisplay').innerText = `BEM-VINDO, ${localStorage.getItem('iFipe_User_Name')}`;
+            
+            initOracle();
+            await loadData();
+        }
+
+        async function loadData() {
+            const { data } = await _s
+                .from('ofertas')
+                .select('*, fornecedores(nome, insignia_manual, ativo), variacoes(produtos_mestre(nome), capacidade, cor)')
+                .gt('quantidade', 0)
+                .order('criado_em', { ascending: false });
+            
+            // Filtra anúncios de lojas inativas para não aparecerem
+            dbAds = (data || []).filter(a => a.fornecedores && a.fornecedores.ativo !== false);
+            renderAds();
+        }
+
+        function renderAds() {
+            const query = normalizeString(document.getElementById('mainSearch').value);
+            const grid = document.getElementById('adsGrid');
+            
+            if (!dbAds.length) { grid.innerHTML = '<p class="text-zinc-500 font-black text-xs col-span-full">NENHUM ANÚNCIO DISPONÍVEL NO MOMENTO.</p>'; return; }
+
+            const filtered = dbAds.filter(a => {
+                const searchStr = normalizeString(`${a.fornecedores?.nome} ${a.variacoes?.produtos_mestre?.nome} ${a.variacoes?.capacidade} ${a.variacoes?.cor} ${a.condicao}`);
+                return searchStr.includes(query);
             });
 
-            // Sincronia de Preço: Exatamente o que foi lançado
-            document.getElementById('gridGeral').innerHTML = filtrados.map(o => {
-                let checkVerificado = o.fornecedores.verificado ? '<span class="badge-verificado">✅ VERIFICADO</span>' : '';
-                let stock = ranks[o.fornecedores.id] || 0;
-                let insignia = stock >= 1000 ? '<span class="insignia-badge califa">👑 CALIFA</span>' : (stock >= 200 ? '<span class="insignia-badge rei">🛡️ REI</span>' : (stock >= 50 ? '<span class="insignia-badge magnata">💰 MAGNATA</span>' : ''));
-                let loc = `${getBandeira(o.fornecedores.pais)} | ${o.fornecedores.cidade} - ${o.fornecedores.estado}`;
+            grid.innerHTML = filtered.map(a => {
+                let precoFinal = a.moeda === 'USD' ? (a.preco * oracleRate) : a.preco;
+                let insigniasLojista = (a.fornecedores?.insignia_manual || []).map(insig => `<span class="badge-insignia">${insig}</span>`).join('');
 
                 return `
-                <div class="product-card">
-                    <div class="flex flex-wrap gap-1 mb-2">
-                        <span class="tag-chapada ${o.condicao==='Novo'?'tag-novo':'tag-semi'}">${o.condicao}</span>
-                        <span class="tag-chapada tag-cinza">ESTOQUE: ${o.quantidade}</span>
-                    </div>
-                    <h2 class="text-lg font-black leading-tight mb-1">
-                        <span class="color-dot" style="background:${getHex(o.variacoes.cor)}"></span>
-                        ${o.variacoes.produtos_mestre.nome}
-                    </h2>
-                    <p class="text-[9px] text-gray-400 font-bold mb-3">${o.variacoes.capacidade} | ${o.variacoes.cor}</p>
-                    
-                    <div class="flex flex-wrap gap-1 mb-4">
-                        <span class="moldura-sobria">${o.regioes.bandeira} ORIGEM</span>
-                        ${o.aceita_pix?'<span class="moldura-sobria">PIX</span>':''}
-                        ${o.aceita_usdt?'<span class="moldura-sobria">USDT</span>':''}
-                        ${o.aceita_proposta?'<span class="moldura-sobria">NEGOCIA QTD</span>':''}
-                    </div>
-
-                    <div class="mt-auto border-t border-[#38383a] pt-3 flex justify-between items-end">
-                        <div class="flex-1 overflow-hidden pr-2">
-                            <div class="flex items-center gap-1 mb-1">
-                                <span class="text-[11px] text-[#25d366] font-black truncate">${o.fornecedores.nome}</span>
-                                ${checkVerificado}
+                    <div class="card-anuncio">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-full">
+                                    <h3 class="text-[11px] font-black text-zinc-400">🏢 ${a.fornecedores?.nome || 'LOJA'}</h3>
+                                    <div class="flex flex-wrap w-full mt-1">${insigniasLojista}</div>
+                                </div>
                             </div>
-                            ${insignia}
-                            <div class="text-[8px] text-gray-500 font-black mt-1 uppercase">${loc}</div>
+
+                            <div class="mb-6">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <h2 class="text-sm font-black text-white">${a.variacoes?.produtos_mestre?.nome}</h2>
+                                    <span class="text-[8px] font-black ${a.condicao === 'NOVO' ? 'bg-blue-900/30 text-blue-400 border border-blue-500' : 'bg-yellow-900/30 text-yellow-500 border border-yellow-600'} px-2 py-1 rounded tracking-widest">${a.condicao || 'NOVO'}</span>
+                                </div>
+                                <p class="text-[11px] text-zinc-500 font-mono font-bold">${a.variacoes?.capacidade} | ${a.variacoes?.cor}</p>
+                            </div>
                         </div>
-                        <div class="price-text">${o.moeda==='BRL'?'R$':'$'} ${o.preco.toLocaleString('pt-BR')}</div>
+
+                        <div class="flex justify-between items-end border-t border-zinc-900 pt-4 mt-2">
+                            <div>
+                                <span class="text-[8px] text-zinc-600 block font-black mb-1">PREÇO CONVERTIDO (BRL)</span>
+                                <span class="text-xl font-black text-white font-mono tracking-tighter">R$ ${parseFloat(precoFinal).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                            </div>
+                            <button class="bg-white text-black text-[9px] font-black px-5 py-3 rounded-lg hover:bg-blue-600 hover:text-white transition shadow-lg">
+                                CHAMAR NO WHATS
+                            </button>
+                        </div>
                     </div>
-                    <a href="https://wa.me/${o.fornecedores.whatsapp.replace(/\D/g,'')}?text=VIM%20PELO%20IFIPE" target="_blank" class="buy-button">COMPRAR NO WHATSAPP</a>
-                </div>`;
+                `;
             }).join('');
         }
 
-        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
-        window.onload = init;
+        if(localStorage.getItem('iFipe_User_Auth')) {
+            initApp();
+        } else {
+            checkSystemStatus();
+        }
     </script>
 </body>
 </html>
