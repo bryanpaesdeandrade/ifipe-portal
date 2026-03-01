@@ -8,10 +8,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #0b0b0c; --card: #1c1c1e; --text: #fff; --border: #38383a; --blue: #0071e3; }
+        :root { --bg: #000000; --card: #1c1c1e; --text: #ffffff; --border: #38383a; --blue: #0071e3; }
         body { background: var(--bg); color: var(--text); font-family:-apple-system, sans-serif; margin:0; }
         .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .apple-input { background: #2c2c2e; border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 11px; transition: 0.3s; }
+        .apple-input { background: #2c2c2e; border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 11px; transition: 0.3s; text-transform: uppercase; }
         .apple-input:focus { border-color: var(--blue); }
         .apple-input:disabled { opacity: 0.4; cursor: not-allowed; }
         .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; font-size: 10px; transition: 0.3s; }
@@ -43,9 +43,15 @@
         .hidden { display: none !important; }
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #0071e3; border-radius: 10px; }
+        
+        #btnSubir { position: fixed; bottom: 20px; right: 20px; background: #0071e3; color: #fff; font-weight: 900; font-size: 10px; padding: 12px 18px; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 1000; text-transform: uppercase; border: none; transition: 0.3s; opacity: 0; pointer-events: none; }
+        #btnSubir.show { opacity: 1; pointer-events: auto; }
+        #btnSubir:hover { background: #005bb5; }
     </style>
 </head>
 <body>
+
+    <button id="btnSubir" onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ SUBIR</button>
 
     <div id="maintBanner" class="bg-yellow-500 text-black font-black text-[9px] uppercase text-center py-1 hidden">
         ⚠️ Sistema em Atualização (Acesso VIP Lojista Liberado)
@@ -58,7 +64,7 @@
             <div id="loginForm">
                 <p class="text-[9px] font-black uppercase text-blue-500 mb-8 tracking-widest">Acesso Lojista</p>
                 <form onsubmit="loginLojista(event)">
-                    <input type="text" id="logUser" class="apple-input mb-3" placeholder="WhatsApp ou Nome da Loja" required>
+                    <input type="text" id="logUser" class="apple-input mb-3 uppercase" placeholder="WhatsApp ou Nome da Loja" required>
                     <input type="password" id="logPass" class="apple-input mb-4" placeholder="Senha" required>
                     <button type="submit" id="btnLogin" class="apple-button w-full">Entrar no Painel</button>
                     <button type="button" onclick="toggleAuth()" class="text-[9px] text-gray-500 mt-6 font-bold uppercase hover:text-white transition">Solicitar Cadastro</button>
@@ -68,14 +74,14 @@
             <div id="registerForm" class="hidden">
                 <p class="text-[9px] font-black uppercase text-green-500 mb-6 tracking-widest">Nova Loja</p>
                 <form onsubmit="registrarLojista(event)">
-                    <input type="text" id="regNome" class="apple-input mb-2" placeholder="Nome da Loja" required>
-                    <input type="text" id="regWhats" class="apple-input mb-2" placeholder="WhatsApp (Apenas números)" required>
+                    <input type="text" id="regNome" class="apple-input mb-2 uppercase" placeholder="Nome da Loja" required>
+                    <input type="text" id="regWhats" class="apple-input mb-2 uppercase" placeholder="WhatsApp (Apenas números)" required>
                     <select id="regPais" class="apple-input mb-2" required onchange="mudarPaisCadastro()">
-                        <option value="" disabled selected>País Sede...</option><option value="Brasil">Brasil 🇧🇷</option><option value="Paraguai">Paraguai 🇵🇾</option><option value="Dubai">Dubai 🇦🇪</option><option value="EUA">EUA 🇺🇸</option>
+                        <option value="" disabled selected>País Sede...</option><option value="BRASIL">BRASIL 🇧🇷</option><option value="PARAGUAI">PARAGUAI 🇵🇾</option><option value="DUBAI">DUBAI 🇦🇪</option><option value="EUA">EUA 🇺🇸</option>
                     </select>
                     <div class="grid grid-cols-2 gap-2 mb-2">
-                        <div id="divEstado"><input type="text" id="regEstado" class="apple-input" placeholder="Estado" required></div>
-                        <div id="divCidade"><input type="text" id="regCidade" class="apple-input" placeholder="Cidade" required></div>
+                        <div id="divEstado"><input type="text" id="regEstado" class="apple-input uppercase" placeholder="ESTADO" required></div>
+                        <div id="divCidade"><input type="text" id="regCidade" class="apple-input uppercase" placeholder="CIDADE" required></div>
                     </div>
                     <input type="password" id="regSenha" class="apple-input mb-4" placeholder="Crie uma Senha" required>
                     <button type="submit" id="btnReg" class="apple-button bg-green-600 text-white w-full">Enviar Solicitação</button>
@@ -92,18 +98,19 @@
                 <h1 class="text-xl font-black italic">iFipe</h1>
                 <div class="border-l border-[#38383a] pl-3 hidden sm:block">
                     <p class="text-[8px] text-gray-500 font-black uppercase">Loja Autenticada</p>
-                    <p id="dashNomeLoja" class="font-bold text-xs text-blue-400">...</p>
+                    <p id="dashNomeLoja" class="font-bold text-xs text-blue-400 uppercase">...</p>
                 </div>
             </div>
             
             <div class="flex items-center gap-6">
                 <div class="text-right hidden sm:block">
-                    <p class="text-[7px] text-gray-500 font-black uppercase">Binance Online</p>
+                    <p class="text-[7px] text-gray-500 font-black uppercase">Índice Online Binance</p>
                     <p id="tickerBinance" class="text-xs font-mono font-black text-yellow-400">R$ --</p>
                 </div>
-                <div class="text-right bg-green-900/20 px-3 py-1 rounded-lg border border-green-500/30">
-                    <p class="text-[7px] text-green-400 font-black uppercase">USDT (Câmbio VIP)</p>
-                    <p id="tVip" class="text-xs font-mono font-black text-green-400">R$ --</p>
+                <div class="flex flex-col items-end">
+                    <a href="https://wa.me/15616760652?text=Oráculo%20venho%20através%20do%20iFipe%20e%20quero%20comprar%20USDT" target="_blank" class="bg-[#32d74b] text-black px-3 py-1.5 rounded-lg border border-green-500 font-black text-[9px] uppercase hover:bg-green-400 transition text-center">
+                        COMPRAR USDT COM ORÁCULO
+                    </a>
                 </div>
                 <button onclick="abrirConta()" class="text-[9px] text-gray-400 font-black uppercase hover:text-white">Conta</button>
                 <button onclick="sairPainel()" class="text-[9px] text-red-500 font-black uppercase hover:underline">Sair</button>
@@ -115,23 +122,28 @@
             <div class="lg:col-span-3 space-y-4">
                 
                 <div class="apple-card border-blue-600/30 bg-blue-600/5 p-4">
-                    <h3 class="text-[10px] font-black uppercase text-blue-500 italic mb-2">Conquistas 🏆</h3>
+                    <h3 class="text-[10px] font-black uppercase text-blue-500 italic mb-2">SEUS NÍVEIS NO IFIPE 🏆</h3>
+                    <p class="text-[8px] text-gray-400 uppercase mb-3 font-bold tracking-widest">SEU STATUS NO IFIPE</p>
                     <div id="blocoInsignias" class="flex flex-wrap gap-1"></div>
                 </div>
 
                 <div class="apple-card border-green-600/30 bg-green-600/5 p-4">
-                    <h3 class="text-[10px] font-black uppercase text-green-500 italic mb-3">Calculadora VIP</h3>
+                    <h3 class="text-[10px] font-black uppercase text-green-500 italic mb-3">CALCULADORA VIP PARA IPHONE</h3>
                     <div class="space-y-2">
-                        <input type="number" id="calc_vip_usd" class="apple-input font-mono text-center font-bold !bg-black" placeholder="Custo no PY (US$)" oninput="calcularVipDash()">
-                        <div class="bg-black p-2 rounded-lg border border-[#38383a] text-center">
-                            <span class="text-[7px] text-gray-400 uppercase block mb-1">Custo Entregue (SP)</span>
-                            <span id="res_custo" class="text-sm font-mono font-black text-[#32d74b]">R$ 0,00</span>
+                        <div>
+                            <label class="text-[8px] font-black uppercase text-gray-500 ml-1">CUSTO DO IPHONE NO PARAGUAI (US$)</label>
+                            <input type="number" id="calc_vip_usd" class="apple-input font-mono text-center font-bold !bg-black" placeholder="Ex: 1000" oninput="calcularVipDash()">
                         </div>
-                        <div class="bg-[#1c1c1e] p-2 rounded-lg border border-[#38383a]">
-                            <span class="text-[7px] font-black text-gray-500 uppercase block text-center mb-1 border-b border-[#38383a] pb-1">Sugestão de Venda</span>
-                            <div class="flex justify-between items-center"><span class="text-[8px] text-gray-400 uppercase font-bold">Atacado (5%)</span><span id="res_atacado" class="text-[10px] font-mono font-black text-white">R$ 0,00</span></div>
-                            <div class="flex justify-between items-center"><span class="text-[8px] text-gray-400 uppercase font-bold">Atacarejo (12%)</span><span id="res_atacarejo" class="text-[10px] font-mono font-black text-yellow-400">R$ 0,00</span></div>
-                            <div class="flex justify-between items-center"><span class="text-[8px] text-gray-400 uppercase font-bold">Varejo (25%)</span><span id="res_varejo" class="text-[10px] font-mono font-black text-blue-400">R$ 0,00</span></div>
+                        <div class="bg-black p-3 rounded-xl border border-[#38383a] text-center">
+                            <span class="text-[8px] text-gray-400 uppercase block mb-1 font-bold">CUSTO ENTREGUE NO BRASIL</span>
+                            <span id="res_custo" class="text-lg font-mono font-black text-[#32d74b]">R$ 0,00</span>
+                        </div>
+                        <div class="bg-[#1c1c1e] p-3 rounded-xl border border-[#38383a] space-y-2">
+                            <span class="text-[8px] font-black text-gray-500 uppercase block text-center mb-2 border-b border-[#38383a] pb-1">SUGESTÃO DE VENDA</span>
+                            <div class="flex justify-between items-center"><span class="text-[8px] text-gray-400 uppercase font-bold">ALTO ATACADO</span><span id="res_alto_atacado" class="text-[10px] font-mono font-black text-white">R$ 0,00</span></div>
+                            <div class="flex justify-between items-center"><span class="text-[8px] text-gray-400 uppercase font-bold">ATACADO</span><span id="res_atacado" class="text-[10px] font-mono font-black text-yellow-400">R$ 0,00</span></div>
+                            <div class="flex justify-between items-center"><span class="text-[8px] text-gray-400 uppercase font-bold">ATACAREJO</span><span id="res_atacarejo" class="text-[10px] font-mono font-black text-orange-400">R$ 0,00</span></div>
+                            <div class="flex justify-between items-center"><span class="text-[8px] text-gray-400 uppercase font-bold">VAREJO</span><span id="res_varejo" class="text-[10px] font-mono font-black text-blue-400">R$ 0,00</span></div>
                         </div>
                     </div>
                 </div>
@@ -152,52 +164,52 @@
                         
                         <div class="step-block" id="bloco_categoria">
                             <span class="step-label">1. Categoria</span>
-                            <select id="filtro_grupo" class="apple-input" onchange="liberarModelos()" required><option value="" disabled selected>Aguardando...</option><option value="1">IPHONE</option></select>
+                            <select id="filtro_grupo" class="apple-input uppercase" onchange="liberarModelos()" required><option value="" disabled selected>AGUARDANDO...</option><option value="1">IPHONE</option></select>
                         </div>
                         
                         <div class="step-block" id="bloco_modelo">
                             <span class="step-label">2. Modelo</span>
-                            <select id="selProduto" class="apple-input" onchange="liberarMemorias()" required disabled><option value="" disabled selected>Aguardando...</option></select>
+                            <select id="selProduto" class="apple-input uppercase" onchange="liberarMemorias()" required disabled><option value="" disabled selected>AGUARDANDO...</option></select>
                         </div>
 
                         <div class="step-block" id="bloco_memoria">
                             <span class="step-label">3. Memória</span>
-                            <select id="f_cap" class="apple-input" onchange="liberarCores()" required disabled><option value="" disabled selected>Aguardando...</option></select>
+                            <select id="f_cap" class="apple-input uppercase" onchange="liberarCores()" required disabled><option value="" disabled selected>AGUARDANDO...</option></select>
                         </div>
 
                         <div class="step-block" id="bloco_cor">
                             <span class="step-label">4. Cor</span>
-                            <select id="f_cor" class="apple-input" onchange="liberarDetalhes()" required disabled><option value="" disabled selected>Aguardando...</option></select>
+                            <select id="f_cor" class="apple-input uppercase" onchange="liberarDetalhes()" required disabled><option value="" disabled selected>AGUARDANDO...</option></select>
                         </div>
 
                         <div class="step-block" id="bloco_detalhes">
                             <span class="step-label">5. Detalhes Finais</span>
                             
                             <div id="zona_seminovo" class="hidden mb-2 p-2 bg-black rounded-lg border border-[#38383a] space-y-2">
-                                <select id="condicao_semi" class="apple-input !py-1.5"><option value="Seminovo">Seminovo Padrão</option><option value="CPO">CPO Apple</option><option value="GRADE A">Grade A</option><option value="GRADE B">Grade B</option><option value="GRADE C">Grade C</option><option value="AS IS +">AS IS +</option><option value="REPASSE DE CLIENTE">Repasse</option></select>
-                                <select id="saude_bateria" class="apple-input !py-1.5"><option value="" disabled selected>Bateria...</option><option value="ABAIXO DE 85%">Abaixo de 85%</option><option value="ACIMA DE 85%">Acima de 85%</option><option value="ACIMA DE 90%">Acima de 90%</option><option value="ACIMA DE 95%">Acima de 95%</option><option value="BATERIA EM 100%">100%</option></select>
-                                <select id="garantia_semi" class="apple-input !py-1.5"><option value="" disabled selected>Garantia...</option><option value="SEM GARANTIA">Sem Garantia</option><option value="GARANTIA APPLE">Garantia Apple Restante</option><option value="1 MÊS">1 Mês (30 dias)</option><option value="2 MESES">2 Meses</option><option value="3 MESES">3 Meses (90 dias)</option></select>
+                                <select id="condicao_semi" class="apple-input !py-1.5 uppercase"><option value="Seminovo">Seminovo Padrão</option><option value="CPO">CPO Apple</option><option value="GRADE A">Grade A</option><option value="GRADE B">Grade B</option><option value="GRADE C">Grade C</option><option value="AS IS +">AS IS +</option><option value="REPASSE DE CLIENTE">Repasse</option></select>
+                                <select id="saude_bateria" class="apple-input !py-1.5 uppercase"><option value="" disabled selected>BATERIA...</option><option value="ABAIXO DE 85%">Abaixo de 85%</option><option value="ACIMA DE 85%">Acima de 85%</option><option value="ACIMA DE 90%">Acima de 90%</option><option value="ACIMA DE 95%">Acima de 95%</option><option value="BATERIA EM 100%">100%</option></select>
+                                <select id="garantia_semi" class="apple-input !py-1.5 uppercase"><option value="" disabled selected>GARANTIA...</option><option value="SEM GARANTIA">Sem Garantia</option><option value="GARANTIA APPLE">Garantia Apple Restante</option><option value="1 MÊS">1 Mês (30 dias)</option><option value="2 MESES">2 Meses</option><option value="3 MESES">3 Meses (90 dias)</option></select>
                             </div>
                             <div id="zona_novo" class="hidden mb-2 p-2 bg-green-500/10 rounded-lg border border-green-500/30 text-center">
                                 <p class="text-[8px] text-green-400 font-black uppercase">Novo (Bat 100% | 1 Ano Apple)</p>
                             </div>
 
                             <div class="grid grid-cols-2 gap-2 mb-2">
-                                <input type="number" id="quantidade" class="apple-input font-mono" placeholder="Qtd" min="1" required>
-                                <select id="regiao_id" class="apple-input" required><option value="" disabled selected>Origem...</option></select>
+                                <input type="number" id="quantidade" class="apple-input font-mono uppercase" placeholder="QTD" min="1" required>
+                                <select id="regiao_id" class="apple-input uppercase" required><option value="" disabled selected>ORIGEM...</option></select>
                             </div>
                             
                             <div class="grid grid-cols-2 gap-2 mb-2">
-                                <input type="text" id="preco_brl" class="apple-input text-green-400 font-bold font-mono" placeholder="R$ (BRL)" oninput="mascararMoeda(this); limparPreco('brl')">
-                                <input type="text" id="preco_usd" class="apple-input text-blue-400 font-bold font-mono" placeholder="$ (USD)" oninput="mascararMoeda(this); limparPreco('usd')">
+                                <input type="text" id="preco_brl" class="apple-input text-green-400 font-bold font-mono uppercase" placeholder="R$ (BRL)" oninput="mascararMoeda(this); limparPreco('brl')">
+                                <input type="text" id="preco_usd" class="apple-input text-blue-400 font-bold font-mono uppercase" placeholder="$ (USD)" oninput="mascararMoeda(this); limparPreco('usd')">
                             </div>
 
                             <div class="grid grid-cols-2 gap-1 mt-2 bg-black p-2 rounded-lg border border-[#38383a]">
-                                <label class="text-[8px] flex items-center gap-1 font-black text-gray-400"><input type="checkbox" id="c_pix"> PIX</label>
-                                <label class="text-[8px] flex items-center gap-1 font-black text-gray-400"><input type="checkbox" id="c_usdt"> USDT</label>
-                                <label class="text-[8px] flex items-center gap-1 font-black text-gray-400"><input type="checkbox" id="c_nota"> NF</label>
-                                <label class="text-[8px] flex items-center gap-1 font-black text-gray-400"><input type="checkbox" id="c_envio"> ENVIO</label>
-                                <label class="text-[8px] flex items-center gap-1 font-black text-gray-400 col-span-2"><input type="checkbox" id="c_boy"> MOTOBOY SP</label>
+                                <label class="text-[8px] flex items-center gap-1 font-black text-gray-400"><input type="checkbox" id="c_pix"> ACEITO PIX</label>
+                                <label class="text-[8px] flex items-center gap-1 font-black text-gray-400"><input type="checkbox" id="c_usdt"> ACEITO USDT</label>
+                                <label class="text-[8px] flex items-center gap-1 font-black text-gray-400"><input type="checkbox" id="c_coleta"> ACEITO COLETA</label>
+                                <label class="text-[8px] flex items-center gap-1 font-black text-gray-400"><input type="checkbox" id="c_envio"> FAÇO ENVIOS</label>
+                                <label class="text-[8px] flex items-center gap-1 font-black text-gray-400 col-span-2"><input type="checkbox" id="c_nota"> EMITO NF</label>
                             </div>
                             
                             <button type="submit" id="btnSalvarAnuncio" class="apple-button bg-blue-600 text-white mt-3 hidden">Publicar Oferta</button>
@@ -218,7 +230,7 @@
                         </div>
                         <div class="flex gap-2 flex-wrap">
                             <button onclick="abrirBulkEdit()" class="bg-white text-blue-600 px-3 py-1 rounded-full text-[8px] font-black uppercase">Editar Massa</button>
-                            <button onclick="copiarZap()" class="bg-[#25d366] text-black px-3 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-1"><span>🟢</span> ZAP</button>
+                            <button onclick="copiarZap()" class="bg-[#25d366] text-black px-3 py-1 rounded-full text-[8px] font-black uppercase flex items-center gap-1"><span>🟢</span> ENVIAR LISTA NO ZAP</button>
                             <button onclick="bulkDuplicate()" class="bg-blue-800 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase">Duplicar</button>
                             <button onclick="bulkDelete()" class="bg-red-500 text-white px-3 py-1 rounded-full text-[8px] font-black uppercase">Apagar</button>
                         </div>
@@ -227,7 +239,7 @@
                     <div class="overflow-x-auto flex-1 custom-scroll">
                         <table>
                             <thead><tr><th width="30"><input type="checkbox" onclick="toggleAll(this)"></th><th>Modelo/Grade</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
-                            <tbody id="listaAtivos"><tr><td colspan="5" class="text-center text-gray-500 text-xs italic py-6">Carregando...</td></tr></tbody>
+                            <tbody id="listaAtivos"><tr><td colspan="5" class="text-center text-gray-500 text-xs italic py-6 uppercase">Carregando...</td></tr></tbody>
                         </table>
                     </div>
                 </div>
@@ -242,15 +254,15 @@
             <form onsubmit="salvarEdicaoCompleta(event)">
                 <input type="hidden" id="edit_id"><input type="hidden" id="edit_pid"><input type="hidden" id="edit_cap">
                 <div class="grid grid-cols-2 gap-2 mb-2">
-                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Preço</label><input type="text" id="edit_preco" class="apple-input" oninput="mascararMoeda(this)"></div>
-                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Cor</label><select id="edit_cor" class="apple-input"></select></div>
+                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Preço</label><input type="text" id="edit_preco" class="apple-input uppercase" oninput="mascararMoeda(this)"></div>
+                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Cor</label><select id="edit_cor" class="apple-input uppercase"></select></div>
                 </div>
                 <div class="grid grid-cols-2 gap-2 mb-2">
-                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Condição</label><select id="edit_cond" class="apple-input"><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="GRADE A">Grade A</option></select></div>
-                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Qtd</label><input type="number" id="edit_qtd" class="apple-input"></div>
+                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Condição</label><select id="edit_cond" class="apple-input uppercase"><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option><option value="CPO">CPO</option><option value="GRADE A">Grade A</option></select></div>
+                    <div><label class="text-[8px] text-gray-500 uppercase font-black">Qtd</label><input type="number" id="edit_qtd" class="apple-input uppercase"></div>
                 </div>
                 <label class="text-[8px] text-gray-500 uppercase font-black">Garantia</label>
-                <select id="edit_gar" class="apple-input mb-4"><option value="SEM GARANTIA">Sem Garantia</option><option value="1 ANO GARANTIA APPLE">1 Ano Apple</option><option value="3 MESES">3 Meses</option></select>
+                <select id="edit_gar" class="apple-input mb-4 uppercase"><option value="SEM GARANTIA">Sem Garantia</option><option value="1 ANO GARANTIA APPLE">1 Ano Apple</option><option value="3 MESES">3 Meses</option></select>
                 <div class="flex gap-2">
                     <button type="button" onclick="fecharModal('editModal')" class="apple-button bg-gray-600 text-white w-1/3">Sair</button>
                     <button type="submit" class="apple-button bg-blue-600 text-white w-2/3">Salvar</button>
@@ -264,16 +276,17 @@
             <h3 class="text-xs font-black uppercase mb-4 text-green-500 text-center">Edição em Massa</h3>
             <form onsubmit="salvarBulkChanges(event)">
                 <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Preço (Substituir)</label><input type="text" id="bulk_preco" class="apple-input" oninput="mascararMoeda(this)"></div>
-                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Qtd (Substituir)</label><input type="number" id="bulk_qtd" class="apple-input"></div>
-                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Condição</label><select id="bulk_cond" class="apple-input"><option value="">Manter atual...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select></div>
-                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Bateria</label><select id="bulk_bat" class="apple-input"><option value="">Manter atual...</option><option value="BATERIA EM 100%">100%</option><option value="ACIMA DE 90%">Acima de 90%</option></select></div>
+                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Preço (Substituir)</label><input type="text" id="bulk_preco" class="apple-input uppercase" oninput="mascararMoeda(this)"></div>
+                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Qtd (Substituir)</label><input type="number" id="bulk_qtd" class="apple-input uppercase"></div>
+                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Condição</label><select id="bulk_cond" class="apple-input uppercase"><option value="">Manter atual...</option><option value="Novo">Novo</option><option value="Seminovo">Seminovo</option></select></div>
+                    <div><label class="text-[8px] text-gray-500 font-bold uppercase">Bateria</label><select id="bulk_bat" class="apple-input uppercase"><option value="">Manter atual...</option><option value="BATERIA EM 100%">100%</option><option value="ACIMA DE 90%">Acima de 90%</option></select></div>
                 </div>
-                <div class="grid grid-cols-4 gap-2 mb-4 bg-black p-2 rounded border border-[#38383a]">
-                    <div class="text-center"><label class="text-[8px] text-gray-500 block">PIX</label><select id="b_pix" class="apple-input !py-1 !px-1"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
-                    <div class="text-center"><label class="text-[8px] text-gray-500 block">USDT</label><select id="b_usdt" class="apple-input !py-1 !px-1"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
-                    <div class="text-center"><label class="text-[8px] text-gray-500 block">NF</label><select id="b_nota" class="apple-input !py-1 !px-1"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
-                    <div class="text-center"><label class="text-[8px] text-gray-500 block">ENVIO</label><select id="b_envio" class="apple-input !py-1 !px-1"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                <div class="grid grid-cols-5 gap-2 mb-4 bg-black p-2 rounded border border-[#38383a]">
+                    <div class="text-center"><label class="text-[7px] text-gray-500 block font-bold">PIX</label><select id="b_pix" class="apple-input !py-1 !px-1 uppercase"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                    <div class="text-center"><label class="text-[7px] text-gray-500 block font-bold">USDT</label><select id="b_usdt" class="apple-input !py-1 !px-1 uppercase"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                    <div class="text-center"><label class="text-[7px] text-gray-500 block font-bold">COLETA</label><select id="b_coleta" class="apple-input !py-1 !px-1 uppercase"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                    <div class="text-center"><label class="text-[7px] text-gray-500 block font-bold">ENVIO</label><select id="b_envio" class="apple-input !py-1 !px-1 uppercase"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
+                    <div class="text-center"><label class="text-[7px] text-gray-500 block font-bold">NF</label><select id="b_nota" class="apple-input !py-1 !px-1 uppercase"><option value="">-</option><option value="1">Sim</option><option value="0">Não</option></select></div>
                 </div>
                 <div class="flex gap-2">
                     <button type="button" onclick="fecharModal('bulkModal')" class="apple-button bg-gray-600 text-white w-1/3">Cancelar</button>
@@ -283,26 +296,12 @@
         </div>
     </div>
 
-    <div id="perguntasModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2500] px-4">
-        <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-[#38383a] rounded-2xl p-5 shadow-2xl relative flex flex-col h-[60vh]">
-            <button onclick="fecharModal('perguntasModal')" class="absolute top-4 right-4 text-gray-500 hover:text-white font-bold text-xl">×</button>
-            <h3 class="text-xs font-black uppercase text-yellow-500 mb-1">Perguntas (Q&A)</h3>
-            <p id="qa_nome" class="text-[9px] text-gray-400 font-bold mb-4 uppercase truncate"></p>
-            <div id="listaQA" class="flex-1 overflow-y-auto mb-4 space-y-2 custom-scroll pr-1"></div>
-            <form onsubmit="salvarResposta(event)" class="mt-auto">
-                <input type="hidden" id="qa_id">
-                <textarea id="qa_texto" class="apple-input w-full h-[60px] resize-none mb-2" placeholder="Responda ao cliente..." required></textarea>
-                <button type="submit" class="apple-button bg-yellow-600 text-white w-full">Enviar Resposta Oficial</button>
-            </form>
-        </div>
-    </div>
-
     <div id="contaModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2000] p-4">
         <div class="apple-card max-w-[350px] w-full">
             <h3 class="text-xs font-black uppercase mb-4 text-gray-300">Minha Conta</h3>
             <form onsubmit="salvarConta(event)">
-                <input type="text" id="c_nome" class="apple-input mb-2" required>
-                <input type="text" id="c_whats" class="apple-input mb-2" required>
+                <input type="text" id="c_nome" class="apple-input mb-2 uppercase" required>
+                <input type="text" id="c_whats" class="apple-input mb-2 uppercase" required>
                 <input type="password" id="c_senha" class="apple-input mb-4" placeholder="Nova Senha" required>
                 <div class="flex gap-2">
                     <button type="button" onclick="fecharModal('contaModal')" class="apple-button bg-gray-600 text-white w-1/2">Sair</button>
@@ -325,6 +324,45 @@
         const fecharModal = m => document.getElementById(m).classList.add('hidden');
         const toggleAuth = () => { document.getElementById('loginForm').classList.toggle('hidden'); document.getElementById('registerForm').classList.toggle('hidden'); };
 
+        window.onscroll = function() {
+            if (document.body.scrollTop > 200 || document.documentElement.scrollTop > 200) {
+                document.getElementById("btnSubir").classList.add("show");
+            } else {
+                document.getElementById("btnSubir").classList.remove("show");
+            }
+        };
+
+        /* Integração IBGE */
+        async function carregarEstados() {
+            try {
+                const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+                const est = await res.json();
+                const s = document.getElementById('regEstado');
+                s.innerHTML = '<option value="" disabled selected>ESTADO...</option>' + est.map(e => `<option value="${e.sigla}">${e.sigla} - ${e.nome.toUpperCase()}</option>`).join('');
+            } catch(e) { console.error("IBGE Erro", e); }
+        }
+        async function carregarCidades(uf) {
+            try {
+                const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
+                const cid = await res.json();
+                const s = document.getElementById('regCidade');
+                s.innerHTML = '<option value="" disabled selected>CIDADE...</option>' + cid.map(c => `<option value="${c.nome.toUpperCase()}">${c.nome.toUpperCase()}</option>`).join('');
+                s.disabled = false;
+            } catch(e) { console.error("IBGE Erro", e); }
+        }
+        function mudarPaisCadastro() {
+            const p = document.getElementById('regPais').value;
+            const de = document.getElementById('divEstado'), dc = document.getElementById('divCidade');
+            if(p === 'BRASIL') {
+                de.innerHTML = `<select id="regEstado" class="apple-input uppercase" required onchange="carregarCidades(this.value)"><option value="">ESTADO...</option></select>`;
+                dc.innerHTML = `<select id="regCidade" class="apple-input uppercase" required disabled><option value="">CIDADE...</option></select>`;
+                carregarEstados();
+            } else {
+                de.innerHTML = `<input type="text" id="regEstado" class="apple-input uppercase" placeholder="ESTADO / PROVÍNCIA" required>`;
+                dc.innerHTML = `<input type="text" id="regCidade" class="apple-input uppercase" placeholder="CIDADE" required>`;
+            }
+        }
+
         /* Init & Auth */
         async function init() {
             const { data: c } = await _s.from('configuracoes').select('manutencao').eq('id', 1).single();
@@ -342,45 +380,47 @@
         }
 
         async function loginLojista(e) {
-            e.preventDefault(); const u = document.getElementById('logUser').value.trim(); const p = document.getElementById('logPass').value;
+            e.preventDefault(); const u = document.getElementById('logUser').value.trim().toUpperCase(); const p = document.getElementById('logPass').value;
             const { data } = await _s.from('fornecedores').select('*').or(`whatsapp.eq.${u},nome.ilike.%${u}%`).eq('senha', p).maybeSingle();
-            if(data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); window.location.reload(); } else alert("Credenciais inválidas ou loja bloqueada.");
+            if(data && data.ativo) { localStorage.setItem('iFipe_Anunciante', data.id); window.location.reload(); } else alert("CREDENCIAS INVÁLIDAS OU LOJA BLOQUEADA.");
         }
 
         async function registrarLojista(e) {
             e.preventDefault();
-            const n = document.getElementById('regNome').value, w = document.getElementById('regWhats').value, p = document.getElementById('regPais').value, es = document.getElementById('regEstado').value, ci = document.getElementById('regCidade').value, s = document.getElementById('regSenha').value;
+            const n = document.getElementById('regNome').value.toUpperCase(), w = document.getElementById('regWhats').value.toUpperCase(), p = document.getElementById('regPais').value.toUpperCase(), es = document.getElementById('regEstado').value.toUpperCase(), ci = document.getElementById('regCidade').value.toUpperCase(), s = document.getElementById('regSenha').value;
             const { error } = await _s.from('fornecedores').insert([{ nome:n, whatsapp:w, pais:p, estado:es, cidade:ci, senha:s, ativo:false }]);
-            if(!error) { alert("Solicitação enviada ao Master!"); toggleAuth(); } else alert("Erro ao solicitar. Tente outro nome.");
+            if(!error) { alert("SOLICITAÇÃO ENVIADA AO MASTER!"); toggleAuth(); } else alert("ERRO AO SOLICITAR. TENTE OUTRO NOME.");
         }
 
         /* Dashboard Load */
         async function loadDashboard() {
             document.getElementById('authSection').classList.add('hidden'); document.getElementById('dashboardSection').classList.remove('hidden');
-            document.getElementById('dashNomeLoja').innerText = loja.nome;
+            document.getElementById('dashNomeLoja').innerText = loja.nome.toUpperCase();
             
             new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => { 
                 let b = parseFloat(JSON.parse(e.data).c); taxaVipGlobal = b + 0.07;
-                document.getElementById('tickerBinance').innerText = `R$ ${b.toFixed(4)}`; document.getElementById('tVip').innerText = `R$ ${taxaVipGlobal.toFixed(4)}`;
+                document.getElementById('tickerBinance').innerText = `R$ ${b.toFixed(4)}`; 
                 calcularVipDash();
             };
 
             const [p, r, v] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('regioes').select('*').order('nome'), _s.from('variacoes').select('*').order('capacidade') ]);
             produtosMestre = p.data; gradeVariacoes = v.data;
-            document.getElementById('regiao_id').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome}</option>`).join('');
+            document.getElementById('regiao_id').innerHTML += r.data.map(x => `<option value="${x.id}">${x.bandeira} ${x.nome.toUpperCase()}</option>`).join('');
             
             atualizarLista();
         }
 
-        /* Calculadora */
+        /* Calculadora Premium c/ Arredondamento */
         function calcularVipDash() {
             let u = parseFloat(document.getElementById('calc_vip_usd').value);
-            if(!u || !taxaVipGlobal) return ['res_custo','res_atacado','res_atacarejo','res_varejo'].forEach(id => document.getElementById(id).innerText = 'R$ 0,00');
+            if(!u || !taxaVipGlobal) return ['res_custo','res_alto_atacado','res_atacado','res_atacarejo','res_varejo'].forEach(id => document.getElementById(id).innerText = 'R$ 0,00');
+            
             let c = (u * taxaVipGlobal) * 1.06;
             document.getElementById('res_custo').innerText = c.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-            document.getElementById('res_atacado').innerText = (c*1.05).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-            document.getElementById('res_atacarejo').innerText = (c*1.12).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-            document.getElementById('res_varejo').innerText = (c*1.25).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+            document.getElementById('res_alto_atacado').innerText = Math.ceil(c + 50).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+            document.getElementById('res_atacado').innerText = Math.ceil(c + 100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+            document.getElementById('res_atacarejo').innerText = Math.ceil(c + 500).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+            document.getElementById('res_varejo').innerText = Math.ceil(c + 750).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
         }
 
         /* Wizard */
@@ -390,73 +430,91 @@
             document.getElementById('zona_novo').classList.toggle('hidden', t!=='Novo'); document.getElementById('zona_seminovo').classList.toggle('hidden', t==='Novo');
             document.getElementById('bloco_categoria').classList.add('active'); resetWiz(2);
         }
-        function liberarModelos() { document.getElementById('selProduto').innerHTML = '<option value="" disabled selected>Modelo...</option>' + produtosMestre.map(x=>`<option value="${x.id}">${x.nome}</option>`).join(''); document.getElementById('selProduto').disabled=false; document.getElementById('bloco_modelo').classList.add('active'); resetWiz(3); }
-        function liberarMemorias() { let p = document.getElementById('selProduto').value; let caps = [...new Set(gradeVariacoes.filter(x=>x.produto_id==p).map(x=>x.capacidade))]; document.getElementById('f_cap').innerHTML = '<option value="" disabled selected>Memória...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join(''); document.getElementById('f_cap').disabled=false; document.getElementById('bloco_memoria').classList.add('active'); resetWiz(4); }
-        function liberarCores() { let p = document.getElementById('selProduto').value, c = document.getElementById('f_cap').value; let cores = gradeVariacoes.filter(x=>x.produto_id==p && x.capacidade==c).map(x=>x.cor); document.getElementById('f_cor').innerHTML = '<option value="" disabled selected>Cor...</option><option value="MIX">🔴🟢🔵 MIX COLORS</option>' + cores.map(co=>`<option value="${co}">${emoji(co)} ${co}</option>`).join(''); document.getElementById('f_cor').disabled=false; document.getElementById('bloco_cor').classList.add('active'); resetWiz(5); }
+        function liberarModelos() { document.getElementById('selProduto').innerHTML = '<option value="" disabled selected>MODELO...</option>' + produtosMestre.map(x=>`<option value="${x.id}">${x.nome}</option>`).join(''); document.getElementById('selProduto').disabled=false; document.getElementById('bloco_modelo').classList.add('active'); resetWiz(3); }
+        function liberarMemorias() { let p = document.getElementById('selProduto').value; let caps = [...new Set(gradeVariacoes.filter(x=>x.produto_id==p).map(x=>x.capacidade))]; document.getElementById('f_cap').innerHTML = '<option value="" disabled selected>MEMÓRIA...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join(''); document.getElementById('f_cap').disabled=false; document.getElementById('bloco_memoria').classList.add('active'); resetWiz(4); }
+        function liberarCores() { let p = document.getElementById('selProduto').value, c = document.getElementById('f_cap').value; let cores = gradeVariacoes.filter(x=>x.produto_id==p && x.capacidade==c).map(x=>x.cor); document.getElementById('f_cor').innerHTML = '<option value="" disabled selected>COR...</option><option value="MIX">🔴🟢🔵 MIX COLORS</option>' + cores.map(co=>`<option value="${co}">${emoji(co)} ${co.toUpperCase()}</option>`).join(''); document.getElementById('f_cor').disabled=false; document.getElementById('bloco_cor').classList.add('active'); resetWiz(5); }
         function liberarDetalhes() { document.getElementById('bloco_detalhes').classList.add('active'); document.getElementById('btnSalvarAnuncio').classList.remove('hidden'); }
         function resetWiz(n) { if(n<=2){document.getElementById('selProduto').disabled=true; document.getElementById('bloco_modelo').classList.remove('active');} if(n<=3){document.getElementById('f_cap').disabled=true; document.getElementById('bloco_memoria').classList.remove('active');} if(n<=4){document.getElementById('f_cor').disabled=true; document.getElementById('bloco_cor').classList.remove('active');} if(n<=5){document.getElementById('bloco_detalhes').classList.remove('active'); document.getElementById('btnSalvarAnuncio').classList.add('hidden');} }
 
         /* DB Logic */
         async function salvarOferta(e) {
-            e.preventDefault(); const btn = document.getElementById('btnSalvarAnuncio'); btn.disabled=true; btn.innerText="Salvando...";
+            e.preventDefault(); const btn = document.getElementById('btnSalvarAnuncio'); btn.disabled=true; btn.innerText="SALVANDO...";
             const t = document.getElementById('tipo_selecionado').value, pid = document.getElementById('selProduto').value, cap = document.getElementById('f_cap').value, cor = document.getElementById('f_cor').value;
             const pb = parseP(document.getElementById('preco_brl').value), pu = parseP(document.getElementById('preco_usd').value);
-            if(!pb && !pu) { btn.disabled=false; btn.innerText="Publicar Oferta"; return alert("Preço BRL ou USD obrigatório."); }
+            if(!pb && !pu) { btn.disabled=false; btn.innerText="Publicar Oferta"; return alert("PREÇO BRL OU USD OBRIGATÓRIO."); }
             
             let v = gradeVariacoes.find(x => x.produto_id==pid && x.capacidade==cap && x.cor==(cor==='MIX'?gradeVariacoes.find(g=>g.produto_id==pid).cor:cor));
             await _s.from('ofertas').insert([{
                 fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('regiao_id').value, preco: pb||pu, moeda: pb?'BRL':'USD', quantidade: parseInt(document.getElementById('quantidade').value),
                 condicao: t==='Novo'?'Novo':document.getElementById('condicao_semi').value, saude_bateria: t==='Novo'?'BATERIA EM 100%':document.getElementById('saude_bateria').value, garantia: t==='Novo'?'1 ANO GARANTIA APPLE':document.getElementById('garantia_semi').value, cores_variadas: cor==='MIX',
-                aceita_pix: document.getElementById('c_pix').checked, aceita_usdt: document.getElementById('c_usdt').checked, emite_nota: document.getElementById('c_nota').checked, faz_envio: document.getElementById('c_envio').checked, tem_boy: document.getElementById('c_boy').checked, status_aprovacao: 'aprovado'
+                aceita_pix: document.getElementById('c_pix').checked, aceita_usdt: document.getElementById('c_usdt').checked, emite_nota: document.getElementById('c_nota').checked, faz_envio: document.getElementById('c_envio').checked, aceita_coleta: document.getElementById('c_coleta').checked, status_aprovacao: 'aprovado'
             }]);
             
-            e.target.reset(); selecionarTipo(''); btn.disabled=false; btn.innerText="Publicar Oferta"; atualizarLista();
+            e.target.reset(); selecionarTipo(''); btn.disabled=false; btn.innerText="PUBLICAR OFERTA"; atualizarLista();
         }
 
         async function atualizarLista() {
-            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome)), comentarios(id)').eq('fornecedor_id', loja.id).order('criado_em', {ascending:false});
-            ofertasAtuais = data || []; let tEst = 0, tQA = 0;
+            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome))').eq('fornecedor_id', loja.id).order('criado_em', {ascending:false});
+            ofertasAtuais = data || []; let tEst = 0;
             
             document.getElementById('listaAtivos').innerHTML = ofertasAtuais.map(o => {
-                tEst += o.quantidade; tQA += (o.comentarios?.length || 0);
+                tEst += o.quantidade;
                 return `<tr class="row-ofert hover:bg-[#2c2c2e]/50 transition" data-cond="${o.condicao}">
                     <td><input type="checkbox" class="chk-off" value="${o.id}" onclick="updateBulk()"></td>
-                    <td><div class="flex items-center gap-2"><span class="color-dot-preview" style="background:${hex(o.variacoes.cor)}"></span><div><p class="font-black text-[10px] text-blue-400">${o.variacoes.produtos_mestre.nome}</p><p class="text-[8px] text-gray-500 font-bold uppercase">${o.variacoes.capacidade} | ${o.cores_variadas?'MIX':o.variacoes.cor} | ${o.condicao}</p><button onclick="abrirQA(${o.id}, '${o.variacoes.produtos_mestre.nome}')" class="text-[8px] font-black text-yellow-500 uppercase mt-1">💬 QA (${o.comentarios?.length||0})</button></div></div></td>
+                    <td><div class="flex items-center gap-2"><span class="color-dot-preview" style="background:${hex(o.variacoes.cor)}"></span><div><p class="font-black text-[10px] text-blue-400 uppercase">${o.variacoes.produtos_mestre.nome}</p><p class="text-[8px] text-gray-500 font-bold uppercase">${o.variacoes.capacidade} | ${o.cores_variadas?'MIX COLORS':o.variacoes.cor} | ${o.condicao}</p></div></div></td>
                     <td class="text-center"><input type="number" class="mini-edit mini-edit-qtd" value="${o.quantidade}" onblur="salvarInline(${o.id}, 'quantidade', this.value)"></td>
-                    <td class="text-center"><div class="flex justify-center items-center gap-1"><span class="text-[8px] text-gray-500">${o.moeda==='BRL'?'R$':'$'}</span><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarInline(${o.id}, 'preco', this.value)"></div></td>
+                    <td class="text-center"><div class="flex justify-center items-center gap-1"><span class="text-[8px] text-gray-500 uppercase">${o.moeda==='BRL'?'R$':'$'}</span><input type="text" class="mini-edit" value="${o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2})}" oninput="mascararMoeda(this)" onblur="salvarInline(${o.id}, 'preco', this.value)"></div></td>
                     <td class="text-right flex flex-col items-end gap-1 justify-center h-full pt-3"><span class="btn-acao bg-blue-600/20 text-blue-400" onclick="abrirEdit(${o.id})">Editar</span><span class="btn-acao bg-red-500/20 text-red-500" onclick="del(${o.id})">Del</span></td>
                 </tr>`;
             }).join('');
             
-            let tg = []; if(tEst>=1000)tg.push(`<span class="insignia-badge califa">👑 CALIFA (+1K)</span>`); else if(tEst>=500)tg.push(`<span class="insignia-badge sheikh">🕌 SHEIKH (+500)</span>`); else if(tEst>=200)tg.push(`<span class="insignia-badge imperador">⚔️ IMPERADOR (+200)</span>`); else if(tEst>=50)tg.push(`<span class="insignia-badge magnata">💰 MAGNATA (+50)</span>`); if(tQA>=5)tg.push(`<span class="insignia-badge falador">💬 BLÁ BLÁ BLÁ</span>`);
-            document.getElementById('blocoInsignias').innerHTML = tg.length ? tg.join('') : '<span class="text-[9px] text-gray-500 italic">Acumule estoque...</span>';
+            let tg = []; if(tEst>=1000)tg.push(`<span class="insignia-badge califa">👑 CALIFA (+1K)</span>`); else if(tEst>=500)tg.push(`<span class="insignia-badge sheikh">🕌 SHEIKH (+500)</span>`); else if(tEst>=200)tg.push(`<span class="insignia-badge imperador">⚔️ IMPERADOR (+200)</span>`); else if(tEst>=50)tg.push(`<span class="insignia-badge magnata">💰 MAGNATA (+50)</span>`);
+            document.getElementById('blocoInsignias').innerHTML = tg.length ? tg.join('') : '<span class="text-[9px] text-gray-500 italic uppercase">ACUMULE ESTOQUE...</span>';
             filtrarTabela();
         }
 
         async function salvarInline(id, c, v) { let val = c==='preco'?parseP(v):parseInt(v); if(!val || isNaN(val)) return; await _s.from('ofertas').update({[c]:val}).eq('id',id); }
-        async function del(id) { if(confirm("Apagar?")) { await _s.from('ofertas').delete().eq('id',id); atualizarLista(); } }
+        async function del(id) { if(confirm("APAGAR ANÚNCIO?")) { await _s.from('ofertas').delete().eq('id',id); atualizarLista(); } }
         
         /* Modais Extras (Massa, Q&A, Copiar, etc) */
         function toggleAll(m) { document.querySelectorAll('.chk-off').forEach(c => c.checked = m.checked); updateBulk(); }
         function updateBulk() { document.getElementById('bulkCount').innerText = document.querySelectorAll('.chk-off:checked').length; }
         function filtrarTabela() { let f = document.getElementById('filtro_tabela').value; document.querySelectorAll('.row-ofert').forEach(r => { let c = r.getAttribute('data-cond'); r.style.display = (f==='TODOS' || (f==='NOVO'&&c==='Novo') || (f==='SEMINOVO'&&c!=='Novo')) ? '' : 'none'; }); }
-        function copiarZap() { if(!ofertasAtuais.length) return alert("Estoque vazio."); let t=`*${loja.nome}*\n\n`; ofertasAtuais.forEach(o=>{t+=`📱 ${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade}\n${emoji(o.variacoes.cor)} Cor: ${o.cores_variadas?'Mix':o.variacoes.cor} | 📦 ${o.condicao}\n💰 Por: ${o.moeda==='BRL'?'R$':'$'} ${o.preco}\n\n`;}); t+=`👉 wa.me/${loja.whatsapp.replace(/\D/g,'')}`; navigator.clipboard.writeText(t); alert("Copiado!"); }
         
-        async function abrirEdit(id) { const {data:o} = await _s.from('ofertas').select('*, variacoes(*)').eq('id',id).single(); document.getElementById('edit_id').value=id; document.getElementById('edit_pid').value=o.variacoes.produto_id; document.getElementById('edit_cap').value=o.variacoes.capacidade; document.getElementById('edit_preco').value=o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2}); document.getElementById('edit_qtd').value=o.quantidade; document.getElementById('edit_cond').value=o.condicao; document.getElementById('edit_gar').value=o.garantia||"SEM GARANTIA"; document.getElementById('edit_cor').innerHTML = gradeVariacoes.filter(v=>v.produto_id==o.variacoes.produto_id && v.capacidade==o.variacoes.capacidade).map(v=>`<option value="${v.cor}" ${v.cor==o.variacoes.cor?'selected':''}>${v.cor}</option>`).join(''); document.getElementById('editModal').classList.remove('hidden'); }
+        function copiarZap() { 
+            if(!ofertasAtuais.length) return alert("ESTOQUE VAZIO."); 
+            let t=`*${loja.nome.toUpperCase()}*\n\n`; 
+            ofertasAtuais.forEach(o=>{t+=`📱 ${o.variacoes.produtos_mestre.nome.toUpperCase()} ${o.variacoes.capacidade}\n${emoji(o.variacoes.cor)} Cor: ${o.cores_variadas?'MIX COLORS':o.variacoes.cor.toUpperCase()} | 📦 ${o.condicao.toUpperCase()}\n💰 Por: ${o.moeda==='BRL'?'R$':'$'} ${o.preco}\n\n`;}); 
+            let num = loja.whatsapp ? loja.whatsapp.replace(/\D/g, '') : '';
+            if(num) t+=`👉 wa.me/${num}`; 
+            navigator.clipboard.writeText(t); alert("COPIADO! COLE NO SEU WHATSAPP."); 
+        }
+        
+        async function abrirEdit(id) { const {data:o} = await _s.from('ofertas').select('*, variacoes(*)').eq('id',id).single(); document.getElementById('edit_id').value=id; document.getElementById('edit_pid').value=o.variacoes.produto_id; document.getElementById('edit_cap').value=o.variacoes.capacidade; document.getElementById('edit_preco').value=o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2}); document.getElementById('edit_qtd').value=o.quantidade; document.getElementById('edit_cond').value=o.condicao; document.getElementById('edit_gar').value=o.garantia||"SEM GARANTIA"; document.getElementById('edit_cor').innerHTML = gradeVariacoes.filter(v=>v.produto_id==o.variacoes.produto_id && v.capacidade==o.variacoes.capacidade).map(v=>`<option value="${v.cor}" ${v.cor==o.variacoes.cor?'selected':''}>${v.cor.toUpperCase()}</option>`).join(''); document.getElementById('editModal').classList.remove('hidden'); }
         async function salvarEdicaoCompleta(e) { e.preventDefault(); let id = document.getElementById('edit_id').value; let v = gradeVariacoes.find(x=>x.produto_id==document.getElementById('edit_pid').value && x.capacidade==document.getElementById('edit_cap').value && x.cor==document.getElementById('edit_cor').value); await _s.from('ofertas').update({preco:parseP(document.getElementById('edit_preco').value), quantidade:parseInt(document.getElementById('edit_qtd').value), condicao:document.getElementById('edit_cond').value, garantia:document.getElementById('edit_gar').value, variacao_id:v.id}).eq('id',id); fecharModal('editModal'); atualizarLista(); }
         
-        function abrirBulkEdit() { if(!document.querySelectorAll('.chk-off:checked').length) return alert("Selecione os itens!"); document.getElementById('bulkModal').classList.remove('hidden'); }
-        async function salvarBulkChanges(e) { e.preventDefault(); let ids = Array.from(document.querySelectorAll('.chk-off:checked')).map(c=>parseInt(c.value)); let p=parseP(document.getElementById('bulk_preco').value), q=document.getElementById('bulk_qtd').value, c=document.getElementById('bulk_cond').value, b=document.getElementById('bulk_bat').value; let px=document.getElementById('b_pix').value, us=document.getElementById('b_usdt').value, nt=document.getElementById('b_nota').value, en=document.getElementById('b_envio').value; let u={}; if(p)u.preco=p; if(q)u.quantidade=parseInt(q); if(c)u.condicao=c; if(b)u.saude_bateria=b; if(px!=="")u.aceita_pix=px==="1"; if(us!=="")u.aceita_usdt=us==="1"; if(nt!=="")u.emite_nota=nt==="1"; if(en!=="")u.faz_envio=en==="1"; if(Object.keys(u).length) await _s.from('ofertas').update(u).in('id',ids); fecharModal('bulkModal'); atualizarLista(); }
-        async function bulkDuplicate() { let ids = Array.from(document.querySelectorAll('.chk-off:checked')).map(c=>parseInt(c.value)); if(!ids.length) return alert("Selecione!"); const {data} = await _s.from('ofertas').select('*').in('id',ids); await _s.from('ofertas').insert(data.map(o=>{let{id,criado_em,...r}=o; return r;})); atualizarLista(); }
-        async function bulkDelete() { let ids = Array.from(document.querySelectorAll('.chk-off:checked')).map(c=>parseInt(c.value)); if(!ids.length||!confirm("Apagar em massa?")) return; await _s.from('ofertas').delete().in('id',ids); atualizarLista(); }
+        function abrirBulkEdit() { if(!document.querySelectorAll('.chk-off:checked').length) return alert("SELECIONE OS ITENS!"); document.getElementById('bulkModal').classList.remove('hidden'); }
+        async function salvarBulkChanges(e) { e.preventDefault(); let ids = Array.from(document.querySelectorAll('.chk-off:checked')).map(c=>parseInt(c.value)); let p=parseP(document.getElementById('bulk_preco').value), q=document.getElementById('bulk_qtd').value, c=document.getElementById('bulk_cond').value, b=document.getElementById('bulk_bat').value; let px=document.getElementById('b_pix').value, us=document.getElementById('b_usdt').value, nt=document.getElementById('b_nota').value, en=document.getElementById('b_envio').value, co=document.getElementById('b_coleta').value; let u={}; if(p)u.preco=p; if(q)u.quantidade=parseInt(q); if(c)u.condicao=c; if(b)u.saude_bateria=b; if(px!=="")u.aceita_pix=px==="1"; if(us!=="")u.aceita_usdt=us==="1"; if(nt!=="")u.emite_nota=nt==="1"; if(en!=="")u.faz_envio=en==="1"; if(co!=="")u.aceita_coleta=co==="1"; if(Object.keys(u).length) await _s.from('ofertas').update(u).in('id',ids); fecharModal('bulkModal'); atualizarLista(); }
         
-        async function abrirQA(id, n) { document.getElementById('qa_id').value=id; document.getElementById('qa_nome').innerText=n; document.getElementById('perguntasModal').classList.remove('hidden'); loadQA(id); }
-        async function loadQA(id) { const div=document.getElementById('listaQA'); div.innerHTML='<p class="text-center text-[9px] text-gray-500 py-4">Buscando...</p>'; const {data}=await _s.from('comentarios').select('*').eq('oferta_id',id).order('criado_em'); div.innerHTML=data?.length ? data.map(c=>`<div class="p-2 rounded-lg border border-[#38383a] ${c.is_vendedor?'bg-blue-900/20 ml-4':'bg-[#2c2c2e] mr-4'}"><div class="flex justify-between"><span class="text-[8px] font-black uppercase ${c.is_vendedor?'text-blue-400':'text-gray-400'}">${c.is_vendedor?'Você':(c.autor_nome||'Cliente')}</span><button onclick="delQA(${c.id},${id})" class="text-[7px] text-red-500 uppercase">Apagar</button></div><p class="text-[10px] text-gray-300 mt-1">${c.texto}</p></div>`).join('') : '<p class="text-center text-[9px] text-gray-500 py-4">Sem perguntas.</p>'; }
-        async function salvarResposta(e) { e.preventDefault(); let id=document.getElementById('qa_id').value, t=document.getElementById('qa_texto').value; await _s.from('comentarios').insert([{oferta_id:id, autor_nome:loja.nome, texto:t, is_vendedor:true}]); document.getElementById('qa_texto').value=''; loadQA(id); atualizarLista(); }
-        async function delQA(cid, oid) { if(confirm("Apagar?")){ await _s.from('comentarios').delete().eq('id',cid); loadQA(oid); atualizarLista(); } }
+        async function bulkDuplicate() { 
+            let ids = Array.from(document.querySelectorAll('.chk-off:checked')).map(c=>parseInt(c.value)); 
+            if(!ids.length) return alert("SELECIONE OS ITENS PARA DUPLICAR!"); 
+            let qtdStr = prompt("QUANTAS CÓPIAS DESEJA CRIAR PARA CADA ITEM?", "1");
+            if(!qtdStr) return;
+            let qtd = parseInt(qtdStr);
+            if(isNaN(qtd) || qtd <= 0) return alert("QUANTIDADE INVÁLIDA.");
+            
+            const {data} = await _s.from('ofertas').select('*').in('id',ids); 
+            let novas = [];
+            for(let i=0; i<qtd; i++){ novas.push(...data.map(o=>{let{id,criado_em,...r}=o; return r;})); }
+            await _s.from('ofertas').insert(novas); 
+            atualizarLista(); 
+        }
         
-        function abrirConta() { document.getElementById('c_nome').value=loja.nome; document.getElementById('c_whats').value=loja.whatsapp; document.getElementById('contaModal').classList.remove('hidden'); }
-        async function salvarConta(e) { e.preventDefault(); const {data} = await _s.from('fornecedores').update({nome:document.getElementById('c_nome').value, whatsapp:document.getElementById('c_whats').value, senha:document.getElementById('c_senha').value}).eq('id',loja.id).select().single(); if(data) loja=data; alert("Atualizado!"); fecharModal('contaModal'); loadDashboard(); }
+        async function bulkDelete() { let ids = Array.from(document.querySelectorAll('.chk-off:checked')).map(c=>parseInt(c.value)); if(!ids.length||!confirm("APAGAR EM MASSA?")) return; await _s.from('ofertas').delete().in('id',ids); atualizarLista(); }
+        
+        function abrirConta() { document.getElementById('c_nome').value=loja.nome.toUpperCase(); document.getElementById('c_whats').value=loja.whatsapp.toUpperCase(); document.getElementById('contaModal').classList.remove('hidden'); }
+        async function salvarConta(e) { e.preventDefault(); const {data} = await _s.from('fornecedores').update({nome:document.getElementById('c_nome').value.toUpperCase(), whatsapp:document.getElementById('c_whats').value.toUpperCase(), senha:document.getElementById('c_senha').value}).eq('id',loja.id).select().single(); if(data) loja=data; alert("ATUALIZADO!"); fecharModal('contaModal'); loadDashboard(); }
         
         function sairPainel() { localStorage.removeItem('iFipe_Anunciante'); window.location.reload(); }
         window.onload = init;
