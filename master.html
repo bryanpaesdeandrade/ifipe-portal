@@ -11,13 +11,11 @@
         :root { --bg: #000; --card: #0a0a0a; --text: #fff; --border: #2c2c2e; --blue-master: #0071e3; }
         body { background: var(--bg); color: var(--text); font-family:-apple-system, sans-serif; margin:0; text-transform: uppercase; }
         
-        /* PORTA DE EMERGÊNCIA (Blindagem contra Lockout) */
         #masterAuth { background: #000; position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         .auth-box { border: 1px solid var(--border); padding: 40px; border-radius: 20px; background: #0a0a0a; text-align: center; width: 350px; }
         
         .master-nav { background: #050505; border-bottom: 1px solid var(--border); padding: 15px 40px; position: sticky; top:0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
         
-        /* Menu do Master */
         .master-menu { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 20px 40px; background: #0a0a0a; border-bottom: 1px solid var(--border); }
         .menu-btn { background: transparent; border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; font-size: 10px; font-weight: 900; color: #86868b; }
         .menu-btn.active, .menu-btn:hover { background: rgba(0, 113, 227, 0.1); border-color: var(--blue-master); color: var(--blue-master); }
@@ -46,6 +44,7 @@
         
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; align-items: center; justify-content: center; }
         .hidden { display: none !important; }
+        .text-mono { font-family: 'JetBrains Mono', monospace; }
     </style>
 </head>
 <body>
@@ -75,11 +74,11 @@
         </nav>
 
         <div class="master-menu">
-            <button class="menu-btn active" onclick="switchView('v-atacadistas', this)">🏢 ATACADISTAS</button>
-            <button class="menu-btn" onclick="switchView('v-clientes', this)">👥 CLIENTES (BUSCADOR)</button>
-            <button class="menu-btn" onclick="switchView('v-anuncios', this)">📢 GLOBAL DE ANÚNCIOS</button>
-            <button class="menu-btn" onclick="switchView('v-concierge', this)">🛎️ CONCIERGE</button>
-            <button class="menu-btn" onclick="switchView('v-selos', this)">🛡️ SELOS & INSÍGNIAS</button>
+            <button class="menu-btn active" onclick="switchView('v-atacadistas', this)">🏢 ATACADISTAS (DB)</button>
+            <button class="menu-btn" onclick="switchView('v-clientes', this)">👥 CLIENTES (DB)</button>
+            <button class="menu-btn" onclick="switchView('v-anuncios', this)">📢 GLOBAL ANÚNCIOS</button>
+            <button class="menu-btn" onclick="switchView('v-concierge', this)">🛎️ CONCIERGE GLOBAL</button>
+            <button class="menu-btn" onclick="switchView('v-selos', this)">🛡️ GESTÃO SELOS</button>
             <button class="menu-btn" onclick="switchView('v-staff', this)">🛠️ FUNCIONÁRIOS</button>
             <button class="menu-btn" onclick="switchView('v-conta', this)">⚙️ MINHA CONTA</button>
         </div>
@@ -87,15 +86,25 @@
         <div id="v-atacadistas" class="master-view active">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
-                    <h2 class="text-sm font-black text-white">BASE DE ATACADISTAS</h2>
+                    <h2 class="text-sm font-black text-white">BASE COMPLETA: ATACADISTAS</h2>
                     <div class="flex gap-2">
-                        <button onclick="abrirModalAta()" class="btn-master bg-white text-black hover:bg-zinc-300">+ CADASTRAR NOVO</button>
+                        <button onclick="abrirModalAta()" class="btn-master bg-white text-black hover:bg-zinc-300">+ NOVO ATACADISTA</button>
                         <button onclick="bulkAtaModal()" class="btn-master bg-zinc-800 text-white">⚙️ AÇÕES EM MASSA</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table>
-                        <thead><tr><th width="30"><input type="checkbox" onclick="selAllAta(this)"></th><th>ID</th><th>NOME DA LOJA</th><th>WHATSAPP / CONTATO</th><th>CIDADE</th><th>STATUS</th><th>AÇÕES MASTER</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th width="30"><input type="checkbox" onclick="selAllAta(this)"></th>
+                                <th>CADASTRO</th>
+                                <th>LOJA / LOCAL</th>
+                                <th>CONTATO</th>
+                                <th>SENHA (MASTER VIEW)</th>
+                                <th>STATUS / SELO</th>
+                                <th class="text-right">AÇÕES</th>
+                            </tr>
+                        </thead>
                         <tbody id="listAta"></tbody>
                     </table>
                 </div>
@@ -105,12 +114,19 @@
         <div id="v-clientes" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
-                    <h2 class="text-sm font-black text-white">BASE DE CLIENTES (BUSCADORES)</h2>
+                    <h2 class="text-sm font-black text-white">BASE COMPLETA: CLIENTES (BUSCADORES)</h2>
                 </div>
-                <p class="text-[10px] text-zinc-500 mb-4">Visão total dos usuários cadastrados no buscador público.</p>
                 <div class="overflow-x-auto">
                     <table>
-                        <thead><tr><th>ID</th><th>EMAIL / IDENTIFICAÇÃO</th><th>DATA DE CADASTRO</th><th>AÇÕES MASTER</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>DATA DE CADASTRO</th>
+                                <th>EMAIL / CONTATO</th>
+                                <th>SENHA (MASTER VIEW)</th>
+                                <th class="text-right">AÇÃO</th>
+                            </tr>
+                        </thead>
                         <tbody id="listCli"></tbody>
                     </table>
                 </div>
@@ -120,12 +136,20 @@
         <div id="v-anuncios" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
-                    <h2 class="text-sm font-black text-white">CONTROLE GLOBAL DE ANÚNCIOS</h2>
+                    <h2 class="text-sm font-black text-white">HISTÓRICO E CONTROLE GLOBAL DE ANÚNCIOS</h2>
                     <button onclick="loadAnuncios()" class="btn-master bg-zinc-800">ATUALIZAR BASE</button>
                 </div>
                 <div class="overflow-x-auto">
                     <table>
-                        <thead><tr><th>ATACADISTA</th><th>PRODUTO</th><th>PREÇO</th><th>QTD</th><th>AÇÕES MASTER</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>REGISTRO (TIMESTAMPS)</th>
+                                <th>ATACADISTA</th>
+                                <th>PRODUTO</th>
+                                <th>PREÇO / QTD</th>
+                                <th class="text-right">INTERVENÇÃO</th>
+                            </tr>
+                        </thead>
                         <tbody id="listAnu"></tbody>
                     </table>
                 </div>
@@ -133,48 +157,98 @@
         </div>
 
         <div id="v-concierge" class="master-view">
-            <div class="apple-card max-w-2xl mx-auto text-center py-10">
-                <h2 class="text-2xl font-black text-white mb-2">CONCIERGE DE PODER</h2>
-                <p class="text-[10px] text-zinc-500 mb-8 uppercase font-bold">Aja em nome de qualquer atacadista. O sistema abrirá o painel do lojista concedendo a você acesso total à conta dele para lançar, editar ou corrigir.</p>
+            <div class="apple-card">
+                <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">CONCIERGE DE PODER GLOBAL</h2>
+                <p class="text-[10px] text-zinc-500 mb-8 font-bold">Intervenção e ação em massa sobre todo o ecossistema iFipe.</p>
                 
-                <select id="conSelect" class="apple-input mb-4 text-center font-black !text-[14px]">
-                    <option value="">SELECIONE UM ATACADISTA...</option>
-                </select>
-                <button onclick="executarConcierge()" class="btn-master w-full !text-[12px] !py-4 bg-green-600 hover:bg-green-500">ASSUMIR PAINEL DO ATACADISTA</button>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl text-center">
+                        <h3 class="text-[11px] font-black text-red-500 mb-2">PURGA DE ESTOQUE</h3>
+                        <p class="text-[9px] text-zinc-400 mb-4">Apaga globalmente todos os anúncios que estão com estoque ZERADO de todos os lojistas.</p>
+                        <button onclick="globalPurgeZero()" class="btn-master btn-danger w-full">EXECUTAR PURGA (ZERADOS)</button>
+                    </div>
+                    
+                    <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl text-center">
+                        <h3 class="text-[11px] font-black text-blue-500 mb-2">DESATIVAÇÃO EM MASSA</h3>
+                        <p class="text-[9px] text-zinc-400 mb-4">Muda o status de absolutamente TODOS os atacadistas para INATIVO instantaneamente.</p>
+                        <button onclick="globalDesativarLojistas()" class="btn-master w-full bg-zinc-800">CONGELAR SISTEMA (OFF)</button>
+                    </div>
+
+                    <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl text-center">
+                        <h3 class="text-[11px] font-black text-green-500 mb-2">ATIVAÇÃO GERAL</h3>
+                        <p class="text-[9px] text-zinc-400 mb-4">Muda o status de todos os atacadistas cadastrados para ATIVO.</p>
+                        <button onclick="globalAtivarLojistas()" class="btn-master w-full !bg-green-600">LIBERAR SISTEMA (ON)</button>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div id="v-selos" class="master-view">
             <div class="apple-card">
-                <h2 class="text-sm font-black text-white mb-4 border-b border-zinc-800 pb-4">GESTÃO DE SELOS (VERIFICADO)</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="listSelos"></div>
+                <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">GESTÃO DE SELOS E REGRAS DE HIERARQUIA</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+                        <h3 class="text-[10px] font-black text-blue-400 mb-4">REGRAS DE INSÍGNIAS AUTOMÁTICAS (QTD ESTOQUE)</h3>
+                        <form onsubmit="saveInsigniaRules(event)" class="space-y-3">
+                            <div class="flex items-center justify-between bg-black p-3 rounded border border-zinc-800">
+                                <span class="text-[9px] font-black text-red-400">👑 CALIFA (Mínimo Qtd)</span>
+                                <input type="number" id="ruleCalifa" class="apple-input !w-24 !py-1 text-center" value="1000">
+                            </div>
+                            <div class="flex items-center justify-between bg-black p-3 rounded border border-zinc-800">
+                                <span class="text-[9px] font-black text-blue-400">🛡️ REI (Mínimo Qtd)</span>
+                                <input type="number" id="ruleRei" class="apple-input !w-24 !py-1 text-center" value="200">
+                            </div>
+                            <div class="flex items-center justify-between bg-black p-3 rounded border border-zinc-800">
+                                <span class="text-[9px] font-black text-yellow-500">💰 MAGNATA (Mínimo Qtd)</span>
+                                <input type="number" id="ruleMagnata" class="apple-input !w-24 !py-1 text-center" value="50">
+                            </div>
+                            <button type="submit" class="btn-master w-full mt-2">SALVAR REGRAS GLOBAIS</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+                        <h3 class="text-[10px] font-black text-green-400 mb-4">ATRIBUIR SELO DE VERIFICADO MANUALMENTE</h3>
+                        <p class="text-[8px] text-zinc-500 mb-4">Aplica o selo VIP no buscador ignorando qualquer automação.</p>
+                        <select id="seloManualUser" class="apple-input mb-3"></select>
+                        <div class="flex gap-2">
+                            <button onclick="concederSeloManual(true)" class="btn-master w-1/2 !bg-blue-600">CONCEDER SELO ✅</button>
+                            <button onclick="concederSeloManual(false)" class="btn-master w-1/2 bg-zinc-800">REMOVER SELO ❌</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div id="v-staff" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
-                    <h2 class="text-sm font-black text-white">GESTÃO DE FUNCIONÁRIOS / ADMINS</h2>
-                    <button onclick="abrirModalStaff()" class="btn-master bg-white text-black">+ NOVO FUNCIONÁRIO</button>
+                    <h2 class="text-sm font-black text-white">GESTÃO DE FUNCIONÁRIOS (STAFF)</h2>
+                    <button class="btn-master bg-white text-black">+ NOVO STAFF</button>
                 </div>
-                <div class="overflow-x-auto">
-                    <table>
-                        <thead><tr><th>NOME</th><th>CARGO</th><th>STATUS</th><th>AÇÕES MASTER</th></tr></thead>
-                        <tbody id="listStaff"></tbody>
-                    </table>
-                </div>
+                <table class="w-full">
+                    <thead><tr><th>NOME</th><th>CARGO / PERMISSÃO</th><th>AÇÕES</th></tr></thead>
+                    <tbody><tr><td colspan="3" class="text-center text-zinc-500 py-6">Módulo infraestrutural reservado. Nenhum staff cadastrado no momento.</td></tr></tbody>
+                </table>
             </div>
         </div>
 
         <div id="v-conta" class="master-view">
             <div class="apple-card max-w-md mx-auto">
-                <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">CREDENCIAIS MASTER</h2>
+                <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">CREDENCIAIS ABSOLUTAS DO MASTER</h2>
+                
+                <div class="bg-zinc-900 border border-zinc-800 p-4 rounded-xl mb-6">
+                    <p class="text-[9px] text-zinc-500 font-black mb-1">SENHA ATUAL ATIVA:</p>
+                    <p id="currentMasterPassDisplay" class="text-[14px] font-mono font-black text-blue-400 tracking-widest"></p>
+                </div>
+
                 <form onsubmit="updateMaster(event)" class="space-y-4">
                     <div>
-                        <label class="text-[8px] font-black text-zinc-500">NOVA SENHA MASTER</label>
-                        <input type="password" id="mNewPass" class="apple-input" placeholder="Digite para sobrescrever..." required>
+                        <label class="text-[9px] font-black text-red-500">SOBRESCREVER SENHA MASTER (CUIDADO!)</label>
+                        <p class="text-[8px] text-zinc-500 mb-2">Ao salvar, a senha antiga é destruída imediatamente e qualquer sessão externa precisará da nova chave.</p>
+                        <input type="password" id="mNewPass" class="apple-input" placeholder="Digite a nova chave absoluta..." required>
                     </div>
-                    <button type="submit" class="btn-master w-full">ATUALIZAR SENHA</button>
+                    <button type="submit" class="btn-master w-full !bg-red-600">APLICAR NOVA CHAVE MESTRA</button>
                 </form>
             </div>
         </div>
@@ -182,23 +256,25 @@
     </div>
 
     <div id="modalAta" class="hidden modal-overlay">
-        <div class="apple-card w-full max-w-md bg-[#050505] border-[#38383a]">
-            <h3 id="mAtaTitle" class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">NOVO ATACADISTA</h3>
+        <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a]">
+            <h3 id="mAtaTitle" class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">INTERVENÇÃO NO ATACADISTA</h3>
             <form onsubmit="saveAta(event)" class="space-y-3">
                 <input type="hidden" id="mAtaId">
-                <input type="text" id="mAtaNome" class="apple-input" placeholder="NOME DA LOJA" required>
-                <input type="text" id="mAtaWhats" class="apple-input" placeholder="WHATSAPP (SOMENTE NÚMEROS)" required>
-                <input type="text" id="mAtaEmail" class="apple-input" placeholder="EMAIL DE LOGIN">
-                <input type="text" id="mAtaCid" class="apple-input" placeholder="CIDADE">
-                <input type="text" id="mAtaEst" class="apple-input" placeholder="ESTADO (SIGLA)">
-                <input type="text" id="mAtaSenha" class="apple-input border-blue-500" placeholder="SENHA DE ACESSO (Deixe em branco p/ manter)">
-                <div class="flex gap-4 bg-zinc-900 p-3 rounded-lg">
-                    <label class="text-[9px] font-black flex items-center gap-1"><input type="checkbox" id="mAtaAtivo"> ATIVO</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <div><label class="text-[8px] text-zinc-500 font-bold">NOME</label><input type="text" id="mAtaNome" class="apple-input" required></div>
+                    <div><label class="text-[8px] text-zinc-500 font-bold">WHATSAPP</label><input type="text" id="mAtaWhats" class="apple-input" required></div>
+                    <div><label class="text-[8px] text-zinc-500 font-bold">EMAIL</label><input type="text" id="mAtaEmail" class="apple-input"></div>
+                    <div><label class="text-[8px] text-zinc-500 font-bold">CIDADE</label><input type="text" id="mAtaCid" class="apple-input"></div>
+                    <div><label class="text-[8px] text-zinc-500 font-bold">ESTADO</label><input type="text" id="mAtaEst" class="apple-input"></div>
+                    <div><label class="text-[8px] text-blue-500 font-bold">SOBRESCREVER SENHA</label><input type="text" id="mAtaSenha" class="apple-input border-blue-500" placeholder="Deixe em branco p/ não mudar"></div>
+                </div>
+                <div class="flex gap-4 bg-zinc-900 p-3 rounded-lg border border-zinc-800 mt-2">
+                    <label class="text-[9px] font-black flex items-center gap-1"><input type="checkbox" id="mAtaAtivo"> CONTA ATIVA</label>
                     <label class="text-[9px] font-black flex items-center gap-1 text-blue-400"><input type="checkbox" id="mAtaVeri"> SELO VERIFICADO</label>
                 </div>
                 <div class="flex gap-2 pt-2">
                     <button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button>
-                    <button type="submit" class="btn-master w-2/3">SALVAR DADOS</button>
+                    <button type="submit" class="btn-master w-2/3">APLICAR PODER MASTER</button>
                 </div>
             </form>
         </div>
@@ -218,32 +294,20 @@
         </div>
     </div>
 
-    <div id="modalCli" class="hidden modal-overlay">
-        <div class="apple-card w-full max-w-sm bg-[#050505]">
-            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">INTERVIR NO CLIENTE</h3>
-            <form onsubmit="saveCli(event)" class="space-y-3">
-                <input type="hidden" id="mCliId">
-                <input type="text" id="mCliEmail" class="apple-input" placeholder="EMAIL / CONTATO" required>
-                <input type="text" id="mCliSenha" class="apple-input" placeholder="NOVA SENHA (Opcional)">
-                <div class="flex gap-2 pt-2">
-                    <button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button>
-                    <button type="submit" class="btn-master w-2/3">SALVAR</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         
         let dbAta = [], dbCli = [], dbAnu = [];
 
-        // 1. SISTEMA ANTI-LOCKOUT
+        // --- 1. GESTÃO DE SENHA E LOCKOUT (BLINDADO) ---
+        function getMasterPass() { return localStorage.getItem('Master_Custom_Pass') || 'ifipemaster2026'; }
+        
         function checkAuth() {
             const tk = localStorage.getItem('iFipe_Master_Auth');
             if(tk === 'gov_absoluto') {
                 document.getElementById('masterAuth').classList.add('hidden');
                 document.getElementById('masterApp').classList.remove('hidden');
+                document.getElementById('currentMasterPassDisplay').innerText = getMasterPass();
                 initMaster();
             } else {
                 document.getElementById('masterAuth').classList.remove('hidden');
@@ -253,26 +317,39 @@
 
         function tryLogin() {
             const p = document.getElementById('mPass').value;
-            // A Chave Mestra é inviolável. Se for essa, entra.
-            if(p === 'ifipemaster2026' || p === localStorage.getItem('Master_Custom_Pass')) {
+            // Validação Absoluta: Somente a chave ativa funciona.
+            if(p === getMasterPass()) {
                 localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
                 checkAuth();
             } else {
-                document.getElementById('mLoginMsg').innerText = "CHAVE NEGADA.";
+                document.getElementById('mLoginMsg').innerText = "CHAVE NEGADA. ACESSO BLOQUEADO.";
             }
         }
 
         function masterLogout() { localStorage.removeItem('iFipe_Master_Auth'); checkAuth(); }
+        
+        function updateMaster(e) {
+            e.preventDefault();
+            const n = document.getElementById('mNewPass').value;
+            if(n) {
+                localStorage.setItem('Master_Custom_Pass', n);
+                alert("SENHA MASTER ALTERADA! A chave antiga foi pulverizada.");
+                document.getElementById('mNewPass').value = '';
+                document.getElementById('currentMasterPassDisplay').innerText = n;
+            }
+        }
+
+        // --- 2. SISTEMA E RENDERIZAÇÃO ---
         function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden')); }
         function switchView(id, btn) {
             document.querySelectorAll('.master-view').forEach(v => v.classList.remove('active'));
             document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             btn.classList.add('active');
+            if(id === 'v-selos') loadSeloRuleInputs();
         }
 
         async function initMaster() {
-            // Ticker
             new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
                 document.getElementById('tBin').innerText = `R$ ${parseFloat(JSON.parse(e.data).c).toFixed(4)}`;
             };
@@ -280,38 +357,44 @@
         }
 
         async function loadAll() {
-            // Carga Massiva de Dados
             const [f, c, o] = await Promise.all([
                 _s.from('fornecedores').select('*').order('id', {ascending: false}),
                 _s.from('clientes_buscador').select('*').order('criado_em', {ascending: false}),
-                _s.from('ofertas').select('*, fornecedores(nome), variacoes(produtos_mestre(nome), capacidade, cor)').order('id', {ascending: false})
+                _s.from('ofertas').select('*, fornecedores(nome), variacoes(produtos_mestre(nome), capacidade, cor)').order('criado_em', {ascending: false})
             ]);
-            dbAta = f.data || [];
-            dbCli = c.data || [];
-            dbAnu = o.data || [];
+            dbAta = f.data || []; dbCli = c.data || []; dbAnu = o.data || [];
             
-            renderAta(); renderCli(); renderAnu(); renderConcierge(); renderSelos(); renderStaff();
+            renderAta(); renderCli(); renderAnu();
+            
+            // Popula os Selects do Concierge e Selos
+            let options = '<option value="">SELECIONE UM LOJISTA...</option>' + dbAta.map(a => `<option value="${a.id}">${a.nome} (ID: ${a.id})</option>`).join('');
+            document.getElementById('seloManualUser').innerHTML = options;
         }
 
-        // --- ATACADISTAS ---
+        // --- MÓDULO ATACADISTAS (DADOS COMPLETOS) ---
         function renderAta() {
-            document.getElementById('listAta').innerHTML = dbAta.map(a => `
+            document.getElementById('listAta').innerHTML = dbAta.map(a => {
+                let dataCriacao = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : 'Data Indisponível';
+                return `
                 <tr>
                     <td><input type="checkbox" class="chk-ata" value="${a.id}"></td>
-                    <td class="text-zinc-600 font-bold">${a.id}</td>
+                    <td class="text-zinc-500 font-mono text-[9px]">${dataCriacao}<br>ID: ${a.id}</td>
                     <td><span class="font-black text-white">${a.nome}</span><br><span class="text-[8px] text-zinc-500">${a.cidade||'Sem cidade'}</span></td>
                     <td class="font-mono text-[9px] text-zinc-400">${a.whatsapp||a.email||'--'}</td>
-                    <td><span class="badge ${a.ativo?'b-green':'b-red'}">${a.ativo?'ATIVO':'INATIVO'}</span></td>
-                    <td class="text-center"><button onclick="toggleSelo(${a.id}, ${!a.verificado})" class="badge ${a.verificado?'b-blue':'bg-zinc-800 text-zinc-500'} cursor-pointer hover:bg-blue-900 transition">${a.verificado?'VERIFICADO ✅':'SEM SELO'}</button></td>
+                    <td class="font-mono text-red-400 text-[10px] tracking-widest">${a.senha || 'NÃO DEFINIDA'}</td>
+                    <td>
+                        <span class="badge ${a.ativo?'b-green':'b-red'} mb-1">${a.ativo?'ATIVO':'INATIVO'}</span><br>
+                        <span class="badge ${a.verificado?'b-blue':'bg-zinc-800 text-zinc-500'}">${a.verificado?'VERIFICADO ✅':'SEM SELO'}</span>
+                    </td>
                     <td class="text-right">
-                        <button onclick="editAta(${a.id})" class="bg-zinc-800 text-white px-3 py-1.5 rounded text-[8px] font-black hover:bg-white hover:text-black transition">EDITAR</button>
-                        <button onclick="delAta(${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1.5 rounded text-[8px] font-black hover:bg-red-500 hover:text-white transition ml-1">X</button>
+                        <button onclick="editAta(${a.id})" class="bg-zinc-800 text-white px-4 py-2 rounded text-[8px] font-black hover:bg-blue-600 transition">EDITAR</button>
+                        <button onclick="delAta(${a.id})" class="bg-red-900/30 text-red-500 px-4 py-2 rounded text-[8px] font-black hover:bg-red-500 hover:text-white transition ml-1">X</button>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
         function abrirModalAta() {
-            document.getElementById('mAtaTitle').innerText = "CADASTRAR NOVO ATACADISTA";
+            document.getElementById('mAtaTitle').innerText = "CRIAR NOVO ATACADISTA";
             document.getElementById('mAtaId').value = ''; document.getElementById('mAtaNome').value = '';
             document.getElementById('mAtaWhats').value = ''; document.getElementById('mAtaEmail').value = '';
             document.getElementById('mAtaCid').value = ''; document.getElementById('mAtaEst').value = '';
@@ -321,11 +404,11 @@
         }
         function editAta(id) {
             const a = dbAta.find(x => x.id == id);
-            document.getElementById('mAtaTitle').innerText = "EDITAR ATACADISTA";
+            document.getElementById('mAtaTitle').innerText = `EDITANDO: ${a.nome}`;
             document.getElementById('mAtaId').value = a.id; document.getElementById('mAtaNome').value = a.nome;
             document.getElementById('mAtaWhats').value = a.whatsapp||''; document.getElementById('mAtaEmail').value = a.email||'';
             document.getElementById('mAtaCid').value = a.cidade||''; document.getElementById('mAtaEst').value = a.estado||'';
-            document.getElementById('mAtaSenha').value = '';
+            document.getElementById('mAtaSenha').value = ''; // Fica em branco para não sobrescrever sem querer
             document.getElementById('mAtaAtivo').checked = a.ativo; document.getElementById('mAtaVeri').checked = a.verificado;
             document.getElementById('modalAta').classList.remove('hidden');
         }
@@ -344,8 +427,7 @@
             else await _s.from('fornecedores').insert([data]);
             fecharModais(); loadAll();
         }
-        async function delAta(id) { if(confirm("EXCLUIR ABSOLUTAMENTE? Todos os anúncios irão junto.")) { await _s.from('fornecedores').delete().eq('id', id); loadAll(); } }
-        async function toggleSelo(id, status) { await _s.from('fornecedores').update({verificado: status}).eq('id', id); loadAll(); }
+        async function delAta(id) { if(confirm("EXCLUIR ABSOLUTAMENTE? Ação irreversível.")) { await _s.from('fornecedores').delete().eq('id', id); loadAll(); } }
         
         // Bulk Ata
         function selAllAta(el) { document.querySelectorAll('.chk-ata').forEach(c => c.checked = el.checked); }
@@ -362,99 +444,90 @@
             fecharModais(); loadAll();
         }
 
-        // --- CLIENTES (BUSCADORES DB) ---
+        // --- MÓDULO CLIENTES (BUSCADORES) ---
         function renderCli() {
-            document.getElementById('listCli').innerHTML = dbCli.map(c => `
+            document.getElementById('listCli').innerHTML = dbCli.map(c => {
+                let dataCriacao = c.criado_em ? new Date(c.criado_em).toLocaleString('pt-BR') : 'Sem data';
+                return `
                 <tr>
-                    <td class="text-zinc-600 font-bold">${c.id}</td>
-                    <td><span class="font-black text-white">${c.email||c.whatsapp||'Sem Identificação'}</span></td>
-                    <td class="text-[9px] text-zinc-500">${new Date(c.criado_em).toLocaleDateString()}</td>
-                    <td>
-                        <button onclick="editCli(${c.id})" class="bg-zinc-800 text-white px-3 py-1.5 rounded text-[8px] font-black">EDITAR</button>
-                        <button onclick="delCli(${c.id})" class="bg-red-900/30 text-red-500 px-3 py-1.5 rounded text-[8px] font-black ml-1">X</button>
+                    <td class="text-zinc-600 font-bold">#${c.id}</td>
+                    <td class="text-[9px] text-zinc-400 font-mono">${dataCriacao}</td>
+                    <td><span class="font-black text-white">${c.email||c.whatsapp||'Sem ID'}</span></td>
+                    <td class="font-mono text-red-400 text-[10px] tracking-widest">${c.senha || 'NÃO DEFINIDA'}</td>
+                    <td class="text-right">
+                        <button onclick="delCli(${c.id})" class="bg-red-900/30 text-red-500 px-3 py-1.5 rounded text-[8px] font-black hover:bg-red-500 hover:text-white transition ml-1">APAGAR CONTA</button>
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
-        function editCli(id) {
-            const c = dbCli.find(x => x.id == id);
-            document.getElementById('mCliId').value = c.id;
-            document.getElementById('mCliEmail').value = c.email||c.whatsapp||'';
-            document.getElementById('mCliSenha').value = '';
-            document.getElementById('modalCli').classList.remove('hidden');
-        }
-        async function saveCli(e) {
-            e.preventDefault();
-            const id = document.getElementById('mCliId').value;
-            const data = { email: document.getElementById('mCliEmail').value };
-            const s = document.getElementById('mCliSenha').value; if(s) data.senha = s;
-            await _s.from('clientes_buscador').update(data).eq('id', id);
-            fecharModais(); loadAll();
-        }
-        async function delCli(id) { if(confirm("APAGAR CLIENTE?")) { await _s.from('clientes_buscador').delete().eq('id', id); loadAll(); } }
+        async function delCli(id) { if(confirm("Derrubar este Cliente do Banco?")) { await _s.from('clientes_buscador').delete().eq('id', id); loadAll(); } }
 
-        // --- GESTÃO GLOBAL ANÚNCIOS ---
+        // --- MÓDULO GESTÃO GLOBAL ANÚNCIOS ---
         function renderAnu() {
-            document.getElementById('listAnu').innerHTML = dbAnu.slice(0, 100).map(a => `
+            document.getElementById('listAnu').innerHTML = dbAnu.slice(0, 150).map(a => {
+                let dataPost = a.criado_em ? new Date(a.criado_em).toLocaleString('pt-BR') : 'Sem data';
+                return `
                 <tr>
-                    <td class="font-black text-blue-400">${a.fornecedores?a.fornecedores.nome:'Desconhecido'}</td>
-                    <td>${a.variacoes.produtos_mestre.nome} ${a.variacoes.capacidade} <span class="text-[9px] text-zinc-500">${a.variacoes.cor}</span></td>
-                    <td class="font-mono">${a.moeda} ${a.preco}</td>
-                    <td>${a.quantidade} UN</td>
-                    <td><button onclick="delAnu(${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white transition">APAGAR</button></td>
+                    <td class="text-[9px] text-zinc-400 font-mono">${dataPost}</td>
+                    <td class="font-black text-blue-400">${a.fornecedores?a.fornecedores.nome:'Lojista Removido'}</td>
+                    <td>${a.variacoes.produtos_mestre.nome} ${a.variacoes.capacidade} <span class="text-[9px] text-zinc-500 ml-1">${a.variacoes.cor}</span></td>
+                    <td class="font-mono text-white">${a.moeda} ${a.preco} <span class="badge bg-zinc-800 text-zinc-400 ml-2">${a.quantidade} UN</span></td>
+                    <td class="text-right"><button onclick="delAnu(${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white transition">APAGAR ANÚNCIO</button></td>
                 </tr>
-            `).join('') + (dbAnu.length > 100 ? '<tr><td colspan="5" class="text-center text-zinc-500">Exibindo os 100 mais recentes...</td></tr>' : '');
+            `}).join('') + (dbAnu.length > 150 ? '<tr><td colspan="5" class="text-center text-zinc-500 py-4">Exibindo os 150 mais recentes da base...</td></tr>' : '');
         }
-        async function delAnu(id) { if(confirm("Derrubar Anúncio?")) { await _s.from('ofertas').delete().eq('id', id); loadAll(); } }
+        async function delAnu(id) { if(confirm("Apagar este anúncio do ecossistema?")) { await _s.from('ofertas').delete().eq('id', id); loadAll(); } }
         async function loadAnuncios() { await loadAll(); }
 
-        // --- CONCIERGE ---
-        function renderConcierge() {
-            document.getElementById('conSelect').innerHTML = '<option value="">SELECIONE UM LOJISTA...</option>' + dbAta.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
-        }
-        function executarConcierge() {
-            const id = document.getElementById('conSelect').value;
-            if(!id) return alert("Selecione um lojista primeiro.");
-            // O Poder Máximo: Setar o token dele no navegador e abrir o painel.
-            localStorage.setItem('iFipe_Anunciante', id);
-            window.open('atacadista.html', '_blank');
-        }
-
-        // --- SELOS (VISÃO RÁPIDA) ---
-        function renderSelos() {
-            document.getElementById('listSelos').innerHTML = dbAta.map(a => `
-                <div class="bg-[#141415] border border-[#2c2c2e] p-4 rounded-xl flex justify-between items-center">
-                    <div>
-                        <p class="text-[11px] font-black text-white">${a.nome}</p>
-                        <p class="text-[8px] text-zinc-500">ID: ${a.id}</p>
-                    </div>
-                    <button onclick="toggleSelo(${a.id}, ${!a.verificado})" class="badge ${a.verificado?'b-blue':'bg-zinc-800 text-zinc-500'} cursor-pointer hover:bg-blue-900 transition">${a.verificado?'VERIFICADO ✅':'SEM SELO'}</button>
-                </div>
-            `).join('');
-        }
-
-        // --- FUNCIONÁRIOS ---
-        function renderStaff() {
-            document.getElementById('listStaff').innerHTML = `
-                <tr><td colspan="4" class="text-center text-zinc-500">Sem funcionários cadastrados na base (Simulação Master).</td></tr>
-            `;
-        }
-        function abrirModalStaff() { alert("Módulo de tabela de staff a ser conectado."); }
-
-        // --- MINHA CONTA MASTER ---
-        function updateMaster(e) {
-            e.preventDefault();
-            const n = document.getElementById('mNewPass').value;
-            if(n) {
-                localStorage.setItem('Master_Custom_Pass', n);
-                alert("SENHA MASTER ALTERADA NO DISPOSITIVO.");
-                document.getElementById('mNewPass').value = '';
+        // --- MÓDULO CONCIERGE GLOBAL (AÇÕES EM MASSA) ---
+        async function globalPurgeZero() {
+            if(confirm("ATENÇÃO: Você está prestes a DELETAR fisicamente todos os anúncios com estoque 0 do sistema. Confirma?")) {
+                await _s.from('ofertas').delete().lte('quantidade', 0);
+                alert("PURGA EXECUTADA.");
+                loadAll();
             }
+        }
+        async function globalDesativarLojistas() {
+            if(confirm("PERIGO: Isso vai desativar TODOS os atacadistas, impedindo-os de logar e ocultando tudo. Tem certeza?")) {
+                let ids = dbAta.map(a => a.id);
+                await _s.from('fornecedores').update({ativo: false}).in('id', ids);
+                alert("SISTEMA CONGELADO.");
+                loadAll();
+            }
+        }
+        async function globalAtivarLojistas() {
+            if(confirm("Ativar todos os lojistas do banco?")) {
+                let ids = dbAta.map(a => a.id);
+                await _s.from('fornecedores').update({ativo: true}).in('id', ids);
+                alert("SISTEMA LIBERADO.");
+                loadAll();
+            }
+        }
+
+        // --- MÓDULO SELOS E REGRAS ---
+        function loadSeloRuleInputs() {
+            document.getElementById('ruleCalifa').value = localStorage.getItem('iFipe_Rule_Califa') || 1000;
+            document.getElementById('ruleRei').value = localStorage.getItem('iFipe_Rule_Rei') || 200;
+            document.getElementById('ruleMagnata').value = localStorage.getItem('iFipe_Rule_Magnata') || 50;
+        }
+        function saveInsigniaRules(e) {
+            e.preventDefault();
+            localStorage.setItem('iFipe_Rule_Califa', document.getElementById('ruleCalifa').value);
+            localStorage.setItem('iFipe_Rule_Rei', document.getElementById('ruleRei').value);
+            localStorage.setItem('iFipe_Rule_Magnata', document.getElementById('ruleMagnata').value);
+            alert("Regras de Insígnia atualizadas em todo o ecossistema!");
+        }
+        async function concederSeloManual(status) {
+            const id = document.getElementById('seloManualUser').value;
+            if(!id) return alert("Selecione um lojista.");
+            await _s.from('fornecedores').update({verificado: status}).eq('id', id);
+            alert(`Selo ${status ? 'CONCEDIDO' : 'REMOVIDO'} com sucesso!`);
+            loadAll();
         }
 
         window.addEventListener('scroll', () => { document.getElementById('scrollTopBtn').classList.toggle('show', window.scrollY > 300); });
         
-        // Inicia verificação de porta
+        // Boot Lockout Check
         checkAuth();
     </script>
 </body>
