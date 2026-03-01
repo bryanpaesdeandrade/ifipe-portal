@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-pt">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,29 +9,36 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --blue: #0071e3; }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; }
-        .tab-btn { padding: 10px 20px; font-weight: 800; border-bottom: 2px solid transparent; transition: 0.3s; font-size: 12px; text-transform: uppercase; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin:0; }
+        .tab-btn { padding: 10px 20px; font-weight: 800; border-bottom: 2px solid transparent; transition: 0.3s; font-size: 11px; text-transform: uppercase; color: #888; }
         .tab-btn.active { border-color: var(--blue); color: var(--blue); }
         .master-table { width: 100%; border-collapse: collapse; font-size: 12px; }
         .master-table th { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); color: #888; text-transform: uppercase; }
         .master-table td { padding: 12px; border-bottom: 1px solid #2c2c2e; }
-        .action-btn { padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 10px; }
+        .status-toggle { width: 50px; height: 26px; background: #333; border-radius: 50px; position: relative; cursor: pointer; transition: 0.3s; }
+        .status-toggle.on { background: #32d74b; }
+        .status-toggle::after { content: ''; position: absolute; width: 22px; height: 22px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: 0.3s; }
+        .status-toggle.on::after { left: 26px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="p-6">
 
-    <header class="flex justify-between items-center mb-10">
-        <h1 class="text-3xl font-black italic">iFipe <span class="text-blue-500">MASTER</span></h1>
-        <div class="flex gap-4">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+        <div>
+            <h1 class="text-3xl font-black italic">iFipe <span class="text-blue-500">MASTER</span></h1>
+            <p class="text-[10px] text-gray-500 font-bold">PAINEL DE CONTROLE SUPREMO</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
             <button onclick="tab('ofertas')" class="tab-btn active" id="btn-ofertas">Ofertas</button>
             <button onclick="tab('lojistas')" class="tab-btn" id="btn-lojistas">Lojistas</button>
-            <button onclick="tab('clientes')" class="tab-btn" id="btn-clientes">Clientes</button>
-            <button onclick="logout()" class="text-red-500 font-bold text-xs ml-8">SAIR</button>
+            <button onclick="tab('config')" class="tab-btn" id="btn-config">Configurações</button>
+            <button onclick="logout()" class="text-red-500 font-bold text-xs ml-4 border border-red-500/30 px-3 py-1 rounded-full">SAIR</button>
         </div>
     </header>
 
     <div id="tab-ofertas" class="content-tab">
-        <div class="bg-[#1c1c1e] rounded-2xl p-6 border border-[#38383a]">
+        <div class="bg-[#1c1c1e] rounded-2xl p-6 border border-[#38383a] overflow-x-auto">
             <table class="master-table">
                 <thead>
                     <tr>
@@ -48,14 +55,14 @@
     </div>
 
     <div id="tab-lojistas" class="content-tab hidden">
-        <div class="bg-[#1c1c1e] rounded-2xl p-6 border border-[#38383a]">
+        <div class="bg-[#1c1c1e] rounded-2xl p-6 border border-[#38383a] overflow-x-auto">
             <table class="master-table">
                 <thead>
                     <tr>
                         <th>Nome</th>
                         <th>WhatsApp</th>
                         <th>Status</th>
-                        <th>Verificado</th>
+                        <th>Selo</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -64,11 +71,35 @@
         </div>
     </div>
 
+    <div id="tab-config" class="content-tab hidden">
+        <div class="max-w-md">
+            <div class="bg-[#1c1c1e] rounded-2xl p-8 border border-[#38383a]">
+                <h3 class="font-black italic uppercase mb-6">Controle de Sistema</h3>
+                
+                <div class="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
+                    <div>
+                        <p class="font-bold text-sm">Modo de Atualização</p>
+                        <p class="text-[10px] text-gray-500">Ativa o aviso global para visitantes.</p>
+                    </div>
+                    <div id="toggleManutencao" class="status-toggle" onclick="toggleSystemStatus()"></div>
+                </div>
+
+                <div class="mt-8 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                    <p class="text-[11px] text-blue-400 leading-relaxed">
+                        <b>Aviso:</b> Mesmo em atualização, você (Master) e usuários logados continuarão com acesso total para testes e lançamentos.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+        let statusManutencao = false;
 
         async function init() {
             if(localStorage.getItem('iFipe_Role') !== 'master') window.location.href = 'index.html';
+            await checkSystemStatus();
             loadOfertas();
             loadLojistas();
         }
@@ -80,15 +111,29 @@
             document.getElementById('btn-' + t).classList.add('active');
         }
 
+        async function checkSystemStatus() {
+            const { data } = await _s.from('configuracoes').select('manutencao').eq('id', 1).single();
+            statusManutencao = data.manutencao;
+            const toggle = document.getElementById('toggleManutencao');
+            if(statusManutencao) toggle.classList.add('on');
+            else toggle.classList.remove('on');
+        }
+
+        async function toggleSystemStatus() {
+            statusManutencao = !statusManutencao;
+            const { error } = await _s.from('configuracoes').update({ manutencao: statusManutencao }).eq('id', 1);
+            if(!error) checkSystemStatus();
+        }
+
         async function loadOfertas() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(nome), variacoes(produtos_mestre(nome), capacidade, cor)').order('created_at', {ascending:false});
+            const { data } = await _s.from('ofertas').select('*, fornecedores(nome), variacoes(produtos_mestre(nome), capacidade, cor)').order('criado_em', {ascending:false});
             document.getElementById('lista-ofertas').innerHTML = data.map(o => `
                 <tr>
-                    <td><b>${o.variacoes.produtos_mestre.nome}</b><br><span class="text-gray-500">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td>
+                    <td><b>${o.variacoes.produtos_mestre.nome}</b><br><span class="text-[10px] text-gray-500">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td>
                     <td>${o.fornecedores.nome}</td>
-                    <td class="font-mono text-green-400">${o.moeda} ${o.preco}</td>
-                    <td>${new Date(o.criado_em).toLocaleDateString()}</td>
-                    <td><button onclick="deleteOferta(${o.id})" class="text-red-500 hover:underline">Apagar</button></td>
+                    <td class="font-mono text-green-400 font-bold">${o.moeda} ${o.preco}</td>
+                    <td class="text-gray-500">${new Date(o.criado_em).toLocaleDateString()}</td>
+                    <td><button onclick="deleteOferta(${o.id})" class="text-red-500 uppercase font-black text-[10px]">Apagar</button></td>
                 </tr>
             `).join('');
         }
@@ -99,17 +144,17 @@
                 <tr>
                     <td>${l.nome}</td>
                     <td>${l.whatsapp}</td>
-                    <td><span class="${l.ativo ? 'text-green-500' : 'text-red-500'}">${l.ativo ? 'ATIVO' : 'BLOQUEADO'}</span></td>
+                    <td><span class="${l.ativo ? 'text-green-500' : 'text-red-500'} font-bold">${l.ativo ? 'ATIVO' : 'BLOQUEADO'}</span></td>
                     <td>${l.verificado ? '✅' : '❌'}</td>
                     <td class="flex gap-2">
-                        <button onclick="toggleForn(${l.id}, 'ativo', ${l.ativo})" class="bg-gray-800 action-btn">${l.ativo ? 'Bloquear' : 'Ativar'}</button>
-                        <button onclick="toggleForn(${l.id}, 'verificado', ${l.verificado})" class="bg-blue-900 action-btn">Selo ✅</button>
+                        <button onclick="toggleForn(${l.id}, 'ativo', ${l.ativo})" class="bg-[#2c2c2e] px-2 py-1 rounded text-[9px] font-bold uppercase">${l.ativo ? 'Bloquear' : 'Ativar'}</button>
+                        <button onclick="toggleForn(${l.id}, 'verificado', ${l.verificado})" class="bg-blue-600/20 text-blue-400 px-2 py-1 rounded text-[9px] font-bold uppercase">Selo</button>
                     </td>
                 </tr>
             `).join('');
         }
 
-        async function deleteOferta(id) { if(confirm("Apagar?")) { await _s.from('ofertas').delete().eq('id', id); loadOfertas(); } }
+        async function deleteOferta(id) { if(confirm("Apagar anúncio?")) { await _s.from('ofertas').delete().eq('id', id); loadOfertas(); } }
         
         async function toggleForn(id, campo, valor) {
             let obj = {}; obj[campo] = !valor;
