@@ -15,7 +15,6 @@
         .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 12px; cursor: pointer; border: none; font-size: 10px; transition: 0.3s; }
         .apple-button:hover { background: var(--blue); color: #fff; }
         .mini-edit { background: transparent; border: 1px solid transparent; color: #32d74b; font-weight: 800; width: 70px; text-align: center; font-family: 'JetBrains Mono'; }
-        .mini-edit:focus { border-color: var(--blue); background: #2c2c2e; outline: none; }
         .step-block { margin-bottom: 12px; border-left: 2px solid #38383a; padding-left: 15px; opacity: 0.3; pointer-events: none; transition: 0.3s; }
         .step-block.active { border-left-color: var(--blue); opacity: 1; pointer-events: auto; }
         .btn-tipo { background: #2c2c2e; border: 2px solid #38383a; color: #fff; padding: 12px; border-radius: 12px; font-weight: 900; font-size: 10px; cursor: pointer; width: 100%; display: flex; flex-direction: column; align-items: center; }
@@ -59,18 +58,42 @@
                     <div class="step-block" id="s2"><span class="step-label">2. Memória</span><select id="f_cap" class="apple-input" onchange="libCor()" required disabled></select></div>
                     <div class="step-block" id="s3"><span class="step-label">3. Cor</span><select id="f_cor" class="apple-input" onchange="libDet()" required disabled></select></div>
                     <div class="step-block" id="s4">
-                        <span class="step-label">4. Detalhes (Mínimo 1)</span>
+                        <span class="step-label">4. Detalhes</span>
                         <div id="z_semi" class="hidden space-y-2 mb-2">
-                            <select id="f_cond" class="apple-input"><option value="Seminovo">Seminovo Padrão</option><option value="CPO">CPO Apple</option><option value="Grade A">Grade A</option></select>
-                            <input type="text" id="f_bat" class="apple-input" placeholder="Bateria %">
+                            <select id="f_cond" class="apple-input">
+                                <option value="Seminovo">SEMINOVO</option>
+                                <option value="CPO">CPO</option>
+                                <option value="Grade A">GRADE A</option>
+                                <option value="Grade B">GRADE B</option>
+                                <option value="Grade C">GRADE C</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <select id="f_bat" class="apple-input hidden">
+                                <option value="">BATERIA...</option>
+                                <option value="Abaixo de 85%">ABAIXO DE 85%</option>
+                                <option value="Acima de 85%">ACIMA DE 85%</option>
+                                <option value="Acima de 90%">ACIMA DE 90%</option>
+                                <option value="Acima de 95%">ACIMA DE 95%</option>
+                                <option value="Bateria em 100%">BATERIA EM 100%</option>
+                            </select>
+                            <select id="f_gar" class="apple-input hidden">
+                                <option value="">GARANTIA...</option>
+                                <option value="Sem garantia">SEM GARANTIA</option>
+                                <option value="1 Mês">1 MÊS</option>
+                                <option value="2 Meses">2 MESES</option>
+                                <option value="3 Meses">3 MESES</option>
+                                <option value="6 Meses">6 MESES</option>
+                                <option value="12 Meses">12 MESES</option>
+                            </select>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
                             <input type="number" id="f_qtd" class="apple-input" placeholder="Qtd" min="1" oninput="if(this.value<1)this.value=1" required>
                             <select id="f_orig" class="apple-input" required></select>
                         </div>
                         <div class="grid grid-cols-2 gap-2 mt-2">
-                            <input type="text" id="f_brl" class="apple-input text-green-400 font-bold" placeholder="R$ BRL" oninput="mascara(this); if(this.value<0)this.value=0; document.getElementById('f_usd').value=''">
-                            <input type="text" id="f_usd" class="apple-input text-blue-400 font-bold" placeholder="$ USD" oninput="mascara(this); if(this.value<0)this.value=0; document.getElementById('f_brl').value=''">
+                            <input type="text" id="f_usd" class="apple-input font-bold" placeholder="$ USD" oninput="mascara(this); document.getElementById('f_brl').value=''">
+                            <input type="text" id="f_brl" class="apple-input font-bold" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('f_usd').value=''">
                         </div>
                         <div class="grid grid-cols-2 gap-1 mt-2 bg-black p-2 rounded-lg border border-[#38383a]">
                             <label class="text-[8px] flex items-center gap-1 font-black"><input type="checkbox" id="m_pix"> PIX</label>
@@ -97,7 +120,7 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table>
-                        <thead><tr><th width="30"><input type="checkbox" onclick="selAll(this)"></th><th>Modelo / Grade</th><th class="text-center">Qtd</th><th class="text-center">Preço (Arredondado)</th><th class="text-right">Ação</th></tr></thead>
+                        <thead><tr><th width="30"><input type="checkbox" onclick="selAll(this)"></th><th>Modelo / Grade</th><th class="text-center">Qtd</th><th class="text-center">Preço</th><th class="text-right">Ação</th></tr></thead>
                         <tbody id="lista"></tbody>
                     </table>
                 </div>
@@ -158,6 +181,16 @@
             document.getElementById('f_tipo').value = t;
             document.getElementById('btN').classList.toggle('active', t==='Novo'); document.getElementById('btS').classList.toggle('active', t==='Seminovo');
             document.getElementById('z_semi').classList.toggle('hidden', t==='Novo');
+            
+            // Controle Bateria e Garantia
+            if(t==='Novo') {
+                document.getElementById('f_bat').style.display = 'none';
+                document.getElementById('f_gar').style.display = 'none';
+            } else {
+                document.getElementById('f_bat').style.display = 'block';
+                document.getElementById('f_gar').style.display = 'block';
+            }
+
             document.getElementById('f_mod').innerHTML = '<option value="">MODELO...</option>' + produtos.map(x=>`<option value="${x.id}">${x.nome}</option>`).join('');
             document.getElementById('f_mod').disabled = false; document.getElementById('s1').classList.add('active');
         }
@@ -177,13 +210,19 @@
 
         async function doPost(e) {
             e.preventDefault();
+            let tipo = document.getElementById('f_tipo').value;
             let v = vars.find(x => x.produto_id == document.getElementById('f_mod').value && x.capacidade == document.getElementById('f_cap').value && x.cor == document.getElementById('f_cor').value);
             let pb = parseP(document.getElementById('f_brl').value), pu = parseP(document.getElementById('f_usd').value);
+            
+            let g = tipo === 'Novo' ? '1 ANO APPLE' : document.getElementById('f_gar').value;
+            let b = tipo === 'Novo' ? '' : document.getElementById('f_bat').value;
+
             await _s.from('ofertas').insert([{
                 fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('f_orig').value,
                 preco: rnd10(pb||pu), moeda: pb?'BRL':'USD', quantidade: Math.max(1, parseInt(document.getElementById('f_qtd').value)),
-                condicao: document.getElementById('f_tipo').value==='Novo'?'Novo':document.getElementById('f_cond').value,
-                saude_bateria: document.getElementById('f_bat').value || '100%',
+                condicao: tipo==='Novo'?'Novo':document.getElementById('f_cond').value,
+                saude_bateria: b,
+                garantia: g,
                 aceita_pix: document.getElementById('m_pix').checked, aceita_usdt: document.getElementById('m_usdt').checked, emite_nota: document.getElementById('m_nota').checked, faz_envio: document.getElementById('m_envi').checked, aceita_coleta: document.getElementById('m_cole').checked, aceita_proposta: document.getElementById('m_neg').checked, status_aprovacao: 'aprovado'
             }]);
             window.location.reload();
