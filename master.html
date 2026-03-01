@@ -3,125 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - MASTER</title>
+    <title>iFipe - COMANDO CENTRAL MASTER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #141415; --text: #fff; --border: #2c2c2e; --blue-master: #0071e3; }
+        :root { --bg: #000; --card: #0a0a0a; --text: #fff; --border: #2c2c2e; --blue-master: #0071e3; }
         body { background: var(--bg); color: var(--text); font-family:-apple-system, sans-serif; margin:0; text-transform: uppercase; }
         
-        .master-nav { background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); border-bottom: 2px solid var(--blue-master); padding: 15px 40px; position: sticky; top:0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
-        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 1.5rem; }
+        /* PORTA DE EMERGÊNCIA (Blindagem contra Lockout) */
+        #masterAuth { background: #000; position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .auth-box { border: 1px solid var(--border); padding: 40px; border-radius: 20px; background: #0a0a0a; text-align: center; width: 350px; }
         
-        .module-btn { background: var(--border); padding: 15px; border-radius: 15px; text-align: center; cursor: pointer; transition: 0.3s; border: 1px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-        .module-btn:hover { border-color: var(--blue-master); background: rgba(0, 113, 227, 0.1); }
-        .module-title { font-size: 8px; font-weight: 900; color: #a1a1aa; }
+        .master-nav { background: #050505; border-bottom: 1px solid var(--border); padding: 15px 40px; position: sticky; top:0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Menu do Master */
+        .master-menu { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 20px 40px; background: #0a0a0a; border-bottom: 1px solid var(--border); }
+        .menu-btn { background: transparent; border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; font-size: 10px; font-weight: 900; color: #86868b; }
+        .menu-btn.active, .menu-btn:hover { background: rgba(0, 113, 227, 0.1); border-color: var(--blue-master); color: var(--blue-master); }
 
-        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
-        th { padding: 12px; font-size: 9px; color: #52525b; text-align: left; }
-        td { padding: 12px; background: #1c1c1e; font-size: 11px; vertical-align: middle; }
-        td:first-child { border-radius: 12px 0 0 12px; }
-        td:last-child { border-radius: 0 12px 12px 0; }
+        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; margin-bottom: 20px; }
+        .apple-input { background: #141415; border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: #fff; width: 100%; outline: none; font-size: 11px; }
+        .apple-input:focus { border-color: var(--blue-master); }
+        
+        .btn-master { background: var(--blue-master); color: #fff; font-weight: 900; border-radius: 8px; padding: 12px 20px; cursor: pointer; border: none; font-size: 10px; transition: 0.3s; }
+        .btn-master:hover { opacity: 0.8; }
+        .btn-danger { background: #ef4444; color: #fff; border: none; }
+        .btn-danger:hover { background: #dc2626; }
 
-        .badge { padding: 4px 10px; border-radius: 50px; font-size: 8px; font-weight: 900; }
-        .badge-active { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
-        .badge-inactive { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-        .badge-verified { background: rgba(0, 113, 227, 0.2); color: #0071e3; border: 1px solid #0071e3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { padding: 15px 10px; font-size: 9px; color: #52525b; text-align: left; border-bottom: 1px solid var(--border); }
+        td { padding: 15px 10px; font-size: 11px; border-bottom: 1px solid #141415; vertical-align: middle; }
+        tr:hover td { background: #141415; }
 
-        .apple-input { background: #000; border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: #fff; width: 100%; outline: none; font-size: 12px; }
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 8px; font-weight: 900; display: inline-block; }
+        .b-green { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid #22c55e; }
+        .b-red { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid #ef4444; }
+        .b-blue { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid #3b82f6; }
+
+        .master-view { display: none; padding: 20px 40px; }
+        .master-view.active { display: block; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; align-items: center; justify-content: center; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <nav class="master-nav">
-        <div class="flex items-center gap-6">
-            <h1 class="text-2xl font-black italic">iFipe <span class="text-blue-500">MASTER</span></h1>
-            <div class="flex gap-4 border-l border-zinc-800 pl-6">
-                <div class="text-center">
-                    <p class="text-[7px] text-zinc-500 font-black">BINANCE Real</p>
-                    <p id="tBin" class="text-xs font-mono font-black text-white">R$ --</p>
+    <div id="masterAuth" class="hidden">
+        <div class="auth-box">
+            <h1 class="text-3xl font-black italic mb-2 text-blue-500">MASTER</h1>
+            <p class="text-[9px] text-zinc-500 mb-6 tracking-widest font-bold">ACESSO RESTRITO À GOVERNANÇA</p>
+            <input type="password" id="mPass" class="apple-input mb-4 text-center" placeholder="CHAVE DE ACESSO" onkeypress="if(event.key==='Enter') tryLogin()">
+            <button onclick="tryLogin()" class="btn-master w-full">ASSUMIR COMANDO</button>
+            <p id="mLoginMsg" class="text-red-500 text-[10px] mt-4 font-black"></p>
+        </div>
+    </div>
+
+    <div id="masterApp" class="hidden">
+        <nav class="master-nav">
+            <div class="flex items-center gap-6">
+                <h1 class="text-2xl font-black italic">iFipe <span class="text-blue-500">MASTER</span></h1>
+                <div class="flex gap-4 border-l border-zinc-800 pl-6">
+                    <div><span class="text-[7px] text-zinc-500 font-black block">BINANCE REAL</span><span id="tBin" class="text-xs font-mono font-black text-white">R$ --</span></div>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-[9px] font-black bg-blue-900/20 text-blue-500 border border-blue-500 px-3 py-1 rounded-md">AUTORIDADE MÁXIMA</span>
+                <button onclick="masterLogout()" class="text-red-500 font-black text-[10px] hover:underline">SAIR</button>
+            </div>
+        </nav>
+
+        <div class="master-menu">
+            <button class="menu-btn active" onclick="switchView('v-atacadistas', this)">🏢 ATACADISTAS</button>
+            <button class="menu-btn" onclick="switchView('v-clientes', this)">👥 CLIENTES (BUSCADOR)</button>
+            <button class="menu-btn" onclick="switchView('v-anuncios', this)">📢 GLOBAL DE ANÚNCIOS</button>
+            <button class="menu-btn" onclick="switchView('v-concierge', this)">🛎️ CONCIERGE</button>
+            <button class="menu-btn" onclick="switchView('v-selos', this)">🛡️ SELOS & INSÍGNIAS</button>
+            <button class="menu-btn" onclick="switchView('v-staff', this)">🛠️ FUNCIONÁRIOS</button>
+            <button class="menu-btn" onclick="switchView('v-conta', this)">⚙️ MINHA CONTA</button>
+        </div>
+
+        <div id="v-atacadistas" class="master-view active">
+            <div class="apple-card">
+                <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
+                    <h2 class="text-sm font-black text-white">BASE DE ATACADISTAS</h2>
+                    <div class="flex gap-2">
+                        <button onclick="abrirModalAta()" class="btn-master bg-white text-black hover:bg-zinc-300">+ CADASTRAR NOVO</button>
+                        <button onclick="bulkAtaModal()" class="btn-master bg-zinc-800 text-white">⚙️ AÇÕES EM MASSA</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead><tr><th width="30"><input type="checkbox" onclick="selAllAta(this)"></th><th>ID</th><th>NOME DA LOJA</th><th>WHATSAPP / CONTATO</th><th>CIDADE</th><th>STATUS</th><th>AÇÕES MASTER</th></tr></thead>
+                        <tbody id="listAta"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
-        <button onclick="logout()" class="text-[9px] text-red-500 font-black border border-red-500/20 px-4 py-2 rounded-full">SAIR DO MASTER</button>
-    </nav>
 
-    <main class="max-w-[1600px] mx-auto p-6">
-        
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-8">
-            <div class="module-btn" onclick="location.reload()">🏢 <span class="module-title">ANUNCIANTES</span></div>
-            <div class="module-btn" onclick="alert('Módulo de Clientes em breve')">👤 <span class="module-title">BUSCADORES</span></div>
-            <div class="module-btn" onclick="alert('Módulo Global em breve')">📢 <span class="module-title">ANÚNCIOS</span></div>
-            <div class="module-btn" onclick="alert('Módulo Staff em breve')">🛠️ <span class="module-title">FUNCIONÁRIOS</span></div>
-            <div class="module-btn" onclick="alert('Módulo Concierge em breve')">🛎️ <span class="module-title">CONCIERGE</span></div>
-            <div class="module-btn" onclick="window.open('buscar.html')">🔍 <span class="module-title">VER VITRINE</span></div>
-        </div>
-
-        <div class="apple-card">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-lg font-black italic">Gestão de Atacadistas</h2>
-                <div class="flex gap-2">
-                    <input type="text" id="buscaLojista" class="apple-input !w-64 !py-2" placeholder="BUSCAR LOJA..." oninput="renderLojistas()">
+        <div id="v-clientes" class="master-view">
+            <div class="apple-card">
+                <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
+                    <h2 class="text-sm font-black text-white">BASE DE CLIENTES (BUSCADORES)</h2>
+                </div>
+                <p class="text-[10px] text-zinc-500 mb-4">Visão total dos usuários cadastrados no buscador público.</p>
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead><tr><th>ID</th><th>EMAIL / IDENTIFICAÇÃO</th><th>DATA DE CADASTRO</th><th>AÇÕES MASTER</th></tr></thead>
+                        <tbody id="listCli"></tbody>
+                    </table>
                 </div>
             </div>
+        </div>
 
-            <div class="overflow-x-auto">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>NOME / LOCAL</th>
-                            <th>CONTATO</th>
-                            <th>STATUS</th>
-                            <th>SELO</th>
-                            <th class="text-right">AÇÃO</th>
-                        </tr>
-                    </thead>
-                    <tbody id="listaLojistas">
-                        <tr><td colspan="5" class="text-center py-10">CARREGANDO BASE DE DADOS...</td></tr>
-                    </tbody>
-                </table>
+        <div id="v-anuncios" class="master-view">
+            <div class="apple-card">
+                <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
+                    <h2 class="text-sm font-black text-white">CONTROLE GLOBAL DE ANÚNCIOS</h2>
+                    <button onclick="loadAnuncios()" class="btn-master bg-zinc-800">ATUALIZAR BASE</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead><tr><th>ATACADISTA</th><th>PRODUTO</th><th>PREÇO</th><th>QTD</th><th>AÇÕES MASTER</th></tr></thead>
+                        <tbody id="listAnu"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </main>
 
-    <div id="modalEdit" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[2000] p-4">
-        <div class="apple-card max-w-[500px] w-full border-blue-500">
-            <h3 class="text-lg font-black mb-6 border-b border-zinc-800 pb-4">INTERVENÇÃO MASTER: <span id="edTitulo" class="text-blue-500"></span></h3>
-            <form onsubmit="salvarIntervencao(event)" class="space-y-4">
-                <input type="hidden" id="edId">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-[8px] text-zinc-500 font-black mb-1 block">NOME DA LOJA</label>
-                        <input type="text" id="edNome" class="apple-input" required>
-                    </div>
-                    <div>
-                        <label class="text-[8px] text-zinc-500 font-black mb-1 block">WHATSAPP</label>
-                        <input type="text" id="edWhats" class="apple-input" required>
-                    </div>
+        <div id="v-concierge" class="master-view">
+            <div class="apple-card max-w-2xl mx-auto text-center py-10">
+                <h2 class="text-2xl font-black text-white mb-2">CONCIERGE DE PODER</h2>
+                <p class="text-[10px] text-zinc-500 mb-8 uppercase font-bold">Aja em nome de qualquer atacadista. O sistema abrirá o painel do lojista concedendo a você acesso total à conta dele para lançar, editar ou corrigir.</p>
+                
+                <select id="conSelect" class="apple-input mb-4 text-center font-black !text-[14px]">
+                    <option value="">SELECIONE UM ATACADISTA...</option>
+                </select>
+                <button onclick="executarConcierge()" class="btn-master w-full !text-[12px] !py-4 bg-green-600 hover:bg-green-500">ASSUMIR PAINEL DO ATACADISTA</button>
+            </div>
+        </div>
+
+        <div id="v-selos" class="master-view">
+            <div class="apple-card">
+                <h2 class="text-sm font-black text-white mb-4 border-b border-zinc-800 pb-4">GESTÃO DE SELOS (VERIFICADO)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="listSelos"></div>
+            </div>
+        </div>
+
+        <div id="v-staff" class="master-view">
+            <div class="apple-card">
+                <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
+                    <h2 class="text-sm font-black text-white">GESTÃO DE FUNCIONÁRIOS / ADMINS</h2>
+                    <button onclick="abrirModalStaff()" class="btn-master bg-white text-black">+ NOVO FUNCIONÁRIO</button>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-[8px] text-zinc-500 font-black mb-1 block">CIDADE</label>
-                        <input type="text" id="edCid" class="apple-input" required>
-                    </div>
-                    <div>
-                        <label class="text-[8px] text-zinc-500 font-black mb-1 block">ALTERAR SENHA</label>
-                        <input type="text" id="edSenha" class="apple-input" placeholder="MANTER ATUAL...">
-                    </div>
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead><tr><th>NOME</th><th>CARGO</th><th>STATUS</th><th>AÇÕES MASTER</th></tr></thead>
+                        <tbody id="listStaff"></tbody>
+                    </table>
                 </div>
-                <div class="flex gap-4 items-center bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
-                    <label class="flex items-center gap-2 text-[10px] font-black cursor-pointer">
-                        <input type="checkbox" id="edAtivo"> CONTA ATIVA
-                    </label>
-                    <label class="flex items-center gap-2 text-[10px] font-black cursor-pointer text-blue-400">
-                        <input type="checkbox" id="edVerificado"> SELO VERIFICADO ✅
-                    </label>
+            </div>
+        </div>
+
+        <div id="v-conta" class="master-view">
+            <div class="apple-card max-w-md mx-auto">
+                <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">CREDENCIAIS MASTER</h2>
+                <form onsubmit="updateMaster(event)" class="space-y-4">
+                    <div>
+                        <label class="text-[8px] font-black text-zinc-500">NOVA SENHA MASTER</label>
+                        <input type="password" id="mNewPass" class="apple-input" placeholder="Digite para sobrescrever..." required>
+                    </div>
+                    <button type="submit" class="btn-master w-full">ATUALIZAR SENHA</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="modalAta" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-md bg-[#050505] border-[#38383a]">
+            <h3 id="mAtaTitle" class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">NOVO ATACADISTA</h3>
+            <form onsubmit="saveAta(event)" class="space-y-3">
+                <input type="hidden" id="mAtaId">
+                <input type="text" id="mAtaNome" class="apple-input" placeholder="NOME DA LOJA" required>
+                <input type="text" id="mAtaWhats" class="apple-input" placeholder="WHATSAPP (SOMENTE NÚMEROS)" required>
+                <input type="text" id="mAtaEmail" class="apple-input" placeholder="EMAIL DE LOGIN">
+                <input type="text" id="mAtaCid" class="apple-input" placeholder="CIDADE">
+                <input type="text" id="mAtaEst" class="apple-input" placeholder="ESTADO (SIGLA)">
+                <input type="text" id="mAtaSenha" class="apple-input border-blue-500" placeholder="SENHA DE ACESSO (Deixe em branco p/ manter)">
+                <div class="flex gap-4 bg-zinc-900 p-3 rounded-lg">
+                    <label class="text-[9px] font-black flex items-center gap-1"><input type="checkbox" id="mAtaAtivo"> ATIVO</label>
+                    <label class="text-[9px] font-black flex items-center gap-1 text-blue-400"><input type="checkbox" id="mAtaVeri"> SELO VERIFICADO</label>
                 </div>
-                <div class="flex gap-2">
-                    <button type="button" onclick="fecharModal()" class="w-1/3 apple-button !bg-zinc-800 !text-white !p-3">CANCELAR</button>
-                    <button type="submit" class="w-2/3 apple-button !bg-blue-600 !text-white !p-3">APLICAR PODER MASTER</button>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button>
+                    <button type="submit" class="btn-master w-2/3">SALVAR DADOS</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalBulkAta" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-sm bg-[#050505]">
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA</h3>
+            <div class="space-y-2">
+                <button onclick="runBulkAta('ativar')" class="btn-master w-full !bg-green-600">ATIVAR SELECIONADOS</button>
+                <button onclick="runBulkAta('desativar')" class="btn-master w-full bg-zinc-700">DESATIVAR SELECIONADOS</button>
+                <button onclick="runBulkAta('verificar')" class="btn-master w-full !bg-blue-600">APLICAR SELO VERIFICADO</button>
+                <button onclick="runBulkAta('remover_selo')" class="btn-master w-full bg-zinc-700">REMOVER SELO</button>
+                <button onclick="runBulkAta('apagar')" class="btn-master btn-danger w-full mt-4">APAGAR DEFINITIVAMENTE</button>
+                <button onclick="fecharModais()" class="btn-master w-full bg-transparent border border-zinc-700 text-zinc-500 mt-2">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalCli" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-sm bg-[#050505]">
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">INTERVIR NO CLIENTE</h3>
+            <form onsubmit="saveCli(event)" class="space-y-3">
+                <input type="hidden" id="mCliId">
+                <input type="text" id="mCliEmail" class="apple-input" placeholder="EMAIL / CONTATO" required>
+                <input type="text" id="mCliSenha" class="apple-input" placeholder="NOVA SENHA (Opcional)">
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button>
+                    <button type="submit" class="btn-master w-2/3">SALVAR</button>
                 </div>
             </form>
         </div>
@@ -129,88 +235,227 @@
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let lojistas = [];
+        
+        let dbAta = [], dbCli = [], dbAnu = [];
 
-        window.onload = async () => {
-            initBinance();
-            await loadLojistas();
-        };
-
-        function initBinance() {
-            const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            ws.onmessage = e => {
-                const r = parseFloat(JSON.parse(e.data).c);
-                document.getElementById('tBin').innerText = `R$ ${r.toFixed(4)}`;
-            };
-        }
-
-        async function loadLojistas() {
-            const { data, error } = await _s.from('fornecedores').select('*').order('nome');
-            if(!error) {
-                lojistas = data;
-                renderLojistas();
+        // 1. SISTEMA ANTI-LOCKOUT
+        function checkAuth() {
+            const tk = localStorage.getItem('iFipe_Master_Auth');
+            if(tk === 'gov_absoluto') {
+                document.getElementById('masterAuth').classList.add('hidden');
+                document.getElementById('masterApp').classList.remove('hidden');
+                initMaster();
+            } else {
+                document.getElementById('masterAuth').classList.remove('hidden');
+                document.getElementById('masterApp').classList.add('hidden');
             }
         }
 
-        function renderLojistas() {
-            const termo = document.getElementById('buscaLojista').value.toUpperCase();
-            const container = document.getElementById('listaLojistas');
+        function tryLogin() {
+            const p = document.getElementById('mPass').value;
+            // A Chave Mestra é inviolável. Se for essa, entra.
+            if(p === 'ifipemaster2026' || p === localStorage.getItem('Master_Custom_Pass')) {
+                localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
+                checkAuth();
+            } else {
+                document.getElementById('mLoginMsg').innerText = "CHAVE NEGADA.";
+            }
+        }
+
+        function masterLogout() { localStorage.removeItem('iFipe_Master_Auth'); checkAuth(); }
+        function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden')); }
+        function switchView(id, btn) {
+            document.querySelectorAll('.master-view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        async function initMaster() {
+            // Ticker
+            new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
+                document.getElementById('tBin').innerText = `R$ ${parseFloat(JSON.parse(e.data).c).toFixed(4)}`;
+            };
+            await loadAll();
+        }
+
+        async function loadAll() {
+            // Carga Massiva de Dados
+            const [f, c, o] = await Promise.all([
+                _s.from('fornecedores').select('*').order('id', {ascending: false}),
+                _s.from('clientes_buscador').select('*').order('criado_em', {ascending: false}),
+                _s.from('ofertas').select('*, fornecedores(nome), variacoes(produtos_mestre(nome), capacidade, cor)').order('id', {ascending: false})
+            ]);
+            dbAta = f.data || [];
+            dbCli = c.data || [];
+            dbAnu = o.data || [];
             
-            const filtrados = lojistas.filter(l => l.nome.toUpperCase().includes(termo));
-            
-            container.innerHTML = filtrados.map(l => `
-                <tr class="hover:bg-zinc-900/50 transition">
-                    <td>
-                        <p class="font-black text-white">${l.nome}</p>
-                        <p class="text-[9px] text-zinc-500">${l.cidade} - ${l.estado}</p>
-                    </td>
-                    <td><span class="font-mono text-zinc-400">${l.whatsapp}</span></td>
-                    <td><span class="badge ${l.ativo ? 'badge-active' : 'badge-inactive'}">${l.ativo ? 'ATIVO' : 'INATIVO'}</span></td>
-                    <td>${l.verificado ? '<span class="badge badge-verified">VERIFICADO ✅</span>' : '<span class="text-zinc-700 text-[8px] font-bold">SEM SELO</span>'}</td>
+            renderAta(); renderCli(); renderAnu(); renderConcierge(); renderSelos(); renderStaff();
+        }
+
+        // --- ATACADISTAS ---
+        function renderAta() {
+            document.getElementById('listAta').innerHTML = dbAta.map(a => `
+                <tr>
+                    <td><input type="checkbox" class="chk-ata" value="${a.id}"></td>
+                    <td class="text-zinc-600 font-bold">${a.id}</td>
+                    <td><span class="font-black text-white">${a.nome}</span><br><span class="text-[8px] text-zinc-500">${a.cidade||'Sem cidade'}</span></td>
+                    <td class="font-mono text-[9px] text-zinc-400">${a.whatsapp||a.email||'--'}</td>
+                    <td><span class="badge ${a.ativo?'b-green':'b-red'}">${a.ativo?'ATIVO':'INATIVO'}</span></td>
+                    <td class="text-center"><button onclick="toggleSelo(${a.id}, ${!a.verificado})" class="badge ${a.verificado?'b-blue':'bg-zinc-800 text-zinc-500'} cursor-pointer hover:bg-blue-900 transition">${a.verificado?'VERIFICADO ✅':'SEM SELO'}</button></td>
                     <td class="text-right">
-                        <button onclick="abrirEdicao(${l.id})" class="text-[9px] font-black bg-white text-black px-4 py-1.5 rounded-lg hover:bg-blue-500 hover:text-white transition">INTERVIR</button>
+                        <button onclick="editAta(${a.id})" class="bg-zinc-800 text-white px-3 py-1.5 rounded text-[8px] font-black hover:bg-white hover:text-black transition">EDITAR</button>
+                        <button onclick="delAta(${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1.5 rounded text-[8px] font-black hover:bg-red-500 hover:text-white transition ml-1">X</button>
                     </td>
                 </tr>
-            `).join('') || '<tr><td colspan="5" class="text-center py-10 text-zinc-500">NENHUM LOJISTA ENCONTRADO.</td></tr>';
+            `).join('');
         }
-
-        function abrirEdicao(id) {
-            const l = lojistas.find(x => x.id === id);
-            document.getElementById('edId').value = l.id;
-            document.getElementById('edTitulo').innerText = l.nome;
-            document.getElementById('edNome').value = l.nome;
-            document.getElementById('edWhats').value = l.whatsapp;
-            document.getElementById('edCid').value = l.cidade;
-            document.getElementById('edAtivo').checked = l.ativo;
-            document.getElementById('edVerificado').checked = l.verificado;
-            document.getElementById('edSenha').value = '';
-            document.getElementById('modalEdit').classList.remove('hidden');
+        function abrirModalAta() {
+            document.getElementById('mAtaTitle').innerText = "CADASTRAR NOVO ATACADISTA";
+            document.getElementById('mAtaId').value = ''; document.getElementById('mAtaNome').value = '';
+            document.getElementById('mAtaWhats').value = ''; document.getElementById('mAtaEmail').value = '';
+            document.getElementById('mAtaCid').value = ''; document.getElementById('mAtaEst').value = '';
+            document.getElementById('mAtaSenha').value = '';
+            document.getElementById('mAtaAtivo').checked = true; document.getElementById('mAtaVeri').checked = false;
+            document.getElementById('modalAta').classList.remove('hidden');
         }
-
-        async function salvarIntervencao(e) {
+        function editAta(id) {
+            const a = dbAta.find(x => x.id == id);
+            document.getElementById('mAtaTitle').innerText = "EDITAR ATACADISTA";
+            document.getElementById('mAtaId').value = a.id; document.getElementById('mAtaNome').value = a.nome;
+            document.getElementById('mAtaWhats').value = a.whatsapp||''; document.getElementById('mAtaEmail').value = a.email||'';
+            document.getElementById('mAtaCid').value = a.cidade||''; document.getElementById('mAtaEst').value = a.estado||'';
+            document.getElementById('mAtaSenha').value = '';
+            document.getElementById('mAtaAtivo').checked = a.ativo; document.getElementById('mAtaVeri').checked = a.verificado;
+            document.getElementById('modalAta').classList.remove('hidden');
+        }
+        async function saveAta(e) {
             e.preventDefault();
-            const id = document.getElementById('edId').value;
-            const updates = {
-                nome: document.getElementById('edNome').value,
-                whatsapp: document.getElementById('edWhats').value,
-                cidade: document.getElementById('edCid').value,
-                ativo: document.getElementById('edAtivo').checked,
-                verificado: document.getElementById('edVerificado').checked
+            const id = document.getElementById('mAtaId').value;
+            const data = {
+                nome: document.getElementById('mAtaNome').value, whatsapp: document.getElementById('mAtaWhats').value,
+                email: document.getElementById('mAtaEmail').value, cidade: document.getElementById('mAtaCid').value,
+                estado: document.getElementById('mAtaEst').value, ativo: document.getElementById('mAtaAtivo').checked,
+                verificado: document.getElementById('mAtaVeri').checked
             };
+            const s = document.getElementById('mAtaSenha').value; if(s) data.senha = s;
             
-            const senha = document.getElementById('edSenha').value;
-            if(senha.trim() !== '') updates.senha = senha;
+            if(id) await _s.from('fornecedores').update(data).eq('id', id);
+            else await _s.from('fornecedores').insert([data]);
+            fecharModais(); loadAll();
+        }
+        async function delAta(id) { if(confirm("EXCLUIR ABSOLUTAMENTE? Todos os anúncios irão junto.")) { await _s.from('fornecedores').delete().eq('id', id); loadAll(); } }
+        async function toggleSelo(id, status) { await _s.from('fornecedores').update({verificado: status}).eq('id', id); loadAll(); }
+        
+        // Bulk Ata
+        function selAllAta(el) { document.querySelectorAll('.chk-ata').forEach(c => c.checked = el.checked); }
+        function bulkAtaModal() { if(!document.querySelectorAll('.chk-ata:checked').length) return alert("Selecione alguém."); document.getElementById('modalBulkAta').classList.remove('hidden'); }
+        async function runBulkAta(action) {
+            let ids = Array.from(document.querySelectorAll('.chk-ata:checked')).map(c => parseInt(c.value));
+            if(action === 'apagar') { if(confirm("APAGAR TUDO?")) await _s.from('fornecedores').delete().in('id', ids); }
+            else {
+                let u = {};
+                if(action === 'ativar') u.ativo = true; if(action === 'desativar') u.ativo = false;
+                if(action === 'verificar') u.verificado = true; if(action === 'remover_selo') u.verificado = false;
+                await _s.from('fornecedores').update(u).in('id', ids);
+            }
+            fecharModais(); loadAll();
+        }
 
-            const { error } = await _s.from('fornecedores').update(updates).eq('id', id);
-            if(!error) {
-                alert("SOBERANIA MASTER APLICADA: DADOS ATUALIZADOS.");
-                fecharModal();
-                loadLojistas();
+        // --- CLIENTES (BUSCADORES DB) ---
+        function renderCli() {
+            document.getElementById('listCli').innerHTML = dbCli.map(c => `
+                <tr>
+                    <td class="text-zinc-600 font-bold">${c.id}</td>
+                    <td><span class="font-black text-white">${c.email||c.whatsapp||'Sem Identificação'}</span></td>
+                    <td class="text-[9px] text-zinc-500">${new Date(c.criado_em).toLocaleDateString()}</td>
+                    <td>
+                        <button onclick="editCli(${c.id})" class="bg-zinc-800 text-white px-3 py-1.5 rounded text-[8px] font-black">EDITAR</button>
+                        <button onclick="delCli(${c.id})" class="bg-red-900/30 text-red-500 px-3 py-1.5 rounded text-[8px] font-black ml-1">X</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        function editCli(id) {
+            const c = dbCli.find(x => x.id == id);
+            document.getElementById('mCliId').value = c.id;
+            document.getElementById('mCliEmail').value = c.email||c.whatsapp||'';
+            document.getElementById('mCliSenha').value = '';
+            document.getElementById('modalCli').classList.remove('hidden');
+        }
+        async function saveCli(e) {
+            e.preventDefault();
+            const id = document.getElementById('mCliId').value;
+            const data = { email: document.getElementById('mCliEmail').value };
+            const s = document.getElementById('mCliSenha').value; if(s) data.senha = s;
+            await _s.from('clientes_buscador').update(data).eq('id', id);
+            fecharModais(); loadAll();
+        }
+        async function delCli(id) { if(confirm("APAGAR CLIENTE?")) { await _s.from('clientes_buscador').delete().eq('id', id); loadAll(); } }
+
+        // --- GESTÃO GLOBAL ANÚNCIOS ---
+        function renderAnu() {
+            document.getElementById('listAnu').innerHTML = dbAnu.slice(0, 100).map(a => `
+                <tr>
+                    <td class="font-black text-blue-400">${a.fornecedores?a.fornecedores.nome:'Desconhecido'}</td>
+                    <td>${a.variacoes.produtos_mestre.nome} ${a.variacoes.capacidade} <span class="text-[9px] text-zinc-500">${a.variacoes.cor}</span></td>
+                    <td class="font-mono">${a.moeda} ${a.preco}</td>
+                    <td>${a.quantidade} UN</td>
+                    <td><button onclick="delAnu(${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white transition">APAGAR</button></td>
+                </tr>
+            `).join('') + (dbAnu.length > 100 ? '<tr><td colspan="5" class="text-center text-zinc-500">Exibindo os 100 mais recentes...</td></tr>' : '');
+        }
+        async function delAnu(id) { if(confirm("Derrubar Anúncio?")) { await _s.from('ofertas').delete().eq('id', id); loadAll(); } }
+        async function loadAnuncios() { await loadAll(); }
+
+        // --- CONCIERGE ---
+        function renderConcierge() {
+            document.getElementById('conSelect').innerHTML = '<option value="">SELECIONE UM LOJISTA...</option>' + dbAta.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+        }
+        function executarConcierge() {
+            const id = document.getElementById('conSelect').value;
+            if(!id) return alert("Selecione um lojista primeiro.");
+            // O Poder Máximo: Setar o token dele no navegador e abrir o painel.
+            localStorage.setItem('iFipe_Anunciante', id);
+            window.open('atacadista.html', '_blank');
+        }
+
+        // --- SELOS (VISÃO RÁPIDA) ---
+        function renderSelos() {
+            document.getElementById('listSelos').innerHTML = dbAta.map(a => `
+                <div class="bg-[#141415] border border-[#2c2c2e] p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <p class="text-[11px] font-black text-white">${a.nome}</p>
+                        <p class="text-[8px] text-zinc-500">ID: ${a.id}</p>
+                    </div>
+                    <button onclick="toggleSelo(${a.id}, ${!a.verificado})" class="badge ${a.verificado?'b-blue':'bg-zinc-800 text-zinc-500'} cursor-pointer hover:bg-blue-900 transition">${a.verificado?'VERIFICADO ✅':'SEM SELO'}</button>
+                </div>
+            `).join('');
+        }
+
+        // --- FUNCIONÁRIOS ---
+        function renderStaff() {
+            document.getElementById('listStaff').innerHTML = `
+                <tr><td colspan="4" class="text-center text-zinc-500">Sem funcionários cadastrados na base (Simulação Master).</td></tr>
+            `;
+        }
+        function abrirModalStaff() { alert("Módulo de tabela de staff a ser conectado."); }
+
+        // --- MINHA CONTA MASTER ---
+        function updateMaster(e) {
+            e.preventDefault();
+            const n = document.getElementById('mNewPass').value;
+            if(n) {
+                localStorage.setItem('Master_Custom_Pass', n);
+                alert("SENHA MASTER ALTERADA NO DISPOSITIVO.");
+                document.getElementById('mNewPass').value = '';
             }
         }
 
-        function fecharModal() { document.getElementById('modalEdit').classList.add('hidden'); }
-        function logout() { localStorage.clear(); window.location.replace('index.html'); }
+        window.addEventListener('scroll', () => { document.getElementById('scrollTopBtn').classList.toggle('show', window.scrollY > 300); });
+        
+        // Inicia verificação de porta
+        checkAuth();
     </script>
 </body>
 </html>
