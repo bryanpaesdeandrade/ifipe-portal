@@ -3,94 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - O Oráculo</title>
+    <title>iFipe - BUSCADOR DE PREÇOS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, sans-serif; margin:0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 2.5rem; width: 100%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 12px; padding: 16px; width: 100%; color: var(--text); outline: none; margin-bottom: 1rem; }
-        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 18px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; transition: 0.3s; }
-        .apple-button:hover { background: #0071e3; color: #fff; }
-        .brand { text-align: center; margin-bottom: 2rem; }
-        .brand h1 { font-size: 3rem; font-weight: 900; font-style: italic; letter-spacing: -2px; line-height: 1; }
-        .maintenance-screen { text-align: center; padding: 2rem; }
-        .maintenance-screen h2 { font-size: 1.5rem; font-weight: 900; margin-bottom: 1rem; color: #0071e3; }
+        :root { --bg: #000; --card: #0a0a0a; --text: #fff; --border: #1c1c1e; --blue-apple: #0071e3; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; text-transform: uppercase; }
+        
+        /* LOGIN OVERLAY */
+        #loginOverlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .auth-box { border: 1px solid #2c2c2e; padding: 40px; border-radius: 24px; background: #0a0a0a; text-align: center; width: 350px; }
+        
+        .apple-input { background: #141415; border: 1px solid #2c2c2e; border-radius: 12px; padding: 14px; color: #fff; width: 100%; outline: none; font-size: 12px; transition: 0.3s; }
+        .apple-input:focus { border-color: var(--blue-apple); }
+        
+        .btn-apple { background: var(--blue-apple); color: #fff; font-weight: 900; border-radius: 12px; padding: 14px; cursor: pointer; border: none; font-size: 11px; transition: 0.3s; width: 100%; }
+        .btn-apple:hover { opacity: 0.9; transform: scale(1.02); }
+
+        /* INTERFACE */
+        .nav-fipe { background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 15px 20px; position: sticky; top: 0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
+        
+        .card-anuncio { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 16px; transition: 0.3s; }
+        .card-anuncio:hover { border-color: #3a3a3c; transform: translateY(-2px); }
+
+        .badge-insignia { background: rgba(147, 51, 234, 0.1); color: #d8b4fe; border: 1px solid rgba(147, 51, 234, 0.3); font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-right: 4px; margin-top: 4px; }
+        
         .hidden { display: none !important; }
+        .text-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* ORÁCULO DISPLAY */
+        .oracle-tag { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); padding: 4px 8px; border-radius: 6px; font-size: 9px; font-weight: 900; }
     </style>
 </head>
 <body>
 
-    <div id="loginSection" class="apple-card">
-        <div class="brand">
-            <h1>iFipe</h1>
-            <p class="text-blue-500 font-black uppercase text-[10px] tracking-widest">The Apple Oracle</p>
+    <div id="loginOverlay">
+        <div class="auth-box">
+            <h1 class="text-3xl font-black italic mb-2">iFipe <span class="text-blue-500">BUSCAR</span></h1>
+            <p class="text-[9px] text-zinc-500 mb-8 tracking-widest font-bold">ACESSO AO BUSCADOR DE PREÇOS</p>
+            
+            <div id="statusCheck" class="mb-6 hidden">
+                <span class="text-red-500 text-[10px] font-black bg-red-500/10 p-3 rounded-lg block border border-red-500/20">
+                    SISTEMA EM ATUALIZAÇÃO PELA GOVERNANÇA.<br>AGUARDE ALGUNS INSTANTES.
+                </span>
+            </div>
+
+            <div id="loginForm" class="space-y-4">
+                <input type="text" id="user" class="apple-input text-center" placeholder="WHATSAPP OU EMAIL">
+                <input type="password" id="pass" class="apple-input text-center" placeholder="SUA SENHA">
+                <button onclick="handleLogin()" class="btn-apple">ENTRAR NO ECOSSISTEMA</button>
+                <p id="msg" class="text-[10px] font-black text-zinc-500 mt-4 h-4"></p>
+            </div>
         </div>
-        <form onsubmit="realizarLogin(event)">
-            <input type="text" id="logUser" class="apple-input" placeholder="E-mail ou WhatsApp" required>
-            <input type="password" id="logPass" class="apple-input" placeholder="Senha" required>
-            <button type="submit" id="btnEntrar" class="apple-button w-full">Acessar Sistema</button>
-        </form>
     </div>
 
-    <div id="maintenanceSection" class="apple-card hidden">
-        <div class="maintenance-screen">
-            <div class="text-5xl mb-4">🛠️</div>
-            <h2>Estamos em atualização para trazer melhorias para você.</h2>
-            <p class="text-gray-500 font-bold uppercase text-xs">Até logo, Time iFipe</p>
-        </div>
+    <div id="app" class="hidden">
+        <nav class="nav-fipe">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-black italic">iFipe</h1>
+                <div class="oracle-tag flex items-center gap-2">
+                    <span class="text-[7px] text-zinc-500">USDT ORÁCULO (+0.06):</span>
+                    <span id="oracleVal" class="text-mono">R$ --</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="userNameDisplay" class="text-[9px] font-black text-zinc-400">CARREGANDO...</span>
+                <button onclick="logout()" class="text-red-500 font-black text-[9px] hover:underline">SAIR</button>
+            </div>
+        </nav>
+
+        <main class="p-5">
+            <div class="mb-8">
+                <input type="text" id="mainSearch" class="apple-input !py-4 text-lg" placeholder="🔍 BUSCAR MODELO, LOJA OU COR..." onkeyup="renderAds()">
+            </div>
+
+            <div id="adsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+        </main>
     </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+        
+        let dbAds = [];
+        let oracleRate = 0;
 
-        async function checkMaintenance() {
-            const { data } = await _s.from('configuracoes').select('manutencao').eq('id', 1).single();
-            const isLogged = localStorage.getItem('iFipe_Role');
+        // --- 1. GOVERNANÇA DE ACESSO ---
+        async function checkSystemStatus() {
+            // Verifica se o Master trancou o sistema (Item 10)
+            const status = localStorage.getItem('iFipe_Status');
+            if(status === 'off') {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('statusCheck').classList.remove('hidden');
+                return false;
+            }
+            return true;
+        }
 
-            // Se estiver em manutenção e NÃO estiver logado, bloqueia.
-            if (data.manutencao && !isLogged) {
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('maintenanceSection').classList.remove('hidden');
+        async function handleLogin() {
+            const u = document.getElementById('user').value.toLowerCase().trim();
+            const p = document.getElementById('pass').value;
+            const msg = document.getElementById('msg');
+            
+            if(!await checkSystemStatus()) return;
+
+            msg.innerText = "VERIFICANDO...";
+
+            // Tenta encontrar o cliente por email ou whatsapp
+            const { data, error } = await _s
+                .from('clientes_buscador')
+                .select('*')
+                .or(`email.eq.${u},whatsapp.eq.${u}`)
+                .eq('senha', p)
+                .single();
+
+            if (data) {
+                // Sucesso: Incrementa contador de logins (Motor de Insígnias)
+                await _s.from('clientes_buscador').update({ logins_count: (data.logins_count || 0) + 1 }).eq('id', data.id);
+                
+                localStorage.setItem('iFipe_User_Auth', data.id);
+                localStorage.setItem('iFipe_User_Name', data.nome || data.email || data.whatsapp);
+                initApp();
+            } else {
+                msg.className = "text-[10px] font-black text-red-500 mt-4";
+                msg.innerText = "DADOS INVÁLIDOS. TENTE NOVAMENTE.";
             }
         }
 
-        async function realizarLogin(e) {
-            e.preventDefault();
-            const user = document.getElementById('logUser').value;
-            const pass = document.getElementById('logPass').value;
+        function logout() { localStorage.removeItem('iFipe_User_Auth'); window.location.reload(); }
 
-            // Tenta Master
-            const { data: admin } = await _s.from('admin_users').select('*').eq('email', user).eq('senha', pass).maybeSingle();
-            if(admin) {
-                localStorage.setItem('iFipe_Role', 'master');
-                window.location.href = 'master.html';
-                return;
-            }
-
-            // Tenta Lojista
-            const { data: forn } = await _s.from('fornecedores').select('*').or(`whatsapp.eq.${user},nome.eq.${user}`).eq('senha', pass).maybeSingle();
-            if(forn) {
-                localStorage.setItem('iFipe_Atacadista_ID', forn.id);
-                localStorage.setItem('iFipe_Role', 'atacadista');
-                window.location.href = 'atacadista.html';
-                return;
-            }
-
-            // Tenta Cliente
-            const { data: cli } = await _s.from('clientes_buscador').select('*').eq('email', user).eq('senha', pass).maybeSingle();
-            if(cli && cli.aprovado) {
-                localStorage.setItem('iFipe_Token', cli.id);
-                localStorage.setItem('iFipe_Role', 'cliente');
-                window.location.href = 'buscar.html';
-                return;
-            }
-            alert("ACESSO NEGADO.");
+        // --- 2. MOTOR DO ORÁCULO (+ R$ 0,06 FIXO) ---
+        function initOracle() {
+            new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
+                let bin = parseFloat(JSON.parse(e.data).c);
+                oracleRate = bin + 0.06; // Spread Fixo Inegociável (Item 8)
+                document.getElementById('oracleVal').innerText = `R$ ${oracleRate.toFixed(4)}`;
+                renderAds(); // Atualiza preços em tempo real
+            };
         }
 
-        window.onload = checkMaintenance;
+        // --- 3. RENDERIZAÇÃO E INSÍGNIAS (ITEM 2) ---
+        async function initApp() {
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            document.getElementById('userNameDisplay').innerText = `COMANDANTE: ${localStorage.getItem('iFipe_User_Name')}`;
+            
+            initOracle();
+            await loadData();
+        }
+
+        async function loadData() {
+            const { data } = await _s
+                .from('ofertas')
+                .select('*, fornecedores(nome, insignia_manual), variacoes(produtos_mestre(nome), capacidade, cor)')
+                .gt('quantidade', 0)
+                .order('criado_em', { ascending: false });
+            
+            dbAds = data || [];
+            renderAds();
+        }
+
+        function renderAds() {
+            const query = document.getElementById('mainSearch').value.toLowerCase();
+            const grid = document.getElementById('adsGrid');
+            
+            const filtered = dbAds.filter(a => {
+                const searchStr = `${a.fornecedores?.nome} ${a.variacoes?.produtos_mestre?.nome} ${a.variacoes?.capacidade} ${a.variacoes?.cor}`.toLowerCase();
+                return searchStr.includes(query);
+            });
+
+            grid.innerHTML = filtered.map(a => {
+                // Cálculo de preço baseado na moeda e oráculo
+                let precoFinal = a.moeda === 'USD' ? (a.preco * oracleRate) : a.preco;
+                
+                // Renderização de Insígnias do Lojista (Item 2)
+                let insigniasLojista = (a.fornecedores?.insignia_manual || []).map(insig => 
+                    `<span class="badge-insignia">${insig}</span>`
+                ).join('');
+
+                return `
+                    <div class="card-anuncio">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="text-xs font-black text-zinc-400">${a.fornecedores?.nome || 'LOJA'}</h3>
+                                <div class="flex flex-wrap">${insigniasLojista}</div>
+                            </div>
+                            <span class="text-[8px] font-black bg-zinc-800 px-2 py-1 rounded text-zinc-400">
+                                ${a.condicao || 'NOVO'}
+                            </span>
+                        </div>
+
+                        <div class="my-4">
+                            <h2 class="text-sm font-black text-white">${a.variacoes?.produtos_mestre?.nome}</h2>
+                            <p class="text-[10px] text-zinc-500 font-mono">${a.variacoes?.capacidade} | ${a.variacoes?.cor}</p>
+                        </div>
+
+                        <div class="flex justify-between items-end border-t border-zinc-900 pt-4">
+                            <div>
+                                <span class="text-[7px] text-zinc-600 block font-black">PREÇO CONVERTIDO</span>
+                                <span class="text-lg font-black text-white font-mono">R$ ${parseFloat(precoFinal).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                            </div>
+                            <button class="bg-white text-black text-[9px] font-black px-4 py-2 rounded-lg hover:bg-blue-500 hover:text-white transition">
+                                CHAMAR NO WHATS
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // AUTO-LOGIN CHECK
+        if(localStorage.getItem('iFipe_User_Auth')) {
+            initApp();
+        } else {
+            checkSystemStatus();
+        }
     </script>
 </body>
 </html>
