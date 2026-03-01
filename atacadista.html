@@ -108,8 +108,8 @@
                     <p id="tickerBinance" class="text-xs font-mono font-black text-yellow-400">R$ --</p>
                 </div>
                 <div class="flex flex-col items-end">
-                    <a href="https://wa.me/15616760652?text=Oráculo%20venho%20através%20do%20iFipe%20e%20quero%20comprar%20USDT" target="_blank" class="bg-[#32d74b] text-black px-3 py-1.5 rounded-lg border border-green-500 font-black text-[9px] uppercase hover:bg-green-400 transition text-center">
-                        COMPRAR USDT COM ORÁCULO
+                    <a href="https://wa.me/15616760652?text=Oráculo%20venho%20através%20do%20iFipe%20e%20quero%20comprar%20USDT" target="_blank" class="bg-green-900/30 text-green-400 px-3 py-1.5 rounded-lg border border-green-500/50 font-black text-[9px] uppercase hover:bg-green-900/50 transition text-center flex items-center gap-2">
+                        COMPRAR USDT COM ORÁCULO <span id="tVip" class="text-xs font-mono text-green-300">R$ --</span>
                     </a>
                 </div>
                 <button onclick="abrirConta()" class="text-[9px] text-gray-400 font-black uppercase hover:text-white">Conta</button>
@@ -122,8 +122,7 @@
             <div class="lg:col-span-3 space-y-4">
                 
                 <div class="apple-card border-blue-600/30 bg-blue-600/5 p-4">
-                    <h3 class="text-[10px] font-black uppercase text-blue-500 italic mb-2">SEUS NÍVEIS NO IFIPE 🏆</h3>
-                    <p class="text-[8px] text-gray-400 uppercase mb-3 font-bold tracking-widest">SEU STATUS NO IFIPE</p>
+                    <h3 class="text-[10px] font-black uppercase text-blue-500 italic mb-3">SEUS NÍVEIS NO IFIPE 🏆</h3>
                     <div id="blocoInsignias" class="flex flex-wrap gap-1"></div>
                 </div>
 
@@ -398,8 +397,9 @@
             document.getElementById('dashNomeLoja').innerText = loja.nome.toUpperCase();
             
             new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => { 
-                let b = parseFloat(JSON.parse(e.data).c); taxaVipGlobal = b + 0.07;
+                let b = parseFloat(JSON.parse(e.data).c); taxaVipGlobal = b + 0.06;
                 document.getElementById('tickerBinance').innerText = `R$ ${b.toFixed(4)}`; 
+                document.getElementById('tVip').innerText = `R$ ${taxaVipGlobal.toFixed(4)}`;
                 calcularVipDash();
             };
 
@@ -416,11 +416,13 @@
             if(!u || !taxaVipGlobal) return ['res_custo','res_alto_atacado','res_atacado','res_atacarejo','res_varejo'].forEach(id => document.getElementById(id).innerText = 'R$ 0,00');
             
             let c = (u * taxaVipGlobal) * 1.06;
+            let round10 = val => Math.round(val / 10) * 10;
+
             document.getElementById('res_custo').innerText = c.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-            document.getElementById('res_alto_atacado').innerText = Math.ceil(c + 50).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-            document.getElementById('res_atacado').innerText = Math.ceil(c + 100).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-            document.getElementById('res_atacarejo').innerText = Math.ceil(c + 500).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-            document.getElementById('res_varejo').innerText = Math.ceil(c + 750).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+            document.getElementById('res_alto_atacado').innerText = round10(c + 200).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+            document.getElementById('res_atacado').innerText = round10(c + 350).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+            document.getElementById('res_atacarejo').innerText = round10(c + 500).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+            document.getElementById('res_varejo').innerText = round10(c + 1000).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
         }
 
         /* Wizard */
@@ -469,7 +471,7 @@
             }).join('');
             
             let tg = []; if(tEst>=1000)tg.push(`<span class="insignia-badge califa">👑 CALIFA (+1K)</span>`); else if(tEst>=500)tg.push(`<span class="insignia-badge sheikh">🕌 SHEIKH (+500)</span>`); else if(tEst>=200)tg.push(`<span class="insignia-badge imperador">⚔️ IMPERADOR (+200)</span>`); else if(tEst>=50)tg.push(`<span class="insignia-badge magnata">💰 MAGNATA (+50)</span>`);
-            document.getElementById('blocoInsignias').innerHTML = tg.length ? tg.join('') : '<span class="text-[9px] text-gray-500 italic uppercase">ACUMULE ESTOQUE...</span>';
+            document.getElementById('blocoInsignias').innerHTML = tg.length ? tg.join('') : '';
             filtrarTabela();
         }
 
@@ -487,7 +489,7 @@
             ofertasAtuais.forEach(o=>{t+=`📱 ${o.variacoes.produtos_mestre.nome.toUpperCase()} ${o.variacoes.capacidade}\n${emoji(o.variacoes.cor)} Cor: ${o.cores_variadas?'MIX COLORS':o.variacoes.cor.toUpperCase()} | 📦 ${o.condicao.toUpperCase()}\n💰 Por: ${o.moeda==='BRL'?'R$':'$'} ${o.preco}\n\n`;}); 
             let num = loja.whatsapp ? loja.whatsapp.replace(/\D/g, '') : '';
             if(num) t+=`👉 wa.me/${num}`; 
-            navigator.clipboard.writeText(t); alert("COPIADO! COLE NO SEU WHATSAPP."); 
+            navigator.clipboard.writeText(t).then(() => alert("COPIADO! COLE NO SEU WHATSAPP.")); 
         }
         
         async function abrirEdit(id) { const {data:o} = await _s.from('ofertas').select('*, variacoes(*)').eq('id',id).single(); document.getElementById('edit_id').value=id; document.getElementById('edit_pid').value=o.variacoes.produto_id; document.getElementById('edit_cap').value=o.variacoes.capacidade; document.getElementById('edit_preco').value=o.preco.toLocaleString('pt-BR',{minimumFractionDigits:2}); document.getElementById('edit_qtd').value=o.quantidade; document.getElementById('edit_cond').value=o.condicao; document.getElementById('edit_gar').value=o.garantia||"SEM GARANTIA"; document.getElementById('edit_cor').innerHTML = gradeVariacoes.filter(v=>v.produto_id==o.variacoes.produto_id && v.capacidade==o.variacoes.capacidade).map(v=>`<option value="${v.cor}" ${v.cor==o.variacoes.cor?'selected':''}>${v.cor.toUpperCase()}</option>`).join(''); document.getElementById('editModal').classList.remove('hidden'); }
