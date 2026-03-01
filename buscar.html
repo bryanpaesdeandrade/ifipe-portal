@@ -3,37 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - O Oráculo</title>
+    <title>iFipe - O Oráculo das Ofertas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --red: #ff3b30; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, sans-serif; margin:0; }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 20px; }
-        .produto-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; }
+        .glass-nav { background: rgba(28, 28, 30, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1000; }
+        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 1.5rem; transition: 0.3s; height: 100%; display: flex; flex-direction: column; }
+        .apple-card:hover { border-color: #555; transform: translateY(-5px); }
+        .apple-input { background: #2c2c2e; border: 1px solid var(--border); border-radius: 12px; padding: 12px 20px; color: #fff; outline: none; width: 100%; }
+        .price-tag { font-size: 24px; font-weight: 900; color: #32d74b; font-family: 'JetBrains Mono', monospace; }
+        .badge-info { font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 6px; background: rgba(255,255,255,0.05); color: #86868b; text-transform: uppercase; }
+        .badge-info.active { background: rgba(50, 215, 75, 0.1); color: #32d74b; border: 1px solid rgba(50, 215, 75, 0.2); }
+        .insignia { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 4px; margin-right: 4px; }
+        .btn-zap { background: #25d366; color: #000; font-weight: 900; border-radius: 50px; padding: 12px; text-align: center; text-transform: uppercase; font-size: 11px; margin-top: auto; }
+        .grid-ofertas { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; padding: 20px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <div class="p-6 flex justify-between items-center border-b border-[#38383a]">
-        <h1 class="text-2xl font-black italic text-red-500">iFipe</h1>
-        <button onclick="localStorage.clear(); window.location.href='index.html'" class="text-xs font-bold uppercase">Sair</button>
-    </div>
-    <div id="listaOfertas" class="grid-container max-w-7xl mx-auto"></div>
+
+    <nav class="glass-nav p-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl font-black italic text-red-500">iFipe</h1>
+            <div class="flex-1 max-w-xl w-full">
+                <input type="text" id="buscaInput" class="apple-input" placeholder="O que você está buscando hoje?" oninput="filtrar()">
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="userName" class="text-[10px] font-black uppercase text-gray-500">Buscador</span>
+                <button onclick="sair()" class="text-[10px] font-black uppercase text-red-500 border border-red-900 px-3 py-1.5 rounded-lg">Sair</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-8">
+        <div id="listaOfertas" class="grid-ofertas">
+            </div>
+    </main>
+
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        async function carregar() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(nome), variacoes(*, produtos_mestre(*))').eq('status_aprovacao', 'aprovado');
-            document.getElementById('listaOfertas').innerHTML = data.map(o => `
-                <div class="produto-card">
-                    <h3 class="font-black text-lg">${o.variacoes.produtos_mestre.nome}</h3>
-                    <p class="text-gray-500 text-xs">${o.variacoes.capacidade} | ${o.variacoes.cor}</p>
-                    <p class="text-green-400 font-black text-xl mt-4">R$ ${o.preco.toLocaleString('pt-BR')}</p>
-                    <p class="text-[10px] mt-4 text-gray-400 uppercase font-bold">${o.fornecedores.nome}</p>
-                </div>
-            `).join('');
+        let ofertasCache = [];
+
+        window.onload = () => {
+            if(localStorage.getItem('iFipe_User_Auth') !== 'true') {
+                window.location.href = 'index.html';
+                return;
+            }
+            carregarOfertas();
+        };
+
+        async function carregarOfertas() {
+            const { data, error } = await _s.from('ofertas')
+                .select('*, fornecedores(nome, whatsapp, verificado, insignia_manual), variacoes(*, produtos_mestre(*)), regioes(nome)')
+                .eq('status_aprovacao', 'aprovado')
+                .gt('quantidade', 0)
+                .order('preco', { ascending: true });
+
+            if(data) {
+                ofertasCache = data;
+                renderizar(data);
+            }
         }
-        window.onload = carregar;
+
+        function renderizar(lista) {
+            const container = document.getElementById('listaOfertas');
+            if(lista.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center py-20 text-gray-500 font-bold uppercase tracking-widest">Nenhuma oferta encontrada para sua busca</div>';
+                return;
+            }
+
+            container.innerHTML = lista.map(o => {
+                const f = o.fornecedores;
+                const v = o.variacoes;
+                const m = v.produtos_mestre;
+
+                // Montagem de badges de serviço
+                const badges = [
+                    {label: 'PIX', active: o.aceita_pix},
+                    {label: 'USDT', active: o.aceita_usdt},
+                    {label: 'ENVIO', active: o.faz_envio},
+                    {label: 'MOTO', active: o.tem_boy}
+                ].map(b => `<span class="badge-info ${b.active?'active':''}">${b.label}</span>`).join('');
+
+                // Montagem de insígnias do lojista
+                const selos = (f.insignia_manual || []).map(s => `<span class="insignia bg-red-500/20 text-red-500 border border-red-500/30">${s}</span>`).join('');
+
+                return `
+                    <div class="apple-card">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-black text-lg text-white leading-tight">${m.nome}</h3>
+                                <p class="text-[10px] font-black text-gray-500 uppercase tracking-tighter">${v.capacidade} • ${o.cores_variadas ? 'Mix Colors' : v.cor} • ${o.condicao}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="badge-info bg-blue-500/10 text-blue-400 border border-blue-500/20">${o.regioes?.nome || 'SP'}</span>
+                            </div>
+                        </div>
+
+                        <div class="my-4 flex items-baseline gap-2">
+                            <span class="text-xs font-bold text-gray-500">R$</span>
+                            <span class="price-tag">${o.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1 mb-6">
+                            ${badges}
+                        </div>
+
+                        <div class="pt-4 border-t border-[#38383a] mb-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] font-black text-white uppercase">${f.nome} ${f.verificado ? '✅' : ''}</span>
+                                <span class="text-[10px] font-bold text-gray-600">Qtd: ${o.quantidade}</span>
+                            </div>
+                            <div class="flex flex-wrap gap-1">
+                                ${selos}
+                            </div>
+                        </div>
+
+                        <a href="https://wa.me/${f.whatsapp?.replace(/\D/g,'')}?text=Olá, vi o anúncio do ${m.nome} no iFipe e tenho interesse." 
+                           target="_blank" class="btn-zap">
+                           Chamar no WhatsApp
+                        </a>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filtrar() {
+            const termo = document.getElementById('buscaInput').value.toLowerCase();
+            const filtrados = ofertasCache.filter(o => {
+                const nome = o.variacoes.produtos_mestre.nome.toLowerCase();
+                const loja = o.fornecedores.nome.toLowerCase();
+                return nome.includes(termo) || loja.includes(termo);
+            });
+            renderizar(filtrados);
+        }
+
+        function sair() {
+            localStorage.clear();
+            window.location.href = 'index.html';
+        }
     </script>
 </body>
 </html>
