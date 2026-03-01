@@ -3,167 +3,269 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe Master - Comando Central</title>
+    <title>iFipe - COMANDO CENTRAL (MASTER)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --blue: #0071e3; }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin:0; }
-        .tab-btn { padding: 10px 20px; font-weight: 800; border-bottom: 2px solid transparent; transition: 0.3s; font-size: 11px; text-transform: uppercase; color: #888; }
-        .tab-btn.active { border-color: var(--blue); color: var(--blue); }
-        .master-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        .master-table th { text-align: left; padding: 12px; border-bottom: 1px solid var(--border); color: #888; text-transform: uppercase; }
-        .master-table td { padding: 12px; border-bottom: 1px solid #2c2c2e; }
-        .status-toggle { width: 50px; height: 26px; background: #333; border-radius: 50px; position: relative; cursor: pointer; transition: 0.3s; }
-        .status-toggle.on { background: #32d74b; }
-        .status-toggle::after { content: ''; position: absolute; width: 22px; height: 22px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: 0.3s; }
-        .status-toggle.on::after { left: 26px; }
+        :root { --bg: #000; --card: #141415; --text: #fff; --border: #2c2c2e; --blue-master: #0071e3; --gold: #f59e0b; --red: #ef4444; }
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; text-transform: uppercase; }
+        
+        /* Navbar de Autoridade */
+        .master-nav { background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); border-bottom: 2px solid var(--blue-master); padding: 15px 40px; position: sticky; top:0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
+        
+        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 1.5rem; transition: 0.3s; }
+        .apple-card:hover { border-color: var(--blue-master); }
+
+        .module-btn { background: var(--border); padding: 20px; border-radius: 20px; text-align: center; cursor: pointer; transition: 0.3s; border: 1px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .module-btn:hover { background: rgba(0, 113, 227, 0.1); border-color: var(--blue-master); transform: translateY(-5px); }
+        .module-btn i { font-size: 24px; }
+        .module-title { font-size: 10px; font-weight: 900; letter-spacing: 1px; color: #a1a1aa; }
+
+        /* Tabela de Alto Poder */
+        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+        th { padding: 15px; font-size: 10px; color: #52525b; text-align: left; text-transform: uppercase; }
+        td { padding: 15px; background: #1c1c1e; font-size: 11px; }
+        td:first-child { border-radius: 12px 0 0 12px; }
+        td:last-child { border-radius: 0 12px 12px 0; }
+
+        .badge { padding: 4px 10px; border-radius: 50px; font-size: 9px; font-weight: 900; }
+        .badge-active { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .badge-inactive { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .badge-verified { background: rgba(0, 113, 227, 0.2); color: #0071e3; border: 1px solid #0071e3; }
+
+        .btn-scroll-top { position: fixed; bottom: 30px; right: 30px; background: var(--blue-master); color: #fff; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: 0.3s; z-index: 1000; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .btn-scroll-top.show { opacity: 1; }
+
         .hidden { display: none !important; }
+        .apple-input { background: #000; border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: #fff; width: 100%; outline: none; font-size: 12px; }
+        .apple-input:focus { border-color: var(--blue-master); }
     </style>
 </head>
-<body class="p-6">
+<body>
 
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-        <div>
-            <h1 class="text-3xl font-black italic">iFipe <span class="text-blue-500">MASTER</span></h1>
-            <p class="text-[10px] text-gray-500 font-bold">PAINEL DE CONTROLE SUPREMO</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <button onclick="tab('ofertas')" class="tab-btn active" id="btn-ofertas">Ofertas</button>
-            <button onclick="tab('lojistas')" class="tab-btn" id="btn-lojistas">Lojistas</button>
-            <button onclick="tab('config')" class="tab-btn" id="btn-config">Configurações</button>
-            <button onclick="logout()" class="text-red-500 font-bold text-xs ml-4 border border-red-500/30 px-3 py-1 rounded-full">SAIR</button>
-        </div>
-    </header>
+    <button id="scrollTopBtn" class="btn-scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">⬆️</button>
 
-    <div id="tab-ofertas" class="content-tab">
-        <div class="bg-[#1c1c1e] rounded-2xl p-6 border border-[#38383a] overflow-x-auto">
-            <table class="master-table">
-                <thead>
-                    <tr>
-                        <th>Produto</th>
-                        <th>Lojista</th>
-                        <th>Preço</th>
-                        <th>Data</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="lista-ofertas"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="tab-lojistas" class="content-tab hidden">
-        <div class="bg-[#1c1c1e] rounded-2xl p-6 border border-[#38383a] overflow-x-auto">
-            <table class="master-table">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>WhatsApp</th>
-                        <th>Status</th>
-                        <th>Selo</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="lista-lojistas"></tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="tab-config" class="content-tab hidden">
-        <div class="max-w-md">
-            <div class="bg-[#1c1c1e] rounded-2xl p-8 border border-[#38383a]">
-                <h3 class="font-black italic uppercase mb-6">Controle de Sistema</h3>
-                
-                <div class="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
-                    <div>
-                        <p class="font-bold text-sm">Modo de Atualização</p>
-                        <p class="text-[10px] text-gray-500">Ativa o aviso global para visitantes.</p>
-                    </div>
-                    <div id="toggleManutencao" class="status-toggle" onclick="toggleSystemStatus()"></div>
+    <nav class="master-nav">
+        <div class="flex items-center gap-6">
+            <h1 class="text-3xl font-black italic tracking-tighter">iFipe <span class="text-blue-500">MASTER</span></h1>
+            <div class="flex gap-4 border-l border-zinc-800 pl-6">
+                <div class="text-center">
+                    <p class="text-[8px] text-zinc-500 font-black">BINANCE Real</p>
+                    <p id="tBin" class="text-xs font-mono font-black text-white">R$ --</p>
                 </div>
-
-                <div class="mt-8 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                    <p class="text-[11px] text-blue-400 leading-relaxed">
-                        <b>Aviso:</b> Mesmo em atualização, você (Master) e usuários logados continuarão com acesso total para testes e lançamentos.
-                    </p>
+                <div class="text-center">
+                    <p class="text-[8px] text-zinc-500 font-black">ORÁCULO Taxa</p>
+                    <p id="tOra" class="text-xs font-mono font-black text-yellow-500">R$ --</p>
                 </div>
             </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-[10px] font-black bg-zinc-800 px-4 py-2 rounded-full border border-zinc-700">MODO: ADMINISTRADOR ABSOLUTO</span>
+            <button onclick="logout()" class="text-[10px] text-red-500 font-black">ENCERRAR SESSÃO</button>
+        </div>
+    </nav>
+
+    <main class="max-w-[1600px] mx-auto p-8">
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-10">
+            <div class="module-btn" onclick="showModule('anunciantes')">
+                <span>🏢</span>
+                <span class="module-title">Atacadistas</span>
+            </div>
+            <div class="module-btn" onclick="window.open('buscar.html', '_blank')">
+                <span>🔍</span>
+                <span class="module-title">Buscador</span>
+            </div>
+            <div class="module-btn" onclick="showModule('anuncios')">
+                <span>📢</span>
+                <span class="module-title">Gestão Global</span>
+            </div>
+            <div class="module-btn" onclick="showModule('funcionarios')">
+                <span>👥</span>
+                <span class="module-title">Funcionários</span>
+            </div>
+            <div class="module-btn" onclick="showModule('selos')">
+                <span>🛡️</span>
+                <span class="module-title">Selos/Insignias</span>
+            </div>
+            <div class="module-btn" onclick="alert('Concierge em implantação')">
+                <span>🛎️</span>
+                <span class="module-title">Concierge</span>
+            </div>
+            <div class="module-btn bg-blue-900/20 border-blue-500" onclick="location.reload()">
+                <span>🔄</span>
+                <span class="module-title text-blue-400">Atualizar</span>
+            </div>
+        </div>
+
+        <div id="view-anunciantes" class="apple-card">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-black italic">Governança de Atacadistas</h2>
+                <button onclick="abrirNovoLojista()" class="bg-white text-black text-[10px] font-black px-6 py-3 rounded-full hover:bg-blue-500 hover:text-white transition">+ Cadastrar Novo Lojista</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Lojista / Local</th>
+                            <th>Contato</th>
+                            <th>Status</th>
+                            <th>Selo</th>
+                            <th>Poder (Estoque)</th>
+                            <th class="text-right">Ações de Intervenção</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaLojistas"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="view-anuncios" class="apple-card hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-black italic">Gestão Global de Anúncios</h2>
+            </div>
+            <div id="listaGlobalAnuncios" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+        </div>
+
+    </main>
+
+    <div id="modalEditLojista" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-[2000] p-4">
+        <div class="apple-card max-w-[500px] w-full border-blue-500">
+            <h3 class="text-lg font-black mb-6 border-b border-zinc-800 pb-4">Intervenção Direta: <span id="edNomeLoja"></span></h3>
+            <form onsubmit="salvarIntervencao(event)" class="space-y-4">
+                <input type="hidden" id="edId">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[9px] text-zinc-500 font-black mb-1 block">Nome Fantasia</label>
+                        <input type="text" id="edNome" class="apple-input">
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-zinc-500 font-black mb-1 block">WhatsApp</label>
+                        <input type="text" id="edWhats" class="apple-input">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[9px] text-zinc-500 font-black mb-1 block">Cidade</label>
+                        <input type="text" id="edCid" class="apple-input">
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-zinc-500 font-black mb-1 block">Nova Senha</label>
+                        <input type="text" id="edSenha" class="apple-input" placeholder="Sobrescrever senha...">
+                    </div>
+                </div>
+                <div class="flex gap-4 items-center bg-zinc-900 p-4 rounded-2xl">
+                    <label class="flex items-center gap-2 text-[10px] font-black cursor-pointer">
+                        <input type="checkbox" id="edAtivo"> CONTA ATIVA
+                    </label>
+                    <label class="flex items-center gap-2 text-[10px] font-black cursor-pointer text-blue-400">
+                        <input type="checkbox" id="edVerificado"> SELO VERIFICADO
+                    </label>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="fecharModal()" class="w-1/3 apple-button !bg-zinc-800 !text-white">Cancelar</button>
+                    <button type="submit" class="w-2/3 apple-button !bg-blue-600 !text-white">APLICAR ALTERAÇÕES</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let statusManutencao = false;
+        let lojistas = [], todosAnuncios = [], rate = 0;
 
-        async function init() {
-            if(localStorage.getItem('iFipe_Role') !== 'master') window.location.href = 'index.html';
-            await checkSystemStatus();
-            loadOfertas();
-            loadLojistas();
+        window.onload = async () => {
+            initBinance();
+            await loadData();
+        };
+
+        function initBinance() {
+            new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
+                rate = parseFloat(JSON.parse(e.data).c);
+                document.getElementById('tBin').innerText = `R$ ${rate.toFixed(4)}`;
+                document.getElementById('tOra').innerText = `R$ ${(rate + 0.06).toFixed(4)}`;
+            };
         }
 
-        function tab(t) {
-            document.querySelectorAll('.content-tab').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-' + t).classList.remove('hidden');
-            document.getElementById('btn-' + t).classList.add('active');
+        async function loadData() {
+            const { data: f } = await _s.from('fornecedores').select('*').order('nome');
+            const { data: o } = await _s.from('ofertas').select('*, fornecedores(nome)');
+            
+            lojistas = f || [];
+            todosAnuncios = o || [];
+
+            renderLojistas();
         }
 
-        async function checkSystemStatus() {
-            const { data } = await _s.from('configuracoes').select('manutencao').eq('id', 1).single();
-            statusManutencao = data.manutencao;
-            const toggle = document.getElementById('toggleManutencao');
-            if(statusManutencao) toggle.classList.add('on');
-            else toggle.classList.remove('on');
-        }
-
-        async function toggleSystemStatus() {
-            statusManutencao = !statusManutencao;
-            const { error } = await _s.from('configuracoes').update({ manutencao: statusManutencao }).eq('id', 1);
-            if(!error) checkSystemStatus();
-        }
-
-        async function loadOfertas() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(nome), variacoes(produtos_mestre(nome), capacidade, cor)').order('criado_em', {ascending:false});
-            document.getElementById('lista-ofertas').innerHTML = data.map(o => `
+        function renderLojistas() {
+            const container = document.getElementById('listaLojistas');
+            container.innerHTML = lojistas.map(l => {
+                // Cálculo de Poder (Soma de estoque deste lojista)
+                const estoqueTotal = todosAnuncios.filter(a => a.fornecedor_id === l.id).reduce((sum, item) => sum + item.quantidade, 0);
+                
+                return `
                 <tr>
-                    <td><b>${o.variacoes.produtos_mestre.nome}</b><br><span class="text-[10px] text-gray-500">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td>
-                    <td>${o.fornecedores.nome}</td>
-                    <td class="font-mono text-green-400 font-bold">${o.moeda} ${o.preco}</td>
-                    <td class="text-gray-500">${new Date(o.criado_em).toLocaleDateString()}</td>
-                    <td><button onclick="deleteOferta(${o.id})" class="text-red-500 uppercase font-black text-[10px]">Apagar</button></td>
-                </tr>
-            `).join('');
-        }
-
-        async function loadLojistas() {
-            const { data } = await _s.from('fornecedores').select('*').order('nome');
-            document.getElementById('lista-lojistas').innerHTML = data.map(l => `
-                <tr>
-                    <td>${l.nome}</td>
-                    <td>${l.whatsapp}</td>
-                    <td><span class="${l.ativo ? 'text-green-500' : 'text-red-500'} font-bold">${l.ativo ? 'ATIVO' : 'BLOQUEADO'}</span></td>
-                    <td>${l.verificado ? '✅' : '❌'}</td>
-                    <td class="flex gap-2">
-                        <button onclick="toggleForn(${l.id}, 'ativo', ${l.ativo})" class="bg-[#2c2c2e] px-2 py-1 rounded text-[9px] font-bold uppercase">${l.ativo ? 'Bloquear' : 'Ativar'}</button>
-                        <button onclick="toggleForn(${l.id}, 'verificado', ${l.verificado})" class="bg-blue-600/20 text-blue-400 px-2 py-1 rounded text-[9px] font-bold uppercase">Selo</button>
+                    <td>
+                        <p class="font-black text-white">${l.nome}</p>
+                        <p class="text-[9px] text-zinc-500">${l.cidade} - ${l.estado}</p>
                     </td>
-                </tr>
-            `).join('');
+                    <td><span class="font-mono text-zinc-400">${l.whatsapp}</span></td>
+                    <td><span class="badge ${l.ativo ? 'badge-active' : 'badge-inactive'}">${l.ativo ? 'ATIVO' : 'INATIVO'}</span></td>
+                    <td>${l.verificado ? '<span class="badge badge-verified">VERIFICADO</span>' : '<span class="text-zinc-700">---</span>'}</td>
+                    <td><span class="font-black text-blue-400">${estoqueTotal} UN</span></td>
+                    <td class="text-right">
+                        <button onclick="intervirLojista(${l.id})" class="text-[9px] font-black bg-zinc-800 px-3 py-1 rounded-lg hover:bg-white hover:text-black transition">INTERVIR</button>
+                    </td>
+                </tr>`;
+            }).join('');
         }
 
-        async function deleteOferta(id) { if(confirm("Apagar anúncio?")) { await _s.from('ofertas').delete().eq('id', id); loadOfertas(); } }
+        function intervirLojista(id) {
+            const l = lojistas.find(x => x.id === id);
+            document.getElementById('edId').value = l.id;
+            document.getElementById('edNomeLoja').innerText = l.nome;
+            document.getElementById('edNome').value = l.nome;
+            document.getElementById('edWhats').value = l.whatsapp;
+            document.getElementById('edCid').value = l.cidade;
+            document.getElementById('edAtivo').checked = l.ativo;
+            document.getElementById('edVerificado').checked = l.verificado;
+            document.getElementById('edSenha').value = '';
+            document.getElementById('modalEditLojista').classList.remove('hidden');
+        }
+
+        async function salvarIntervencao(e) {
+            e.preventDefault();
+            const id = document.getElementById('edId').value;
+            const data = {
+                nome: document.getElementById('edNome').value,
+                whatsapp: document.getElementById('edWhats').value,
+                cidade: document.getElementById('edCid').value,
+                ativo: document.getElementById('edAtivo').checked,
+                verificado: document.getElementById('edVerificado').checked
+            };
+            const novaSenha = document.getElementById('edSenha').value;
+            if(novaSenha.trim() !== '') data.senha = novaSenha;
+
+            await _s.from('fornecedores').update(data).eq('id', id);
+            alert("PODER MASTER EXERCIDO: DADOS ATUALIZADOS.");
+            fecharModal();
+            loadData();
+        }
+
+        function showModule(mod) {
+            document.getElementById('view-anunciantes').classList.add('hidden');
+            document.getElementById('view-anuncios').classList.add('hidden');
+            document.getElementById(`view-${mod}`).classList.remove('hidden');
+        }
+
+        function fecharModal() { document.getElementById('modalEditLojista').classList.add('hidden'); }
+        function logout() { localStorage.clear(); window.location.replace('index.html'); }
         
-        async function toggleForn(id, campo, valor) {
-            let obj = {}; obj[campo] = !valor;
-            await _s.from('fornecedores').update(obj).eq('id', id);
-            loadLojistas();
-        }
-
-        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
-        window.onload = init;
+        window.addEventListener('scroll', () => { 
+            document.getElementById('scrollTopBtn').classList.toggle('show', window.scrollY > 300); 
+        });
     </script>
 </body>
 </html>
