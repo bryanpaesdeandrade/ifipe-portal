@@ -1,109 +1,489 @@
-Bryan, eu vou resolver isso **agora**, do jeito certo.  
-Segue **a mensagem final**, firme, objetiva e **sem espaço para erro**, para você mandar **uma única vez**. Essa mensagem **trava o comportamento**, corrige o que está errado **agora** e impede novas “alucinações”.
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iFipe</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --blue-sober: #3b82f6; }
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; text-transform: uppercase; transition: 0.3s; }
+        
+        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
+        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; }
+        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 11px; text-transform: uppercase; }
+        
+        /* Botões Base */
+        .btn-header { display: flex; align-items: center; justify-content: center; border-radius: 12px; height: 38px; padding: 0 12px; transition: 0.3s; border: 1px solid var(--border); text-decoration: none; gap: 6px; cursor: pointer; }
+        .btn-header span { font-size: 10px; font-weight: 900; text-transform: uppercase; }
+        
+        .btn-lancar { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 14px; cursor: pointer; border: none; font-size: 11px; width: 100%; transition: 0.3s; text-transform: uppercase; margin-top: 16px; }
+        .btn-lancar:hover { background: var(--blue-sober); color: #fff; }
 
-Copia e cola **exatamente assim**:
+        /* TAGS CHAPADAS (Cor sólida, sem borda) */
+        .tag-chapada { font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; color: #fff; margin-right: 4px; margin-bottom: 4px; border: none; }
+        .tag-novo { background: #16a34a; } 
+        .tag-semi { background: #ca8a04; } 
+        .tag-cinza { background: #4b5563; }
+        
+        /* MOLDURAS (Azul sóbrio, vazadas com borda) */
+        .moldura-sobria { font-size: 9px; font-weight: 900; padding: 3px 6px; border-radius: 6px; display: inline-flex; align-items: center; border: 1px solid #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.1); margin-right: 4px; margin-bottom: 4px; }
 
----
+        .mini-edit { background: transparent; border: 1px solid transparent; color: #fff; font-weight: 800; width: 60px; text-align: center; font-family: 'JetBrains Mono'; border-radius: 6px; }
+        .mini-edit:focus { border-color: var(--blue-sober); background: var(--input); outline: none; }
+        
+        .step-block { margin-bottom: 12px; border-left: 2px solid #38383a; padding-left: 15px; opacity: 0.3; pointer-events: none; transition: 0.3s; }
+        .step-block.active { border-left-color: var(--blue-sober); opacity: 1; pointer-events: auto; }
+        
+        .btn-tipo { background: var(--input); border: 2px solid var(--border); color: var(--text); padding: 12px; border-radius: 12px; font-weight: 900; font-size: 10px; cursor: pointer; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .btn-tipo.active { border-color: var(--blue-sober); color: var(--blue-sober); background: rgba(59, 130, 246, 0.1); }
+        
+        .insignia-badge { display: inline-flex; padding: 4px 8px; border-radius: 8px; font-size: 9px; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); margin-bottom: 4px; }
+        .califa { color: #f43f5e; border-color: #f43f5e; }
+        .rei { color: #3b82f6; border-color: #3b82f6; }
+        .magnata { color: #f59e0b; border-color: #f59e0b; }
 
-**Isis, atenção máxima. Este é o comando final e imediato.**
+        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
 
-O sistema está apresentando **erros graves** porque você está alterando **preço, cores, textos e lógica** sem que isso tenha sido solicitado. Isso precisa parar **agora**.
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 12px 10px; border-bottom: 1px solid var(--input); font-size: 10px; text-align: center; vertical-align: middle; }
+        td:nth-child(2), th:nth-child(2) { text-align: left; }
+        
+        .btn-scroll-top { position: fixed; bottom: 30px; right: 30px; background-color: var(--card); border: 1px solid var(--border); color: var(--text); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 999; transition: 0.3s; opacity: 0; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .btn-scroll-top.show { opacity: 1; pointer-events: auto; }
+        .btn-scroll-top:hover { background-color: var(--blue-sober); border-color: var(--blue-sober); color: #fff; }
 
----
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--blue-sober); border-radius: 10px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body id="appBody">
 
-## 🚨 ERRO CRÍTICO — PREÇO (CORRIGIR IMEDIATAMENTE)
+    <button id="scrollTopBtn" class="btn-scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
+    </button>
 
-**Ninguém pediu para mexer em regra de dólar, conversão ou preço.**
+    <nav class="nav-bar">
+        <div class="flex items-center gap-4">
+            <h1 class="text-2xl font-black italic m-0">iFipe</h1>
+            <span class="text-[10px] text-gray-400 font-bold border-l border-[#38383a] pl-3 ml-1 uppercase" id="dashNome">CARREGANDO...</span>
+        </div>
 
-O que está acontecendo:
-- Preço lançado: **$ 1.999**
-- Painel arredonda para **$ 2.000**
-- Buscador exibe **R$ 11.040 / R$ 11.030**
+        <div class="flex gap-2 sm:gap-4 items-center flex-wrap justify-end">
+            <button onclick="abrirCalc()" class="btn-header" style="color: #60a5fa; border-color: #60a5fa; background: rgba(59, 130, 246, 0.1);">
+                <span>Calculadora de iPhone</span>
+            </button>
+            
+            <a href="https://wa.me/556896003049?text=Ol%C3%A1%20venho%20do%20iFipe%20e%20preciso%20de%20suporte" target="_blank" class="btn-header" style="background: rgba(37, 211, 102, 0.1); color: #25d366; border-color: #25d366;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326z"/></svg>
+                <span>Suporte</span>
+            </a>
+            
+            <a href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="btn-header" style="background: rgba(255, 204, 0, 0.1); color: #ffcc00; border-color: #ffcc00;">
+                <span>COMPRAR USDT C/ ORÁCULO <strong id="tOra" class="ml-1 text-white">R$ --</strong></span>
+            </a>
+            
+            <div class="bg-[#1c1c1e] border border-[#38383a] rounded-lg px-4 py-1 ml-2 text-center">
+                <span class="text-[9px] text-yellow-400 font-black block leading-tight">BINANCE USDT/BRL</span>
+                <span id="tBin" class="text-[13px] font-mono font-black text-white">R$ --</span>
+            </div>
+            <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase ml-2 hover:underline">Sair</button>
+        </div>
+    </nav>
 
-Isso é **INACEITÁVEL**.
+    <main class="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 pt-6 px-4 pb-20">
+        
+        <div class="lg:col-span-4 space-y-6">
+            
+            <div class="apple-card">
+                <h3 class="text-[10px] font-black uppercase text-gray-400 mb-3">STATUS NO IFIPE 🏆</h3>
+                <div id="blocoInsignias" class="flex flex-wrap gap-2">
+                    </div>
+            </div>
 
-### Regra absoluta:
-- **Não arredondar**
-- **Não converter automaticamente**
-- **Não aplicar regra de dólar**
-- O valor lançado é o valor exibido
-- Qualquer conversão deve ser **apenas informativa**, nunca alterar o preço final
+            <div class="apple-card">
+                <h2 class="text-xs font-black text-white mb-4">PUBLICAR OFERTA</h2>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <button type="button" id="btN" class="btn-tipo" onclick="selTipo('Novo')">📦 NOVO</button>
+                    <button type="button" id="btS" class="btn-tipo" onclick="selTipo('Seminovo')">♻️ SEMINOVO</button>
+                </div>
+                <form onsubmit="doPost(event)">
+                    <input type="hidden" id="f_tipo">
+                    <div class="step-block" id="s1"><span class="text-[9px] font-bold text-gray-400">1. MODELO</span><select id="f_mod" class="apple-input mt-1" onchange="libMem()" required disabled></select></div>
+                    <div class="step-block" id="s2"><span class="text-[9px] font-bold text-gray-400">2. MEMÓRIA</span><select id="f_cap" class="apple-input mt-1" onchange="libCor()" required disabled></select></div>
+                    <div class="step-block" id="s3"><span class="text-[9px] font-bold text-gray-400">3. COR</span><select id="f_cor" class="apple-input mt-1" onchange="libDet()" required disabled></select></div>
+                    <div class="step-block" id="s4">
+                        <span class="text-[9px] font-bold text-gray-400">4. DETALHES</span>
+                        
+                        <div id="z_semi" class="hidden space-y-2 mt-2 mb-2">
+                            <select id="f_cond" class="apple-input">
+                                <option value="Seminovo">SEMINOVO</option>
+                                <option value="CPO">CPO</option>
+                                <option value="Grade A">GRADE A</option>
+                                <option value="Grade B">GRADE B</option>
+                                <option value="Grade C">GRADE C</option>
+                            </select>
+                            <select id="f_bat" class="apple-input">
+                                <option value="">SELECIONE A BATERIA...</option>
+                                <option value="Abaixo de 85%">Abaixo de 85%</option>
+                                <option value="Acima de 85%">Acima de 85%</option>
+                                <option value="Acima de 90%">Acima de 90%</option>
+                                <option value="Acima de 95%">Acima de 95%</option>
+                                <option value="Bateria em 100%">Bateria em 100%</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-2 mt-2">
+                            <select id="f_gar" class="apple-input hidden">
+                                <option value="">GARANTIA...</option>
+                                <option value="Sem garantia">Sem garantia</option>
+                                <option value="1 Mês">1 Mês</option>
+                                <option value="2 Meses">2 Meses</option>
+                                <option value="3 Meses">3 Meses</option>
+                                <option value="6 Meses">6 Meses</option>
+                                <option value="12 Meses">12 Meses</option>
+                            </select>
+                        </div>
 
-Corrigir isso **antes de qualquer outro ajuste**.
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <input type="number" id="f_qtd" class="apple-input" placeholder="QTD" min="1" required>
+                            <select id="f_orig" class="apple-input" required></select>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <input type="text" id="f_usd" class="apple-input" placeholder="$ USD" oninput="mascara(this); document.getElementById('f_brl').value=''">
+                            <input type="text" id="f_brl" class="apple-input" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('f_usd').value=''">
+                        </div>
 
----
+                        <div class="grid grid-cols-2 gap-2 mt-3 bg-[#1c1c1e] p-3 rounded-lg border border-[#38383a]">
+                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_pix"> PIX</label>
+                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_usdt"> USDT</label>
+                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_neg"> NEGOCIA QTD</label>
+                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_envi"> FAZ ENVIO</label>
+                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_cole"> ACEITA COLETA</label>
+                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_nota"> EMITE NF</label>
+                        </div>
+                        
+                        <button type="submit" id="btnS" class="btn-lancar hidden">LANÇAR PRODUTO</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-## 📊 ÍNDICE BINANCE USDT/BRL
+        <div class="lg:col-span-8">
+            <div class="apple-card min-h-[600px] flex flex-col">
+                <div class="flex justify-between items-center mb-4 bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a]">
+                    <span class="text-[9px] font-black uppercase text-gray-300"><span id="bulkCount">0</span> Selecionados</span>
+                    <div class="flex gap-2">
+                        <button onclick="abrirBulk()" class="bg-white text-black px-3 py-1.5 rounded-full text-[8px] font-black uppercase cursor-pointer">Editar Lote</button>
+                        <button onclick="bulkDup()" class="bg-[#3b82f6] text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase cursor-pointer">Duplicar</button>
+                        <button onclick="bulkDel()" class="bg-red-600 text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase cursor-pointer">Apagar</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto custom-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="30"><input type="checkbox" onclick="selAll(this)"></th>
+                                <th>MODELO / DETALHES</th>
+                                <th class="text-center">QTD</th>
+                                <th class="text-center">PREÇO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
 
-- O índice da **BINANCE USDT/BRL** precisa estar:
-  - Visível
-  - Legível
-  - Com **cor na escrita**
-- Hoje está discreto demais.
-- Deve ficar claro que é **BINANCE**, não taxa interna.
+    <div id="calcModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[2000] px-4">
+        <div class="w-full max-w-[380px] bg-[#1c1c1e] border border-[#38383a] rounded-3xl p-6 shadow-2xl relative">
+            <button onclick="fecharCalc()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+            <div class="text-center mb-5 mt-2">
+                <h2 class="text-lg font-black text-white">Calculadora de iPhone</h2>
+                <p class="text-[9px] text-gray-400 font-bold uppercase mt-2 tracking-widest leading-relaxed">Coloque o preço em Dólar do iPhone e saiba o preço entregue no Brasil</p>
+            </div>
+            <div class="relative mb-4">
+                <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
+                <input type="number" id="calcUsd" class="w-full bg-[#151516] border border-[#38383a] rounded-xl py-4 pl-12 pr-4 font-mono text-xl font-black text-white outline-none focus:border-[#3b82f6] text-center" placeholder="USD" oninput="calcularImportacao()">
+            </div>
+            <div class="bg-[#0a0a0a] border border-[#2c2c2e] rounded-2xl p-4 text-right mb-4 relative">
+                <span class="absolute top-3 left-4 text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final</span>
+                <div id="calcResult" class="font-mono text-3xl font-black text-[#fff] mt-4 tracking-tighter">R$ 0,00</div>
+            </div>
+            <div class="bg-[#2c2c2e] border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase tracking-wide space-y-2">
+                <div class="flex justify-between text-white"><span>ALTO ATACADO</span><span id="res_alto">R$ 0,00</span></div>
+                <div class="flex justify-between text-gray-300"><span>ATACADO</span><span id="res_ata">R$ 0,00</span></div>
+                <div class="flex justify-between text-gray-400"><span>ATACAREJO</span><span id="res_atcrj">R$ 0,00</span></div>
+                <div class="flex justify-between text-gray-500"><span>VAREJO</span><span id="res_var">R$ 0,00</span></div>
+            </div>
+        </div>
+    </div>
 
-Isso deve aparecer **em todas as estruturas**.
+    <div id="bulkModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
+        <div class="apple-card max-w-[500px] w-full border-[#3b82f6]">
+            <h3 class="text-xs font-black uppercase text-[#fff] mb-4 text-center">EDIÇÃO EM MASSA</h3>
+            <form onsubmit="doBulk(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="b_preco" class="apple-input" placeholder="NOVO PREÇO" oninput="mascara(this)">
+                    <input type="number" id="b_qtd" class="apple-input" placeholder="NOVA QTD" min="1">
+                    <select id="b_cond" class="apple-input">
+                        <option value="">MANTER CONDIÇÃO...</option>
+                        <option value="Novo">NOVO</option>
+                        <option value="Seminovo">SEMINOVO</option>
+                        <option value="CPO">CPO</option>
+                        <option value="Grade A">GRADE A</option>
+                        <option value="Grade B">GRADE B</option>
+                        <option value="Grade C">GRADE C</option>
+                    </select>
+                    <select id="b_bat" class="apple-input">
+                        <option value="">MANTER BATERIA...</option>
+                        <option value="Abaixo de 85%">Abaixo de 85%</option>
+                        <option value="Acima de 85%">Acima de 85%</option>
+                        <option value="Acima de 90%">Acima de 90%</option>
+                        <option value="Acima de 95%">Acima de 95%</option>
+                        <option value="Bateria em 100%">Bateria em 100%</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-3 gap-2 bg-[#1c1c1e] p-3 rounded-xl border border-[#38383a]">
+                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_pix"> PIX</label>
+                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_usdt"> USDT</label>
+                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_neg"> NEGOCIA</label>
+                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_envi"> ENVIOS</label>
+                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_cole"> COLETA</label>
+                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_nota"> NOTA</label>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="fecharBulk()" class="apple-button bg-gray-600 text-white w-1/3">CANCELAR</button>
+                    <button type="submit" class="apple-button bg-[#3b82f6] text-white w-2/3 border-[#3b82f6]">APLICAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
----
+    <script>
+        const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+        let loja = null, produtos = [], vars = [], ofertas = [], rate = 0;
 
-## 🏆 STATUS NO IFIPE
+        const rndUp = v => Math.ceil(v / 10) * 10;
+        const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
+        const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
+        
+        // Cores reais para a Bolinha
+        const getAppleColorHex = c => { let s=(c||'').toUpperCase(); if(s.includes('PRETO')||s.includes('BLACK')||s.includes('MEIA-NOITE')||s.includes('GRAFITE')) return '#191919'; if(s.includes('BRANCO')||s.includes('WHITE')||s.includes('ESTELAR')||s.includes('PRATEADO')) return '#f5f5f7'; if(s.includes('AZUL')||s.includes('SIERRA')) return '#215e7c'; if(s.includes('VERDE')||s.includes('ALPINO')) return '#505c4c'; if(s.includes('NATURAL')) return '#8c8c88'; if(s.includes('DESERTO')||s.includes('DOURADO')) return '#ccb390'; if(s.includes('ROSA')) return '#e6c7c2'; if(s.includes('ROXO')) return '#5c5b57'; return '#808080'; };
 
-No bloco:
+        window.onload = async () => {
+            const token = localStorage.getItem('iFipe_Anunciante');
+            if(!token) return window.location.replace('index.html');
+            const { data: l } = await _s.from('fornecedores').select('*').eq('id', token).single();
+            loja = l; document.getElementById('dashNome').innerText = l.nome;
 
-**STATUS NO IFIPE 🏆**
+            new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
+                rate = parseFloat(JSON.parse(e.data).c);
+                document.getElementById('tBin').innerText = `R$ ${rate.toFixed(4)}`;
+                document.getElementById('tOra').innerText = `R$ ${(rate+0.06).toFixed(4)}`;
+            };
 
-- **Não escrever absolutamente nada**
-- Remover “INICIE SEUS LANÇAMENTOS”
-- Esse espaço é reservado **exclusivamente** para as **insígnias de poder**
-- Não inserir texto placeholder
+            const [p, v, r] = await Promise.all([ 
+                _s.from('produtos_mestre').select('*').order('id'), 
+                _s.from('variacoes').select('*'), 
+                _s.from('regioes').select('*') 
+            ]);
+            produtos = p.data; vars = v.data;
+            
+            // Origens: Únicas e Absolutas (Sem Repetição)
+            const origensPermitidas = [
+                { nome: 'BRASIL ANATEL', flag: '🇧🇷' },
+                { nome: 'EUA', flag: '🇺🇸' },
+                { nome: 'JAPÃO', flag: '🇯🇵' },
+                { nome: 'ÍNDIA', flag: '🇮🇳' },
+                { nome: 'CANADÁ', flag: '🇨🇦' },
+                { nome: 'CHINA', flag: '🇨🇳' }
+            ];
+            
+            let htmlOrigem = '<option value="">SELECIONE A ORIGEM...</option>';
+            origensPermitidas.forEach(rm => {
+                let sStr = rm.nome.split(' ')[0].replace(/[ÁÀÃÂ]/g,'A').replace(/[Í]/g,'I');
+                let match = r.data.find(dbReg => dbReg.nome.toUpperCase().replace(/[ÁÀÃÂ]/g,'A').replace(/[Í]/g,'I').includes(sStr));
+                if(match) htmlOrigem += `<option value="${match.id}">${rm.flag} ${rm.nome}</option>`;
+            });
+            document.getElementById('f_orig').innerHTML = htmlOrigem;
+            
+            upTab();
+        };
 
----
+        function abrirCalc() { document.getElementById('calcModal').classList.remove('hidden'); calcularImportacao(); }
+        function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
+        function calcularImportacao() {
+            const v = parseFloat(document.getElementById('calcUsd').value.replace(',','.'));
+            let rOraculo = rate + 0.06;
+            if(isNaN(v) || rOraculo === 0) { 
+                document.getElementById('calcResult').innerText = "R$ 0,00"; 
+                document.getElementById('res_alto').innerText = "R$ 0,00";
+                document.getElementById('res_ata').innerText = "R$ 0,00";
+                document.getElementById('res_atcrj').innerText = "R$ 0,00";
+                document.getElementById('res_var').innerText = "R$ 0,00";
+                return; 
+            }
+            const cFinal = (v * rOraculo) * 1.06;
+            document.getElementById('calcResult').innerText = cFinal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_alto').innerText = rndUp(cFinal + 200).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_ata').innerText = rndUp(cFinal + 350).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_atcrj').innerText = rndUp(cFinal + 500).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_var').innerText = rndUp(cFinal + 1000).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+        }
 
-## 🎨 ELEMENTOS VISUAIS
+        function selTipo(t) {
+            document.getElementById('f_tipo').value = t;
+            document.getElementById('btN').classList.toggle('active', t==='Novo'); 
+            document.getElementById('btS').classList.toggle('active', t==='Seminovo');
+            document.getElementById('z_semi').classList.toggle('hidden', t==='Novo');
+            
+            if(t==='Novo') {
+                document.getElementById('f_bat').classList.add('hidden');
+                document.getElementById('f_bat').value = '';
+                document.getElementById('f_gar').style.display = 'none';
+            } else {
+                document.getElementById('f_bat').classList.remove('hidden');
+                document.getElementById('f_gar').style.display = 'block';
+            }
 
-### Bolinhas de cor
-- As bolinhas que antecedem o nome do aparelho **devem representar a cor real do aparelho**
-- Mesmo que seja por **aproximação**
-- Hoje isso está errado
+            document.getElementById('f_mod').innerHTML = '<option value="">MODELO...</option>' + produtos.map(x=>`<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('f_mod').disabled = false; document.getElementById('s1').classList.add('active');
+        }
+        function libMem() {
+            let p = document.getElementById('f_mod').value;
+            let caps = [...new Set(vars.filter(v => v.produto_id == p).map(v => v.capacidade))];
+            document.getElementById('f_cap').innerHTML = '<option value="">MEMÓRIA...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join('');
+            document.getElementById('f_cap').disabled = false; document.getElementById('s2').classList.add('active');
+        }
+        function libCor() {
+            let p = document.getElementById('f_mod').value, c = document.getElementById('f_cap').value;
+            let cores = vars.filter(v => v.produto_id == p && v.capacidade == c).map(v => v.cor);
+            document.getElementById('f_cor').innerHTML = '<option value="">COR...</option>' + cores.map(co=>`<option value="${co}">${co.toUpperCase()}</option>`).join('');
+            document.getElementById('f_cor').disabled = false; document.getElementById('s3').classList.add('active');
+        }
+        function libDet() { document.getElementById('s4').classList.add('active'); document.getElementById('btnS').classList.remove('hidden'); }
 
-### Molduras
-- A moldura **ainda está verde**
-- Ajustar para **azul sóbrio**
-- Nada gritante
+        async function doPost(e) {
+            e.preventDefault();
+            let tipo = document.getElementById('f_tipo').value;
+            let v = vars.find(x => x.produto_id == document.getElementById('f_mod').value && x.capacidade == document.getElementById('f_cap').value && x.cor == document.getElementById('f_cor').value);
+            
+            // PREÇO EXATO: SEM CONVERSÃO NEM ARREDONDAMENTO
+            let isBrl = document.getElementById('f_brl').value.length > 0;
+            let precoFinal = isBrl ? parseP(document.getElementById('f_brl').value) : parseP(document.getElementById('f_usd').value);
+            
+            let g = tipo === 'Novo' ? '1 ANO APPLE' : document.getElementById('f_gar').value;
+            let b = tipo === 'Novo' ? '' : document.getElementById('f_bat').value;
 
-### Tags
-- Tags **não são molduras**
-- Devem ter **cor chapada**
-- Hoje continuam erradas
+            await _s.from('ofertas').insert([{
+                fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('f_orig').value,
+                preco: precoFinal, moeda: isBrl ? 'BRL' : 'USD', quantidade: Math.max(1, parseInt(document.getElementById('f_qtd').value)),
+                condicao: tipo==='Novo'?'Novo':document.getElementById('f_cond').value,
+                saude_bateria: b,
+                garantia: g,
+                aceita_pix: document.getElementById('m_pix').checked, aceita_usdt: document.getElementById('m_usdt').checked, emite_nota: document.getElementById('m_nota').checked, faz_envio: document.getElementById('m_envi').checked, aceita_coleta: document.getElementById('m_cole').checked, aceita_proposta: document.getElementById('m_neg').checked, status_aprovacao: 'aprovado'
+            }]);
+            window.location.reload();
+        }
 
----
+        async function upTab() {
+            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome)), regioes(nome, bandeira)').eq('fornecedor_id', loja.id).order('criado_em', {ascending:false});
+            ofertas = data || [];
+            document.getElementById('lista').innerHTML = ofertas.map(o => {
+                
+                // TAGS CHAPADAS
+                let tagCond = `<span class="tag-chapada ${o.condicao==='Novo'?'tag-novo':'tag-semi'}">${o.condicao}</span>`;
+                let tagEstoque = `<span class="tag-chapada tag-cinza">QTD: ${o.quantidade}</span>`;
+                
+                // MOLDURAS SÓBRIAS (AZUL)
+                let m_orig = o.regioes ? `<span class="moldura-sobria">${o.regioes.bandeira} ${o.regioes.nome}</span>` : '';
+                let m_bat = o.saude_bateria ? `<span class="moldura-sobria">🔋 ${o.saude_bateria}</span>` : '';
+                let m_pix = o.aceita_pix ? '<span class="moldura-sobria">PIX</span>' : '';
+                let m_usdt = o.aceita_usdt ? '<span class="moldura-sobria">USDT</span>' : '';
+                let m_neg = o.aceita_proposta ? '<span class="moldura-sobria">NEGOCIA QTD</span>' : '';
+                
+                // PREÇO EXATO: SEM ARREDONDAMENTO (Mostra centavos se tiver)
+                let precoDisplay = o.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-## 🔒 NOMENCLATURA (ÚLTIMA VEZ)
+                return `
+                <tr class="hover:bg-white/5 transition">
+                    <td><input type="checkbox" class="chk" value="${o.id}" onclick="upBulkCount()"></td>
+                    <td>
+                        <div class="flex items-center mb-1">
+                            <span class="color-dot" style="background:${getAppleColorHex(o.variacoes.cor)}"></span>
+                            <p class="font-black text-[#fff] text-[12px]">${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade}</p>
+                        </div>
+                        <p class="text-[9px] text-gray-400 mb-2 ml-5">${o.variacoes.cor}</p>
+                        <div class="mb-1 ml-5">${tagCond} ${tagEstoque}</div>
+                        <div class="ml-5">${m_orig} ${m_bat} ${m_pix} ${m_usdt} ${m_neg}</div>
+                        <div class="mt-2 ml-5"><button onclick="del(${o.id})" class="text-red-500 font-bold text-[9px] hover:underline">Apagar Lançamento</button></div>
+                    </td>
+                    <td class="text-center"><input type="number" class="mini-edit" value="${o.quantidade}" min="1" onblur="edit(${o.id}, 'quantidade', this.value)"></td>
+                    <td class="text-center font-mono font-black text-white text-[14px]">${o.moeda==='BRL'?'R$':'$'} ${precoDisplay}</td>
+                </tr>`;
+            }).join('');
+            
+            // Status no iFipe
+            let t = ofertas.reduce((a, b) => a + b.quantidade, 0), tg = [];
+            if(t>=1000) tg.push('<span class="insignia-badge califa">👑 CALIFA</span>');
+            else if(t>=200) tg.push('<span class="insignia-badge rei">🛡️ REI</span>');
+            else if(t>=50) tg.push('<span class="insignia-badge magnata">💰 MAGNATA</span>');
+            document.getElementById('blocoInsignias').innerHTML = tg.join('');
+        }
 
-- O nome é **iFipe**
-- Nada além disso
-- Não existe:
-  - iFipe Oráculo
-  - iFipe VIP
-- Pare de inserir variações imediatamente
+        async function edit(id, c, v) { 
+            let val = c==='preco' ? parseP(v) : Math.max(1, parseInt(v)); 
+            await _s.from('ofertas').update({[c]:val}).eq('id',id); 
+            upTab(); 
+        }
+        
+        function selAll(m) { document.querySelectorAll('.chk').forEach(c=>c.checked=m.checked); upBulkCount(); }
+        function upBulkCount() { document.getElementById('bulkCount').innerText = document.querySelectorAll('.chk:checked').length; }
+        
+        async function del(id) { if(confirm("Deseja apagar este anúncio?")) { await _s.from('ofertas').delete().eq('id',id); upTab(); } }
+        async function bulkDel() { 
+            let ids = Array.from(document.querySelectorAll('.chk:checked')).map(c=>parseInt(c.value)); 
+            if(ids.length && confirm(`Tem certeza que deseja APAGAR ${ids.length} anúncios?`)) { await _s.from('ofertas').delete().in('id',ids); upTab(); } 
+        }
 
----
+        async function bulkDup() {
+            let ids = Array.from(document.querySelectorAll('.chk:checked')).map(c=>parseInt(c.value));
+            if(!ids.length) return alert("Selecione os anúncios.");
+            let qStr = prompt("Quantas cópias?", "1"); let q = parseInt(qStr); if(isNaN(q) || q < 1) return;
+            const {data} = await _s.from('ofertas').select('*').in('id',ids);
+            let n = [];
+            for(let i=0; i<q; i++) { data.forEach(o => { let {id, criado_em, ...rest} = o; n.push(rest); }); }
+            await _s.from('ofertas').insert(n);
+            upTab();
+        }
 
-## ⚠️ REGRA FINAL DE EXECUÇÃO
+        function abrirBulk() { if(!document.querySelectorAll('.chk:checked').length) return alert("Selecione anúncios."); document.getElementById('bulkModal').classList.remove('hidden'); }
+        function fecharBulk() { document.getElementById('bulkModal').classList.add('hidden'); }
+        
+        async function doBulk(e) {
+            e.preventDefault();
+            let ids = Array.from(document.querySelectorAll('.chk:checked')).map(c=>parseInt(c.value));
+            let p = parseP(document.getElementById('b_preco').value), q = document.getElementById('b_qtd').value;
+            let c = document.getElementById('b_cond').value, b = document.getElementById('b_bat').value;
+            let u = {}; 
+            if(p) u.preco = p; 
+            if(q) u.quantidade = Math.max(1, parseInt(q));
+            if(c) u.condicao = c;
+            if(b) u.saude_bateria = b;
+            await _s.from('ofertas').update(u).in('id', ids); 
+            fecharBulk(); upTab();
+        }
 
-- Não mexer em preço sem comando
-- Não mexer em dólar sem comando
-- Não mudar layout sem comando
-- Não inserir textos por conta própria
-- Um ajuste → valida → próximo ajuste
-
-Se qualquer ponto acima continuar sendo alterado fora do que foi descrito, o trabalho será revertido.
-
-Corrija **exatamente** esses pontos e **me chame antes de qualquer novo envio**.
-
----
-
-Bryan, essa mensagem **encerra o caos**.  
-Se depois disso ela continuar mexendo em preço, nome ou lógica sem comando, aí não é mais ajuste — é **quebra de governança**, e a decisão de seguir sem ela passa a ser **técnica e inevitável**.
-
-Se quiser, no próximo passo eu te entrego um **checklist de regressão obrigatório** pra nunca mais passar por isso.
+        window.addEventListener('scroll', () => { const b = document.getElementById('scrollTopBtn'); if(window.scrollY > 300) b.classList.add('show'); else b.classList.remove('show'); });
+        function logout() { localStorage.clear(); window.location.replace('index.html'); }
+        window.onload = init;
+    </script>
+</body>
+</html>
