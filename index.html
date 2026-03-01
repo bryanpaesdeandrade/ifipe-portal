@@ -11,83 +11,86 @@
         :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; }
         body { background: var(--bg); color: var(--text); font-family:-apple-system, sans-serif; margin:0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
         .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 2.5rem; width: 100%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 12px; padding: 16px; width: 100%; color: var(--text); outline: none; margin-bottom: 1rem; transition: 0.3s; }
-        .apple-input:focus { border-color: #0071e3; }
-        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 18px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; transition: 0.3s; letter-spacing: 1px; }
-        .apple-button:hover { background: #0071e3; color: #fff; transform: scale(1.02); }
+        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 12px; padding: 16px; width: 100%; color: var(--text); outline: none; margin-bottom: 1rem; }
+        .apple-button { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 18px; width: 100%; cursor: pointer; text-transform: uppercase; border: none; transition: 0.3s; }
+        .apple-button:hover { background: #0071e3; color: #fff; }
         .brand { text-align: center; margin-bottom: 2rem; }
-        .brand h1 { font-size: 3rem; font-weight: 900; italic: true; letter-spacing: -2px; line-height: 1; margin-bottom: 5px; font-style: italic; }
-        .brand p { color: #0071e3; font-weight: 900; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 2px; }
+        .brand h1 { font-size: 3rem; font-weight: 900; font-style: italic; letter-spacing: -2px; line-height: 1; }
+        .maintenance-screen { text-align: center; padding: 2rem; }
+        .maintenance-screen h2 { font-size: 1.5rem; font-weight: 900; margin-bottom: 1rem; color: #0071e3; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <div class="apple-card">
+    <div id="loginSection" class="apple-card">
         <div class="brand">
             <h1>iFipe</h1>
-            <p>The Apple Oracle</p>
+            <p class="text-blue-500 font-black uppercase text-[10px] tracking-widest">The Apple Oracle</p>
         </div>
-
         <form onsubmit="realizarLogin(event)">
-            <label class="text-[10px] font-black uppercase text-gray-500 ml-2 mb-1 block">Identificação</label>
             <input type="text" id="logUser" class="apple-input" placeholder="E-mail ou WhatsApp" required>
-            
-            <label class="text-[10px] font-black uppercase text-gray-500 ml-2 mb-1 block">Senha</label>
-            <input type="password" id="logPass" class="apple-input" placeholder="••••••••" required>
-            
-            <button type="submit" id="btnEntrar" class="apple-button">Acessar Sistema</button>
+            <input type="password" id="logPass" class="apple-input" placeholder="Senha" required>
+            <button type="submit" id="btnEntrar" class="apple-button w-full">Acessar Sistema</button>
         </form>
+    </div>
+
+    <div id="maintenanceSection" class="apple-card hidden">
+        <div class="maintenance-screen">
+            <div class="text-5xl mb-4">🛠️</div>
+            <h2>Estamos em atualização para trazer melhorias para você.</h2>
+            <p class="text-gray-500 font-bold uppercase text-xs">Até logo, Time iFipe</p>
+        </div>
     </div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
+        async function checkMaintenance() {
+            const { data } = await _s.from('configuracoes').select('manutencao').eq('id', 1).single();
+            const isLogged = localStorage.getItem('iFipe_Role');
+
+            // Se estiver em manutenção e NÃO estiver logado, bloqueia.
+            if (data.manutencao && !isLogged) {
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('maintenanceSection').classList.remove('hidden');
+            }
+        }
+
         async function realizarLogin(e) {
             e.preventDefault();
-            const btn = document.getElementById('btnEntrar');
-            btn.innerText = "VERIFICANDO...";
-            btn.disabled = true;
-
             const user = document.getElementById('logUser').value;
             const pass = document.getElementById('logPass').value;
 
-            try {
-                // 1. TENTA MASTER (Bryan) na tabela admin_users
-                const { data: admin } = await _s.from('admin_users').select('*').eq('email', user).eq('senha', pass).maybeSingle();
-                if(admin) {
-                    localStorage.setItem('iFipe_Role', 'master');
-                    window.location.href = 'master.html';
-                    return;
-                }
-
-                // 2. TENTA ATACADISTA (Lojista) pelo WhatsApp ou Nome
-                const { data: forn } = await _s.from('fornecedores').select('*').or(`whatsapp.eq.${user},nome.eq.${user}`).eq('senha', pass).maybeSingle();
-                if(forn) {
-                    if(!forn.ativo) throw new Error("LOJA BLOQUEADA. FALE COM O MASTER.");
-                    localStorage.setItem('iFipe_Atacadista_ID', forn.id);
-                    localStorage.setItem('iFipe_Role', 'atacadista');
-                    window.location.href = 'atacadista.html';
-                    return;
-                }
-
-                // 3. TENTA CLIENTE pelo E-mail
-                const { data: cli } = await _s.from('clientes_buscador').select('*').eq('email', user).eq('senha', pass).maybeSingle();
-                if(cli) {
-                    if(!cli.aprovado) throw new Error("ACESSO PENDENTE DE APROVAÇÃO.");
-                    localStorage.setItem('iFipe_Token', cli.id);
-                    localStorage.setItem('iFipe_Role', 'cliente');
-                    window.location.href = 'buscar.html';
-                    return;
-                }
-
-                alert("DADOS INCORRETOS.");
-            } catch (err) {
-                alert(err.message);
-            } finally {
-                btn.innerText = "ACESSAR SISTEMA";
-                btn.disabled = false;
+            // Tenta Master
+            const { data: admin } = await _s.from('admin_users').select('*').eq('email', user).eq('senha', pass).maybeSingle();
+            if(admin) {
+                localStorage.setItem('iFipe_Role', 'master');
+                window.location.href = 'master.html';
+                return;
             }
+
+            // Tenta Lojista
+            const { data: forn } = await _s.from('fornecedores').select('*').or(`whatsapp.eq.${user},nome.eq.${user}`).eq('senha', pass).maybeSingle();
+            if(forn) {
+                localStorage.setItem('iFipe_Atacadista_ID', forn.id);
+                localStorage.setItem('iFipe_Role', 'atacadista');
+                window.location.href = 'atacadista.html';
+                return;
+            }
+
+            // Tenta Cliente
+            const { data: cli } = await _s.from('clientes_buscador').select('*').eq('email', user).eq('senha', pass).maybeSingle();
+            if(cli && cli.aprovado) {
+                localStorage.setItem('iFipe_Token', cli.id);
+                localStorage.setItem('iFipe_Role', 'cliente');
+                window.location.href = 'buscar.html';
+                return;
+            }
+            alert("ACESSO NEGADO.");
         }
+
+        window.onload = checkMaintenance;
     </script>
 </body>
 </html>
