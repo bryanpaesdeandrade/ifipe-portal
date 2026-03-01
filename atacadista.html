@@ -3,84 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Painel do Atacadista</title>
+    <title>iFipe - Atacadista</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #0b0b0c; --card: #1c1c1e; --text: #fff; --border: #38383a; --blue: #0071e3; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, sans-serif; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin:0; }
         .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
-        .apple-input { background: #2c2c2e; border: 1px solid var(--border); border-radius: 10px; padding: 12px; width: 100%; color: #fff; outline: none; }
-        .btn-primary { background: var(--blue); color: #fff; font-weight: 800; border-radius: 12px; padding: 14px; width: 100%; transition: 0.3s; }
-        .btn-primary:hover { opacity: 0.8; }
-        .status-badge { font-size: 10px; font-weight: 900; padding: 4px 10px; border-radius: 50px; }
+        .apple-input { background: #2c2c2e; border: 1px solid var(--border); border-radius: 10px; padding: 12px; width: 100%; color: #fff; outline: none; transition: 0.3s; }
+        .apple-input:focus { border-color: var(--blue); }
+        .btn-primary { background: var(--blue); color: #fff; font-weight: 800; border-radius: 12px; padding: 14px; width: 100%; transition: 0.3s; text-transform: uppercase; font-size: 12px; }
+        .btn-primary:hover { transform: scale(1.02); }
+        .btn-edit { color: #0071e3; font-weight: 800; font-size: 10px; text-transform: uppercase; }
+        .hidden { display: none !important; }
+        .maintenance-banner { background: #f59e0b; color: #000; font-weight: 900; text-align: center; font-size: 10px; padding: 5px; text-transform: uppercase; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body>
 
-    <div class="max-w-6xl mx-auto">
+    <div id="maintBanner" class="maintenance-banner hidden">⚠️ Sistema em modo de manutenção (Apenas usuários ativos)</div>
+
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
         <header class="flex justify-between items-center mb-8">
             <div>
                 <h1 class="text-2xl font-black italic">iFipe <span class="text-blue-500">Business</span></h1>
-                <p id="nomeLoja" class="text-gray-500 font-bold uppercase text-[10px]">Carregando loja...</p>
+                <p id="nomeLoja" class="text-gray-500 font-bold uppercase text-[10px] tracking-widest">Carregando...</p>
             </div>
-            <button onclick="logout()" class="text-red-500 font-bold text-xs uppercase">Sair</button>
+            <button onclick="logout()" class="text-red-500 font-bold text-xs uppercase border border-red-500/20 px-4 py-2 rounded-full">Sair</button>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             <div class="lg:col-span-1">
-                <div class="apple-card">
-                    <h2 class="font-black mb-4 uppercase italic">Novo Anúncio</h2>
+                <div class="apple-card sticky top-8">
+                    <h2 id="formTitle" class="font-black mb-6 uppercase italic text-blue-500">Novo Anúncio</h2>
+                    <input type="hidden" id="editId">
+                    
                     <div class="space-y-4">
                         <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase">Modelo</label>
+                            <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Modelo de iPhone</label>
                             <select id="selProduto" class="apple-input" onchange="carregarVariacoes(this.value)">
-                                <option value="">Selecione o iPhone...</option>
+                                <option value="">Selecione...</option>
                             </select>
                         </div>
                         <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase">Variação (GB/Cor)</label>
+                            <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Variação (Grade)</label>
                             <select id="selVariacao" class="apple-input">
-                                <option value="">Aguardando modelo...</option>
+                                <option value="">Escolha o modelo acima...</option>
                             </select>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <label class="text-[10px] font-bold text-gray-400 uppercase">Preço</label>
+                                <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Preço Final</label>
                                 <input type="number" id="inpPreco" class="apple-input" placeholder="0.00">
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold text-gray-400 uppercase">Moeda</label>
+                                <label class="text-[10px] font-black text-gray-500 uppercase ml-1">Moeda</label>
                                 <select id="selMoeda" class="apple-input">
-                                    <option value="BRL">R$ (BRL)</option>
-                                    <option value="USD">$ (USD)</option>
+                                    <option value="BRL">R$ BRL</option>
+                                    <option value="USD">$ USD</option>
                                 </select>
                             </div>
                         </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-gray-400 uppercase">Quantidade</label>
-                            <input type="number" id="inpQtd" class="apple-input" value="1">
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-4 py-2">
-                            <label class="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                                <input type="checkbox" id="checkPix"> ACEITA PIX
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-center gap-2 text-[10px] font-black bg-black/20 p-3 rounded-lg cursor-pointer">
+                                <input type="checkbox" id="checkPix" class="w-4 h-4"> PIX
                             </label>
-                            <label class="flex items-center gap-2 text-xs font-bold cursor-pointer">
-                                <input type="checkbox" id="checkUsdt"> ACEITA USDT
+                            <label class="flex items-center gap-2 text-[10px] font-black bg-black/20 p-3 rounded-lg cursor-pointer">
+                                <input type="checkbox" id="checkUsdt" class="w-4 h-4"> USDT
                             </label>
                         </div>
 
-                        <button onclick="postarAnuncio()" class="btn-primary">PUBLICAR NO BUSCADOR</button>
+                        <button onclick="salvarOferta()" id="btnPost" class="btn-primary">Publicar Oferta</button>
+                        <button onclick="cancelarEdicao()" id="btnCancel" class="w-full text-[10px] font-bold text-gray-500 uppercase mt-2 hidden">Cancelar Edição</button>
                     </div>
                 </div>
             </div>
 
             <div class="lg:col-span-2">
-                <div class="apple-card min-h-[400px]">
-                    <h2 class="font-black mb-4 uppercase italic">Meus Anúncios Ativos</h2>
+                <div class="apple-card min-h-[500px]">
+                    <h2 class="font-black mb-6 uppercase italic">Meus Anúncios no Oráculo</h2>
                     <div id="listaAnuncios" class="space-y-3">
                         </div>
                 </div>
@@ -95,14 +98,17 @@
 
         async function init() {
             const id = localStorage.getItem('iFipe_Atacadista_ID');
-            if(!id) return window.location.href = 'index.html';
+            if(!id) window.location.href = 'index.html';
+
+            const { data: config } = await _s.from('configuracoes').select('manutencao').eq('id', 1).single();
+            if(config.manutencao) document.getElementById('maintBanner').classList.remove('hidden');
 
             const { data } = await _s.from('fornecedores').select('*').eq('id', id).single();
             userLogado = data;
-            document.getElementById('nomeLoja').innerText = data.nome;
+            document.getElementById('nomeLoja').innerText = data.nome + " ✅";
 
-            carregarModelos();
-            meusAnuncios();
+            await carregarModelos();
+            await meusAnuncios();
         }
 
         async function carregarModelos() {
@@ -111,44 +117,79 @@
         }
 
         async function carregarVariacoes(pId) {
-            const { data } = await _s.from('variacoes').select('*').eq('produto_id', pId);
-            document.getElementById('selVariacao').innerHTML = data.map(v => `<option value="${v.id}">${v.capacidade} - ${v.cor}</option>`).join('');
+            if(!pId) return;
+            const { data } = await _s.from('variacoes').select('*').eq('produto_id', pId).order('capacidade');
+            document.getElementById('selVariacao').innerHTML = data.map(v => `<option value="${v.id}">${v.capacidade} | ${v.cor}</option>`).join('');
         }
 
-        async function postarAnuncio() {
+        async function salvarOferta() {
             const vId = document.getElementById('selVariacao').value;
             const preco = document.getElementById('inpPreco').value;
-            if(!vId || !preco) return alert("Preencha tudo!");
+            const editId = document.getElementById('editId').value;
 
-            await _s.from('ofertas').insert({
+            const payload = {
                 fornecedor_id: userLogado.id,
                 variacao_id: vId,
-                preco: preco,
+                preco: parseFloat(preco),
                 moeda: document.getElementById('selMoeda').value,
-                quantidade: document.getElementById('inpQtd').value,
                 aceita_pix: document.getElementById('checkPix').checked,
-                aceita_usdt: document.getElementById('checkUsdt').checked
-            });
+                aceita_usdt: document.getElementById('checkUsdt').checked,
+                status_aprovacao: 'aprovado'
+            };
 
-            alert("Anúncio publicado!");
+            if(editId) {
+                await _s.from('ofertas').update(payload).eq('id', editId);
+            } else {
+                await _s.from('ofertas').insert(payload);
+            }
+
+            cancelarEdicao();
             meusAnuncios();
         }
 
         async function meusAnuncios() {
-            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome))').eq('fornecedor_id', userLogado.id).order('criado_em', {ascending: false});
+            const { data } = await _s.from('ofertas').select('*, variacoes(id, capacidade, cor, produtos_mestre(id, nome))').eq('fornecedor_id', userLogado.id).order('criado_em', {ascending: false});
             
             document.getElementById('listaAnuncios').innerHTML = data.map(o => `
-                <div class="bg-[#2c2c2e] p-4 rounded-xl flex justify-between items-center border border-gray-800">
+                <div class="bg-black/30 p-4 rounded-xl flex justify-between items-center border border-white/5 hover:border-blue-500/50 transition">
                     <div>
                         <p class="font-black text-sm">${o.variacoes.produtos_mestre.nome}</p>
-                        <p class="text-[10px] text-gray-500 font-bold uppercase">${o.variacoes.capacidade} | ${o.variacoes.cor}</p>
+                        <p class="text-[9px] text-gray-500 font-black uppercase">${o.variacoes.capacidade} • ${o.variacoes.cor}</p>
                     </div>
-                    <div class="text-right">
-                        <p class="font-mono font-black text-[#32d74b]">${o.moeda} ${o.preco}</p>
-                        <button onclick="deletarAnuncio(${o.id})" class="text-[8px] text-red-500 font-bold uppercase mt-1">Excluir</button>
+                    <div class="flex items-center gap-6">
+                        <div class="text-right">
+                            <p class="font-mono font-black text-[#32d74b] text-lg">${o.moeda === 'BRL' ? 'R$' : '$'} ${o.preco.toLocaleString()}</p>
+                            <p class="text-[8px] text-gray-600 font-bold uppercase">${o.aceita_pix ? 'PIX' : ''} ${o.aceita_usdt ? '• USDT' : ''}</p>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <button onclick="prepararEdicao(${o.id}, ${o.variacoes.produtos_mestre.id}, ${o.variacoes.id}, ${o.preco}, '${o.moeda}', ${o.aceita_pix}, ${o.aceita_usdt})" class="btn-edit">Editar</button>
+                            <button onclick="deletarAnuncio(${o.id})" class="text-red-800 font-bold text-[9px] uppercase">Apagar</button>
+                        </div>
                     </div>
                 </div>
             `).join('');
+        }
+
+        async function prepararEdicao(id, pId, vId, preco, moeda, pix, usdt) {
+            document.getElementById('formTitle').innerText = "Editando Oferta";
+            document.getElementById('editId').value = id;
+            document.getElementById('selProduto').value = pId;
+            await carregarVariacoes(pId);
+            document.getElementById('selVariacao').value = vId;
+            document.getElementById('inpPreco').value = preco;
+            document.getElementById('selMoeda').value = moeda;
+            document.getElementById('checkPix').checked = pix;
+            document.getElementById('checkUsdt').checked = usdt;
+            document.getElementById('btnPost').innerText = "Salvar Alterações";
+            document.getElementById('btnCancel').classList.remove('hidden');
+        }
+
+        function cancelarEdicao() {
+            document.getElementById('formTitle').innerText = "Novo Anúncio";
+            document.getElementById('editId').value = "";
+            document.getElementById('inpPreco').value = "";
+            document.getElementById('btnPost').innerText = "Publicar Oferta";
+            document.getElementById('btnCancel').classList.add('hidden');
         }
 
         async function deletarAnuncio(id) {
