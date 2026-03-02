@@ -1,102 +1,147 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Painel do Anunciante</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
+    <title>iFipe - A Fipe do iPhone</title>
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --blue-sober: #3b82f6; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; text-transform: uppercase; transition: 0.3s; }
-        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
-        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 11px; text-transform: uppercase; }
-        .btn-lancar { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 14px; cursor: pointer; border: none; font-size: 11px; width: 100%; transition: 0.3s; text-transform: uppercase; margin-top: 16px; }
-        .mini-edit { background: transparent; border: 1px solid transparent; color: #fff; font-weight: 800; width: 60px; text-align: center; border-radius: 6px; border-bottom: 1px dashed rgba(255,255,255,0.3); }
-        .hidden { display: none !important; }
-        .step-block { margin-bottom: 12px; border-left: 2px solid #38383a; padding-left: 15px; opacity: 0.3; pointer-events: none; transition: 0.3s; }
-        .step-block.active { border-left-color: var(--blue-sober); opacity: 1; pointer-events: auto; }
-        .btn-tipo { background: var(--input); border: 2px solid var(--border); color: var(--text); padding: 12px; border-radius: 12px; font-weight: 900; font-size: 10px; cursor: pointer; width: 100%; display: flex; flex-direction: column; align-items: center; }
-        .btn-tipo.active { border-color: var(--blue-sober); color: var(--blue-sober); background: rgba(59, 130, 246, 0.1); }
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #050816;
+            color: #f5f5f5;
+        }
+        #app {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .topo {
+            text-align: center;
+            margin-top: 24px;
+            margin-bottom: 24px;
+        }
+        .logo {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        .sub {
+            margin: 4px 0 0 0;
+            font-size: 14px;
+            color: #c0c0c0;
+        }
+        .busca {
+            margin-bottom: 16px;
+        }
+        #buscador {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #0b1020;
+            color: #f5f5f5;
+            font-size: 14px;
+            outline: none;
+        }
+        #buscador::placeholder {
+            color: #777;
+        }
+        .lista {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .itemModelo {
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #111827;
+            border: 1px solid #1f2937;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s, transform 0.1s, border-color 0.15s;
+        }
+        .itemModelo:hover {
+            background: #1f2937;
+            border-color: #3b82f6;
+            transform: translateY(-1px);
+        }
+        .rodape {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+        }
     </style>
 </head>
-<body id="appBody">
+<body>
 
-    <div id="mainContent" class="hidden">
-        <nav class="nav-bar">
-            <div class="flex items-center gap-4">
-                <h1 class="text-2xl font-black italic m-0">iFipe</h1>
-                <span class="text-[10px] text-gray-400 font-bold border-l border-[#38383a] pl-3 ml-1 uppercase" id="dashNome">...</span>
+<div id="app">
+    <header class="topo">
+        <h1 class="logo">iFipe</h1>
+        <p class="sub">A Fipe do iPhone 📱</p>
+    </header>
+
+    <section class="busca">
+        <input
+            type="text"
+            id="buscador"
+            placeholder="Digite o modelo do iPhone..."
+            oninput="filtrar()"
+        >
+    </section>
+
+    <section id="listaModelos" class="lista"></section>
+
+    <footer class="rodape">
+        <p>iFipe © 2025 - Consulta de preços de iPhone</p>
+    </footer>
+</div>
+
+<script>
+    const modelos = [
+        "iPhone 11",
+        "iPhone 11 Pro",
+        "iPhone 11 Pro Max",
+        "iPhone 12",
+        "iPhone 12 Mini",
+        "iPhone 12 Pro",
+        "iPhone 12 Pro Max",
+        "iPhone 13",
+        "iPhone 13 Mini",
+        "iPhone 13 Pro",
+        "iPhone 13 Pro Max",
+        "iPhone 14",
+        "iPhone 14 Plus",
+        "iPhone 14 Pro",
+        "iPhone 14 Pro Max",
+        "iPhone 15",
+        "iPhone 15 Plus",
+        "iPhone 15 Pro",
+        "iPhone 15 Pro Max"
+    ];
+
+    function filtrar() {
+        const termo = document.getElementById("buscador").value.toLowerCase();
+        const lista = document.getElementById("listaModelos");
+
+        const filtrados = modelos.filter(m => m.toLowerCase().includes(termo));
+
+        lista.innerHTML = filtrados.map(m => `
+            <div class="itemModelo" onclick="abrirModelo('${m}')">
+                ${m}
             </div>
-            <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
-        </nav>
+        `).join("");
+    }
 
-        <main class="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 pt-6 px-4 pb-20">
-            <div class="lg:col-span-4 space-y-6">
-                <div class="apple-card">
-                    <h2 class="text-xs font-black text-white mb-4">PUBLICAR OFERTA</h2>
-                    <div class="grid grid-cols-2 gap-2 mb-4">
-                        <button type="button" id="btN" class="btn-tipo" onclick="selTipo('Novo')">📦 NOVO</button>
-                        <button type="button" id="btS" class="btn-tipo" onclick="selTipo('Seminovo')">♻️ SEMINOVO</button>
-                    </div>
-                    <form onsubmit="doPost(event)">
-                        <input type="hidden" id="f_tipo">
-                        <div class="step-block" id="s1"><span>1. MODELO</span><select id="f_mod" class="apple-input mt-1" onchange="libMem()" disabled></select></div>
-                        <div class="step-block" id="s2"><span>2. MEMÓRIA</span><select id="f_cap" class="apple-input mt-1" onchange="libCor()" disabled></select></div>
-                        <div class="step-block" id="s3"><span>3. COR</span><select id="f_cor" class="apple-input mt-1" onchange="libDet()" disabled></select></div>
-                        <div class="step-block" id="s4">
-                            <span>4. DETALHES</span>
-                            <div class="grid grid-cols-2 gap-2 mt-2">
-                                <input type="number" id="f_qtd" class="apple-input" placeholder="QTD">
-                                <input type="text" id="f_brl" class="apple-input" placeholder="R$ PREÇO" oninput="mascara(this)">
-                            </div>
-                            <button type="submit" id="btnS" class="btn-lancar hidden">LANÇAR PRODUTO</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <div class="lg:col-span-8">
-                <div class="apple-card min-h-[400px]">
-                    <h2 class="text-xs font-black text-white mb-4">MEU ESTOQUE</h2>
-                    <div id="lista" class="space-y-2"></div>
-                </div>
-            </div>
-        </main>
-    </div>
+    function abrirModelo(nome) {
+        alert("Abrir página do modelo: " + nome);
+    }
 
-    <script>
-        const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let loja = null, produtos = [], vars = [];
+    // inicia com todos listados
+    filtrar();
+</script>
 
-        window.onload = async () => {
-            const token = localStorage.getItem('iFipe_Anunciante');
-            if(!token) return window.location.replace('index.html');
-
-            const { data: l, error } = await _s.from('fornecedores').select('*').eq('id', token).single();
-
-            if(error || !l) {
-                localStorage.removeItem('iFipe_Anunciante');
-                return window.location.replace('index.html');
-            }
-
-            loja = l;
-            document.getElementById('dashNome').innerText = loja.nome;
-            document.getElementById('mainContent').classList.remove('hidden');
-
-            const [p, v] = await Promise.all([ _s.from('produtos_mestre').select('*').order('nome'), _s.from('variacoes').select('*') ]);
-            produtos = p.data; vars = v.data;
-            upTab();
-        };
-
-        const mascara = i => { let v=i.value.replace(/\D/g, ''); i.value=(parseFloat(v)/100).toFixed(2).replace('.', ','); };
-        function selTipo(t) { document.getElementById('f_tipo').value = t; document.getElementById('btN').classList.toggle('active', t==='Novo'); document.getElementById('btS').classList.toggle('active', t==='Seminovo'); document.getElementById('f_mod').innerHTML = '<option value="">MODELO...</option>' + produtos.map(x=>`<option value="${x.id}">${x.nome}</option>`).join(''); document.getElementById('f_mod').disabled = false; document.getElementById('s1').classList.add('active'); }
-        function libMem() { let p = document.getElementById('f_mod').value; let caps = [...new Set(vars.filter(v => v.produto_id == p).map(v => v.capacidade))]; document.getElementById('f_cap').innerHTML = '<option value="">MEMÓRIA...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join(''); document.getElementById('f_cap').disabled = false; document.getElementById('s2').classList.add('active'); }
-        function libCor() { let p = document.getElementById('f_mod').value, c = document.getElementById('f_cap').value; let cores = vars.filter(v => v.produto_id == p && v.capacidade == c).map(v => v.cor); document.getElementById('f_cor').innerHTML = '<option value="">COR...</option>' + cores.map(co=>`<option value="${co}">${co.toUpperCase()}</option>`).join(''); document.getElementById('f_cor').disabled = false; document.getElementById('s3').classList.add('active'); }
-        function libDet() { document.getElementById('s4').classList.add('active'); document.getElementById('btnS').classList.remove('hidden'); }
-        async function upTab() { const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome))').eq('fornecedor_id', loja.id); document.getElementById('lista').innerHTML = (data || []).map(o => `<div class="bg-white/5 p-3 rounded-lg flex justify-between"><span>${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade}</span><span>R$ ${o.preco}</span></div>`).join(''); }
-        function logout() { localStorage.clear(); window.location.replace('index.html'); }
-    </script>
 </body>
 </html>
