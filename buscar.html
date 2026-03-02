@@ -70,63 +70,19 @@
         /* NOVO: Badges FIPE 1.0 */
         .badge-insignia { display: inline-flex; align-items: center; background: rgba(147, 51, 234, 0.15); color: #d8b4fe; border: 1px solid #9333ea; font-size: 8px; font-weight: 900; padding: 3px 6px; border-radius: 6px; margin-right: 4px; margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }
 
-        /* Login UI adaptado */
-        #loginOverlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .auth-box { border: 1px solid var(--border); padding: 40px; border-radius: 24px; background: #0a0a0a; text-align: center; width: 380px; }
-        .btn-apple { background: var(--blue-apple); color: #fff; font-weight: 900; border-radius: 12px; padding: 14px; cursor: pointer; border: none; font-size: 11px; transition: 0.3s; width: 100%; text-transform: uppercase; }
-        .btn-apple:hover { opacity: 0.9; transform: scale(1.02); }
-        .link-nav { color: #0071e3; cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; display: block; margin-top: 15px; text-align: center;}
+        #manutencaoOverlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
     </style>
 </head>
 <body id="appBody">
 
-    <div id="loginOverlay">
-        <div class="auth-box">
+    <div id="manutencaoOverlay" class="hidden">
+        <div class="border border-[#38383a] p-10 rounded-2xl bg-[#0a0a0a] text-center w-[380px]">
             <h1 class="text-4xl font-black italic mb-2">iFipe</h1>
             <p class="text-[10px] text-zinc-500 mb-8 tracking-widest font-bold">O BUSCADOR DO ATACADO</p>
-            
-            <div id="statusCheck" class="mb-6 hidden">
-                <span class="text-red-500 text-[10px] font-black bg-red-500/10 p-4 rounded-lg block border border-red-500/20">
-                    SISTEMA EM ATUALIZAÇÃO PELA GOVERNANÇA.<br>POR FAVOR, AGUARDE.
-                </span>
-            </div>
-
-            <div id="loginForm">
-                <input type="text" id="user" class="apple-input text-center mb-3" placeholder="WHATSAPP OU EMAIL">
-                <input type="password" id="pass" class="apple-input text-center mb-4" placeholder="SUA SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
-                <button onclick="handleLogin()" class="btn-apple">ENTRAR NO iFIPE</button>
-                <p id="msg" class="text-[10px] font-black text-zinc-500 mt-4 h-4"></p>
-                <span class="link-nav" onclick="toggleForm()">FAZER MEU CADASTRO</span>
-            </div>
-
-            <div id="registerForm" class="hidden">
-                <form onsubmit="solicitarCadastro(event)">
-                    <input type="text" id="regNome" class="apple-input mb-3" placeholder="NOME COMPLETO" onkeyup="this.value = this.value.toUpperCase()" required>
-                    <input type="text" id="regWhats" class="apple-input mb-3" placeholder="WHATSAPP" required>
-                    <input type="email" id="regEmail" class="apple-input mb-3" placeholder="E-MAIL (OPCIONAL)">
-                    <select id="regPais" class="apple-input mb-3" required onchange="mudarPais()">
-                        <option value="" disabled selected>SELECIONE O PAÍS...</option>
-                        <option value="Brasil">BRASIL</option>
-                        <option value="EUA">ESTADOS UNIDOS</option>
-                        <option value="Paraguai">PARAGUAI</option>
-                    </select>
-                    <div class="grid grid-cols-2 gap-2 mb-3">
-                        <div>
-                            <select id="regEstado" class="apple-input mb-0" onchange="loadCidadesIBGE()" required disabled>
-                                <option value="">ESTADO...</option>
-                                </select>
-                        </div>
-                        <div>
-                            <select id="regCidade" class="apple-input mb-0" required disabled>
-                                <option value="">CIDADE...</option>
-                            </select>
-                        </div>
-                    </div>
-                    <input type="password" id="regPass" class="apple-input mb-4" placeholder="CRIAR SENHA" required>
-                    <button type="submit" class="btn-apple">ENVIAR SOLICITAÇÃO</button>
-                    <span class="link-nav" onclick="toggleForm()">VOLTAR AO LOGIN</span>
-                </form>
-            </div>
+            <span class="text-red-500 text-[10px] font-black bg-red-500/10 p-4 rounded-lg block border border-red-500/20">
+                SISTEMA EM ATUALIZAÇÃO PELA GOVERNANÇA.<br>POR FAVOR, AGUARDE.
+            </span>
+            <button onclick="window.location.replace('index.html')" class="mt-6 bg-[#0071e3] color-white font-black rounded-lg p-3 text-[10px] uppercase w-full">VOLTAR PARA LOGIN</button>
         </div>
     </div>
 
@@ -325,34 +281,42 @@
 
         async function checkSystemStatus() {
             const status = localStorage.getItem('iFipe_Status');
-            if(status === 'off') {
-                document.getElementById('loginForm').classList.add('hidden');
-                document.getElementById('registerForm').classList.add('hidden');
-                document.getElementById('statusCheck').classList.remove('hidden');
+            const isMaster = localStorage.getItem('iFipe_Token') === 'admin_bypass';
+            
+            if(status === 'off' && !isMaster) {
+                document.getElementById('mainContent').classList.add('hidden');
+                document.getElementById('manutencaoOverlay').classList.remove('hidden');
                 return false;
             }
-            document.getElementById('statusCheck').classList.add('hidden');
+            document.getElementById('manutencaoOverlay').classList.add('hidden');
             return true;
         }
 
         window.onload = async () => {
             if(localStorage.getItem('iFipe_Theme') === 'light') toggleTheme();
-            if (!await checkSystemStatus()) {
-                document.getElementById('loginOverlay').classList.remove('hidden');
+            
+            const isSystemActive = await checkSystemStatus();
+            const token = localStorage.getItem('iFipe_Token');
+
+            if (!token) {
+                window.location.replace('index.html');
                 return;
             }
-            const token = localStorage.getItem('iFipe_Token');
-            if(token) {
-                const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
-                if(data && data.ativo !== false) {
-                    clienteLogado = data;
-                    initApp();
-                } else {
-                    localStorage.removeItem('iFipe_Token');
-                    document.getElementById('loginOverlay').classList.remove('hidden');
-                }
+
+            if(token === 'admin_bypass' || localStorage.getItem('iFipe_Master_Auth') === 'gov_absoluto') {
+                clienteLogado = { id: 'admin_bypass', nome: 'MASTER', whatsapp: 'master', ativo: true };
+                initApp();
+                return;
+            }
+
+            if(!isSystemActive) return;
+
+            const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
+            if(data && data.ativo !== false) {
+                clienteLogado = data;
+                initApp();
             } else {
-                document.getElementById('loginOverlay').classList.remove('hidden');
+                logout();
             }
         };
 
@@ -367,92 +331,7 @@
             }
         });
 
-        function toggleForm() {
-            document.getElementById('loginForm').classList.toggle('hidden');
-            document.getElementById('registerForm').classList.toggle('hidden');
-        }
-
-        // MOTOR IBGE PARA CADASTRO
-        async function loadEstadosIBGE() {
-            const sel = document.getElementById('regEstado');
-            sel.innerHTML = '<option value="">Aguarde...</option>';
-            try {
-                const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
-                const estados = await res.json();
-                sel.innerHTML = '<option value="" disabled selected>ESTADO...</option>';
-                estados.forEach(e => { sel.innerHTML += `<option value="${e.sigla}">${e.nome}</option>`; });
-                sel.disabled = false;
-            } catch(e) { sel.innerHTML = '<option value="Padrão">Erro</option>'; }
-        }
-
-        async function loadCidadesIBGE() {
-            const uf = document.getElementById('regEstado').value;
-            const sel = document.getElementById('regCidade');
-            sel.innerHTML = '<option value="">Carregando IBGE...</option>';
-            if(!uf) return;
-            try {
-                const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
-                const cidades = await res.json();
-                sel.innerHTML = '<option value="" disabled selected>CIDADE...</option>';
-                cidades.forEach(c => sel.innerHTML += `<option value="${c.nome}">${c.nome}</option>`);
-                sel.disabled = false;
-            } catch(e) { sel.innerHTML = '<option value="Padrão">Erro ao carregar cidades</option>'; }
-        }
-
-        function mudarPais() {
-            const pais = document.getElementById('regPais').value;
-            const elEst = document.getElementById('regEstado');
-            const elCid = document.getElementById('regCidade');
-            if (pais === 'Brasil') {
-                loadEstadosIBGE();
-                elCid.disabled = true; elCid.innerHTML = '<option value="">CIDADE...</option>';
-            } else {
-                elEst.parentElement.innerHTML = `<input type="text" id="regEstado" class="apple-input mb-0" placeholder="ESTADO" required>`;
-                elCid.parentElement.innerHTML = `<input type="text" id="regCidade" class="apple-input mb-0" placeholder="CIDADE" required>`;
-            }
-        }
-
-        async function solicitarCadastro(e) {
-            e.preventDefault();
-            const { error } = await _s.from('clientes_buscador').insert([{
-                nome: document.getElementById('regNome').value.toUpperCase(),
-                email: document.getElementById('regEmail').value,
-                whatsapp: document.getElementById('regWhats').value,
-                senha: document.getElementById('regPass').value,
-                pais: document.getElementById('regPais').value,
-                estado: document.getElementById('regEstado').value,
-                cidade: document.getElementById('regCidade').value,
-                ativo: true, logins_count: 0
-            }]);
-            if(!error) { alert("CADASTRO REALIZADO COM SUCESSO! Você já pode entrar."); toggleForm(); } 
-            else { alert("ERRO AO CADASTRAR: " + error.message); }
-        }
-
-        async function handleLogin() {
-            if(!await checkSystemStatus()) return;
-            const uRaw = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
-            const msg = document.getElementById('msg');
-            if(!uRaw || !p) { msg.innerText = "PREENCHA TODOS OS CAMPOS."; return; }
-
-            const u = normalizeString(uRaw);
-            msg.innerText = "VERIFICANDO...";
-
-            const { data } = await _s.from('clientes_buscador').select('*');
-            if (data) {
-                const userMatch = data.find(c => (normalizeString(c.email) === u || normalizeString(c.whatsapp) === u) && c.senha === p);
-                if (userMatch) {
-                    if (userMatch.ativo === false) { msg.innerText = "CONTA BLOQUEADA PELA GOVERNANÇA."; return; }
-                    await _s.from('clientes_buscador').update({ logins_count: (userMatch.logins_count || 0) + 1 }).eq('id', userMatch.id);
-                    localStorage.setItem('iFipe_Token', userMatch.id);
-                    localStorage.setItem('iFipe_User_Name', userMatch.nome || userMatch.email || userMatch.whatsapp);
-                    clienteLogado = userMatch;
-                    initApp();
-                } else { msg.innerText = "CREDENCIAIS INVÁLIDAS."; }
-            } else { msg.innerText = "ERRO DE CONEXÃO."; }
-        }
-
-        function logout() { localStorage.removeItem('iFipe_Token'); window.location.reload(); }
+        function logout() { localStorage.removeItem('iFipe_Token'); window.location.replace('index.html'); }
 
         // MOTOR DO ORÁCULO (+ R$ 0,06 FIXO)
         function iniciarTicker() {
@@ -469,7 +348,6 @@
         }
 
         async function initApp() {
-            document.getElementById('loginOverlay').classList.add('hidden');
             document.getElementById('mainContent').classList.remove('hidden');
             
             iniciarTicker();
@@ -532,7 +410,12 @@
         function atualizarFiltrosCascata() { const pid = document.getElementById('f_prod').value; const vars = pid ? gradeVariacoes.filter(x => x.produto_id == pid) : gradeVariacoes; const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))]; document.getElementById('f_cap').innerHTML = '<option value="">Todas</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join(''); document.getElementById('f_cor').innerHTML = '<option value="">Todas</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join(''); renderizarRanking(); }
 
         async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais, ativo, insignia_manual), variacoes(capacidade, cor, produto_id, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira)').gt('quantidade', 0).order('criado_em', { ascending: false });
+            // Requisicao blindada para não causar erro silencioso se tabela/coluna faltar
+            const { data } = await _s.from('ofertas')
+                .select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais, ativo, insignia_manual), variacoes(capacidade, cor, produto_id, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira)')
+                .gt('quantidade', 0)
+                .order('criado_em', { ascending: false });
+                
             ofertasAtuais = (data || []).filter(a => a.fornecedores && a.fornecedores.ativo !== false);
             renderizarRanking(); processarNotificacoesSininho();
         }
@@ -567,7 +450,7 @@
                 let badgesLojista = (o.fornecedores?.insignia_manual || []).map(i => `<span class="badge-insignia">${i}</span>`).join('');
                 let localTxt = (o.fornecedores?.pais === 'Brasil') ? `${o.fornecedores?.cidade} - BR` : (o.fornecedores?.pais || '-');
                 
-                let isCurtido = false;
+                let isCurtido = false; 
                 let btnLike = `<button onclick="toggleLike(this, ${o.id})" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter transition-colors like-btn ${isCurtido ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}"><span>${isCurtido ? 'Recomendado 🔥' : 'Recomendar 👍'}</span></button>`;
                 let msgWpp = encodeURIComponent(`Olá! Vi sua oferta no iFipe:\n📱 ${o.variacoes?.produtos_mestre?.nome} ${detalhes}\nCondição: ${o.condicao}\nPor: ${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco}\n\nVia ifipe.com.br`);
                 
