@@ -67,34 +67,65 @@
         .search-suggestion-item:last-child { border-bottom: none; }
         .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
         
-        /* Badges FIPE 1.0 */
+        /* NOVO: Badges FIPE 1.0 */
         .badge-insignia { display: inline-flex; align-items: center; background: rgba(147, 51, 234, 0.15); color: #d8b4fe; border: 1px solid #9333ea; font-size: 8px; font-weight: 900; padding: 3px 6px; border-radius: 6px; margin-right: 4px; margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }
 
-        /* Login UI p/ manutenção */
+        /* Login UI adaptado */
         #loginOverlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         .auth-box { border: 1px solid var(--border); padding: 40px; border-radius: 24px; background: #0a0a0a; text-align: center; width: 380px; }
         .btn-apple { background: var(--blue-apple); color: #fff; font-weight: 900; border-radius: 12px; padding: 14px; cursor: pointer; border: none; font-size: 11px; transition: 0.3s; width: 100%; text-transform: uppercase; }
         .btn-apple:hover { opacity: 0.9; transform: scale(1.02); }
+        .link-nav { color: #0071e3; cursor: pointer; font-size: 10px; font-weight: 900; text-transform: uppercase; display: block; margin-top: 15px; text-align: center;}
     </style>
 </head>
 <body id="appBody">
 
-    <div id="loginOverlay" class="hidden">
+    <div id="loginOverlay">
         <div class="auth-box">
             <h1 class="text-4xl font-black italic mb-2">iFipe</h1>
             <p class="text-[10px] text-zinc-500 mb-8 tracking-widest font-bold">O BUSCADOR DO ATACADO</p>
             
-            <div id="statusCheck" class="mb-6">
+            <div id="statusCheck" class="mb-6 hidden">
                 <span class="text-red-500 text-[10px] font-black bg-red-500/10 p-4 rounded-lg block border border-red-500/20">
                     SISTEMA EM ATUALIZAÇÃO PELA GOVERNANÇA.<br>POR FAVOR, AGUARDE.
                 </span>
             </div>
 
             <div id="loginForm">
-                <input type="text" id="user" class="apple-input text-center mb-3" placeholder="USUÁRIO MASTER">
-                <input type="password" id="pass" class="apple-input text-center mb-4" placeholder="CHAVE MESTRA" onkeypress="if(event.key==='Enter') handleMasterLogin()">
-                <button onclick="handleMasterLogin()" class="btn-apple">ENTRAR EM MODO MASTER</button>
+                <input type="text" id="user" class="apple-input text-center mb-3" placeholder="WHATSAPP OU EMAIL">
+                <input type="password" id="pass" class="apple-input text-center mb-4" placeholder="SUA SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
+                <button onclick="handleLogin()" class="btn-apple">ENTRAR NO iFIPE</button>
                 <p id="msg" class="text-[10px] font-black text-zinc-500 mt-4 h-4"></p>
+                <span class="link-nav" onclick="toggleForm()">FAZER MEU CADASTRO</span>
+            </div>
+
+            <div id="registerForm" class="hidden">
+                <form onsubmit="solicitarCadastro(event)">
+                    <input type="text" id="regNome" class="apple-input mb-3" placeholder="NOME COMPLETO" onkeyup="this.value = this.value.toUpperCase()" required>
+                    <input type="text" id="regWhats" class="apple-input mb-3" placeholder="WHATSAPP" required>
+                    <input type="email" id="regEmail" class="apple-input mb-3" placeholder="E-MAIL (OPCIONAL)">
+                    <select id="regPais" class="apple-input mb-3" required onchange="mudarPais()">
+                        <option value="" disabled selected>SELECIONE O PAÍS...</option>
+                        <option value="Brasil">BRASIL</option>
+                        <option value="EUA">ESTADOS UNIDOS</option>
+                        <option value="Paraguai">PARAGUAI</option>
+                    </select>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div>
+                            <select id="regEstado" class="apple-input mb-0" onchange="loadCidadesIBGE()" required disabled>
+                                <option value="">ESTADO...</option>
+                                </select>
+                        </div>
+                        <div>
+                            <select id="regCidade" class="apple-input mb-0" required disabled>
+                                <option value="">CIDADE...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="password" id="regPass" class="apple-input mb-4" placeholder="CRIAR SENHA" required>
+                    <button type="submit" class="btn-apple">ENVIAR SOLICITAÇÃO</button>
+                    <span class="link-nav" onclick="toggleForm()">VOLTAR AO LOGIN</span>
+                </form>
             </div>
         </div>
     </div>
@@ -146,6 +177,58 @@
                 </form>
             </div>
         </div>
+        
+        <div id="comentarioModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[2500] px-4">
+            <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-[#38383a] rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+                <button onclick="fecharComentarios()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+                <div class="text-center mb-4 mt-2">
+                    <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">Perguntas sobre a Oferta</h3>
+                    <p id="comentarioProdutoNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
+                </div>
+                <div id="listaComentarios" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2 custom-scroll"></div>
+                <form onsubmit="postarComentario(event)" class="mt-auto border-t border-[#38383a] pt-4">
+                    <input type="hidden" id="comentario_oferta_id">
+                    <textarea id="comentario_texto" class="apple-input w-full h-[60px] resize-none mb-2 text-[11px]" placeholder="Faça uma pergunta sobre este aparelho..." required></textarea>
+                    <button type="submit" class="bg-blue-600 text-white font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-blue-700">Enviar Pergunta</button>
+                </form>
+            </div>
+        </div>
+        
+        <div id="alertaModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
+            <div class="w-full max-w-[350px] bg-[#1c1c1e] border border-yellow-500 rounded-3xl p-6 shadow-2xl relative">
+                <button onclick="fecharAlerta()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+                <div class="text-center mb-4 mt-2">
+                    <h3 class="text-sm font-black uppercase text-yellow-500 tracking-widest">Aviso de Preço  🔔 </h3>
+                    <p id="alertaNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
+                </div>
+                <input type="hidden" id="alerta_prod_id">
+                <input type="hidden" id="alerta_cap">
+                <label class="text-[8px] text-gray-500 font-bold uppercase mb-1 block">Me avise quando baixar para (R$):</label>
+                <input type="number" id="alerta_preco" class="apple-input w-full mb-4" placeholder="Ex: 3500">
+                <button onclick="gravarAlerta()" class="bg-yellow-500 text-black font-black uppercase text-[11px] rounded-full px-6 py-3 w-full transition-colors hover:bg-yellow-400">Criar Alerta</button>
+            </div>
+        </div>
+        
+        <div id="sininhoModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
+            <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-yellow-500/50 rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+                <button onclick="fecharSininho()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+                <div class="text-center mb-4 mt-2">
+                    <h3 class="text-sm font-black uppercase text-yellow-500 tracking-widest">Seus Alertas Ativos  🔔 </h3>
+                </div>
+                <div id="listaNotificacoes" class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scroll"></div>
+            </div>
+        </div>
+        
+        <div id="historicoModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[3000] px-4">
+            <div class="w-full max-w-[400px] bg-[#1c1c1e] border border-blue-500 rounded-3xl p-6 shadow-2xl relative flex flex-col max-h-[85vh]">
+                <button onclick="fecharHistorico()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+                <div class="text-center mb-4 mt-2">
+                    <h3 class="text-sm font-black uppercase text-blue-500 tracking-widest">📈 Histórico de Preço</h3>
+                    <p id="historicoNome" class="text-[10px] text-gray-400 font-bold mt-1 uppercase"></p>
+                </div>
+                <div id="listaHistorico" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scroll"></div>
+            </div>
+        </div>
 
         <nav class="nav-bar">
             <div class="flex items-center gap-2 sm:gap-3">
@@ -164,13 +247,18 @@
                     <span class="text-[8px] text-gray-400 font-bold uppercase tracking-widest">Binance USDT/BRL</span>
                     <span class="text-[14px] font-black text-[#32d74b] font-mono" id="ticker">$ --</span>
                 </div>
-                <a href="https://wa.me/15616760652?text=venho%20do%20ifipe" target="_blank" class="bg-[#ffcc00] text-black flex items-center gap-2 px-2.5 py-1.5 rounded-md no-underline">
-                    <span class="text-[8px] sm:text-[9px] font-black uppercase">Comprar USDT (+ R$ 0,06)</span>
+                <a href="https://wa.me/15616760652?text=venho%20do%20ifipe%20e%20quero%20comprar%20USDT" target="_blank" class="bg-[#ffcc00] text-black flex items-center gap-2 px-2.5 py-1.5 rounded-md hover:bg-yellow-400 transition-colors no-underline">
+                    <span class="text-[8px] sm:text-[9px] font-black uppercase">Comprar USDT c/ Oráculo (+ R$ 0,06)</span>
                     <span class="bg-black text-yellow-500 px-1.5 py-0.5 rounded text-[10px] font-mono font-black" id="oraculoRate">R$ --</span>
                 </a>
             </div>
             <div class="flex gap-4 items-center">
+                <button onclick="abrirSininho()" class="relative text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
+                    🔔 Alertas
+                    <span id="badgeSininho" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center shadow-lg">0</span>
+                </button>
                 <button onclick="toggleTheme()" id="themeBtn" class="theme-toggle">🌙</button>
+                <button onclick="abrirConta()" class="text-[10px] text-blue-400 font-black uppercase hover:text-white flex items-center gap-1">Conta</button>
                 <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
             </div>
         </nav>
@@ -187,9 +275,25 @@
             </div>
 
             <div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6 mt-0">
-                <div><label class="block text-[8px] uppercase font-black text-blue-500 mb-1 text-center">1. Categoria</label><select id="f_cat" class="apple-input" onchange="popularAparelhos()"><option value="">Todas</option><option value="1">IPHONE</option><option value="2">WATCH</option><option value="3">IPAD</option><option value="4">MACBOOK</option></select></div>
+                <div>
+                    <label class="block text-[8px] uppercase font-black text-blue-500 mb-1 text-center">1. Categoria</label>
+                    <select id="f_cat" class="apple-input" onchange="popularAparelhos()">
+                        <option value="">Todas</option><option value="1">IPHONE</option><option value="2">APPLE WATCH</option><option value="3">IPAD</option><option value="4">MACBOOK</option><option value="5">IMAC</option><option value="6">ACESSÓRIOS</option><option value="7">XIAOMI</option><option value="8">REALME</option>
+                    </select>
+                </div>
                 <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">2. Aparelho</label><select id="f_prod" class="apple-input" onchange="atualizarFiltrosCascata()"><option value="">Todos</option></select></div>
-                <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Condição</label><select id="f_cond" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option><option value="NOVO">NOVO</option><option value="SEMINOVO">SEMINOVO</option></select></div>
+                <div>
+                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Condição</label>
+                    <select id="f_cond" class="apple-input" onchange="renderizarRanking()">
+                        <option value="">Todas</option>
+                        <option value="NOVO">Novo</option>
+                        <option value="SEMINOVO">Seminovo</option>
+                        <option value="CPO">CPO</option>
+                        <option value="GRADE A">GRADE A</option>
+                        <option value="GRADE B">GRADE B</option>
+                        <option value="GRADE C">GRADE C</option>
+                    </select>
+                </div>
                 <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Memória</label><select id="f_cap" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
                 <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Cor</label><select id="f_cor" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
                 <div><label class="block text-[8px] uppercase font-black text-gray-500 mb-1 text-center">Origem</label><select id="f_reg" class="apple-input" onchange="renderizarRanking()"><option value="">Todas</option></select></div>
@@ -207,52 +311,167 @@
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let ofertasAtuais = [], gradeVariacoes = [], clienteLogado = null, todosProdutosMestre = [], currentUsdtRate = 0;
+        
+        let ofertasAtuais = [], gradeVariacoes = [], clienteLogado = null, todosProdutosMestre = [], currentUsdtRate = 0, meusAlertas = [];
 
         function normalizeString(str) { return str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : ''; }
 
         function toggleTheme() {
             const b = document.body; b.classList.toggle('light-mode');
             const isLight = b.classList.contains('light-mode');
+            document.getElementById('themeBtn').innerText = isLight ? "☀️" : "🌙";
             localStorage.setItem('iFipe_Theme', isLight ? 'light' : 'dark');
         }
 
-        // REGRAS DE BLOQUEIO / BYPASS MASTER
         async function checkSystemStatus() {
             const status = localStorage.getItem('iFipe_Status');
-            const isMaster = localStorage.getItem('iFipe_Token') === 'admin_bypass';
-            
-            if(status === 'off' && !isMaster) {
-                document.getElementById('loginOverlay').classList.remove('hidden');
-                document.getElementById('mainContent').classList.add('hidden');
+            if(status === 'off') {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('registerForm').classList.add('hidden');
+                document.getElementById('statusCheck').classList.remove('hidden');
                 return false;
             }
-            document.getElementById('loginOverlay').classList.add('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
+            document.getElementById('statusCheck').classList.add('hidden');
             return true;
-        }
-
-        async function handleMasterLogin() {
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
-            if(u.toLowerCase() === 'bryan' && p === '96197577') {
-                localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
-                localStorage.setItem('iFipe_Status_Override', 'true');
-                localStorage.setItem('iFipe_Token', 'admin_bypass');
-                location.reload();
-            } else {
-                document.getElementById('msg').innerText = "ACESSO NEGADO.";
-            }
         }
 
         window.onload = async () => {
             if(localStorage.getItem('iFipe_Theme') === 'light') toggleTheme();
-            if (await checkSystemStatus()) {
-                initApp();
+            if (!await checkSystemStatus()) {
+                document.getElementById('loginOverlay').classList.remove('hidden');
+                return;
+            }
+            const token = localStorage.getItem('iFipe_Token');
+            if(token) {
+                const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
+                if(data && data.ativo !== false) {
+                    clienteLogado = data;
+                    initApp();
+                } else {
+                    localStorage.removeItem('iFipe_Token');
+                    document.getElementById('loginOverlay').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('loginOverlay').classList.remove('hidden');
             }
         };
 
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('scrollTopBtn');
+            if (window.scrollY > 300) { btn.classList.add('show'); } else { btn.classList.remove('show'); }
+        });
+
+        document.addEventListener('click', function(e) {
+            if(!e.target.closest('#buscaTexto') && !e.target.closest('#sugestoesBusca')) {
+                document.getElementById('sugestoesBusca')?.classList.add('hidden');
+            }
+        });
+
+        function toggleForm() {
+            document.getElementById('loginForm').classList.toggle('hidden');
+            document.getElementById('registerForm').classList.toggle('hidden');
+        }
+
+        // MOTOR IBGE PARA CADASTRO
+        async function loadEstadosIBGE() {
+            const sel = document.getElementById('regEstado');
+            sel.innerHTML = '<option value="">Aguarde...</option>';
+            try {
+                const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+                const estados = await res.json();
+                sel.innerHTML = '<option value="" disabled selected>ESTADO...</option>';
+                estados.forEach(e => { sel.innerHTML += `<option value="${e.sigla}">${e.nome}</option>`; });
+                sel.disabled = false;
+            } catch(e) { sel.innerHTML = '<option value="Padrão">Erro</option>'; }
+        }
+
+        async function loadCidadesIBGE() {
+            const uf = document.getElementById('regEstado').value;
+            const sel = document.getElementById('regCidade');
+            sel.innerHTML = '<option value="">Carregando IBGE...</option>';
+            if(!uf) return;
+            try {
+                const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
+                const cidades = await res.json();
+                sel.innerHTML = '<option value="" disabled selected>CIDADE...</option>';
+                cidades.forEach(c => sel.innerHTML += `<option value="${c.nome}">${c.nome}</option>`);
+                sel.disabled = false;
+            } catch(e) { sel.innerHTML = '<option value="Padrão">Erro ao carregar cidades</option>'; }
+        }
+
+        function mudarPais() {
+            const pais = document.getElementById('regPais').value;
+            const elEst = document.getElementById('regEstado');
+            const elCid = document.getElementById('regCidade');
+            if (pais === 'Brasil') {
+                loadEstadosIBGE();
+                elCid.disabled = true; elCid.innerHTML = '<option value="">CIDADE...</option>';
+            } else {
+                elEst.parentElement.innerHTML = `<input type="text" id="regEstado" class="apple-input mb-0" placeholder="ESTADO" required>`;
+                elCid.parentElement.innerHTML = `<input type="text" id="regCidade" class="apple-input mb-0" placeholder="CIDADE" required>`;
+            }
+        }
+
+        async function solicitarCadastro(e) {
+            e.preventDefault();
+            const { error } = await _s.from('clientes_buscador').insert([{
+                nome: document.getElementById('regNome').value.toUpperCase(),
+                email: document.getElementById('regEmail').value,
+                whatsapp: document.getElementById('regWhats').value,
+                senha: document.getElementById('regPass').value,
+                pais: document.getElementById('regPais').value,
+                estado: document.getElementById('regEstado').value,
+                cidade: document.getElementById('regCidade').value,
+                ativo: true, logins_count: 0
+            }]);
+            if(!error) { alert("CADASTRO REALIZADO COM SUCESSO! Você já pode entrar."); toggleForm(); } 
+            else { alert("ERRO AO CADASTRAR: " + error.message); }
+        }
+
+        async function handleLogin() {
+            if(!await checkSystemStatus()) return;
+            const uRaw = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            const msg = document.getElementById('msg');
+            if(!uRaw || !p) { msg.innerText = "PREENCHA TODOS OS CAMPOS."; return; }
+
+            const u = normalizeString(uRaw);
+            msg.innerText = "VERIFICANDO...";
+
+            const { data } = await _s.from('clientes_buscador').select('*');
+            if (data) {
+                const userMatch = data.find(c => (normalizeString(c.email) === u || normalizeString(c.whatsapp) === u) && c.senha === p);
+                if (userMatch) {
+                    if (userMatch.ativo === false) { msg.innerText = "CONTA BLOQUEADA PELA GOVERNANÇA."; return; }
+                    await _s.from('clientes_buscador').update({ logins_count: (userMatch.logins_count || 0) + 1 }).eq('id', userMatch.id);
+                    localStorage.setItem('iFipe_Token', userMatch.id);
+                    localStorage.setItem('iFipe_User_Name', userMatch.nome || userMatch.email || userMatch.whatsapp);
+                    clienteLogado = userMatch;
+                    initApp();
+                } else { msg.innerText = "CREDENCIAIS INVÁLIDAS."; }
+            } else { msg.innerText = "ERRO DE CONEXÃO."; }
+        }
+
+        function logout() { localStorage.removeItem('iFipe_Token'); window.location.reload(); }
+
+        // MOTOR DO ORÁCULO (+ R$ 0,06 FIXO)
+        function iniciarTicker() {
+            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+            socket.onmessage = (e) => {
+                let bin = parseFloat(JSON.parse(e.data).c);
+                currentUsdtRate = bin + 0.06;
+                document.getElementById('ticker').innerText = `R$ ${bin.toFixed(4).replace('.',',')}`;
+                document.getElementById('oraculoRate').innerText = `R$ ${currentUsdtRate.toFixed(4).replace('.',',')}`;
+                document.getElementById('tickerCalc').innerText = `R$ ${bin.toFixed(4).replace('.',',')}`;
+                document.getElementById('calcTaxaEfetiva').innerText = `R$ ${currentUsdtRate.toFixed(4).replace('.', ',')}`;
+                calcularImportacao(); renderizarRanking();
+            };
+        }
+
         async function initApp() {
+            document.getElementById('loginOverlay').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+            
             iniciarTicker();
             const [p, r, v, f] = await Promise.all([
                 _s.from('produtos_mestre').select('*').order('nome'),
@@ -261,58 +480,136 @@
                 _s.from('fornecedores').select('id, nome, cidade, pais, verificado, ativo, insignia_manual')
             ]);
             todosProdutosMestre = p.data; gradeVariacoes = v.data;
-            document.getElementById('f_prod').innerHTML = '<option value="">Todos</option>' + p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('f_prod').innerHTML += p.data.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            
+            // Lojistas e Cidades agora refletem apenas Ativos
             const lojistasAtivos = f.data.filter(l => l.ativo !== false);
-            document.getElementById('f_lojista').innerHTML = '<option value="">Todos</option>' + lojistasAtivos.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
+            document.getElementById('f_lojista').innerHTML += lojistasAtivos.map(x => `<option value="${x.id}">${x.nome} ${x.verificado ? ' [✔️]' : ''}</option>`).join('');
             const cidades = [...new Set(lojistasAtivos.map(x => x.cidade).filter(Boolean))].sort();
-            document.getElementById('f_cid').innerHTML = '<option value="">Todas</option>' + cidades.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('f_cid').innerHTML += cidades.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            await carregarAlertas();
             carregarDados(); setInterval(carregarDados, 5000);
         }
 
-        function iniciarTicker() {
-            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            socket.onmessage = (e) => {
-                let bin = parseFloat(JSON.parse(e.data).c);
-                currentUsdtRate = bin + 0.06;
-                document.getElementById('ticker').innerText = `R$ ${bin.toFixed(4).replace('.',',')}`;
-                document.getElementById('oraculoRate').innerText = `R$ ${currentUsdtRate.toFixed(4).replace('.',',')}`;
-                renderizarRanking();
-            };
+        function abrirCalc() { document.getElementById('calcModal').classList.remove('hidden'); calcularImportacao(); }
+        function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
+        function calcularImportacao() {
+            const usdInput = parseFloat(document.getElementById('calcUsd').value.replace(',', '.'));
+            if(isNaN(usdInput) || currentUsdtRate === 0) { document.getElementById('calcResult').innerText = "R$ 0,00"; return; }
+            const custoFinal = (usdInput * currentUsdtRate) * 1.06;
+            document.getElementById('calcResult').innerText = custoFinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
-        async function carregarDados() {
-            const { data } = await _s.from('ofertas')
-                .select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais, ativo, insignia_manual), variacoes(capacidade, cor, produto_id, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira)')
-                .gt('quantidade', 0)
-                .order('criado_em', { ascending: false });
-            ofertasAtuais = (data || []).filter(a => a.fornecedores && a.fornecedores.ativo !== false);
-            renderizarRanking();
-        }
+        function abrirConta() { document.getElementById('conta_whats').value = clienteLogado.whatsapp || ''; document.getElementById('conta_senha').value = clienteLogado.senha || ''; document.getElementById('contaModal').classList.remove('hidden'); }
+        function fecharConta() { document.getElementById('contaModal').classList.add('hidden'); }
+        async function salvarConta(e) { e.preventDefault(); const w = document.getElementById('conta_whats').value; const s = document.getElementById('conta_senha').value; await _s.from('clientes_buscador').update({ whatsapp: w, senha: s }).eq('id', clienteLogado.id); clienteLogado.whatsapp = w; clienteLogado.senha = s; fecharConta(); alert("Conta atualizada!"); }
 
+        async function carregarAlertas() { const { data } = await _s.from('alertas_preco').select('*, produtos_mestre(nome)').eq('cliente_id', clienteLogado.id); meusAlertas = data || []; processarNotificacoesSininho(); }
+        function abrirModalAlerta(prodId, cap, nome) { document.getElementById('alerta_prod_id').value = prodId; document.getElementById('alerta_cap').value = cap || ''; document.getElementById('alertaNome').innerText = nome + (cap ? ' | ' + cap : ''); document.getElementById('alertaModal').classList.remove('hidden'); }
+        function fecharAlerta() { document.getElementById('alertaModal').classList.add('hidden'); document.getElementById('alerta_preco').value = ''; }
+        async function gravarAlerta() { const pId = document.getElementById('alerta_prod_id').value; const cap = document.getElementById('alerta_cap').value; const preco = parseFloat(document.getElementById('alerta_preco').value); if(!preco || preco <= 0) return alert("Digite um valor válido."); await _s.from('alertas_preco').insert([{ cliente_id: clienteLogado.id, produto_id: pId, capacidade: cap, preco_desejado: preco }]); alert("Alerta criado!"); fecharAlerta(); carregarAlertas(); }
+
+        function processarNotificacoesSininho() {
+            let avisos = [];
+            meusAlertas.forEach(alerta => {
+                let match = ofertasAtuais.find(o => o.variacoes.produto_id == alerta.produto_id && (alerta.capacidade === '' || o.variacoes.capacidade === alerta.capacidade) && o.preco <= alerta.preco_desejado && o.moeda === 'BRL' && o.quantidade > 0);
+                if(match) avisos.push({ alerta, oferta: match });
+            });
+            const badge = document.getElementById('badgeSininho');
+            if(avisos.length > 0) { badge.innerText = avisos.length; badge.classList.remove('hidden'); } else { badge.classList.add('hidden'); }
+            document.getElementById('listaNotificacoes').innerHTML = avisos.length === 0 ? '<p class="text-[10px] text-gray-500 italic text-center py-6 font-bold">Nenhum alerta atingido.</p>' : avisos.map(a => `<div class="bg-[#2c2c2e] p-3 rounded-xl border border-yellow-500/50 relative"><span class="absolute top-2 right-2 text-[8px] bg-red-600 text-white px-1.5 py-0.5 rounded font-black">ATINGIDO</span><p class="text-[11px] font-black text-white mb-1">${a.oferta.variacoes.produtos_mestre.nome} ${a.alerta.capacidade}</p><p class="text-[14px] font-black text-[#32d74b] mb-1">R$ ${a.oferta.preco.toLocaleString('pt-BR')}</p><p class="text-[9px] text-[#25d366] uppercase font-black">Loja: ${a.oferta.fornecedores.nome}</p></div>`).join('');
+        }
+        function abrirSininho() { document.getElementById('sininhoModal').classList.remove('hidden'); processarNotificacoesSininho(); }
+        function fecharSininho() { document.getElementById('sininhoModal').classList.add('hidden'); }
+
+        async function abrirHistorico(ofertaId, nome) { document.getElementById('historicoNome').innerText = nome; document.getElementById('historicoModal').classList.remove('hidden'); const div = document.getElementById('listaHistorico'); div.innerHTML = '<p class="text-[10px] text-gray-500 text-center py-6">Carregando...</p>'; const { data } = await _s.from('historico_precos').select('*').eq('oferta_id', ofertaId).order('registrado_em', { ascending: false }).limit(10); if (!data || data.length === 0) { div.innerHTML = '<p class="text-[10px] text-gray-500 text-center py-6 font-bold">Sem histórico recente.</p>'; return; } div.innerHTML = data.map(h => `<div class="bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a] flex justify-between items-center"><span class="text-[10px] text-gray-400 font-bold">${new Date(h.registrado_em).toLocaleDateString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span><span class="text-[14px] font-black text-white">${h.moeda === 'USD' ? '$' : 'R$'} ${h.preco.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span></div>`).join(''); }
+        function fecharHistorico() { document.getElementById('historicoModal').classList.add('hidden'); }
+
+        function mostrarSugestoes(termo) { const div = document.getElementById('sugestoesBusca'); if (!termo || termo.length < 2) { div.classList.add('hidden'); renderizarRanking(); return; } const txt = termo.toLowerCase(); const matches = todosProdutosMestre.filter(p => p.nome.toLowerCase().includes(txt)).slice(0, 6); if (matches.length === 0) { div.classList.add('hidden'); renderizarRanking(); return; } div.innerHTML = matches.map(m => `<div class="search-suggestion-item" onclick="selecionarSugestao('${escapeString(m.nome)}')">${m.nome}</div>`).join(''); div.classList.remove('hidden'); renderizarRanking(); }
+        function selecionarSugestao(nome) { document.getElementById('buscaTexto').value = nome; document.getElementById('sugestoesBusca').classList.add('hidden'); renderizarRanking(); }
         function popularAparelhos() { const catId = document.getElementById('f_cat').value; const filtrados = catId ? todosProdutosMestre.filter(x => x.grupo_id == catId) : todosProdutosMestre; document.getElementById('f_prod').innerHTML = '<option value="">Todos</option>' + filtrados.map(x => `<option value="${x.id}">${x.nome}</option>`).join(''); atualizarFiltrosCascata(); }
         function atualizarFiltrosCascata() { const pid = document.getElementById('f_prod').value; const vars = pid ? gradeVariacoes.filter(x => x.produto_id == pid) : gradeVariacoes; const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))]; document.getElementById('f_cap').innerHTML = '<option value="">Todas</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join(''); document.getElementById('f_cor').innerHTML = '<option value="">Todas</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join(''); renderizarRanking(); }
 
-        function getAppleColorHex(colorName) { const s = (colorName || '').toUpperCase(); if (s.includes('BLACK')) return '#000'; if (s.includes('WHITE')) return '#FFF'; return '#808080'; }
+        async function carregarDados() {
+            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais, ativo, insignia_manual), variacoes(capacidade, cor, produto_id, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira)').gt('quantidade', 0).order('criado_em', { ascending: false });
+            ofertasAtuais = (data || []).filter(a => a.fornecedores && a.fornecedores.ativo !== false);
+            renderizarRanking(); processarNotificacoesSininho();
+        }
+
+        function getAppleColorHex(colorName) { const s = (colorName || '').toUpperCase(); if (s.includes('MIDNIGHT') || s.includes('ESCURA')) return '#191919'; if (s.includes('PRETO') || s.includes('BLACK')) return '#000000'; if (s.includes('BRANCO') || s.includes('WHITE')) return '#FFFFFF'; if (s.includes('ESTELAR') || s.includes('STARLIGHT')) return '#faf9f6'; if (s.includes('PRATA') || s.includes('SILVER')) return '#e3e4e5'; if (s.includes('DOURADO') || s.includes('GOLD')) return '#fad7bd'; if (s.includes('AZUL') || s.includes('BLUE')) return '#215e7c'; if (s.includes('VERDE') || s.includes('GREEN')) return '#505c4c'; if (s.includes('ROXO') || s.includes('PURPLE')) return '#b1b1cc'; if (s.includes('AMARELO') || s.includes('YELLOW')) return '#f9e479'; if (s.includes('VERMELHO') || s.includes('RED')) return '#a50011'; if (s.includes('TITAN') || s.includes('CINZA')) return '#bcbab5'; return '#808080'; }
         function escapeString(str) { return (str || '').replace(/'/g, "\\'"); }
-        function logout() { localStorage.removeItem('iFipe_Token'); window.location.reload(); }
+        function getModelWeight(name) { let w = 0; let n = (name || "").toLowerCase(); let m = n.match(/iphone\s*(\d+)/); if(m) { w += parseInt(m[1]) * 1000; } if(n.includes("pro max")) w += 40; else if(n.includes("pro")) w += 30; else if(n.includes("plus")) w += 20; else w += 10; return w; }
+        function sortOffers(a, b) { let wA = getModelWeight(a.variacoes?.produtos_mestre?.nome); let wB = getModelWeight(b.variacoes?.produtos_mestre?.nome); if (wA !== wB) return wB - wA; return a.preco - b.preco; }
 
         function renderizarRanking() {
             const fTexto = normalizeString(document.getElementById('buscaTexto').value);
+            const fCat = document.getElementById('f_cat').value; const fP = document.getElementById('f_prod').value; const fC = document.getElementById('f_cond').value; const fCap = document.getElementById('f_cap').value; const fCor = document.getElementById('f_cor').value; const fReg = document.getElementById('f_reg').value; const fLoj = document.getElementById('f_lojista').value; const fCid = document.getElementById('f_cid').value;
+
+            let filtrados = ofertasAtuais.filter(o => (!fTexto || normalizeString(o.variacoes?.produtos_mestre?.nome).includes(fTexto) || normalizeString(o.variacoes?.cor).includes(fTexto) || normalizeString(o.fornecedores?.nome).includes(fTexto)) && (!fCat || o.variacoes?.produtos_mestre?.grupo_id == fCat) && (!fP || o.variacoes?.produtos_mestre?.id == fP) && (!fC || o.condicao == fC) && (!fCap || o.variacoes?.capacidade == fCap) && (!fCor || o.variacoes?.cor == fCor) && (!fReg || o.regiao_id == fReg) && (!fLoj || o.fornecedor_id == fLoj) && (!fCid || o.fornecedores?.cidade == fCid));
+
             const grid = document.getElementById('gridGeral');
-            let filtrados = ofertasAtuais.filter(o => (!fTexto || normalizeString(o.variacoes?.produtos_mestre?.nome).includes(fTexto)));
-            if(filtrados.length === 0) { grid.innerHTML = '<p class="col-span-full text-center py-10">Vazio.</p>'; return; }
-            grid.innerHTML = filtrados.map(o => {
+            if(filtrados.length === 0) { grid.innerHTML = '<p class="text-gray-500 text-center col-span-full py-10 font-bold uppercase tracking-widest">Nenhuma oferta encontrada.</p>'; return; }
+            let menores = {}; filtrados.forEach(o => { let k = `${o.variacao_id}_${o.condicao}_${o.moeda}`; if(!menores[k] || o.preco < menores[k]) menores[k] = o.preco; });
+            let listaBRL = filtrados.filter(o => o.moeda === 'BRL').sort(sortOffers); let listaUSD = filtrados.filter(o => o.moeda === 'USD').sort(sortOffers);
+            let finalLayout = []; let idxBRL = 0; let idxUSD = 0;
+            while(idxBRL < listaBRL.length || idxUSD < listaUSD.length) {
+                if(idxBRL < listaBRL.length) finalLayout.push(listaBRL[idxBRL++]); if(idxBRL < listaBRL.length) finalLayout.push(listaBRL[idxBRL++]);
+                if(idxUSD < listaUSD.length) finalLayout.push(listaUSD[idxUSD++]); if(idxUSD < listaUSD.length) finalLayout.push(listaUSD[idxUSD++]);
+            }
+            grid.innerHTML = finalLayout.map(o => {
                 let precoFinal = o.moeda === 'USD' ? (o.preco * currentUsdtRate) : o.preco;
-                return `<div class="product-card flex flex-col pt-6">
-                    <h2 class="text-lg font-black">${o.variacoes?.produtos_mestre?.nome}</h2>
-                    <p class="text-[9px] uppercase">${o.variacoes?.capacidade} | ${o.variacoes?.cor}</p>
-                    <div class="mt-auto border-t border-zinc-800 pt-2 flex justify-between">
-                        <span class="text-[11px] text-green-500 font-black">${o.fornecedores?.nome}</span>
-                        <span class="price-text">R$ ${precoFinal.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>
+                let tagMenor = o.preco === menores[`${o.variacao_id}_${o.condicao}_${o.moeda}`] ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : '';
+                let tagEstoque = o.quantidade <= 3 ? `<span class="tag-status tag-poucas">APENAS ${o.quantidade} UN</span>` : `<span class="tag-status tag-muitas">ESTOQUE ${o.quantidade} UN</span>`;
+                let detalhes = [o.variacoes?.capacidade, o.variacoes?.cor].filter(Boolean).join(' | ');
+                let colorDot = `<span class="color-dot" style="background-color: ${getAppleColorHex(o.variacoes?.cor)};"></span>`;
+                
+                let badgesLojista = (o.fornecedores?.insignia_manual || []).map(i => `<span class="badge-insignia">${i}</span>`).join('');
+                let localTxt = (o.fornecedores?.pais === 'Brasil') ? `${o.fornecedores?.cidade} - BR` : (o.fornecedores?.pais || '-');
+                
+                let isCurtido = false;
+                let btnLike = `<button onclick="toggleLike(this, ${o.id})" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter transition-colors like-btn ${isCurtido ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}"><span>${isCurtido ? 'Recomendado 🔥' : 'Recomendar 👍'}</span></button>`;
+                let msgWpp = encodeURIComponent(`Olá! Vi sua oferta no iFipe:\n📱 ${o.variacoes?.produtos_mestre?.nome} ${detalhes}\nCondição: ${o.condicao}\nPor: ${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco}\n\nVia ifipe.com.br`);
+                
+                let selo = o.fornecedores?.verificado ? `<svg class="ml-1 text-blue-500 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.001 2C6.478 2 2 6.478 2 12.001c0 5.522 4.478 9.999 10.001 9.999 5.522 0 9.999-4.477 9.999-9.999C22 6.478 17.523 2 12.001 2zm-1.935 14.981l-3.97-3.97 1.415-1.414 2.555 2.555 6.563-6.563 1.414 1.414-7.977 7.978z"/></svg>` : '';
+
+                return `
+                <div class="product-card flex flex-col pt-6 relative">
+                    <div onclick="abrirModalAlerta(${o.variacoes?.produto_id}, '${o.variacoes?.capacidade}', '${escapeString(o.variacoes?.produtos_mestre?.nome)}')" class="btn-alerta-card" title="Avisar quando baixar o preço">
+                        <span class="text-[8px] font-black uppercase text-yellow-500">Alerta</span>
+                        <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
                     </div>
+                    <div class="flex flex-wrap gap-1 mb-1.5">${tagEstoque} ${tagMenor}</div>
+                    <h2 class="text-lg font-black leading-tight mb-0.5">${colorDot}${o.variacoes?.produtos_mestre?.nome}</h2>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[9px] font-black uppercase text-zinc-400">${detalhes}</span>
+                        <span class="text-[8px] font-black ${o.condicao === 'NOVO' ? 'bg-blue-900/30 text-blue-400 border border-blue-500' : 'bg-yellow-900/30 text-yellow-500 border border-yellow-600'} px-2 py-1 rounded tracking-widest">${o.condicao}</span>
+                    </div>
+                    <div class="mt-auto border-t border-[#38383a] pt-2 flex justify-between items-end">
+                        <div class="flex-1 overflow-hidden pr-2">
+                            <div class="flex items-center text-[11px] text-[#25d366] font-black uppercase tracking-widest mb-0.5"><span class="truncate">🏢 ${o.fornecedores?.nome}</span>${selo}</div>
+                            <span class="text-[8px] text-zinc-500 block mb-1">📍 ${localTxt}</span>
+                            <div class="flex flex-wrap w-full mt-1">${badgesLojista}</div>
+                        </div>
+                        <div class="price-text mb-1 flex-shrink-0">R$ ${precoFinal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 pb-1 border-t border-[#38383a] text-gray-400 mt-1">
+                        ${btnLike}
+                        <button onclick="abrirHistorico(${o.id}, '${escapeString(o.variacoes?.produtos_mestre?.nome)}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors">📈 Histórico</button>
+                        <button onclick="abrirComentarios(${o.id}, '${escapeString(o.variacoes?.produtos_mestre?.nome)}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-blue-500 transition-colors">Perguntas</button>
+                        <button onclick="shareOffer('${escapeString(o.variacoes?.produtos_mestre?.nome)}', '${detalhes}', '${precoFinal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}', 'https://wa.me/${o.fornecedores?.whatsapp?.replace(/\D/g,'')}?text=${msgWpp}')" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter hover:text-green-500 transition-colors">Compartilhar</button>
+                    </div>
+                    <a href="https://wa.me/${o.fornecedores?.whatsapp?.replace(/\D/g,'')}?text=${msgWpp}" target="_blank" class="buy-button mt-4">Comprar no WhatsApp</a>
                 </div>`;
             }).join('');
         }
+
+        async function toggleLike(btn, id) { if(!clienteLogado) return; let isCurtido = btn.classList.contains('text-blue-500'); btn.classList.add('like-anim'); setTimeout(() => btn.classList.remove('like-anim'), 300); if(isCurtido) { btn.classList.remove('text-blue-500'); btn.classList.add('text-gray-400'); btn.querySelector('span').innerText="Recomendar 👍"; await _s.from('curtidas').delete().eq('oferta_id', id).eq('cliente_id', clienteLogado.id); } else { btn.classList.remove('text-gray-400'); btn.classList.add('text-blue-500'); btn.querySelector('span').innerText="Recomendado 🔥"; await _s.from('curtidas').insert([{ oferta_id: id, cliente_id: clienteLogado.id }]); } }
+        function shareOffer(nome, detalhes, preco, link) { const texto = `🔥 Olha essa oferta no iFipe!\n\n📱 ${nome}\n📋 ${detalhes}\n💰 R$ ${preco}\n\nFale direto com o Lojista:\n👉 ${link}`; if (navigator.share && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) { navigator.share({ title: 'Oferta iFipe', text: texto }).catch(console.error); } else { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank'); } }
+        async function abrirComentarios(ofertaId, nomeProduto) { document.getElementById('comentario_oferta_id').value = ofertaId; document.getElementById('comentarioProdutoNome').innerText = nomeProduto; document.getElementById('comentarioModal').classList.remove('hidden'); await carregarComentarios(ofertaId); }
+        function fecharComentarios() { document.getElementById('comentarioModal').classList.add('hidden'); document.getElementById('comentario_texto').value = ''; }
+        async function carregarComentarios(ofertaId) { const div = document.getElementById('listaComentarios'); div.innerHTML = '<p class="text-[10px] text-gray-500 text-center py-6">Carregando...</p>'; const { data } = await _s.from('comentarios').select('*').eq('oferta_id', ofertaId).order('criado_em', { ascending: true }); if(!data || data.length === 0) { div.innerHTML = '<p class="text-[10px] text-gray-500 text-center py-6 font-bold">Nenhuma pergunta ainda.</p>'; return; } div.innerHTML = data.map(c => `<div class="bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a]"><div class="flex justify-between items-center mb-1.5"><span class="text-[9px] font-black text-blue-400 uppercase tracking-widest">${c.autor_nome || 'Usuário Privado'}</span><span class="text-[7px] text-gray-500 uppercase font-bold">${new Date(c.criado_em).toLocaleDateString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span></div><p class="text-[11px] text-gray-300 font-bold">${c.texto}</p></div>`).join(''); div.scrollTop = div.scrollHeight; }
+        async function postarComentario(e) { e.preventDefault(); const oId = document.getElementById('comentario_oferta_id').value; const txt = document.getElementById('comentario_texto').value; if(!txt.trim()) return; await _s.from('comentarios').insert([{ oferta_id: oId, autor_nome: clienteLogado.nome || clienteLogado.whatsapp || 'Usuário Privado', texto: txt }]); document.getElementById('comentario_texto').value = ''; await carregarComentarios(oId); }
     </script>
 </body>
 </html>
