@@ -77,11 +77,17 @@
 
             <div id="loginForm" class="flex flex-col h-full justify-center">
                 <div class="text-center mb-6">
-                    <h3 class="text-lg font-black text-white italic">Acesso ao Buscador</h3>
-                    <p class="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-1">Zona Exclusiva para Lojistas</p>
+                    <h3 class="text-lg font-black text-white italic">Acesso ao Sistema</h3>
+                    <p class="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-1">Selecione seu perfil abaixo</p>
                 </div>
 
                 <div class="space-y-4">
+                    <div>
+                        <select id="loginType" class="apple-input !font-black !tracking-widest !text-center text-white bg-[#1c1c1e] border-[#0071e3]/50">
+                            <option value="buscador">SOU BUSCADOR (VIP)</option>
+                            <option value="anunciante">SOU ANUNCIANTE (LOJISTA)</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1.5 block tracking-widest">End. de Acesso</label>
                         <input type="text" id="user" class="apple-input !text-left font-mono">
@@ -182,21 +188,29 @@
             iniciarTicker();
             checkSystemStatus();
             
+            // Bypass Master Auto-Login
+            if(localStorage.getItem('iFipe_Token') === 'admin_bypass') {
+                window.location.replace('buscar.html');
+                return;
+            }
+
+            if(localStorage.getItem('iFipe_Status') === 'off') return;
+
             const token = localStorage.getItem('iFipe_Token');
             if(token) {
-                if(token === 'admin_bypass' || localStorage.getItem('iFipe_Master_Auth') === 'gov_absoluto') {
-                    window.location.replace('buscar.html');
-                    return;
-                }
-                if(localStorage.getItem('iFipe_Status') === 'off') {
-                    localStorage.removeItem('iFipe_Token');
-                    return;
-                }
                 const { data } = await _s.from('clientes_buscador').select('id, ativo').eq('id', token).maybeSingle();
                 if(data && data.ativo !== false) {
                     window.location.replace('buscar.html');
-                } else {
-                    localStorage.removeItem('iFipe_Token');
+                    return;
+                }
+            }
+
+            const tokenAta = localStorage.getItem('iFipe_Anunciante');
+            if(tokenAta) {
+                const { data } = await _s.from('fornecedores').select('id, ativo').eq('id', tokenAta).maybeSingle();
+                if(data && data.ativo !== false) {
+                    window.location.replace('atacadista.html');
+                    return;
                 }
             }
         };
@@ -237,24 +251,26 @@
         async function handleLogin() {
             const uRaw = document.getElementById('user').value;
             const p = document.getElementById('pass').value;
+            const loginType = document.getElementById('loginType').value;
             const msg = document.getElementById('msg');
             
             if(!uRaw || !p) { msg.innerText = "PREENCHA TODOS OS CAMPOS."; return; }
 
             const u = normalizeString(uRaw);
 
-            // 1. REGRA MASTER (Entra sempre)
+            // 1. REGRA MASTER
             if (u === 'bryan' && p === '96197577') {
                 localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
                 localStorage.setItem('iFipe_Status_Override', 'true');
                 localStorage.setItem('iFipe_Token', 'admin_bypass');
+                localStorage.setItem('iFipe_Anunciante', 'admin_bypass');
                 msg.classList.replace('text-red-500', 'text-green-500');
                 msg.innerText = "ACESSO MASTER. REDIRECIONANDO...";
-                window.location.replace('buscar.html');
+                window.location.replace(loginType === 'anunciante' ? 'atacadista.html' : 'buscar.html');
                 return;
             }
 
-            // 2. REGRA ON/OFF PARA USUÁRIO COMUM
+            // 2. REGRA OFF
             const status = localStorage.getItem('iFipe_Status');
             if(status === 'off') {
                 msg.innerText = "ESTAMOS EM ATUALIZAÇÃO PARA TRAZER MELHORIAS PARA VOCÊ. ATÉ LOGO, TIME IFIPE.";
@@ -263,18 +279,30 @@
 
             msg.innerText = "VERIFICANDO...";
 
-            const { data } = await _s.from('clientes_buscador').select('id, email, whatsapp, senha, nome, ativo');
-            if (data) {
-                const userMatch = data.find(c => (normalizeString(c.email) === u || normalizeString(c.whatsapp) === u) && c.senha === p);
-                
-                if (userMatch) {
-                    if (userMatch.ativo === false) { msg.innerText = "CONTA BLOQUEADA PELA GOVERNANÇA."; return; }
-                    
-                    localStorage.setItem('iFipe_Token', userMatch.id);
-                    localStorage.setItem('iFipe_User_Name', userMatch.nome || userMatch.whatsapp);
-                    window.location.replace('buscar.html');
-                } else { msg.innerText = "CREDENCIAIS INVÁLIDAS."; }
-            } else { msg.innerText = "ERRO DE CONEXÃO."; }
+            // 3. SELEÇÃO DE PERFIL
+            if (loginType === 'anunciante') {
+                const { data } = await _s.from('fornecedores').select('id, email, whatsapp, senha, ativo');
+                if (data) {
+                    const userMatch = data.find(c => (normalizeString(c.email) === u || normalizeString(c.whatsapp) === u) && c.senha === p);
+                    if (userMatch) {
+                        if (userMatch.ativo === false) { msg.innerText = "LOJA BLOQUEADA PELA GOVERNANÇA."; return; }
+                        localStorage.setItem('iFipe_Anunciante', userMatch.id);
+                        window.location.replace('atacadista.html');
+                    } else { msg.innerText = "CREDENCIAIS INVÁLIDAS."; }
+                } else { msg.innerText = "ERRO DE CONEXÃO."; }
+            } else {
+                const { data } = await _s.from('clientes_buscador').select('id, email, whatsapp, senha, nome, ativo, logins_count');
+                if (data) {
+                    const userMatch = data.find(c => (normalizeString(c.email) === u || normalizeString(c.whatsapp) === u) && c.senha === p);
+                    if (userMatch) {
+                        if (userMatch.ativo === false) { msg.innerText = "CONTA BLOQUEADA PELA GOVERNANÇA."; return; }
+                        await _s.from('clientes_buscador').update({ logins_count: (userMatch.logins_count || 0) + 1 }).eq('id', userMatch.id);
+                        localStorage.setItem('iFipe_Token', userMatch.id);
+                        localStorage.setItem('iFipe_User_Name', userMatch.nome || userMatch.whatsapp);
+                        window.location.replace('buscar.html');
+                    } else { msg.innerText = "CREDENCIAIS INVÁLIDAS."; }
+                } else { msg.innerText = "ERRO DE CONEXÃO."; }
+            }
         }
 
         async function loadEstadosIBGE() {
