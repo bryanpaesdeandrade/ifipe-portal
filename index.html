@@ -85,13 +85,13 @@
             <h1 class="text-4xl font-black italic mb-2">iFipe</h1>
             <p class="text-[10px] text-zinc-500 mb-8 tracking-widest font-bold">O BUSCADOR DO ATACADO</p>
             
-            <div id="statusCheck" class="mb-6 hidden">
+            <div id="statusCheck" class="mb-6">
                 <span class="text-red-500 text-[10px] font-black bg-red-500/10 p-4 rounded-lg block border border-red-500/20">
                     SISTEMA EM ATUALIZAÇÃO PELA GOVERNANÇA.<br>POR FAVOR, AGUARDE.
                 </span>
             </div>
 
-            <div id="loginForm">
+            <div id="loginForm" class="hidden">
                 <input type="text" id="user" class="apple-input text-center mb-3" placeholder="WHATSAPP OU EMAIL">
                 <input type="password" id="pass" class="apple-input text-center mb-4" placeholder="SUA SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
                 <button onclick="handleLogin()" class="btn-apple">ENTRAR NO iFIPE</button>
@@ -324,35 +324,23 @@
         }
 
         async function checkSystemStatus() {
-            const status = localStorage.getItem('iFipe_Status');
-            if(status === 'off') {
-                document.getElementById('loginForm').classList.add('hidden');
-                document.getElementById('registerForm').classList.add('hidden');
-                document.getElementById('statusCheck').classList.remove('hidden');
-                return false;
-            }
-            return true;
+            // Removendo a checagem real do localStorage. Forçando SEMPRE o estado de manutenção visualmente, 
+            // mas deixando o código rodar para não quebrar a página toda. 
+            // O usuário não conseguirá usar os campos de login pois eles estão com a classe 'hidden'.
+            return false;
         }
 
         window.onload = async () => {
             if(localStorage.getItem('iFipe_Theme') === 'light') toggleTheme();
-            if (!await checkSystemStatus()) {
-                document.getElementById('loginOverlay').classList.remove('hidden');
-                return;
-            }
-            const token = localStorage.getItem('iFipe_Token');
-            if(token) {
-                const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
-                if(data && data.ativo !== false) {
-                    clienteLogado = data;
-                    initApp();
-                } else {
-                    localStorage.removeItem('iFipe_Token');
-                    document.getElementById('loginOverlay').classList.remove('hidden');
-                }
-            } else {
-                document.getElementById('loginOverlay').classList.remove('hidden');
-            }
+            
+            // Forçando a exibição da mensagem de manutenção, independentemente de qualquer coisa.
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('statusCheck').classList.remove('hidden');
+            document.getElementById('loginOverlay').classList.remove('hidden');
+            
+            // Impede qualquer outra lógica de carregar, para garantir que fique na tela de manutenção.
+            return;
         };
 
         window.addEventListener('scroll', () => {
