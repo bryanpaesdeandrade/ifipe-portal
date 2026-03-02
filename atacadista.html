@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
+<!DOCTYPE html><html lang="pt-br"><head>
     <script>
         // ESCUDO DE CONTENÇÃO (NÃO TOCAR)
         const a_tok = localStorage.getItem('iFipe_Anunciante');
@@ -338,30 +336,26 @@
             const tokenMaster = localStorage.getItem('iFipe_Token') === 'admin_bypass';
             const status = localStorage.getItem('iFipe_Status');
 
-            // 1. MASTER SUPREMO: IGNORA TUDO E ENTRA
+            // 1. VERIFICAÇÃO DE MANUTENÇÃO (BLOQUEIO GERAL)
+            if (status === 'off' && !tokenMaster) {
+                alert("SISTEMA EM MANUTENÇÃO.");
+                return window.location.replace('index.html');
+            }
+
+            // 2. EXCEÇÃO MASTER SUPREMO (ENTRA SEMPRE)
             if (tokenMaster) {
                 loja = { id: 1, nome: "MODO MASTER (VISUALIZAÇÃO)" };
                 document.getElementById('dashNome').innerText = loja.nome;
             } else {
-                // 2. REGRA MANUTENÇÃO PARA USUÁRIO COMUM
-                if (status === 'off') {
-                    alert("SISTEMA EM MANUTENÇÃO.");
-                    return window.location.replace('index.html');
-                }
+                if(!tokenAta) return window.location.replace('index.html');
 
-                // 3. SEM TOKEN -> REDIRECIONA PRO LOGIN
-                if (!tokenAta) {
-                    return window.location.replace('index.html');
-                }
-
-                // 4. TEM TOKEN -> VERIFICA NO BANCO SE É VALIDO/ATIVO
                 const { data: l, error } = await _s
                     .from('fornecedores')
                     .select('*')
                     .eq('id', tokenAta)
                     .single();
 
-                if (error || !l || l.ativo === false) {
+                if(error || !l) {
                     localStorage.removeItem('iFipe_Anunciante');
                     return window.location.replace('index.html');
                 }
@@ -370,7 +364,6 @@
                 document.getElementById('dashNome').innerText = l.nome;
             }
 
-            // ================= LÓGICA DE INICIALIZAÇÃO PRESERVADA =================
             new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
                 rate = parseFloat(JSON.parse(e.data).c);
                 document.getElementById('tBin').innerText = `R$ ${rate.toFixed(4)}`;
@@ -696,6 +689,4 @@
 
         window.addEventListener('scroll', () => { const b = document.getElementById('scrollTopBtn'); if(window.scrollY > 300) b.classList.add('show'); else b.classList.remove('show'); });
         function logout() { localStorage.removeItem('iFipe_Anunciante'); localStorage.removeItem('iFipe_Token'); window.location.replace('index.html'); }
-    </script>
-</body>
-</html>
+    </script></body></html>
