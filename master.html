@@ -36,6 +36,11 @@
         .hidden { display: none !important; }
         #scrollTopBtn { opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 9999; }
         #scrollTopBtn.show { opacity: 1; pointer-events: auto; }
+        .mini-edit { background: transparent; border: 1px solid transparent; color: #fff; font-weight: 800; width: 60px; text-align: center; font-family: 'JetBrains Mono'; border-radius: 6px; transition: 0.3s; border-bottom: 1px dashed rgba(255,255,255,0.3); outline: none; }
+        .mini-edit:focus { border-color: var(--blue-master); background: rgba(0, 113, 227, 0.1); border-bottom: 1px solid var(--blue-master); }
+        .mini-edit-preco { width: 80px; }
+        .btn-tipo { background: var(--border); border: 2px solid var(--border); color: var(--text); padding: 12px; border-radius: 12px; font-weight: 900; font-size: 10px; cursor: pointer; width: 100%; text-align: center; }
+        .btn-tipo.active { border-color: var(--blue-master); color: var(--blue-master); background: rgba(0, 113, 227, 0.1); }
     </style>
 </head>
 <body>
@@ -67,10 +72,10 @@
 
         <div class="master-menu">
             <button class="menu-btn active" onclick="switchView('v-atacadistas', this)">🏢 ATACADISTAS</button>
-            <button class="menu-btn" onclick="switchView('v-clientes', this)">👥 CLIENTES</button>
+            <button class="menu-btn" onclick="switchView('v-clientes', this)">👥 BUSCADORES</button>
             <button class="menu-btn" onclick="switchView('v-anuncios', this)">📢 GESTÃO GLOBAL</button>
             <button class="menu-btn" onclick="switchView('v-selos', this)">🛡️ GESTÃO SELOS</button>
-            <button class="menu-btn" onclick="switchView('v-calculadora', this)">🧮 CALCULADORA VIP 2.0</button>
+            <button class="menu-btn" onclick="switchView('v-funcionarios', this)">👨‍💼 FUNCIONÁRIOS</button>
             <button class="menu-btn" onclick="switchView('v-conta', this)">⚙️ MINHA CONTA</button>
         </div>
 
@@ -96,7 +101,7 @@
         <div id="v-clientes" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
-                    <h2 class="text-sm font-black text-white">CLIENTES BUSCADORES</h2>
+                    <h2 class="text-sm font-black text-white">BUSCADORES</h2>
                     <div class="flex gap-2 w-2/3 justify-end">
                         <input type="text" placeholder="🔍 BUSCAR NOME, CIDADE, EMAIL, WHATSAPP..." class="apple-input !w-2/3 !py-2" onkeyup="filterTable('listCli', this.value)">
                         <button onclick="abrirModalCliNovo()" class="btn-master bg-white text-black hover:bg-zinc-300">+ NOVO</button>
@@ -116,14 +121,15 @@
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
                     <h2 class="text-sm font-black text-white">GESTÃO GLOBAL DE ANÚNCIOS</h2>
-                    <div class="flex gap-2 w-1/2 justify-end">
+                    <div class="flex gap-2 w-2/3 justify-end">
                         <input type="text" placeholder="🔍 BUSCAR PRODUTO, LOJA, COR..." class="apple-input !w-2/3 !py-2" onkeyup="filterTable('listAnu', this.value)">
                         <button onclick="abrirModalGestaoAnuncio()" class="btn-master !bg-blue-600">➕ LANÇAR ANÚNCIO</button>
+                        <button onclick="bulkAnuModal()" class="btn-master bg-zinc-800 text-white">⚙️ EM MASSA</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table>
-                        <thead><tr><th>REGISTRO</th><th>PRODUTO / VARIAÇÃO</th><th>CONDIÇÃO</th><th>PREÇO</th><th>ESTOQUE</th><th class="text-right">X</th></tr></thead>
+                        <thead><tr><th width="30"><input type="checkbox" onclick="selAll(this, '.chk-anu')"></th><th>REGISTRO</th><th>PRODUTO / VARIAÇÃO</th><th>CONDIÇÃO</th><th class="text-center">PREÇO (EDITAR)</th><th class="text-center">ESTOQUE (EDITAR)</th><th class="text-right">X</th></tr></thead>
                         <tbody id="listAnu"></tbody>
                     </table>
                 </div>
@@ -178,14 +184,19 @@
             </div>
         </div>
 
-        <div id="v-calculadora" class="master-view">
-            <div class="apple-card max-w-lg mx-auto">
-                <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">🧮 CALCULADORA VIP 2.0</h2>
-                <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-xl space-y-4">
-                    <div class="flex justify-between items-center border-b border-zinc-800 pb-2"><span class="text-[10px] text-zinc-500 font-bold">ORÁCULO (+0.06):</span><span id="calcOraculoDisplay" class="text-sm font-mono text-green-400 font-black">R$ 0.00</span></div>
-                    <div><label class="text-[9px] font-black text-zinc-400">VALOR USD</label><input type="number" id="calcValorUsd" class="apple-input mt-2" oninput="runCalcVip()"></div>
-                    <div><label class="text-[9px] font-black text-zinc-400">LUCRO (%)</label><input type="number" id="calcLucro" class="apple-input mt-2" value="0" oninput="runCalcVip()"></div>
-                    <div class="bg-black p-4 rounded-lg text-center mt-4"><span class="text-2xl font-black text-white font-mono" id="calcResultDisplay">R$ 0,00</span></div>
+        <div id="v-funcionarios" class="master-view">
+            <div class="apple-card">
+                <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
+                    <h2 class="text-sm font-black text-white">FUNCIONÁRIOS</h2>
+                    <div class="flex gap-2 w-2/3 justify-end">
+                        <button onclick="abrirModalFunc()" class="btn-master bg-white text-black hover:bg-zinc-300">+ NOVO FUNCIONÁRIO</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table>
+                        <thead><tr><th>NOME</th><th>WHATSAPP</th><th>SENHA</th><th>STATUS</th><th class="text-right">AÇÕES</th></tr></thead>
+                        <tbody id="listFunc"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -194,7 +205,7 @@
             <div class="apple-card max-w-md mx-auto">
                 <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">CHAVE MESTRA</h2>
                 <form onsubmit="updateMaster(event)" class="space-y-4">
-                    <input type="password" id="mNewPass" class="apple-input" placeholder="Nova senha master..." required><button type="submit" class="btn-master w-full !bg-red-600">APLICAR</button>
+                    <input type="password" id="mNewPass" class="apple-input" placeholder="Nova senha master..." required><button type="submit" class="btn-master w-full !bg-red-600">APLICAR E SALVAR</button>
                 </form>
             </div>
         </div>
@@ -202,7 +213,7 @@
 
     <div id="modalCli" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a]">
-            <h3 id="mCliTitle" class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">INTERVENÇÃO NO CLIENTE</h3>
+            <h3 id="mCliTitle" class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">INTERVENÇÃO NO BUSCADOR</h3>
             <form onsubmit="saveCli(event)" id="formCli" class="space-y-3">
                 <input type="hidden" id="mCliId">
                 <div class="grid grid-cols-2 gap-3">
@@ -215,27 +226,75 @@
                     <div id="divCidadeCli" class="col-span-1"><label class="text-[8px] text-zinc-500 font-bold">CIDADE</label><select id="mCliCid" class="apple-input"><option value="">Aguarde...</option></select></div>
                     <div class="col-span-2 border-t border-zinc-800 pt-2"><label class="text-[8px] text-red-500 font-bold">SENHA</label><input type="text" id="mCliSenha" class="apple-input border-red-500" required></div>
                 </div>
-                <div class="flex gap-2 pt-4"><button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button><button type="submit" class="btn-master w-2/3">SALVAR CLIENTE</button></div>
+                <div class="flex gap-2 pt-4"><button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button><button type="submit" class="btn-master w-2/3">SALVAR</button></div>
             </form>
         </div>
     </div>
 
     <div id="modalGestaoAnuncio" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-xl bg-[#050505] border-[#38383a]">
-            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">➕ NOVO ANÚNCIO</h3>
-            <form onsubmit="gestaoAddAnuncio(event)" class="space-y-4">
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">➕ LANÇAR ANÚNCIO (GLOBAL)</h3>
+            <form onsubmit="gestaoAddAnuncioM(event)" class="space-y-4">
                 <select id="gLoja" class="apple-input" required></select>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <button type="button" id="btNM" class="btn-tipo" onclick="selTipoM('Novo')">📦 NOVO</button>
+                    <button type="button" id="btSM" class="btn-tipo" onclick="selTipoM('Seminovo')">♻️ SEMINOVO</button>
+                </div>
+                <input type="hidden" id="f_tipo_m">
+                
                 <div class="grid grid-cols-3 gap-2">
-                    <select id="gModelo" class="apple-input" onchange="loadCapacidades()" required><option value="">Modelo...</option></select>
-                    <select id="gCapacidade" class="apple-input" onchange="loadCores()" required><option value="">Capac...</option></select>
-                    <select id="gCor" class="apple-input" required><option value="">Cor...</option></select>
+                    <select id="f_mod_m" class="apple-input" onchange="libMemM()" required disabled></select>
+                    <select id="f_cap_m" class="apple-input" onchange="libCorM()" required disabled></select>
+                    <select id="f_cor_m" class="apple-input" required disabled></select>
                 </div>
-                <div class="grid grid-cols-4 gap-2">
-                    <select id="gCondicao" class="apple-input" required><option value="NOVO">NOVO</option><option value="SEMINOVO">SEMINOVO</option><option value="CPO">CPO</option><option value="GRADE A">GRADE A</option><option value="GRADE B">GRADE B</option><option value="GRADE C">GRADE C</option></select>
-                    <input type="number" id="gQtd" class="apple-input" placeholder="Qtd" required>
-                    <select id="gMoeda" class="apple-input" required><option value="USD">USD</option><option value="BRL">BRL</option></select>
-                    <input type="number" step="0.01" id="gPreco" class="apple-input" placeholder="Preço" required>
+                
+                <div id="z_semi_m" class="hidden grid grid-cols-2 gap-2">
+                    <select id="f_cond_m" class="apple-input">
+                        <option value="Seminovo">SEMINOVO</option>
+                        <option value="CPO">CPO</option>
+                        <option value="Grade A">GRADE A</option>
+                        <option value="Grade B">GRADE B</option>
+                        <option value="Grade C">GRADE C</option>
+                    </select>
+                    <select id="f_bat_m" class="apple-input">
+                        <option value="">BATERIA...</option>
+                        <option value="Abaixo de 85%">Abaixo de 85%</option>
+                        <option value="Acima de 85%">Acima de 85%</option>
+                        <option value="Acima de 90%">Acima de 90%</option>
+                        <option value="Acima de 95%">Acima de 95%</option>
+                        <option value="Bateria em 100%">Bateria em 100%</option>
+                    </select>
                 </div>
+                
+                <select id="f_gar_m" class="apple-input hidden">
+                    <option value="">GARANTIA...</option>
+                    <option value="Sem garantia">Sem garantia</option>
+                    <option value="1 Mês">1 Mês</option>
+                    <option value="2 Meses">2 Meses</option>
+                    <option value="3 Meses">3 Meses</option>
+                    <option value="6 Meses">6 Meses</option>
+                    <option value="12 Meses">12 Meses</option>
+                </select>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" id="f_qtd_m" class="apple-input" placeholder="QTD" min="0" required>
+                    <select id="f_orig_m" class="apple-input" required></select>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="f_usd_m" class="apple-input" placeholder="$ USD" oninput="mascara(this); document.getElementById('f_brl_m').value=''">
+                    <input type="text" id="f_brl_m" class="apple-input" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('f_usd_m').value=''">
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 bg-[#1c1c1e] p-3 rounded-lg border border-[#38383a]">
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_pix_m"> PIX</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_usdt_m"> USDT</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_neg_m"> NEGOCIA</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_envi_m"> ENVIO</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_cole_m"> COLETA</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_nota_m"> NF</label>
+                </div>
+
                 <div class="flex gap-2 pt-2"><button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button><button type="submit" class="btn-master w-2/3 !bg-blue-600">PUBLICAR</button></div>
             </form>
         </div>
@@ -261,12 +320,29 @@
         </div>
     </div>
 
+    <div id="modalFunc" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-sm bg-[#050505] border-[#38383a]">
+            <h3 id="mFuncTitle" class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">FUNCIONÁRIO</h3>
+            <form onsubmit="saveFunc(event)" class="space-y-3">
+                <input type="hidden" id="mFuncId">
+                <input type="text" id="mFuncNome" class="apple-input" placeholder="NOME DO FUNCIONÁRIO" required>
+                <input type="text" id="mFuncWhats" class="apple-input" placeholder="WHATSAPP" required>
+                <input type="text" id="mFuncSenha" class="apple-input border-red-500" placeholder="SENHA" required>
+                <div class="flex gap-2 pt-2"><button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button><button type="submit" class="btn-master w-2/3">SALVAR</button></div>
+            </form>
+        </div>
+    </div>
+
     <div id="modalBulkAta" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505]"><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (ATACADISTAS)</h3><input type="text" id="bulkAtaSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('fornecedores', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('fornecedores', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button><button onclick="runBulk('fornecedores', 'desativar')" class="btn-master w-full bg-zinc-700 mb-2">DESATIVAR SELECIONADOS</button><button onclick="runBulk('fornecedores', 'verificar')" class="btn-master w-full border border-blue-600 text-blue-500 bg-transparent mb-4">APLICAR SELO VERIFICADO</button><button onclick="runBulk('fornecedores', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button><button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button></div></div>
-    <div id="modalBulkCli" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505]"><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (CLIENTES)</h3><input type="text" id="bulkCliSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('clientes_buscador', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('clientes_buscador', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button><button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button></div></div>
+    <div id="modalBulkCli" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505]"><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (BUSCADORES)</h3><input type="text" id="bulkCliSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('clientes_buscador', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('clientes_buscador', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button><button onclick="runBulk('clientes_buscador', 'desativar')" class="btn-master w-full bg-zinc-700 mb-4">DESATIVAR SELECIONADOS</button><button onclick="runBulk('clientes_buscador', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button><button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button></div></div>
+    <div id="modalBulkAnu" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505]"><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (ANÚNCIOS)</h3><input type="text" id="bulkAnuPreco" class="apple-input mb-2" placeholder="NOVO PREÇO" oninput="mascara(this)"><input type="number" id="bulkAnuQtd" class="apple-input mb-4" placeholder="NOVA QUANTIDADE"><button onclick="runBulkAnu()" class="btn-master w-full !bg-blue-600 mb-4">APLICAR ALTERAÇÕES</button><button onclick="runBulk('ofertas', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button><button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button></div></div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let dbAta=[], dbCli=[], dbAnu=[], dbVar=[], currentOracleUsdt=0;
+        let dbAta=[], dbCli=[], dbAnu=[], dbVar=[], dbFunc=[], dbReg=[], currentOracleUsdt=0;
+
+        const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
+        const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
 
         async function toggleStatus(table, id, status) {
             const { error } = await _s.from(table).update({ativo: status}).eq('id', id);
@@ -320,31 +396,50 @@
         function renderSystemStatus() { const btn = document.getElementById('sysOnOffBtn'); if(localStorage.getItem('iFipe_Status')!=='off') { btn.className="btn-master bg-green-600 px-3 py-1 text-[9px] ml-2"; btn.innerText="SISTEMA: ON"; } else { btn.className="btn-master btn-danger px-3 py-1 text-[9px] ml-2"; btn.innerText="SISTEMA: OFF (ATUALIZANDO)"; } }
         function selAll(el, selector) { document.querySelectorAll(selector).forEach(c => c.checked = el.checked); }
 
+        function updateMaster(e) {
+            e.preventDefault();
+            const np = document.getElementById('mNewPass').value;
+            if(np) {
+                localStorage.setItem('Master_Custom_Pass', np);
+                alert("Senha Master atualizada com sucesso!");
+                document.getElementById('mNewPass').value = '';
+            }
+        }
+
         async function initMaster() {
             new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
                 let bin = parseFloat(JSON.parse(e.data).c); currentOracleUsdt = bin + 0.06;
                 document.getElementById('tBin').innerText = `R$ ${bin.toFixed(4)}`; document.getElementById('tUsdt').innerText = `R$ ${currentOracleUsdt.toFixed(4)}`;
-                document.getElementById('calcOraculoDisplay').innerText = `R$ ${currentOracleUsdt.toFixed(4)}`; runCalcVip();
             };
             renderSystemStatus(); await loadAll();
         }
 
         async function loadAll() {
-            const [f, c, o, v] = await Promise.all([
+            const [f, c, o, v, r, fn] = await Promise.all([
                 _s.from('fornecedores').select('*').order('nome'),
                 _s.from('clientes_buscador').select('*').order('nome'),
                 _s.from('ofertas').select('*, fornecedores(nome, insignia_manual), variacoes(id, produtos_mestre(id, nome), capacidade, cor)').order('criado_em', {ascending:false}),
-                _s.from('variacoes').select('id, produtos_mestre(id, nome), capacidade, cor')
+                _s.from('variacoes').select('id, produtos_mestre(id, nome), capacidade, cor'),
+                _s.from('regioes').select('*'),
+                _s.from('funcionarios').select('*').order('nome')
             ]);
-            dbAta=f.data||[]; dbCli=c.data||[]; dbAnu=o.data||[]; dbVar=v.data||[];
-            renderAta(); renderCli(); renderAnu(); loadUsersForSelo();
-            document.getElementById('gLoja').innerHTML = '<option value="">Selecione Loja...</option>' + dbAta.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+            dbAta=f.data||[]; dbCli=c.data||[]; dbAnu=o.data||[]; dbVar=v.data||[]; dbReg=r.data||[]; dbFunc=fn.data||[];
+            renderAta(); renderCli(); renderAnu(); renderFunc(); loadUsersForSelo();
+            
+            document.getElementById('gLoja').innerHTML = '<option value="">Selecione a Loja do Lançamento...</option>' + dbAta.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
+            
             let uM=[]; let mM=new Set(); dbVar.forEach(va => { if(va.produtos_mestre && !mM.has(va.produtos_mestre.id)) { mM.add(va.produtos_mestre.id); uM.push(va.produtos_mestre); } });
-            document.getElementById('gModelo').innerHTML = '<option value="">Modelo...</option>' + uM.sort((a,b)=>a.nome.localeCompare(b.nome)).map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
-        }
+            document.getElementById('f_mod_m').innerHTML = '<option value="">MODELO...</option>' + uM.sort((a,b)=>a.nome.localeCompare(b.nome)).map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
 
-        function loadCapacidades() { const m = parseInt(document.getElementById('gModelo').value); const s = document.getElementById('gCapacidade'); s.innerHTML = '<option value="">Selecione...</option>'; document.getElementById('gCor').innerHTML = '<option value="">Capacidade primeiro</option>'; if(!m) return; let caps = new Set(); dbVar.filter(v => v.produtos_mestre && v.produtos_mestre.id === m).forEach(v => { if(v.capacidade) caps.add(v.capacidade); }); Array.from(caps).sort().forEach(cap => s.innerHTML += `<option value="${cap}">${cap}</option>`); }
-        function loadCores() { const m = parseInt(document.getElementById('gModelo').value); const c = document.getElementById('gCapacidade').value; const s = document.getElementById('gCor'); s.innerHTML = '<option value="">Selecione...</option>'; if(!m || !c) return; let cores = new Set(); dbVar.filter(v => v.produtos_mestre && v.produtos_mestre.id === m && v.capacidade === c).forEach(v => { if(v.cor) cores.add(v.cor); }); Array.from(cores).sort().forEach(cor => s.innerHTML += `<option value="${cor}">${cor}</option>`); }
+            const origensPermitidas = [ { nome: 'BRASIL ANATEL', flag: '🇧🇷' }, { nome: 'EUA', flag: '🇺🇸' }, { nome: 'JAPÃO', flag: '🇯🇵' }, { nome: 'ÍNDIA', flag: '🇮🇳' }, { nome: 'CANADÁ', flag: '🇨🇦' }, { nome: 'CHINA', flag: '🇨🇳' } ];
+            let htmlOrigem = '<option value="">ORIGEM...</option>';
+            origensPermitidas.forEach(rm => {
+                let sStr = rm.nome.split(' ')[0].replace(/[ÁÀÃÂ]/g,'A').replace(/[Í]/g,'I');
+                let match = dbReg.find(dbR => dbR.nome.toUpperCase().replace(/[ÁÀÃÂ]/g,'A').replace(/[Í]/g,'I').includes(sStr));
+                if(match) htmlOrigem += `<option value="${match.id}">${rm.flag} ${rm.nome}</option>`;
+            });
+            document.getElementById('f_orig_m').innerHTML = htmlOrigem;
+        }
 
         function renderAta() { 
             document.getElementById('listAta').innerHTML = dbAta.map(a => { 
@@ -371,6 +466,7 @@
         function abrirModalAta() { document.getElementById('mAtaTitle').innerText = "NOVO ATACADISTA"; document.getElementById('mAtaId').value=''; document.getElementById('mAtaNome').value=''; document.getElementById('mAtaWhats').value=''; document.getElementById('mAtaEmail').value=''; document.getElementById('mAtaPais').value='Brasil'; toggleLocationFields('Ata'); document.getElementById('mAtaSenha').value=''; document.getElementById('modalAta').classList.remove('hidden'); }
         function editAta(id) { const a = dbAta.find(x => x.id == id); document.getElementById('mAtaTitle').innerText = `EDITANDO: ${a.nome}`; document.getElementById('mAtaId').value = a.id; document.getElementById('mAtaNome').value = a.nome; document.getElementById('mAtaWhats').value = a.whatsapp||''; document.getElementById('mAtaEmail').value = a.email||''; document.getElementById('mAtaPais').value = a.pais||'Brasil'; toggleLocationFields('Ata'); if(a.pais==='Brasil'){ document.getElementById('mAtaEst').value = a.estado||''; loadCidadesIBGE('Ata').then(()=> document.getElementById('mAtaCid').value = a.cidade||''); } document.getElementById('mAtaSenha').value = a.senha||''; document.getElementById('mAtaAtivo').checked = a.ativo; document.getElementById('mAtaVeri').checked = a.verificado; document.getElementById('modalAta').classList.remove('hidden'); }
         async function saveAta(e) { e.preventDefault(); const d = { nome: document.getElementById('mAtaNome').value.toUpperCase(), whatsapp: document.getElementById('mAtaWhats').value, email: document.getElementById('mAtaEmail').value, pais: document.getElementById('mAtaPais').value, estado: document.getElementById('mAtaPais').value==='Brasil'?document.getElementById('mAtaEst').value:null, cidade: document.getElementById('mAtaPais').value==='Brasil'?document.getElementById('mAtaCid').value:null, ativo: document.getElementById('mAtaAtivo').checked, verificado: document.getElementById('mAtaVeri').checked, senha: document.getElementById('mAtaSenha').value }; const id = document.getElementById('mAtaId').value; if(id) await _s.from('fornecedores').update(d).eq('id', id); else await _s.from('fornecedores').insert([d]); fecharModais(); loadAll(); }
+        function bulkAtaModal() { document.getElementById('modalBulkAta').classList.remove('hidden'); }
 
         function renderCli() { 
             document.getElementById('listCli').innerHTML = dbCli.map(c => { 
@@ -397,46 +493,182 @@
                 </tr>`; 
             }).join(''); 
         }
-        function abrirModalCliNovo() { document.getElementById('mCliTitle').innerText="NOVO CLIENTE BUSCADOR"; document.getElementById('mCliId').value=''; document.getElementById('formCli').reset(); toggleLocationFields('Cli'); document.getElementById('modalCli').classList.remove('hidden'); }
+        function abrirModalCliNovo() { document.getElementById('mCliTitle').innerText="NOVO BUSCADOR"; document.getElementById('mCliId').value=''; document.getElementById('formCli').reset(); toggleLocationFields('Cli'); document.getElementById('modalCli').classList.remove('hidden'); }
         function editCli(id) { const c = dbCli.find(x=>x.id==id); document.getElementById('mCliTitle').innerText=`EDITANDO: ${c.nome}`; document.getElementById('mCliId').value=c.id; document.getElementById('mCliNome').value=c.nome||''; document.getElementById('mCliWhats').value=c.whatsapp||''; document.getElementById('mCliEmail').value=c.email||''; document.getElementById('mCliPais').value=c.pais||'Brasil'; toggleLocationFields('Cli'); if(c.pais==='Brasil'){ document.getElementById('mCliEst').value=c.estado||''; loadCidadesIBGE('Cli').then(()=> document.getElementById('mCliCid').value=c.cidade||''); } document.getElementById('mCliSenha').value=c.senha||''; document.getElementById('modalCli').classList.remove('hidden'); }
-        async function saveCli(e) { e.preventDefault(); const id = document.getElementById('mCliId').value; const payload = { nome: document.getElementById('mCliNome').value.toUpperCase(), whatsapp: document.getElementById('mCliWhats').value, email: document.getElementById('mCliEmail').value, pais: document.getElementById('mCliPais').value, estado: document.getElementById('mCliPais').value === 'Brasil' ? document.getElementById('mCliEst').value : null, cidade: document.getElementById('mCliPais').value === 'Brasil' ? document.getElementById('mCliCid').value : null, senha: document.getElementById('mCliSenha').value }; const { error } = id ? await _s.from('clientes_buscador').update(payload).eq('id', id) : await _s.from('clientes_buscador').insert([payload]); if(error) { alert("ERRO AO SALVAR: " + error.message); } else { alert("CLIENTE SALVO COM SUCESSO!"); fecharModais(); loadAll(); } }
+        async function saveCli(e) { e.preventDefault(); const id = document.getElementById('mCliId').value; const payload = { nome: document.getElementById('mCliNome').value.toUpperCase(), whatsapp: document.getElementById('mCliWhats').value, email: document.getElementById('mCliEmail').value, pais: document.getElementById('mCliPais').value, estado: document.getElementById('mCliPais').value === 'Brasil' ? document.getElementById('mCliEst').value : null, cidade: document.getElementById('mCliPais').value === 'Brasil' ? document.getElementById('mCliCid').value : null, senha: document.getElementById('mCliSenha').value }; const { error } = id ? await _s.from('clientes_buscador').update(payload).eq('id', id) : await _s.from('clientes_buscador').insert([payload]); if(error) { alert("ERRO AO SALVAR: " + error.message); } else { alert("SALVO COM SUCESSO!"); fecharModais(); loadAll(); } }
+        function bulkCliModal() { document.getElementById('modalBulkCli').classList.remove('hidden'); }
 
-        async function runBulk(t, a) { const cls = t === 'fornecedores' ? '.chk-ata:checked' : '.chk-cli:checked'; let ids = Array.from(document.querySelectorAll(cls)).map(c => parseInt(c.value)); if(a === 'apagar') { if(confirm("APAGAR DEFINITIVO?")) await _s.from(t).delete().in('id', ids); } else if (a === 'senha') { const s = document.getElementById(t==='fornecedores'?'bulkAtaSenha':'bulkCliSenha').value; if(!s) return alert("Digite senha."); await _s.from(t).update({senha: s}).in('id', ids); } else if(t === 'fornecedores') { let u = {}; if(a==='ativar') u.ativo=true; if(a==='desativar') u.ativo=false; if(a==='verificar') u.verificado=true; await _s.from(t).update(u).in('id', ids); } fecharModais(); loadAll(); }
+        // FUNCIONÁRIOS
+        function renderFunc() { 
+            document.getElementById('listFunc').innerHTML = dbFunc.map(f => { 
+                return `<tr>
+                    <td><span class="font-black text-white text-xs">${f.nome}</span></td>
+                    <td class="font-mono text-[9px] text-zinc-400">${f.whatsapp}</td>
+                    <td class="font-mono text-red-400 text-[10px]">${f.senha}</td>
+                    <td><span class="badge ${f.ativo?'b-green':'b-red'}">${f.ativo?'ATIVO':'BLOQUEADO'}</span></td>
+                    <td class="text-right">
+                        <div class="flex justify-end gap-1 mt-1">
+                            <button onclick="toggleStatus('funcionarios', ${f.id}, true)" class="bg-green-900/30 text-green-500 px-2 py-1 rounded text-[8px] font-black">ATIVAR</button>
+                            <button onclick="toggleStatus('funcionarios', ${f.id}, false)" class="bg-yellow-900/30 text-yellow-500 px-2 py-1 rounded text-[8px] font-black">BLOQ</button>
+                            <button onclick="delRecord('funcionarios', ${f.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black">EXCLUIR</button>
+                            <button onclick="editFunc(${f.id})" class="bg-zinc-800 text-white px-2 py-1 rounded text-[8px] font-black">EDITAR</button>
+                        </div>
+                    </td>
+                </tr>`; 
+            }).join(''); 
+        }
+        function abrirModalFunc() { document.getElementById('mFuncTitle').innerText="NOVO FUNCIONÁRIO"; document.getElementById('mFuncId').value=''; document.getElementById('mFuncNome').value=''; document.getElementById('mFuncWhats').value=''; document.getElementById('mFuncSenha').value=''; document.getElementById('modalFunc').classList.remove('hidden'); }
+        function editFunc(id) { const f = dbFunc.find(x=>x.id==id); document.getElementById('mFuncTitle').innerText=`EDITAR: ${f.nome}`; document.getElementById('mFuncId').value=f.id; document.getElementById('mFuncNome').value=f.nome||''; document.getElementById('mFuncWhats').value=f.whatsapp||''; document.getElementById('mFuncSenha').value=f.senha||''; document.getElementById('modalFunc').classList.remove('hidden'); }
+        async function saveFunc(e) { e.preventDefault(); const id = document.getElementById('mFuncId').value; const payload = { nome: document.getElementById('mFuncNome').value.toUpperCase(), whatsapp: document.getElementById('mFuncWhats').value, senha: document.getElementById('mFuncSenha').value, ativo: true }; const { error } = id ? await _s.from('funcionarios').update(payload).eq('id', id) : await _s.from('funcionarios').insert([payload]); if(error) { alert("ERRO: " + error.message); } else { fecharModais(); loadAll(); } }
 
-        function renderAnu() { const tbody = document.getElementById('listAnu'); if(!dbAnu.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Vazio.</td></tr>'; return; } let grouped = {}; dbAnu.forEach(a => { let fNome = a.fornecedores ? a.fornecedores.nome : 'DESCONHECIDO'; if(!grouped[fNome]) grouped[fNome] = { ads: [], b: a.fornecedores?.insignia_manual || [] }; grouped[fNome].ads.push(a); }); let html = ''; for(let loja in grouped) { let b = grouped[loja].b.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 text-[7px]">${i}</span>`).join(''); html += `<tr class="group-header bg-[#141415] border-y border-zinc-800"><td colspan="6" class="font-black text-blue-500 py-3">🏢 ${loja} ${b}</td></tr>`; grouped[loja].ads.forEach(a => { let d = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '--'; let p = a.variacoes ? `${a.variacoes.produtos_mestre?.nome} ${a.variacoes.capacidade} <span class="text-zinc-500">${a.variacoes.cor}</span>` : 'Indisponível'; let c = a.condicao || 'NOVO'; html += `<tr><td class="text-[9px] text-zinc-400 font-mono">${d}</td><td class="text-[10px] font-bold text-white">${p}</td><td>${c}</td><td class="font-mono text-white">${a.moeda} ${a.preco}</td><td><span class="badge bg-zinc-800">${a.quantidade} UN</span></td><td class="text-right"><button onclick="delRecord('ofertas', ${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black">X</button></td></tr>`; }); } tbody.innerHTML = html; }
-        function abrirModalGestaoAnuncio() { document.getElementById('gModelo').value = ''; document.getElementById('modalGestaoAnuncio').classList.remove('hidden'); }
-        async function gestaoAddAnuncio(e) { e.preventDefault(); const mId = parseInt(document.getElementById('gModelo').value); const c = document.getElementById('gCapacidade').value; const cor = document.getElementById('gCor').value; const v = dbVar.find(x => x.produtos_mestre?.id === mId && x.capacidade === c && x.cor === cor); if(!v) return alert("Inválido."); const payload = { fornecedor_id: document.getElementById('gLoja').value, variacao_id: v.id, condicao: document.getElementById('gCondicao').value, quantidade: document.getElementById('gQtd').value, moeda: document.getElementById('gMoeda').value, preco: document.getElementById('gPreco').value }; const { error } = await _s.from('ofertas').insert([payload]); if(error) alert(error.message); else { alert("Publicado!"); fecharModais(); e.target.reset(); loadAll(); } }
+        // AÇÕES EM MASSA GENÉRICA
+        async function runBulk(t, a) { 
+            const cls = t === 'fornecedores' ? '.chk-ata:checked' : (t === 'clientes_buscador' ? '.chk-cli:checked' : '.chk-anu:checked'); 
+            let ids = Array.from(document.querySelectorAll(cls)).map(c => parseInt(c.value)); 
+            if(!ids.length) return alert("Selecione itens.");
+            if(a === 'apagar') { 
+                if(confirm("APAGAR DEFINITIVO OS SELECIONADOS?")) await _s.from(t).delete().in('id', ids); 
+            } else if (a === 'senha') { 
+                const s = document.getElementById(t==='fornecedores'?'bulkAtaSenha':'bulkCliSenha').value; 
+                if(!s) return alert("Digite senha."); 
+                await _s.from(t).update({senha: s}).in('id', ids); 
+            } else if(a === 'ativar' || a === 'desativar' || a === 'verificar') { 
+                let u = {}; 
+                if(a==='ativar') u.ativo=true; 
+                if(a==='desativar') u.ativo=false; 
+                if(a==='verificar') u.verificado=true; 
+                await _s.from(t).update(u).in('id', ids); 
+            } 
+            fecharModais(); loadAll(); 
+        }
 
+        // ANUNCIOS GESTAO
+        function renderAnu() { 
+            const tbody = document.getElementById('listAnu'); 
+            if(!dbAnu.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Vazio.</td></tr>'; return; } 
+            let grouped = {}; 
+            dbAnu.forEach(a => { let fNome = a.fornecedores ? a.fornecedores.nome : 'DESCONHECIDO'; if(!grouped[fNome]) grouped[fNome] = { ads: [], b: a.fornecedores?.insignia_manual || [] }; grouped[fNome].ads.push(a); }); 
+            let html = ''; 
+            for(let loja in grouped) { 
+                let b = grouped[loja].b.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 text-[7px]">${i}</span>`).join(''); 
+                html += `<tr class="group-header bg-[#141415] border-y border-zinc-800"><td colspan="7" class="font-black text-blue-500 py-3">🏢 ${loja} ${b}</td></tr>`; 
+                grouped[loja].ads.forEach(a => { 
+                    let d = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '--'; 
+                    let p = a.variacoes ? `${a.variacoes.produtos_mestre?.nome} ${a.variacoes.capacidade} <span class="text-zinc-500">${a.variacoes.cor}</span>` : 'Indisponível'; 
+                    let c = a.condicao || 'NOVO'; 
+                    let pDisp = a.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    html += `<tr>
+                        <td><input type="checkbox" class="chk-anu" value="${a.id}"></td>
+                        <td class="text-[9px] text-zinc-400 font-mono">${d}</td>
+                        <td class="text-[10px] font-bold text-white">${p}</td>
+                        <td>${c}</td>
+                        <td class="text-center font-mono text-white">${a.moeda} <input type="text" class="mini-edit mini-edit-preco" value="${pDisp}" oninput="mascara(this)" onblur="editAnuncio(${a.id}, 'preco', this.value)"></td>
+                        <td class="text-center"><input type="number" class="mini-edit" value="${a.quantidade}" min="0" onblur="editAnuncio(${a.id}, 'quantidade', this.value)"></td>
+                        <td class="text-right"><button onclick="delRecord('ofertas', ${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black">X</button></td>
+                    </tr>`; 
+                }); 
+            } 
+            tbody.innerHTML = html; 
+        }
+
+        async function editAnuncio(id, f, v) {
+            let val;
+            if(f === 'preco') { val = parseP(v); if(isNaN(val)||val<0) val=0; } 
+            else { val = parseInt(v); if(isNaN(val)||val<0) val=0; }
+            await _s.from('ofertas').update({[f]: val}).eq('id', id);
+            loadAll();
+        }
+
+        function bulkAnuModal() { document.getElementById('modalBulkAnu').classList.remove('hidden'); }
+        async function runBulkAnu() {
+            let ids = Array.from(document.querySelectorAll('.chk-anu:checked')).map(c => parseInt(c.value));
+            if(!ids.length) return alert("Selecione anúncios.");
+            let u = {};
+            let p = document.getElementById('bulkAnuPreco').value;
+            let q = document.getElementById('bulkAnuQtd').value;
+            if(p) u.preco = parseP(p);
+            if(q !== '') { let qVal = parseInt(q); u.quantidade = isNaN(qVal) || qVal < 0 ? 0 : qVal; }
+            if(Object.keys(u).length > 0) await _s.from('ofertas').update(u).in('id', ids);
+            fecharModais(); loadAll();
+        }
+
+        // LANÇAR ANÚNCIO (Lógica Atacadista Adaptada)
+        function abrirModalGestaoAnuncio() { document.getElementById('modalGestaoAnuncio').classList.remove('hidden'); }
+        function selTipoM(t) {
+            document.getElementById('f_tipo_m').value = t;
+            document.getElementById('btNM').classList.toggle('active', t==='Novo'); 
+            document.getElementById('btSM').classList.toggle('active', t==='Seminovo');
+            document.getElementById('z_semi_m').classList.toggle('hidden', t==='Novo');
+            if(t==='Novo') { document.getElementById('f_bat_m').value = ''; document.getElementById('f_gar_m').style.display = 'none'; } 
+            else { document.getElementById('f_gar_m').style.display = 'block'; }
+            document.getElementById('f_mod_m').disabled = false; 
+        }
+        function libMemM() {
+            let p = parseInt(document.getElementById('f_mod_m').value);
+            let caps = [...new Set(dbVar.filter(v => v.produtos_mestre && v.produtos_mestre.id === p).map(v => v.capacidade))];
+            document.getElementById('f_cap_m').innerHTML = '<option value="">MEMÓRIA...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join('');
+            document.getElementById('f_cap_m').disabled = false; 
+        }
+        function libCorM() {
+            let p = parseInt(document.getElementById('f_mod_m').value), c = document.getElementById('f_cap_m').value;
+            let cores = dbVar.filter(v => v.produtos_mestre && v.produtos_mestre.id === p && v.capacidade === c).map(v => v.cor);
+            document.getElementById('f_cor_m').innerHTML = '<option value="">COR...</option>' + cores.map(co=>`<option value="${co}">${co.toUpperCase()}</option>`).join('');
+            document.getElementById('f_cor_m').disabled = false; 
+        }
+        async function gestaoAddAnuncioM(e) { 
+            e.preventDefault(); 
+            const lojaId = document.getElementById('gLoja').value;
+            const mId = parseInt(document.getElementById('f_mod_m').value); 
+            const c = document.getElementById('f_cap_m').value; 
+            const cor = document.getElementById('f_cor_m').value; 
+            const v = dbVar.find(x => x.produtos_mestre?.id === mId && x.capacidade === c && x.cor === cor); 
+            if(!v) return alert("Variação não encontrada."); 
+            
+            let tipo = document.getElementById('f_tipo_m').value;
+            let isBrl = document.getElementById('f_brl_m').value.length > 0;
+            let precoFinal = isBrl ? parseP(document.getElementById('f_brl_m').value) : parseP(document.getElementById('f_usd_m').value);
+            let g = tipo === 'Novo' ? '1 ANO APPLE' : document.getElementById('f_gar_m').value;
+            let b = tipo === 'Novo' ? '' : document.getElementById('f_bat_m').value;
+            let q = parseInt(document.getElementById('f_qtd_m').value);
+            if (isNaN(q) || q < 0) q = 0;
+
+            const payload = { 
+                fornecedor_id: lojaId, variacao_id: v.id, regiao_id: document.getElementById('f_orig_m').value,
+                preco: precoFinal, moeda: isBrl ? 'BRL' : 'USD', quantidade: q,
+                condicao: tipo==='Novo'?'Novo':document.getElementById('f_cond_m').value,
+                saude_bateria: b, garantia: g,
+                aceita_pix: document.getElementById('m_pix_m').checked, aceita_usdt: document.getElementById('m_usdt_m').checked, 
+                emite_nota: document.getElementById('m_nota_m').checked, faz_envio: document.getElementById('m_envi_m').checked, 
+                aceita_coleta: document.getElementById('m_cole_m').checked, aceita_proposta: document.getElementById('m_neg_m').checked, 
+                status_aprovacao: 'aprovado'
+            }; 
+            const { error } = await _s.from('ofertas').insert([payload]); 
+            if(error) alert(error.message); else { alert("Publicado!"); fecharModais(); e.target.reset(); loadAll(); } 
+        }
+
+        // GESTAO DE SELOS
         function loadUsersForSelo() {
             const t = document.getElementById('seloTableSel').value;
             const sel = document.getElementById('seloUser');
             if(t === 'fornecedores') {
                 sel.innerHTML = dbAta.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
-                document.getElementById('seloNovaInsigniaAta').classList.remove('hidden');
-                document.getElementById('seloNovaInsigniaCli').classList.add('hidden');
+                document.getElementById('seloNovaInsigniaAta').classList.remove('hidden'); document.getElementById('seloNovaInsigniaCli').classList.add('hidden');
             } else {
                 sel.innerHTML = dbCli.map(c => `<option value="${c.id}">${c.nome || c.email || c.whatsapp || 'SEM NOME'}</option>`).join('');
-                document.getElementById('seloNovaInsigniaAta').classList.add('hidden');
-                document.getElementById('seloNovaInsigniaCli').classList.remove('hidden');
+                document.getElementById('seloNovaInsigniaAta').classList.add('hidden'); document.getElementById('seloNovaInsigniaCli').classList.remove('hidden');
             }
         }
         async function addInsignia() {
-            const t = document.getElementById('seloTableSel').value;
-            const id = document.getElementById('seloUser').value;
+            const t = document.getElementById('seloTableSel').value; const id = document.getElementById('seloUser').value;
             const s = t === 'fornecedores' ? document.getElementById('seloNovaInsigniaAta') : document.getElementById('seloNovaInsigniaCli');
             if(!id || !s.value) return alert("Selecione usuário e insígnia.");
             const u = (t === 'fornecedores' ? dbAta : dbCli).find(x => x.id == id);
-            let curr = u.insignia_manual || [];
-            if(!curr.includes(s.value)) curr.push(s.value);
+            let curr = u.insignia_manual || []; if(!curr.includes(s.value)) curr.push(s.value);
             const { error } = await _s.from(t).update({insignia_manual: curr}).eq('id', id);
-            if(error) { alert("ERRO AO ATRIBUIR: " + error.message); }
-            else { alert("INSÍGNIA ATRIBUÍDA COM SUCESSO!"); s.value = ''; loadAll(); }
+            if(error) { alert("ERRO AO ATRIBUIR: " + error.message); } else { alert("INSÍGNIA ATRIBUÍDA!"); s.value = ''; loadAll(); }
         }
         async function clearInsignias() { const t = document.getElementById('seloTableSel').value; const id = document.getElementById('seloUser').value; if(confirm("Limpar?")) { await _s.from(t).update({insignia_manual: []}).eq('id', id); loadAll(); } }
 
-        function runCalcVip() { const u = parseFloat(document.getElementById('calcValorUsd').value)||0; const l = parseFloat(document.getElementById('calcLucro').value)||0; if(currentOracleUsdt>0) { document.getElementById('calcResultDisplay').innerText = `R$ ${((u * currentOracleUsdt) * (1+(l/100))).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})}`; } }
-        window.addEventListener('scroll', () => { document.getElementById('scrollTopBtn').classList.toggle('show', window.scrollY > 300); });
-        
         checkAuth();
     </script>
 </body>
