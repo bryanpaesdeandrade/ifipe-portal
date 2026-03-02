@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #050505; --card: #121212; --border: #2a2a2a; --blue-brand: #0071e3; }
-        body { background-color: var(--bg); color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin: 0; min-height: 100vh; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        body { background-color: var(--bg); color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin: 0; min-height: 100vh; position: relative; }
         
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
@@ -22,10 +22,16 @@
         .btn-primary:hover { background: var(--blue-brand); color: #fff; }
 
         .glass-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 30px; position: relative; overflow: hidden; }
+        
+        .banner-fabrica { background: #000; border: 1px solid var(--border); border-radius: 20px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; transition: 0.4s; text-decoration: none; min-height: 350px; cursor: pointer; }
+        .banner-fabrica:hover { border-color: #444; }
+        .iphone-shape { position: absolute; width: 130px; height: 260px; border: 2px solid #222; border-radius: 24px; background: linear-gradient(135deg, #111 0%, #000 100%); z-index: 1; opacity: 0.4; transition: 0.5s; box-shadow: inset 0 0 20px rgba(255,255,255,0.02); }
+        .banner-fabrica:hover .iphone-shape { opacity: 0.6; transform: scale(1.02); }
+        
         .hidden { display: none !important; }
     </style>
 </head>
-<body class="p-4">
+<body class="flex flex-col items-center justify-center p-4 py-12 md:py-20">
 
     <div class="absolute top-4 left-6 text-[10px] font-black text-[#32d74b] tracking-widest flex items-center gap-2">
         <span class="w-1.5 h-1.5 rounded-full bg-[#32d74b] animate-pulse"></span>
@@ -33,26 +39,53 @@
     </div>
 
     <div class="mb-10 text-center flex items-center justify-center gap-3 w-full">
-        <h1 class="text-4xl md:text-5xl font-black italic text-white tracking-tighter">iFipe</h1>
+        <h1 class="text-4xl md:text-5xl font-black italic text-white tracking-tighter select-none cursor-default" ondblclick="revelarLoginMaster()">iFipe</h1>
         <div class="h-8 w-[2px] bg-[#2a2a2a]"></div>
-        <h2 class="text-lg md:text-xl font-black text-[#0071e3] uppercase tracking-widest italic">CONTENÇÃO ATIVA</h2>
+        <h2 class="text-lg md:text-xl font-black text-[#0071e3] uppercase tracking-widest italic">A Fipe do iPhone</h2>
     </div>
 
-    <main class="w-full max-w-md">
-        <div class="glass-card flex flex-col justify-center shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20">
+    <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-6xl items-stretch">
+
+        <div class="glass-card order-2 lg:order-1 flex flex-col justify-center shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20">
+            <div class="text-center mb-5 mt-2">
+                <h2 class="text-lg font-black text-white italic">Calculadora 2.0</h2>
+                <p class="text-[9px] text-gray-500 font-bold uppercase mt-2 tracking-widest leading-relaxed">Coloque o preço em Dólar do iPhone e saiba o preço entregue no Brasil</p>
+            </div>
+            <div class="relative mb-4">
+                <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
+                <input type="number" id="calcUsd" class="apple-input !pl-12 !text-left font-mono text-xl font-black" oninput="calcularImportacao()">
+            </div>
+            <div class="bg-[#0a0a0a] border border-[#2c2c2e] rounded-2xl p-4 text-right mb-4 relative shadow-inner">
+                <span class="absolute top-3 left-4 text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP</span>
+                <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-4 tracking-tighter">R$ 0,00</div>
+            </div>
+            <div class="bg-[#1c1c1e] border border-[#2a2a2a] rounded-xl p-4 text-[10px] font-black uppercase tracking-wide space-y-2">
+                <div class="flex justify-between text-white"><span>ALTO ATACADO</span><span id="res_alto">R$ 0,00</span></div>
+                <div class="flex justify-between text-gray-300"><span>ATACADO</span><span id="res_ata">R$ 0,00</span></div>
+                <div class="flex justify-between text-gray-400"><span>ATACAREJO</span><span id="res_atcrj">R$ 0,00</span></div>
+                <div class="flex justify-between text-gray-500"><span>VAREJO</span><span id="res_var">R$ 0,00</span></div>
+            </div>
+        </div>
+
+        <div class="glass-card order-1 lg:order-2 flex flex-col justify-center shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20 min-h-[350px]">
             
-            <div id="statusCheck" class="mb-6">
-                <span class="text-yellow-500 text-[10px] font-black bg-yellow-500/10 p-4 rounded-xl block border border-yellow-500/20 text-center leading-relaxed tracking-wider uppercase">
-                    Estamos em atualização para trazer melhorias para você.<br><br>Até logo, time iFipe.
+            <div id="statusCheck" class="mb-5 hidden">
+                <span class="text-yellow-500 text-[10px] font-black bg-yellow-500/10 p-4 rounded-xl block border border-yellow-500/20 text-center leading-relaxed tracking-wider">
+                    ESTAMOS EM ATUALIZAÇÃO PARA TRAZER MELHORIAS PARA VOCÊ.<br><br>ATÉ LOGO, TIME IFIPE.
                 </span>
             </div>
 
-            <div id="loginForm" class="flex flex-col">
+            <div id="loginForm" class="flex flex-col h-full justify-center">
+                <div class="text-center mb-6">
+                    <h3 class="text-lg font-black text-white italic">Acesso ao Sistema</h3>
+                    <p class="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-1">Selecione seu perfil abaixo</p>
+                </div>
+
                 <div class="space-y-4">
                     <div>
                         <select id="loginType" class="apple-input !font-black !tracking-widest !text-center text-white bg-[#1c1c1e] border-[#0071e3]/50">
-                            <option value="buscador">SOU BUSCADOR (VIP)</option>
-                            <option value="anunciante">SOU ANUNCIANTE (LOJISTA)</option>
+                            <option value="buscador">SOU BUSCADOR</option>
+                            <option value="anunciante">SOU ANUNCIANTE</option>
                         </select>
                     </div>
                     <div>
@@ -65,44 +98,287 @@
                     </div>
                 </div>
 
-                <button onclick="handleLogin()" class="btn-primary mt-6">ACESSAR SISTEMA</button>
+                <button onclick="handleLogin()" class="btn-primary mt-6">ENTRAR NO iFIPE</button>
                 <p id="msg" class="text-[9px] font-black text-center text-red-500 h-4 mt-3 uppercase tracking-widest"></p>
+                
+                <span id="linkRegister" class="text-[#0071e3] cursor-pointer text-[10px] font-black uppercase block mt-2 text-center hover:underline tracking-widest" onclick="toggleForm()">FAZER MEU CADASTRO</span>
+            </div>
+
+            <div id="registerForm" class="hidden flex-col gap-3">
+                <div class="text-center mb-2">
+                    <h3 class="text-sm font-black text-white italic">Novo Cadastro</h3>
+                </div>
+                <div>
+                    <label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1 block tracking-widest">NOME COMPLETO</label>
+                    <input type="text" id="regNome" class="apple-input" onkeyup="this.value = this.value.toUpperCase()" required>
+                </div>
+                <div>
+                    <label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1 block tracking-widest">WHATSAPP (NÚMEROS)</label>
+                    <input type="text" id="regWhats" class="apple-input font-mono" required>
+                </div>
+                <div>
+                    <label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1 block tracking-widest">E-MAIL (OPCIONAL)</label>
+                    <input type="email" id="regEmail" class="apple-input font-mono">
+                </div>
+                <div>
+                    <label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1 block tracking-widest">PAÍS</label>
+                    <select id="regPais" class="apple-input" required onchange="mudarPais()">
+                        <option value="" disabled selected></option>
+                        <option value="Brasil">BRASIL</option>
+                        <option value="EUA">ESTADOS UNIDOS</option>
+                        <option value="Paraguai">PARAGUAI</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div id="boxEstado">
+                        <label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1 block tracking-widest">ESTADO</label>
+                        <select id="regEstado" class="apple-input" onchange="loadCidadesIBGE()" required disabled><option value="" disabled selected></option></select>
+                    </div>
+                    <div id="boxCidade">
+                        <label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1 block tracking-widest">CIDADE</label>
+                        <select id="regCidade" class="apple-input" required disabled><option value="" disabled selected></option></select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1 block tracking-widest">CRIAR SENHA</label>
+                    <input type="password" id="regPass" class="apple-input font-mono tracking-[0.2em]" required>
+                </div>
+                <button onclick="solicitarCadastro(event)" class="btn-primary mt-2">ENVIAR SOLICITAÇÃO</button>
+                <span class="text-gray-500 cursor-pointer text-[9px] font-black uppercase block mt-2 text-center hover:text-white" onclick="toggleForm()">VOLTAR AO LOGIN</span>
             </div>
         </div>
+
+        <div class="order-3 lg:order-3 h-full min-h-[350px]">
+            <a href="https://fabricademarcas.mercos.com/" target="_blank" class="banner-fabrica h-full w-full group">
+                <div class="iphone-shape">
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[35px] h-[8px] bg-black rounded-b-lg border border-[#222] border-t-0"></div>
+                </div>
+                <h3 class="relative z-10 text-white font-black text-3xl leading-[1.1] text-center tracking-tighter drop-shadow-lg group-hover:scale-105 transition-transform duration-500">
+                    Fábrica de<br>marcas
+                </h3>
+            </a>
+        </div>
+
     </main>
+
+    <div class="h-10 w-full mt-auto"></div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
-        // FORÇA CONTENÇÃO NO STORAGE
-        localStorage.setItem('iFipe_Status', 'off');
+        let rateBinance = 0;
+        let rateOraculo = 0;
 
-        window.onload = () => {
-            new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = (e) => {
-                const rate = parseFloat(JSON.parse(e.data).c);
-                document.getElementById('topRateTicker').innerText = rate.toFixed(4).replace('.',',');
-            };
-        };
+        function normalizeString(str) { return str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : ''; }
+        const rndUp = v => Math.ceil(v / 10) * 10;
 
-        async function handleLogin() {
-            const u = document.getElementById('user').value.toLowerCase().trim();
-            const p = document.getElementById('pass').value;
-            const type = document.getElementById('loginType').value;
-            const msg = document.getElementById('msg');
+        function revelarLoginMaster() {
+            document.getElementById('statusCheck').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+        }
 
-            // REGRA MASTER: BYPASS TOTAL
-            if (u === 'bryan' && p === '96197577') {
-                localStorage.setItem('iFipe_Token', 'admin_bypass');
-                localStorage.setItem('iFipe_Anunciante', 'admin_bypass');
-                localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
-                msg.className = "text-[9px] font-black text-center text-green-500 h-4 mt-3 uppercase tracking-widest";
-                msg.innerText = "ACESSO MASTER LIBERADO.";
-                setTimeout(() => window.location.replace(type === 'anunciante' ? 'atacadista.html' : 'buscar.html'), 500);
+        function checkSystemStatus() {
+            const status = localStorage.getItem('iFipe_Status');
+            if(status === 'off') {
+                document.getElementById('statusCheck').classList.remove('hidden');
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('registerForm').classList.add('hidden');
+                return false;
+            }
+            document.getElementById('statusCheck').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+            return true;
+        }
+
+        window.onload = async () => {
+            iniciarTicker();
+            const isSystemOn = checkSystemStatus();
+            
+            // Bypass Master Auto-Login
+            if(localStorage.getItem('iFipe_Token') === 'admin_bypass') {
+                window.location.replace('buscar.html');
                 return;
             }
 
-            // BLOQUEIO PARA QUALQUER OUTRO USUÁRIO
-            msg.innerText = "ACESSO NEGADO: SISTEMA EM MANUTENÇÃO.";
+            // REDIRECIONAMENTO IMEDIATO SE JÁ ESTIVER LOGADO (PORTA DE ENTRADA)
+            const token = localStorage.getItem('iFipe_Token');
+            if(token && token !== 'admin_bypass') {
+                if(!isSystemOn) return; // Se off, fica no index e vê manutenção
+                const { data } = await _s.from('clientes_buscador').select('id, ativo').eq('id', token).maybeSingle();
+                if(data && data.ativo !== false) {
+                    window.location.replace('buscar.html');
+                    return;
+                }
+            }
+
+            const tokenAta = localStorage.getItem('iFipe_Anunciante');
+            if(tokenAta && tokenAta !== 'admin_bypass') {
+                if(!isSystemOn) return; // Se off, fica no index e vê manutenção
+                const { data } = await _s.from('fornecedores').select('id, ativo').eq('id', tokenAta).maybeSingle();
+                if(data && data.ativo !== false) {
+                    window.location.replace('atacadista.html');
+                    return;
+                }
+            }
+        };
+
+        function iniciarTicker() {
+            const socket = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+            socket.onmessage = (e) => {
+                rateBinance = parseFloat(JSON.parse(e.data).c);
+                rateOraculo = rateBinance + 0.06;
+                document.getElementById('topRateTicker').innerText = `R$ ${rateBinance.toFixed(4).replace('.',',')}`;
+                calcularImportacao();
+            };
+        }
+
+        function calcularImportacao() {
+            const usdInput = parseFloat(document.getElementById('calcUsd').value.replace(',', '.'));
+            if(isNaN(usdInput) || rateOraculo === 0) { 
+                document.getElementById('calcResult').innerText = "R$ 0,00"; 
+                document.getElementById('res_alto').innerText = "R$ 0,00";
+                document.getElementById('res_ata').innerText = "R$ 0,00";
+                document.getElementById('res_atcrj').innerText = "R$ 0,00";
+                document.getElementById('res_var').innerText = "R$ 0,00";
+                return; 
+            }
+            const cFinal = (usdInput * rateOraculo) * 1.06;
+            document.getElementById('calcResult').innerText = cFinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('res_alto').innerText = rndUp(cFinal + 200).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_ata').innerText = rndUp(cFinal + 350).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_atcrj').innerText = rndUp(cFinal + 500).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('res_var').innerText = rndUp(cFinal + 1000).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+        }
+
+        function toggleForm() {
+            document.getElementById('loginForm').classList.toggle('hidden');
+            document.getElementById('registerForm').classList.toggle('hidden');
+        }
+
+        async function handleLogin() {
+            const uRaw = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            const loginType = document.getElementById('loginType').value;
+            const msg = document.getElementById('msg');
+            
+            if(!uRaw || !p) { msg.innerText = "PREENCHA TODOS OS CAMPOS."; return; }
+
+            const u = normalizeString(uRaw);
+
+            // 1. REGRA MASTER EXCLUSIVA
+            if (u === 'bryan' && p === '96197577') {
+                localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
+                localStorage.setItem('iFipe_Status_Override', 'true');
+                localStorage.setItem('iFipe_Token', 'admin_bypass');
+                localStorage.setItem('iFipe_Anunciante', 'admin_bypass');
+                msg.classList.replace('text-red-500', 'text-green-500');
+                msg.innerText = "ACESSO MASTER. REDIRECIONANDO...";
+                setTimeout(() => window.location.replace(loginType === 'anunciante' ? 'atacadista.html' : 'buscar.html'), 500);
+                return;
+            }
+
+            // 2. REGRA OFF PARA O RESTO (Se de alguma forma o usuário chegar aqui)
+            const status = localStorage.getItem('iFipe_Status');
+            if(status === 'off') {
+                msg.innerText = "ESTAMOS EM ATUALIZAÇÃO PARA TRAZER MELHORIAS PARA VOCÊ.";
+                return;
+            }
+
+            msg.innerText = "VERIFICANDO...";
+
+            // 3. SELEÇÃO E REDIRECIONAMENTO
+            if (loginType === 'anunciante') {
+                const { data } = await _s.from('fornecedores').select('id, email, whatsapp, senha, ativo');
+                if (data) {
+                    const userMatch = data.find(c => (normalizeString(c.email) === u || normalizeString(c.whatsapp) === u) && c.senha === p);
+                    if (userMatch) {
+                        if (userMatch.ativo === false) { msg.innerText = "LOJA BLOQUEADA PELA GOVERNANÇA."; return; }
+                        localStorage.setItem('iFipe_Anunciante', userMatch.id);
+                        window.location.replace('atacadista.html');
+                    } else { msg.innerText = "CREDENCIAIS INVÁLIDAS."; }
+                } else { msg.innerText = "ERRO DE CONEXÃO."; }
+            } else {
+                const { data } = await _s.from('clientes_buscador').select('id, email, whatsapp, senha, nome, ativo, logins_count');
+                if (data) {
+                    const userMatch = data.find(c => (normalizeString(c.email) === u || normalizeString(c.whatsapp) === u) && c.senha === p);
+                    if (userMatch) {
+                        if (userMatch.ativo === false) { msg.innerText = "CONTA BLOQUEADA PELA GOVERNANÇA."; return; }
+                        await _s.from('clientes_buscador').update({ logins_count: (userMatch.logins_count || 0) + 1 }).eq('id', userMatch.id);
+                        localStorage.setItem('iFipe_Token', userMatch.id);
+                        localStorage.setItem('iFipe_User_Name', userMatch.nome || userMatch.whatsapp);
+                        window.location.replace('buscar.html');
+                    } else { msg.innerText = "CREDENCIAIS INVÁLIDAS."; }
+                } else { msg.innerText = "ERRO DE CONEXÃO."; }
+            }
+        }
+
+        async function loadEstadosIBGE() {
+            const sel = document.getElementById('regEstado');
+            sel.innerHTML = '<option value="">Aguarde...</option>';
+            try {
+                const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome');
+                const estados = await res.json();
+                sel.innerHTML = '<option value="" disabled selected></option>';
+                estados.forEach(e => { sel.innerHTML += `<option value="${e.sigla}">${e.nome}</option>`; });
+                sel.disabled = false;
+            } catch(e) { sel.innerHTML = '<option value="Padrão">Erro</option>'; }
+        }
+
+        async function loadCidadesIBGE() {
+            const uf = document.getElementById('regEstado').value;
+            const sel = document.getElementById('regCidade');
+            sel.innerHTML = '<option value="">Carregando...</option>';
+            if(!uf) return;
+            try {
+                const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
+                const cidades = await res.json();
+                sel.innerHTML = '<option value="" disabled selected></option>';
+                cidades.forEach(c => sel.innerHTML += `<option value="${c.nome}">${c.nome}</option>`; });
+                sel.disabled = false;
+            } catch(e) { sel.innerHTML = '<option value="Padrão">Erro</option>'; }
+        }
+
+        function mudarPais() {
+            const pais = document.getElementById('regPais').value;
+            const boxEst = document.getElementById('boxEstado');
+            const boxCid = document.getElementById('boxCidade');
+            
+            if (pais === 'Brasil') {
+                boxEst.innerHTML = `<label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1 block tracking-widest">ESTADO</label><select id="regEstado" class="apple-input" onchange="loadCidadesIBGE()" required disabled><option value="" disabled selected></option></select>`;
+                boxCid.innerHTML = `<label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1 block tracking-widest">CIDADE</label><select id="regCidade" class="apple-input" required disabled><option value="" disabled selected></option></select>`;
+                loadEstadosIBGE();
+            } else {
+                boxEst.innerHTML = `<label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1 block tracking-widest">ESTADO</label><input type="text" id="regEstado" class="apple-input" required>`;
+                boxCid.innerHTML = `<label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1 block tracking-widest">CIDADE</label><input type="text" id="regCidade" class="apple-input" required>`;
+            }
+        }
+
+        async function solicitarCadastro(e) {
+            e.preventDefault();
+            const btn = e.target;
+            btn.innerText = "ENVIANDO...";
+            btn.disabled = true;
+
+            const { error } = await _s.from('clientes_buscador').insert([{
+                nome: document.getElementById('regNome').value.toUpperCase(),
+                email: document.getElementById('regEmail').value,
+                whatsapp: document.getElementById('regWhats').value,
+                senha: document.getElementById('regPass').value,
+                pais: document.getElementById('regPais').value,
+                estado: document.getElementById('regEstado').value,
+                cidade: document.getElementById('regCidade').value,
+                ativo: true, logins_count: 0
+            }]);
+
+            if(!error) { 
+                alert("CADASTRO REALIZADO COM SUCESSO! Você já pode fazer o login."); 
+                document.getElementById('user').value = document.getElementById('regWhats').value;
+                document.getElementById('pass').value = document.getElementById('regPass').value;
+                toggleForm(); 
+            } else { alert("ERRO: Verifique se o Whatsapp/Email já existe."); }
+            
+            btn.innerText = "ENVIAR SOLICITAÇÃO";
+            btn.disabled = false;
         }
     </script>
 </body>
