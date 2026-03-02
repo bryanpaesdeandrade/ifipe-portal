@@ -3,107 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Buscador VIP</title>
+    <title>iFipe - Painel do Anunciante</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --blue: #0071e3; }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; }
-        .apple-input { background: #1c1c1e; border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: #fff; width: 100%; outline: none; text-align: center; }
-        .btn-main { background: var(--blue); color: #fff; font-weight: 900; border-radius: 12px; padding: 14px; width: 100%; cursor: pointer; border: none; text-transform: uppercase; }
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --blue-sober: #3b82f6; }
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; text-transform: uppercase; transition: 0.3s; }
+        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
+        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; }
+        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 11px; text-transform: uppercase; }
+        .btn-header { display: flex; align-items: center; justify-content: center; border-radius: 12px; height: 38px; padding: 0 12px; transition: 0.3s; border: 1px solid var(--border); text-decoration: none; gap: 6px; cursor: pointer; position: relative; }
+        .btn-header span { font-size: 10px; font-weight: 900; text-transform: uppercase; }
+        .btn-lancar { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 14px; cursor: pointer; border: none; font-size: 11px; width: 100%; transition: 0.3s; text-transform: uppercase; margin-top: 16px; }
+        .btn-lancar:hover { background: var(--blue-sober); color: #fff; }
+        .tag-chapada { font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; color: #fff; margin-right: 4px; margin-bottom: 4px; border: none; }
+        .tag-novo { background: #16a34a; } .tag-semi { background: #ca8a04; }
+        .moldura-sobria { font-size: 9px; font-weight: 900; padding: 3px 6px; border-radius: 6px; display: inline-flex; align-items: center; border: 1px solid #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.1); margin-right: 4px; margin-bottom: 4px; }
+        .mini-edit { background: transparent; border: 1px solid transparent; color: #fff; font-weight: 800; width: 60px; text-align: center; font-family: 'JetBrains Mono'; border-radius: 6px; transition: 0.3s; border-bottom: 1px dashed rgba(255,255,255,0.3); }
+        .mini-edit:focus { border-color: var(--blue-sober); background: rgba(59, 130, 246, 0.1); outline: none; border-bottom: 1px solid var(--blue-sober); }
+        .mini-edit-preco { width: 80px; }
+        .step-block { margin-bottom: 12px; border-left: 2px solid #38383a; padding-left: 15px; opacity: 0.3; pointer-events: none; transition: 0.3s; }
+        .step-block.active { border-left-color: var(--blue-sober); opacity: 1; pointer-events: auto; }
+        .btn-tipo { background: var(--input); border: 2px solid var(--border); color: var(--text); padding: 12px; border-radius: 12px; font-weight: 900; font-size: 10px; cursor: pointer; width: 100%; display: flex; flex-direction: column; align-items: center; }
+        .btn-tipo.active { border-color: var(--blue-sober); color: var(--blue-sober); background: rgba(59, 130, 246, 0.1); }
+        .insignia-badge { display: inline-flex; padding: 4px 8px; border-radius: 8px; font-size: 9px; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); margin-bottom: 4px; }
+        .califa { color: #f43f5e; border-color: #f43f5e; } .rei { color: #3b82f6; border-color: #3b82f6; } .magnata { color: #f59e0b; border-color: #f59e0b; }
+        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { padding: 12px 10px; border-bottom: 1px solid var(--input); font-size: 10px; text-align: center; vertical-align: middle; }
         .hidden { display: none !important; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--blue-sober); border-radius: 10px; }
     </style>
 </head>
-<body>
+<body id="appBody">
 
-    <div id="authSection" class="min-h-screen flex items-center justify-center p-4">
-        <div class="w-full max-w-[350px] text-center">
-            <h1 class="text-4xl font-black italic mb-2">iFipe</h1>
-            <p class="text-[10px] text-zinc-500 mb-8 tracking-widest font-bold uppercase">Buscador VIP 1.0</p>
-            
-            <div class="space-y-3">
-                <input type="text" id="user" class="apple-input" placeholder="WHATSAPP OU EMAIL">
-                <input type="password" id="pass" class="apple-input" placeholder="SENHA">
-                <button onclick="handleLogin()" class="btn-main">Entrar no Sistema</button>
-                <p id="msg" class="text-[10px] font-bold text-red-500 mt-2 h-4"></p>
+    <div id="mainContent" class="hidden">
+        <nav class="nav-bar">
+            <div class="flex items-center gap-4">
+                <h1 class="text-2xl font-black italic m-0">iFipe</h1>
+                <span class="text-[10px] text-gray-400 font-bold border-l border-[#38383a] pl-3 ml-1 uppercase" id="dashNome">CARREGANDO...</span>
             </div>
-        </div>
-    </div>
-
-    <div id="appSection" class="hidden">
-        <nav class="p-6 border-b border-zinc-800 flex justify-between items-center">
-            <h1 class="text-xl font-black italic">iFipe</h1>
-            <button onclick="logout()" class="text-red-500 text-[10px] font-black uppercase">Sair</button>
+            <div class="flex gap-4 items-center">
+                <div class="bg-[#1c1c1e] border border-[#38383a] rounded-lg px-4 py-1 text-center">
+                    <span class="text-[8px] text-yellow-400 font-black block leading-tight">BINANCE USDT/BRL</span>
+                    <span id="tBin" class="text-[13px] font-mono font-black text-white">R$ --</span>
+                </div>
+                <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
+            </div>
         </nav>
-        
-        <main class="max-w-6xl mx-auto p-6">
-            <div class="mb-8">
-                <input type="text" id="search" class="apple-input !text-left px-6 py-4 text-lg" placeholder="Qual iPhone você busca?" oninput="renderData()">
+
+        <main class="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 pt-6 px-4 pb-20">
+            <div class="lg:col-span-4 space-y-6">
+                <div class="apple-card">
+                    <h3 class="text-[10px] font-black uppercase text-gray-400 mb-3">STATUS NO IFIPE 🏆</h3>
+                    <div id="blocoInsignias" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div class="apple-card">
+                    <h2 class="text-xs font-black text-white mb-4">PUBLICAR OFERTA</h2>
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <button type="button" id="btN" class="btn-tipo" onclick="selTipo('Novo')">📦 NOVO</button>
+                        <button type="button" id="btS" class="btn-tipo" onclick="selTipo('Seminovo')">♻️ SEMINOVO</button>
+                    </div>
+                    <form onsubmit="doPost(event)">
+                        <input type="hidden" id="f_tipo">
+                        <div class="step-block" id="s1"><span>1. MODELO</span><select id="f_mod" class="apple-input mt-1" onchange="libMem()" disabled></select></div>
+                        <div class="step-block" id="s2"><span>2. MEMÓRIA</span><select id="f_cap" class="apple-input mt-1" onchange="libCor()" disabled></select></div>
+                        <div class="step-block" id="s3"><span>3. COR</span><select id="f_cor" class="apple-input mt-1" onchange="libDet()" disabled></select></div>
+                        <div class="step-block" id="s4">
+                            <span>4. DETALHES</span>
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <input type="number" id="f_qtd" class="apple-input" placeholder="QTD" required>
+                                <select id="f_orig" class="apple-input" required></select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mt-2">
+                                <input type="text" id="f_brl" class="apple-input" placeholder="R$ BRL" oninput="mascara(this)">
+                            </div>
+                            <button type="submit" id="btnS" class="btn-lancar hidden">LANÇAR PRODUTO</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div id="grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+            <div class="lg:col-span-8">
+                <div class="apple-card min-h-[600px] flex flex-col">
+                    <div class="flex justify-between items-center mb-4 bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a]">
+                        <span class="text-[9px] font-black uppercase text-gray-300">Meu Estoque Ativo</span>
+                        <button onclick="copiarListaWhatsApp()" class="bg-[#25d366] text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase flex items-center gap-1">Copiar Lista</button>
+                    </div>
+                    <div class="overflow-x-auto custom-scroll">
+                        <table>
+                            <thead><tr><th>MODELO / DETALHES</th><th>ESTOQUE</th><th>PREÇO</th><th>X</th></tr></thead>
+                            <tbody id="lista"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
 <script>
     const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-    let dbOfertas = [];
+    let loja = null, produtos = [], vars = [], ofertas = [], rate = 0;
 
-    async function handleLogin() {
-        const u = document.getElementById('user').value.trim().toLowerCase();
-        const p = document.getElementById('pass').value;
-        const msg = document.getElementById('msg');
-        msg.innerText = "VERIFICANDO...";
+    window.onload = async () => {
+        const token = localStorage.getItem('iFipe_Anunciante');
+        if(!token) return window.location.replace('index.html');
 
-        // 1. TENTA LOGIN ATACADISTA
-        const { data: ata } = await _s.from('fornecedores').select('id, ativo').or(`email.eq.${u},whatsapp.eq.${u}`).eq('senha', p).maybeSingle();
-        if (ata) {
-            localStorage.setItem('iFipe_Anunciante', ata.id);
-            window.location.replace('atacadista.html');
-            return;
+        const { data: l, error } = await _s.from('fornecedores').select('*').eq('id', token).single();
+        if(error || !l) {
+            localStorage.removeItem('iFipe_Anunciante');
+            return window.location.replace('index.html');
         }
 
-        // 2. TENTA LOGIN CLIENTE
-        const { data: cli } = await _s.from('clientes_buscador').select('id, ativo').or(`email.eq.${u},whatsapp.eq.${u}`).eq('senha', p).maybeSingle();
-        if (cli) {
-            localStorage.setItem('iFipe_Token', cli.id);
-            startApp();
-            return;
-        }
-        msg.innerText = "ACESSO NEGADO.";
+        loja = l;
+        document.getElementById('dashNome').innerText = loja.nome;
+        document.getElementById('mainContent').classList.remove('hidden');
+
+        new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
+            rate = parseFloat(JSON.parse(e.data).c);
+            document.getElementById('tBin').innerText = `R$ ${rate.toFixed(4)}`;
+        };
+
+        const [p, v, r] = await Promise.all([ _s.from('produtos_mestre').select('*').order('id'), _s.from('variacoes').select('*'), _s.from('regioes').select('*') ]);
+        produtos = p.data; vars = v.data;
+        document.getElementById('f_orig').innerHTML = '<option value="">ORIGEM...</option>' + r.data.map(reg => `<option value="${reg.id}">${reg.bandeira || ''} ${reg.nome}</option>`).join('');
+        upTab();
+    };
+
+    const mascara = i => { let v=i.value.replace(/\D/g, ''); i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
+    const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
+    const getAppleColorHex = c => { let s=(c||'').toUpperCase(); if(s.includes('PRETO')||s.includes('BLACK')) return '#191919'; if(s.includes('BRANCO')||s.includes('WHITE')) return '#f5f5f7'; return '#808080'; };
+
+    function selTipo(t) { document.getElementById('f_tipo').value = t; document.getElementById('btN').classList.toggle('active', t==='Novo'); document.getElementById('btS').classList.toggle('active', t==='Seminovo'); document.getElementById('f_mod').innerHTML = '<option value="">MODELO...</option>' + produtos.map(x=>`<option value="${x.id}">${x.nome}</option>`).join(''); document.getElementById('f_mod').disabled = false; document.getElementById('s1').classList.add('active'); }
+    function libMem() { let p = document.getElementById('f_mod').value; let caps = [...new Set(vars.filter(v => v.produto_id == p).map(v => v.capacidade))]; document.getElementById('f_cap').innerHTML = '<option value="">MEMÓRIA...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join(''); document.getElementById('f_cap').disabled = false; document.getElementById('s2').classList.add('active'); }
+    function libCor() { let p = document.getElementById('f_mod').value, c = document.getElementById('f_cap').value; let cores = vars.filter(v => v.produto_id == p && v.capacidade == c).map(v => v.cor); document.getElementById('f_cor').innerHTML = '<option value="">COR...</option>' + cores.map(co=>`<option value="${co}">${co.toUpperCase()}</option>`).join(''); document.getElementById('f_cor').disabled = false; document.getElementById('s3').classList.add('active'); }
+    function libDet() { document.getElementById('s4').classList.add('active'); document.getElementById('btnS').classList.remove('hidden'); }
+
+    async function doPost(e) {
+        e.preventDefault();
+        let tipo = document.getElementById('f_tipo').value;
+        let v = vars.find(x => x.produto_id == document.getElementById('f_mod').value && x.capacidade == document.getElementById('f_cap').value && x.cor == document.getElementById('f_cor').value);
+        await _s.from('ofertas').insert([{
+            fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('f_orig').value,
+            preco: parseP(document.getElementById('f_brl').value), moeda: 'BRL', quantidade: parseInt(document.getElementById('f_qtd').value),
+            condicao: tipo, status_aprovacao: 'aprovado'
+        }]);
+        window.location.reload();
     }
 
-    async function startApp() {
-        document.getElementById('authSection').classList.add('hidden');
-        document.getElementById('appSection').classList.remove('hidden');
-        const { data } = await _s.from('ofertas').select('*, fornecedores(nome), variacoes(capacidade, cor, produtos_mestre(nome))').gt('quantidade', 0);
-        dbOfertas = data || [];
-        renderData();
+    async function upTab() {
+        const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome)), regioes(nome, bandeira)').eq('fornecedor_id', loja.id).order('criado_em', {ascending:false});
+        ofertas = data || [];
+        document.getElementById('lista').innerHTML = ofertas.map(o => `
+            <tr class="border-b border-[#2c2c2e]">
+                <td class="text-left py-4">
+                    <div class="flex items-center gap-2"><span class="color-dot" style="background:${getAppleColorHex(o.variacoes.cor)}"></span><p class="font-black text-white text-[12px]">${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade}</p></div>
+                    <span class="tag-chapada ${o.condicao==='Novo'?'tag-novo':'tag-semi'} mt-2">${o.condicao}</span>
+                </td>
+                <td><input type="number" class="mini-edit" value="${o.quantidade}" onblur="updateField(${o.id}, 'quantidade', this.value)"></td>
+                <td class="font-mono text-white">R$ ${o.preco.toLocaleString('pt-BR')}</td>
+                <td><button onclick="del(${o.id})" class="text-red-500 font-black">X</button></td>
+            </tr>`).join('');
+        
+        let t = ofertas.reduce((a, b) => a + (b.quantidade || 0), 0);
+        let tg = t >= 1000 ? '<span class="insignia-badge califa">👑 CALIFA</span>' : (t >= 200 ? '<span class="insignia-badge rei">🛡️ REI</span>' : '<span class="insignia-badge magnata">💰 MAGNATA</span>');
+        document.getElementById('blocoInsignias').innerHTML = tg;
     }
 
-    function renderData() {
-        const term = document.getElementById('search').value.toLowerCase();
-        const filtered = dbOfertas.filter(o => 
-            o.variacoes.produtos_mestre.nome.toLowerCase().includes(term) || 
-            o.fornecedores.nome.toLowerCase().includes(term)
-        );
-
-        document.getElementById('grid').innerHTML = filtered.map(o => `
-            <div class="product-card">
-                <h3 class="font-black">${o.variacoes.produtos_mestre.nome}</h3>
-                <p class="text-[10px] text-zinc-400 uppercase">${o.variacoes.capacidade} | ${o.variacoes.cor}</p>
-                <div class="mt-4 flex justify-between items-end">
-                    <span class="text-zinc-500 text-[9px] font-bold">${o.fornecedores.nome}</span>
-                    <span class="text-xl font-black text-blue-500">R$ ${o.preco.toLocaleString('pt-BR')}</span>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    function logout() { localStorage.clear(); window.location.reload(); }
-
-    window.onload = () => { if(localStorage.getItem('iFipe_Token')) startApp(); };
+    async function updateField(id, field, val) { await _s.from('ofertas').update({[field]: parseInt(val)}).eq('id', id); upTab(); }
+    async function del(id) { if(confirm("Apagar anúncio?")) { await _s.from('ofertas').delete().eq('id', id); upTab(); } }
+    function logout() { localStorage.clear(); window.location.replace('index.html'); }
 </script>
 </body>
 </html>
