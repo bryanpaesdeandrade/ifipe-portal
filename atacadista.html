@@ -3,249 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Painel Atacadista</title>
+    <title>iFipe - Buscador VIP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --blue-apple: #0071e3; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, sans-serif; margin:0; transition: 0.3s; text-transform: uppercase; }
-        
-        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; }
-        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 12px; width: 100%; color: var(--text); outline: none; font-size: 12px; }
-        .apple-input:focus { border-color: var(--blue-apple); }
-
-        .btn-apple { background: var(--blue-apple); color: #fff; font-weight: 900; border-radius: 12px; padding: 14px; cursor: pointer; border: none; font-size: 11px; transition: 0.3s; width: 100%; }
-        .btn-apple:hover { opacity: 0.9; transform: scale(1.02); }
-
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 12px; font-size: 10px; color: #86868b; border-bottom: 1px solid var(--border); }
-        td { padding: 12px; font-size: 11px; border-bottom: 1px solid #2c2c2e; }
-
-        #loginOverlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .auth-box { border: 1px solid var(--border); padding: 40px; border-radius: 24px; background: #0a0a0a; text-align: center; width: 380px; }
+        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --blue: #0071e3; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; }
+        .apple-input { background: #1c1c1e; border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: #fff; width: 100%; outline: none; text-align: center; }
+        .btn-main { background: var(--blue); color: #fff; font-weight: 900; border-radius: 12px; padding: 14px; width: 100%; cursor: pointer; border: none; text-transform: uppercase; }
+        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
         .hidden { display: none !important; }
     </style>
 </head>
-<body id="appBody">
+<body>
 
-    <div id="loginOverlay" class="hidden">
-        <div class="auth-box">
+    <div id="authSection" class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-[350px] text-center">
             <h1 class="text-4xl font-black italic mb-2">iFipe</h1>
-            <p class="text-[10px] text-zinc-500 mb-8 tracking-widest font-bold">PAINEL DO ANUNCIANTE</p>
+            <p class="text-[10px] text-zinc-500 mb-8 tracking-widest font-bold uppercase">Buscador VIP 1.0</p>
             
-            <div id="statusCheck" class="mb-6 hidden">
-                <span class="text-red-500 text-[10px] font-black bg-red-500/10 p-4 rounded-lg block border border-red-500/20">
-                    SISTEMA EM ATUALIZAÇÃO PELA GOVERNANÇA.<br>POR FAVOR, AGUARDE.
-                </span>
-            </div>
-
-            <div id="loginForm">
-                <input type="text" id="user" class="apple-input text-center mb-3" placeholder="WHATSAPP OU USUÁRIO MASTER">
-                <input type="password" id="pass" class="apple-input text-center mb-4" placeholder="SUA SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
-                <button onclick="handleLogin()" class="btn-apple">ENTRAR NO PAINEL</button>
-                <p id="msg" class="text-[10px] font-black text-red-500 mt-4 h-4"></p>
+            <div class="space-y-3">
+                <input type="text" id="user" class="apple-input" placeholder="WHATSAPP OU EMAIL">
+                <input type="password" id="pass" class="apple-input" placeholder="SENHA">
+                <button onclick="handleLogin()" class="btn-main">Entrar no Sistema</button>
+                <p id="msg" class="text-[10px] font-bold text-red-500 mt-2 h-4"></p>
             </div>
         </div>
     </div>
 
-    <div id="mainContent" class="hidden">
-        <nav class="nav-bar">
-            <h1 class="text-xl font-black italic">iFipe <span class="text-blue-500">ANUNCIANTE</span></h1>
-            <div class="flex gap-4 items-center">
-                <span id="nomeLoja" class="text-[10px] font-black text-zinc-400">---</span>
-                <button onclick="logout()" class="text-red-500 font-black text-[10px]">SAIR</button>
-            </div>
+    <div id="appSection" class="hidden">
+        <nav class="p-6 border-b border-zinc-800 flex justify-between items-center">
+            <h1 class="text-xl font-black italic">iFipe</h1>
+            <button onclick="logout()" class="text-red-500 text-[10px] font-black uppercase">Sair</button>
         </nav>
-
+        
         <main class="max-w-6xl mx-auto p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="md:col-span-1">
-                    <div class="apple-card">
-                        <h2 class="text-sm font-black mb-4 text-blue-500">LANÇAR OFERTA</h2>
-                        <form id="formOferta" onsubmit="salvarOferta(event)" class="space-y-3">
-                            <select id="f_modelo" class="apple-input" onchange="loadCapacidades()" required><option value="">MODELO...</option></select>
-                            <select id="f_cap" class="apple-input" onchange="loadCores()" required><option value="">MEMÓRIA...</option></select>
-                            <select id="f_cor" class="apple-input" required><option value="">COR...</option></select>
-                            <select id="f_cond" class="apple-input" required>
-                                <option value="NOVO">NOVO</option>
-                                <option value="SEMINOVO">SEMINOVO</option>
-                                <option value="CPO">CPO</option>
-                            </select>
-                            <div class="grid grid-cols-2 gap-2">
-                                <input type="number" id="f_qtd" class="apple-input" placeholder="QTD" required>
-                                <select id="f_moeda" class="apple-input" required>
-                                    <option value="USD">USD ($)</option>
-                                    <option value="BRL">BRL (R$)</option>
-                                </select>
-                            </div>
-                            <input type="number" step="0.01" id="f_preco" class="apple-input" placeholder="PREÇO" required>
-                            <button type="submit" class="btn-apple mt-2">PUBLICAR AGORA</button>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="md:col-span-2">
-                    <div class="apple-card">
-                        <h2 class="text-sm font-black mb-4">MEUS ANÚNCIOS ATIVOS</h2>
-                        <div class="overflow-x-auto">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>PRODUTO</th>
-                                        <th>COND.</th>
-                                        <th>PREÇO</th>
-                                        <th>ESTOQUE</th>
-                                        <th>AÇÕES</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="listaOfertas"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+            <div class="mb-8">
+                <input type="text" id="search" class="apple-input !text-left px-6 py-4 text-lg" placeholder="Qual iPhone você busca?" oninput="renderData()">
             </div>
+            <div id="grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
         </main>
     </div>
 
-    <script>
-        const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        
-        let anuncianteLogado = null, dbVar = [], dbModelos = [];
+<script>
+    const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+    let dbOfertas = [];
 
-        // --- REGRAS DE MANUTENÇÃO E LOGIN MASTER ---
-        async function checkSystemStatus() {
-            const status = localStorage.getItem('iFipe_Status');
-            const isMaster = localStorage.getItem('iFipe_Token') === 'admin_bypass';
-            
-            if (status === 'off' && !isMaster) {
-                document.getElementById('statusCheck').classList.remove('hidden');
-                document.getElementById('loginOverlay').classList.remove('hidden');
-                document.getElementById('mainContent').classList.add('hidden');
-                return false;
-            }
-            return true;
+    async function handleLogin() {
+        const u = document.getElementById('user').value.trim().toLowerCase();
+        const p = document.getElementById('pass').value;
+        const msg = document.getElementById('msg');
+        msg.innerText = "VERIFICANDO...";
+
+        // 1. TENTA LOGIN ATACADISTA
+        const { data: ata } = await _s.from('fornecedores').select('id, ativo').or(`email.eq.${u},whatsapp.eq.${u}`).eq('senha', p).maybeSingle();
+        if (ata) {
+            localStorage.setItem('iFipe_Anunciante', ata.id);
+            window.location.replace('atacadista.html');
+            return;
         }
 
-        async function handleLogin() {
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
-            const msg = document.getElementById('msg');
-
-            // 1. BYPASS MASTER SUPREMO
-            if (u.toLowerCase() === 'bryan' && p === '96197577') {
-                localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
-                localStorage.setItem('iFipe_Status_Override', 'true');
-                localStorage.setItem('iFipe_Token', 'admin_bypass');
-                location.reload();
-                return;
-            }
-
-            // 2. BLOQUEIO DE MANUTENÇÃO PARA DEMAIS
-            const status = localStorage.getItem('iFipe_Status');
-            if (status === 'off') {
-                msg.innerText = "SISTEMA EM MANUTENÇÃO.";
-                return;
-            }
-
-            // 3. LOGIN NORMAL ATACADISTA
-            msg.innerText = "VERIFICANDO...";
-            const { data, error } = await _s.from('fornecedores').select('*').or(`whatsapp.eq.${u},email.eq.${u}`).eq('senha', p).single();
-            
-            if (data) {
-                if (data.ativo === false) { msg.innerText = "LOJA BLOQUEADA."; return; }
-                localStorage.setItem('iFipe_Anunciante', data.id);
-                location.reload();
-            } else {
-                msg.innerText = "CREDENCIAIS INVÁLIDAS.";
-            }
+        // 2. TENTA LOGIN CLIENTE
+        const { data: cli } = await _s.from('clientes_buscador').select('id, ativo').or(`email.eq.${u},whatsapp.eq.${u}`).eq('senha', p).maybeSingle();
+        if (cli) {
+            localStorage.setItem('iFipe_Token', cli.id);
+            startApp();
+            return;
         }
+        msg.innerText = "ACESSO NEGADO.";
+    }
 
-        window.onload = async () => {
-            const isSystemActive = await checkSystemStatus();
-            const tokenMaster = localStorage.getItem('iFipe_Token') === 'admin_bypass';
-            const tokenAta = localStorage.getItem('iFipe_Anunciante');
+    async function startApp() {
+        document.getElementById('authSection').classList.add('hidden');
+        document.getElementById('appSection').classList.remove('hidden');
+        const { data } = await _s.from('ofertas').select('*, fornecedores(nome), variacoes(capacidade, cor, produtos_mestre(nome))').gt('quantidade', 0);
+        dbOfertas = data || [];
+        renderData();
+    }
 
-            if (tokenMaster) {
-                anuncianteLogado = { id: 1, nome: 'MASTER ADMIN' }; // ID genérico para o master ver a estrutura
-                document.getElementById('nomeLoja').innerText = "MODO MASTER";
-                initApp();
-            } else if (tokenAta && isSystemActive) {
-                const { data } = await _s.from('fornecedores').select('*').eq('id', tokenAta).single();
-                if (data && data.ativo !== false) {
-                    anuncianteLogado = data;
-                    document.getElementById('nomeLoja').innerText = data.nome;
-                    initApp();
-                } else { logout(); }
-            } else {
-                document.getElementById('loginOverlay').classList.remove('hidden');
-            }
-        };
+    function renderData() {
+        const term = document.getElementById('search').value.toLowerCase();
+        const filtered = dbOfertas.filter(o => 
+            o.variacoes.produtos_mestre.nome.toLowerCase().includes(term) || 
+            o.fornecedores.nome.toLowerCase().includes(term)
+        );
 
-        // --- LÓGICA DO PAINEL (CONGELADA) ---
-        async function initApp() {
-            document.getElementById('loginOverlay').classList.add('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
-            
-            const [m, v] = await Promise.all([
-                _s.from('produtos_mestre').select('*').order('nome'),
-                _s.from('variacoes').select('*')
-            ]);
-            dbModelos = m.data; dbVar = v.data;
-            document.getElementById('f_modelo').innerHTML += dbModelos.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-            carregarMinhasOfertas();
-        }
+        document.getElementById('grid').innerHTML = filtered.map(o => `
+            <div class="product-card">
+                <h3 class="font-black">${o.variacoes.produtos_mestre.nome}</h3>
+                <p class="text-[10px] text-zinc-400 uppercase">${o.variacoes.capacidade} | ${o.variacoes.cor}</p>
+                <div class="mt-4 flex justify-between items-end">
+                    <span class="text-zinc-500 text-[9px] font-bold">${o.fornecedores.nome}</span>
+                    <span class="text-xl font-black text-blue-500">R$ ${o.preco.toLocaleString('pt-BR')}</span>
+                </div>
+            </div>
+        `).join('');
+    }
 
-        function loadCapacidades() {
-            const mId = document.getElementById('f_modelo').value;
-            const caps = [...new Set(dbVar.filter(v => v.produto_id == mId).map(v => v.capacidade))];
-            document.getElementById('f_cap').innerHTML = '<option value="">MEMÓRIA...</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
-        }
+    function logout() { localStorage.clear(); window.location.reload(); }
 
-        function loadCores() {
-            const mId = document.getElementById('f_modelo').value;
-            const cap = document.getElementById('f_cap').value;
-            const cores = dbVar.filter(v => v.produto_id == mId && v.capacidade == cap).map(v => v.cor);
-            document.getElementById('f_cor').innerHTML = '<option value="">COR...</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join('');
-        }
-
-        async function carregarMinhasOfertas() {
-            const { data } = await _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome))').eq('fornecedor_id', anuncianteLogado.id).order('criado_em', {ascending: false});
-            document.getElementById('listaOfertas').innerHTML = data.map(o => `
-                <tr>
-                    <td>${o.variacoes.produtos_mestre.nome}<br><span class="text-[8px] text-zinc-500">${o.variacoes.capacidade} | ${o.variacoes.cor}</span></td>
-                    <td><span class="text-[9px] border border-zinc-700 px-1 rounded">${o.condicao}</span></td>
-                    <td class="font-black">${o.moeda} ${o.preco.toLocaleString('pt-BR')}</td>
-                    <td>${o.quantidade} UN</td>
-                    <td><button onclick="deletarOferta(${o.id})" class="text-red-500 font-black text-[10px]">EXCLUIR</button></td>
-                </tr>
-            `).join('');
-        }
-
-        async function salvarOferta(e) {
-            e.preventDefault();
-            const mId = document.getElementById('f_modelo').value;
-            const cap = document.getElementById('f_cap').value;
-            const cor = document.getElementById('f_cor').value;
-            const v = dbVar.find(x => x.produto_id == mId && x.capacidade == cap && x.cor == cor);
-            
-            const payload = {
-                fornecedor_id: anuncianteLogado.id,
-                variacao_id: v.id,
-                condicao: document.getElementById('f_cond').value,
-                quantidade: document.getElementById('f_qtd').value,
-                moeda: document.getElementById('f_moeda').value,
-                preco: document.getElementById('f_preco').value
-            };
-
-            await _s.from('ofertas').insert([payload]);
-            alert("OFERTA PUBLICADA!");
-            carregarMinhasOfertas();
-        }
-
-        async function deletarOferta(id) { if(confirm("EXCLUIR ANÚNCIO?")) { await _s.from('ofertas').delete().eq('id', id); carregarMinhasOfertas(); } }
-        function logout() { localStorage.removeItem('iFipe_Anunciante'); localStorage.removeItem('iFipe_Token'); location.reload(); }
-    </script>
+    window.onload = () => { if(localStorage.getItem('iFipe_Token')) startApp(); };
+</script>
 </body>
 </html>
