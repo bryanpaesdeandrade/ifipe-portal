@@ -66,6 +66,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
+                <span id="headerMasterName" class="text-[10px] font-black text-blue-500 tracking-widest">MASTER</span>
                 <button onclick="masterLogout()" class="text-red-500 font-black text-[10px] hover:underline">SAIR</button>
             </div>
         </nav>
@@ -142,7 +143,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
                         <h3 class="text-[10px] font-black text-purple-400 mb-4">ATRIBUIÇÃO POR NOME</h3>
-                        <select id="seloTableSel" class="apple-input mb-3" onchange="loadUsersForSelo()"><option value="fornecedores">🏢 ATACADISTAS</option><option value="clientes_buscador">👥 CLIENTES</option></select>
+                        <select id="seloTableSel" class="apple-input mb-3" onchange="loadUsersForSelo()"><option value="fornecedores">🏢 ATACADISTAS</option><option value="clientes_buscador">👥 BUSCADORES</option></select>
                         <select id="seloUser" class="apple-input mb-3"></select>
                         
                         <select id="seloNovaInsigniaAta" class="apple-input mb-3 border-purple-500">
@@ -159,7 +160,7 @@
                         </select>
 
                         <select id="seloNovaInsigniaCli" class="apple-input mb-3 border-purple-500 hidden">
-                            <option value="">-- INSÍGNIAS P/ CLIENTES --</option>
+                            <option value="">-- INSÍGNIAS P/ BUSCADORES --</option>
                             <option value="1 LOGIN: LOJISTA EXPERTO">1 LOGIN: LOJISTA EXPERTO</option>
                             <option value="10 LOGINS: PEGOU A SENHA">10 LOGINS: PEGOU A SENHA</option>
                             <option value="20 LOGINS: ÁGUIA">20 LOGINS: ÁGUIA</option>
@@ -176,9 +177,6 @@
                         </select>
 
                         <div class="flex gap-2"><button onclick="addInsignia()" class="btn-master w-1/2 !bg-purple-600">+ ATRIBUIR</button><button onclick="clearInsignias()" class="btn-master w-1/2 bg-zinc-800">LIMPAR</button></div>
-                    </div>
-                    <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800 flex items-center justify-center">
-                        <button onclick="syncAutomatedBadges()" class="btn-master bg-blue-600 w-full py-4 text-xs">⚙️ SINCRONIZAR TODAS AS PATENTES (AUTO)</button>
                     </div>
                 </div>
             </div>
@@ -203,9 +201,21 @@
 
         <div id="v-conta" class="master-view">
             <div class="apple-card max-w-md mx-auto">
-                <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">CHAVE MESTRA</h2>
-                <form onsubmit="updateMaster(event)" class="space-y-4">
-                    <input type="password" id="mNewPass" class="apple-input" placeholder="Nova senha master..." required><button type="submit" class="btn-master w-full !bg-red-600">APLICAR E SALVAR</button>
+                <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4 text-center">PERFIL MASTER</h2>
+                <form onsubmit="updateMasterProfile(event)" class="space-y-4">
+                    <div>
+                        <label class="text-[8px] text-zinc-500 font-black mb-1 block">NOME MASTER</label>
+                        <input type="text" id="mProfNome" class="apple-input" placeholder="Seu Nome" required>
+                    </div>
+                    <div>
+                        <label class="text-[8px] text-zinc-500 font-black mb-1 block">WHATSAPP MASTER</label>
+                        <input type="text" id="mProfWhats" class="apple-input" placeholder="Seu WhatsApp" required>
+                    </div>
+                    <div>
+                        <label class="text-[8px] text-red-500 font-black mb-1 block">SENHA DE ACESSO</label>
+                        <input type="password" id="mProfSenha" class="apple-input" placeholder="Nova senha master..." required>
+                    </div>
+                    <button type="submit" class="btn-master w-full !bg-red-600 mt-2">SALVAR E APLICAR</button>
                 </form>
             </div>
         </div>
@@ -344,17 +354,63 @@
         const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
 
-        async function toggleStatus(table, id, status) {
-            const { error } = await _s.from(table).update({ativo: status}).eq('id', id);
-            if(error) alert("ERRO AO ATUALIZAR STATUS: " + error.message);
-            else { alert(`STATUS ATUALIZADO: ${status ? 'ATIVO' : 'BLOQUEADO'}`); loadAll(); }
+        // REGRA MASTER PERSISTÊNCIA LOCAL
+        function updateMasterProfile(e) {
+            e.preventDefault();
+            const n = document.getElementById('mProfNome').value.toUpperCase();
+            const w = document.getElementById('mProfWhats').value;
+            const s = document.getElementById('mProfSenha').value;
+            localStorage.setItem('Master_Custom_Nome', n);
+            localStorage.setItem('Master_Custom_Whats', w);
+            localStorage.setItem('Master_Custom_Pass', s);
+            alert("Perfil Master atualizado com sucesso!");
+            renderMasterInfo();
+        }
+
+        function renderMasterInfo() {
+            const nome = localStorage.getItem('Master_Custom_Nome') || 'MASTER';
+            const whats = localStorage.getItem('Master_Custom_Whats') || '';
+            const pass = localStorage.getItem('Master_Custom_Pass') || '96197577';
+            document.getElementById('headerMasterName').innerText = nome;
+            
+            if(document.getElementById('mProfNome')) document.getElementById('mProfNome').value = nome;
+            if(document.getElementById('mProfWhats')) document.getElementById('mProfWhats').value = whats;
+            if(document.getElementById('mProfSenha')) document.getElementById('mProfSenha').value = pass;
+        }
+
+        // VERIFICADOR DINÂMICO DE COLUNA DE STATUS
+        function getStatusCol(table) {
+            if (table === 'clientes_buscador' && dbCli.length > 0) {
+                if ('ativo' in dbCli[0]) return { name: 'ativo', valT: true, valF: false };
+                if ('status' in dbCli[0]) return { name: 'status', valT: 'ativo', valF: 'bloqueado' };
+                if ('bloqueado' in dbCli[0]) return { name: 'bloqueado', valT: false, valF: true };
+                if ('is_active' in dbCli[0]) return { name: 'is_active', valT: true, valF: false };
+            }
+            return { name: 'ativo', valT: true, valF: false }; // Fallback padrão
+        }
+
+        async function toggleStatus(table, id, statusReq) {
+            const colInfo = getStatusCol(table);
+            const val = statusReq ? colInfo.valT : colInfo.valF;
+            
+            const { error } = await _s.from(table).update({ [colInfo.name]: val }).eq('id', id);
+            
+            if(error) {
+                if(error.message.includes('Could not find the')) {
+                    alert(`ERRO ESTRUTURAL NO SUPABASE: A coluna '${colInfo.name}' não existe na tabela '${table}'.\n\nSolução: Vá ao Supabase e crie uma coluna booleana chamada 'ativo' com valor padrão 'true'.`);
+                } else {
+                    alert("ERRO AO ATUALIZAR STATUS: " + error.message);
+                }
+            } else { 
+                loadAll(); 
+            }
         }
         
         async function delRecord(table, id) {
             if(confirm("ATENÇÃO: Deseja EXCLUIR DEFINITIVAMENTE este registro?")) {
                 const { error } = await _s.from(table).delete().eq('id', id);
                 if(error) alert("ERRO AO EXCLUIR: " + error.message);
-                else { alert("REGISTRO EXCLUÍDO COM SUCESSO."); loadAll(); }
+                else { loadAll(); }
             }
         }
 
@@ -387,7 +443,15 @@
             }
         }
 
-        function tryLogin() { if(document.getElementById('mPass').value === (localStorage.getItem('Master_Custom_Pass')||'96197577')) { localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto'); checkAuth(); } else { document.getElementById('mLoginMsg').innerText = "ACESSO NEGADO."; } }
+        function tryLogin() { 
+            const passAtual = localStorage.getItem('Master_Custom_Pass') || '96197577';
+            if(document.getElementById('mPass').value === passAtual) { 
+                localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto'); 
+                checkAuth(); 
+            } else { 
+                document.getElementById('mLoginMsg').innerText = "ACESSO NEGADO."; 
+            } 
+        }
         function masterLogout() { localStorage.removeItem('iFipe_Master_Auth'); window.location.reload(); }
         function checkAuth() { if(localStorage.getItem('iFipe_Master_Auth')==='gov_absoluto') { document.getElementById('masterAuth').classList.add('hidden'); document.getElementById('masterApp').classList.remove('hidden'); initMaster(); } else { document.getElementById('masterAuth').classList.remove('hidden'); } }
         function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden')); }
@@ -396,17 +460,8 @@
         function renderSystemStatus() { const btn = document.getElementById('sysOnOffBtn'); if(localStorage.getItem('iFipe_Status')!=='off') { btn.className="btn-master bg-green-600 px-3 py-1 text-[9px] ml-2"; btn.innerText="SISTEMA: ON"; } else { btn.className="btn-master btn-danger px-3 py-1 text-[9px] ml-2"; btn.innerText="SISTEMA: OFF (ATUALIZANDO)"; } }
         function selAll(el, selector) { document.querySelectorAll(selector).forEach(c => c.checked = el.checked); }
 
-        function updateMaster(e) {
-            e.preventDefault();
-            const np = document.getElementById('mNewPass').value;
-            if(np) {
-                localStorage.setItem('Master_Custom_Pass', np);
-                alert("Senha Master atualizada com sucesso!");
-                document.getElementById('mNewPass').value = '';
-            }
-        }
-
         async function initMaster() {
+            renderMasterInfo();
             new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
                 let bin = parseFloat(JSON.parse(e.data).c); currentOracleUsdt = bin + 0.06;
                 document.getElementById('tBin').innerText = `R$ ${bin.toFixed(4)}`; document.getElementById('tUsdt').innerText = `R$ ${currentOracleUsdt.toFixed(4)}`;
@@ -469,11 +524,18 @@
         function bulkAtaModal() { document.getElementById('modalBulkAta').classList.remove('hidden'); }
 
         function renderCli() { 
+            const colInfo = getStatusCol('clientes_buscador');
             document.getElementById('listCli').innerHTML = dbCli.map(c => { 
                 let n = c.nome || c.email || c.whatsapp || 'SEM NOME'; 
                 let local = c.pais === 'Brasil' ? `${c.cidade||'-'} / ${c.estado||'-'}` : (c.pais || 'Não definido'); 
                 let b = (c.insignia_manual || []).map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); 
-                let statusBadge = c.ativo !== false ? `<span class="badge b-green">ATIVO</span>` : `<span class="badge b-red">BLOQUEADO</span>`;
+                
+                let isAtivo = true;
+                if(colInfo.name === 'ativo' || colInfo.name === 'is_active') isAtivo = c[colInfo.name] !== false;
+                else if(colInfo.name === 'status') isAtivo = c.status === 'ativo';
+                else if(colInfo.name === 'bloqueado') isAtivo = c.bloqueado !== true;
+
+                let statusBadge = isAtivo ? `<span class="badge b-green">ATIVO</span>` : `<span class="badge b-red">BLOQUEADO</span>`;
                 return `<tr>
                     <td><input type="checkbox" class="chk-cli" value="${c.id}"></td>
                     <td><span class="font-black text-white text-xs">${n}</span><br><span class="text-[8px] text-zinc-500 font-mono">ID #${c.id}</span></td>
@@ -495,7 +557,29 @@
         }
         function abrirModalCliNovo() { document.getElementById('mCliTitle').innerText="NOVO BUSCADOR"; document.getElementById('mCliId').value=''; document.getElementById('formCli').reset(); toggleLocationFields('Cli'); document.getElementById('modalCli').classList.remove('hidden'); }
         function editCli(id) { const c = dbCli.find(x=>x.id==id); document.getElementById('mCliTitle').innerText=`EDITANDO: ${c.nome}`; document.getElementById('mCliId').value=c.id; document.getElementById('mCliNome').value=c.nome||''; document.getElementById('mCliWhats').value=c.whatsapp||''; document.getElementById('mCliEmail').value=c.email||''; document.getElementById('mCliPais').value=c.pais||'Brasil'; toggleLocationFields('Cli'); if(c.pais==='Brasil'){ document.getElementById('mCliEst').value=c.estado||''; loadCidadesIBGE('Cli').then(()=> document.getElementById('mCliCid').value=c.cidade||''); } document.getElementById('mCliSenha').value=c.senha||''; document.getElementById('modalCli').classList.remove('hidden'); }
-        async function saveCli(e) { e.preventDefault(); const id = document.getElementById('mCliId').value; const payload = { nome: document.getElementById('mCliNome').value.toUpperCase(), whatsapp: document.getElementById('mCliWhats').value, email: document.getElementById('mCliEmail').value, pais: document.getElementById('mCliPais').value, estado: document.getElementById('mCliPais').value === 'Brasil' ? document.getElementById('mCliEst').value : null, cidade: document.getElementById('mCliPais').value === 'Brasil' ? document.getElementById('mCliCid').value : null, senha: document.getElementById('mCliSenha').value }; const { error } = id ? await _s.from('clientes_buscador').update(payload).eq('id', id) : await _s.from('clientes_buscador').insert([payload]); if(error) { alert("ERRO AO SALVAR: " + error.message); } else { alert("SALVO COM SUCESSO!"); fecharModais(); loadAll(); } }
+        
+        async function saveCli(e) { 
+            e.preventDefault(); 
+            const id = document.getElementById('mCliId').value; 
+            const payload = { 
+                nome: document.getElementById('mCliNome').value.toUpperCase(), 
+                whatsapp: document.getElementById('mCliWhats').value, 
+                email: document.getElementById('mCliEmail').value, 
+                pais: document.getElementById('mCliPais').value, 
+                estado: document.getElementById('mCliPais').value === 'Brasil' ? document.getElementById('mCliEst').value : null, 
+                cidade: document.getElementById('mCliPais').value === 'Brasil' ? document.getElementById('mCliCid').value : null, 
+                senha: document.getElementById('mCliSenha').value 
+            }; 
+            
+            if(!id) {
+                const colInfo = getStatusCol('clientes_buscador');
+                payload[colInfo.name] = colInfo.valT;
+            }
+
+            const { error } = id ? await _s.from('clientes_buscador').update(payload).eq('id', id) : await _s.from('clientes_buscador').insert([payload]); 
+            if(error) { alert("ERRO AO SALVAR: " + error.message); } 
+            else { fecharModais(); loadAll(); } 
+        }
         function bulkCliModal() { document.getElementById('modalBulkCli').classList.remove('hidden'); }
 
         // FUNCIONÁRIOS
@@ -508,10 +592,10 @@
                     <td><span class="badge ${f.ativo?'b-green':'b-red'}">${f.ativo?'ATIVO':'BLOQUEADO'}</span></td>
                     <td class="text-right">
                         <div class="flex justify-end gap-1 mt-1">
-                            <button onclick="toggleStatus('funcionarios', ${f.id}, true)" class="bg-green-900/30 text-green-500 px-2 py-1 rounded text-[8px] font-black">ATIVAR</button>
-                            <button onclick="toggleStatus('funcionarios', ${f.id}, false)" class="bg-yellow-900/30 text-yellow-500 px-2 py-1 rounded text-[8px] font-black">BLOQ</button>
-                            <button onclick="delRecord('funcionarios', ${f.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black">EXCLUIR</button>
-                            <button onclick="editFunc(${f.id})" class="bg-zinc-800 text-white px-2 py-1 rounded text-[8px] font-black">EDITAR</button>
+                            <button onclick="toggleStatus('funcionarios', ${f.id}, true)" class="bg-green-900/30 text-green-500 px-2 py-1 rounded text-[8px] font-black hover:bg-green-500">ATIVAR</button>
+                            <button onclick="toggleStatus('funcionarios', ${f.id}, false)" class="bg-yellow-900/30 text-yellow-500 px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500">BLOQ</button>
+                            <button onclick="delRecord('funcionarios', ${f.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black hover:bg-red-500">EXCLUIR</button>
+                            <button onclick="editFunc(${f.id})" class="bg-zinc-800 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-500">EDITAR</button>
                         </div>
                     </td>
                 </tr>`; 
@@ -525,19 +609,31 @@
         async function runBulk(t, a) { 
             const cls = t === 'fornecedores' ? '.chk-ata:checked' : (t === 'clientes_buscador' ? '.chk-cli:checked' : '.chk-anu:checked'); 
             let ids = Array.from(document.querySelectorAll(cls)).map(c => parseInt(c.value)); 
-            if(!ids.length) return alert("Selecione itens.");
+            if(!ids.length) return alert("Selecione itens na lista primeiro.");
+
             if(a === 'apagar') { 
                 if(confirm("APAGAR DEFINITIVO OS SELECIONADOS?")) await _s.from(t).delete().in('id', ids); 
             } else if (a === 'senha') { 
                 const s = document.getElementById(t==='fornecedores'?'bulkAtaSenha':'bulkCliSenha').value; 
-                if(!s) return alert("Digite senha."); 
+                if(!s) return alert("Digite a nova senha."); 
                 await _s.from(t).update({senha: s}).in('id', ids); 
             } else if(a === 'ativar' || a === 'desativar' || a === 'verificar') { 
                 let u = {}; 
-                if(a==='ativar') u.ativo=true; 
-                if(a==='desativar') u.ativo=false; 
+                const colInfo = getStatusCol(t);
+
+                if(a==='ativar') u[colInfo.name] = colInfo.valT; 
+                if(a==='desativar') u[colInfo.name] = colInfo.valF; 
                 if(a==='verificar') u.verificado=true; 
-                await _s.from(t).update(u).in('id', ids); 
+                
+                const { error } = await _s.from(t).update(u).in('id', ids); 
+                if(error) {
+                    if(error.message.includes('Could not find the')) {
+                        alert(`ERRO NO BANCO: A coluna '${colInfo.name}' não existe na tabela '${t}'. Vá ao Supabase e crie.`);
+                    } else {
+                        alert("ERRO: " + error.message);
+                    }
+                    return;
+                }
             } 
             fecharModais(); loadAll(); 
         }
@@ -643,7 +739,7 @@
                 status_aprovacao: 'aprovado'
             }; 
             const { error } = await _s.from('ofertas').insert([payload]); 
-            if(error) alert(error.message); else { alert("Publicado!"); fecharModais(); e.target.reset(); loadAll(); } 
+            if(error) alert(error.message); else { fecharModais(); e.target.reset(); loadAll(); } 
         }
 
         // GESTAO DE SELOS
@@ -665,7 +761,7 @@
             const u = (t === 'fornecedores' ? dbAta : dbCli).find(x => x.id == id);
             let curr = u.insignia_manual || []; if(!curr.includes(s.value)) curr.push(s.value);
             const { error } = await _s.from(t).update({insignia_manual: curr}).eq('id', id);
-            if(error) { alert("ERRO AO ATRIBUIR: " + error.message); } else { alert("INSÍGNIA ATRIBUÍDA!"); s.value = ''; loadAll(); }
+            if(error) { alert("ERRO AO ATRIBUIR: " + error.message); } else { s.value = ''; loadAll(); }
         }
         async function clearInsignias() { const t = document.getElementById('seloTableSel').value; const id = document.getElementById('seloUser').value; if(confirm("Limpar?")) { await _s.from(t).update({insignia_manual: []}).eq('id', id); loadAll(); } }
 
