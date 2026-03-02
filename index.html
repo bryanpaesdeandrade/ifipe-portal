@@ -1,378 +1,221 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>iFipe - A Fipe do iPhone</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
-
-<style>
-:root { --bg: #050505; --card: #121212; --border: #2a2a2a; --blue-brand: #0071e3; }
-body { background-color: var(--bg); color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin: 0; min-height: 100vh; position: relative; }
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-
-.apple-input { background: #151515; border: 1px solid var(--border); border-radius: 12px; padding: 14px; width: 100%; color: #fff; outline: none; font-size: 11px; text-align: center; transition: 0.3s; }
-.apple-input:focus { border-color: var(--blue-brand); }
-
-.btn-primary { background: #ffffff; color: #000000; font-weight: 900; border-radius: 50px; padding: 14px; cursor: pointer; border: none; font-size: 11px; width: 100%; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.05em; }
-.btn-primary:hover { background: var(--blue-brand); color: #fff; }
-
-.glass-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 30px; position: relative; overflow: hidden; }
-
-.banner-fabrica { background: #000; border: 1px solid var(--border); border-radius: 20px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; transition: 0.4s; text-decoration: none; min-height: 350px; cursor: pointer; }
-.banner-fabrica:hover { border-color: #444; }
-
-.iphone-shape { position: absolute; width: 130px; height: 260px; border: 2px solid #222; border-radius: 24px; background: linear-gradient(135deg, #111 0%, #000 100%); z-index: 1; opacity: 0.4; transition: 0.5s; box-shadow: inset 0 0 20px rgba(255,255,255,0.02); }
-.banner-fabrica:hover .iphone-shape { opacity: 0.6; transform: scale(1.02); }
-
-.hidden { display: none !important; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iFipe - A Fipe do iPhone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #050505; --card: #121212; --border: #2a2a2a; --blue-brand: #0071e3; }
+        body { background-color: var(--bg); color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin: 0; min-height: 100vh; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .apple-input { background: #151515; border: 1px solid var(--border); border-radius: 12px; padding: 14px; width: 100%; color: #fff; outline: none; font-size: 11px; text-align: center; transition: 0.3s; }
+        .apple-input:focus { border-color: var(--blue-brand); }
+        .btn-primary { background: #ffffff; color: #000000; font-weight: 900; border-radius: 50px; padding: 14px; cursor: pointer; border: none; font-size: 11px; width: 100%; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.05em; }
+        .btn-primary:hover { background: var(--blue-brand); color: #fff; }
+        .glass-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 30px; display: flex; flex-direction: column; justify-content: center; }
+        .banner-fabrica { background: #000; border: 1px solid var(--border); border-radius: 20px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; transition: 0.4s; text-decoration: none; min-height: 350px; cursor: pointer; }
+        .banner-fabrica:hover { border-color: #444; }
+        .iphone-shape { position: absolute; width: 130px; height: 260px; border: 2px solid #222; border-radius: 24px; background: linear-gradient(135deg, #111 0%, #000 100%); z-index: 1; opacity: 0.4; transition: 0.5s; }
+        .hidden { display: none !important; }
+    </style>
 </head>
-
 <body class="flex flex-col items-center justify-center p-4 py-12 md:py-20">
 
-<div class="absolute top-4 left-6 text-[10px] font-black text-[#32d74b] tracking-widest flex items-center gap-2">
-<span class="w-1.5 h-1.5 rounded-full bg-[#32d74b] animate-pulse"></span>
-USDT/BRL: $ <span id="topRateTicker">--,----</span>
-</div>
-
-<div class="mb-10 text-center flex items-center justify-center gap-3 w-full">
-<h1 class="text-4xl md:text-5xl font-black italic text-white tracking-tighter select-none cursor-default">iFipe</h1>
-<div class="h-8 w-[2px] bg-[#2a2a2a]"></div>
-<h2 class="text-lg md:text-xl font-black text-[#0071e3] uppercase tracking-widest italic">A Fipe do iPhone</h2>
-</div>
-
-<main class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-6xl items-stretch">
-<div class="glass-card order-2 lg:order-1 flex flex-col justify-center shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20">
-
-<div class="text-center mb-5 mt-2">
-<h2 class="text-lg font-black text-white italic">Calculadora de iPhone Importado</h2>
-<p class="text-[9px] text-gray-500 font-bold uppercase mt-2 tracking-widest leading-relaxed">
-Coloque o preço em Dólar do iPhone e saiba o preço entregue no Brasil
-</p>
-</div>
-
-<div class="relative mb-4">
-<span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
-<input type="number" id="calcUsd" class="apple-input !pl-12 !text-left font-mono text-xl font-black" oninput="calcularImportacao()">
-</div>
-
-<div class="bg-[#0a0a0a] border border-[#2c2c2e] rounded-2xl p-4 text-right mb-4 relative shadow-inner">
-<span class="absolute top-3 left-4 text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP</span>
-<div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-4 tracking-tighter">R$ 0,00</div>
-</div>
-
-<div class="bg-[#1c1c1e] border border-[#2a2a2a] rounded-xl p-4 text-[10px] font-black uppercase tracking-wide space-y-2">
-<div class="flex justify-between text-white"><span>ALTO ATACADO</span><span id="res_alto">R$ 0,00</span></div>
-<div class="flex justify-between text-gray-300"><span>ATACADO</span><span id="res_ata">R$ 0,00</span></div>
-<div class="flex justify-between text-gray-400"><span>ATACAREJO</span><span id="res_atcrj">R$ 0,00</span></div>
-<div class="flex justify-between text-gray-500"><span>VAREJO</span><span id="res_var">R$ 0,00</span></div>
-</div>
-
-</div>
-
-<div class="glass-card order-1 lg:order-2 flex flex-col justify-center shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20 min-h-[350px]">
-
-<div id="statusCheck" class="mb-5 hidden">
-<span class="text-yellow-500 text-[10px] font-black bg-yellow-500/10 p-4 rounded-xl block border border-yellow-500/20 text-center leading-relaxed tracking-wider">
-ESTAMOS EM ATUALIZAÇÃO PARA TRAZER MELHORIAS PARA VOCÊ.<br><br>ATÉ LOGO, TIME IFIPE.
-</span>
-</div>
-
-<div id="loginForm" class="flex flex-col h-full justify-center">
-
-<div class="text-center mb-6">
-<h3 class="text-lg font-black text-white italic">Acesso ao Sistema</h3>
-<p class="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-1">Selecione seu perfil abaixo</p>
-</div>
-
-<div class="space-y-4">
-
-<div>
-<select id="loginType" class="apple-input !font-black !tracking-widest !text-center text-white bg-[#1c1c1e] border-[#0071e3]/50">
-<option value="buscador">SOU BUSCADOR</option>
-<option value="anunciante">SOU ANUNCIANTE</option>
-</select>
-</div>
-
-<div>
-<label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1.5 block tracking-widest">End. de Acesso</label>
-<input type="text" id="user" class="apple-input !text-left font-mono">
-</div>
-
-<div>
-<label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1.5 block tracking-widest">Senha</label>
-<input type="password" id="pass" class="apple-input !text-left font-mono tracking-[0.2em]" onkeypress="if(event.key==='Enter') handleLogin()">
-</div>
-
-</div>
-
-<button onclick="handleLogin()" class="btn-primary mt-6">ENTRAR NO iFIPE</button>
-
-<p id="msg" class="text-[9px] font-black text-center text-red-500 h-4 mt-3 uppercase tracking-widest"></p>
-
-<span id="linkRegister" class="text-[#0071e3] cursor-pointer text-[10px] font-black uppercase block mt-2 text-center hover:underline tracking-widest" onclick="toggleForm()">FAZER MEU CADASTRO</span>
-
-</div>
-
-<div id="registerForm" class="hidden flex-col gap-3">
-
-<div class="text-center mb-2">
-<h3 class="text-sm font-black text-white italic">Solicitar Cadastro</h3>
-<p class="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-1">
-Preencha os dados abaixo para solicitar acesso
-</p>
-</div>
-
-<div class="space-y-4">
-
-<div>
-<label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1.5 block tracking-widest">Seu Nome</label>
-<input type="text" id="regNome" class="apple-input !text-left font-mono" onkeyup="this.value = this.value.toUpperCase()">
-</div>
-
-<div>
-<label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1.5 block tracking-widest">Seu WhatsApp</label>
-<input type="text" id="regZap" class="apple-input !text-left font-mono">
-</div>
-
-<div>
-<label class="text-[8px] font-black text-gray-500 uppercase ml-2 mb-1.5 block tracking-widest">Seu Perfil</label>
-<select id="regPerfil" class="apple-input !font-black !tracking-widest !text-center text-white bg-[#1c1c1e] border-[#0071e3]/50">
-<option value="buscador">Buscador</option>
-<option value="anunciante">Anunciante</option>
-</select>
-</div>
-
-</div>
-
-<button onclick="enviarCadastro()" class="btn-primary mt-6">SOLICITAR ACESSO</button>
-
-<p id="msgReg" class="text-[9px] font-black text-center text-green-500 h-4 mt-3 uppercase tracking-widest"></p>
-
-<span class="text-[#0071e3] cursor-pointer text-[10px] font-black uppercase block mt-2 text-center hover:underline tracking-widest" onclick="toggleForm()">JÁ TENHO ACESSO</span>
-
-</div>
-</div>
-
-<div class="order-3 lg:order-3 h-full min-h-[350px]">
-<a href="https://fabricademarcas.mercos.com/" target="_blank" class="banner-fabrica h-full w-full group">
-
-<div class="iphone-shape" style="top: 20px; left: 20px;"></div>
-<div class="iphone-shape" style="bottom: 20px; right: 20px; transform: rotate(180deg);"></div>
-
-<div class="relative z-10 text-center px-6">
-<h3 class="text-xl font-black text-white italic tracking-tight">Fábrica de Marcas</h3>
-<p class="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">
-Criação de Logos • Identidade Visual • Sites • Landing Pages
-</p>
-
-<div class="mt-6 inline-block bg-white text-black font-black text-[10px] px-6 py-3 rounded-full uppercase tracking-widest hover:bg-[#0071e3] hover:text-white transition">
-Conhecer Agora
-</div>
-</div>
-
-</a>
-</div>
-
-</main>
-
-<div class="h-10 w-full mt-auto"></div>
-
-<script>
-// ===============================
-// STATUS DO SISTEMA (ON/OFF)
-// ===============================
-const systemStatus = "on";
-
-// ===============================
-// CONEXÃO BANCO
-// ===============================
-const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-
-// ===============================
-// VARIÁVEIS GLOBAIS
-// ===============================
-let rateBinance = 0;
-let rateOraculo = 0;
-
-function normalizeString(str) { return str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : ''; }
-const rndUp = v => Math.ceil(v / 10) * 10;
-
-// ===============================
-// INICIALIZAÇÃO E REDIRECIONAMENTO
-// ===============================
-window.onload = async () => {
-    // 1. CHECAGEM DA VARIÁVEL MANUAL
-    if(systemStatus === 'off') {
-        document.getElementById('statusCheck').classList.remove('hidden');
-        document.getElementById('loginForm').classList.add('hidden');
-        document.getElementById('registerForm').classList.add('hidden');
-        return; // Trava o script aqui, exibe só manutenção
-    } else {
-        document.getElementById('statusCheck').classList.add('hidden');
-        document.getElementById('loginForm').classList.remove('hidden');
-    }
-
-    // 2. INICIA BINANCE
-    iniciarTicker();
-
-    // 3. BYPASS MASTER
-    if(localStorage.getItem('iFipe_Master_Auth') === 'gov_absoluto') {
-        window.location.replace('buscar.html');
-        return;
-    }
-
-    // 4. REDIRECIONAMENTO DE SESSÃO ATIVA
-    const token = localStorage.getItem('iFipe_Token');
-    if(token && token !== 'admin_bypass') {
-        const { data } = await _s.from('clientes_buscador').select('id, ativo').eq('id', token).maybeSingle();
-        if(data && data.ativo !== false) return window.location.replace('buscar.html');
-    }
-
-    const tokenAta = localStorage.getItem('iFipe_Anunciante');
-    if(tokenAta && tokenAta !== 'admin_bypass') {
-        const { data } = await _s.from('fornecedores').select('id, ativo').eq('id', tokenAta).maybeSingle();
-        if(data && data.ativo !== false) return window.location.replace('atacadista.html');
-    }
-};
-
-// ===============================
-// WEBSOCKET BINANCE
-// ===============================
-function iniciarTicker() {
-    const ws = new WebSocket("wss://stream.binance.com:9443/ws/usdtbrl@ticker");
-    ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        rateBinance = parseFloat(data.c);
-        rateOraculo = rateBinance + 0.06;
-        document.getElementById("topRateTicker").innerText = rateBinance.toLocaleString("pt-BR", { minimumFractionDigits: 4 });
-        calcularImportacao();
-    };
-}
-
-// ===============================
-// CALCULADORA
-// ===============================
-function calcularImportacao() {
-    const usdInput = parseFloat(document.getElementById('calcUsd').value.replace(',', '.'));
-
-    if (isNaN(usdInput) || rateOraculo === 0) {
-        document.getElementById('calcResult').innerText = "R$ 0,00";
-        document.getElementById('res_alto').innerText = "R$ 0,00";
-        document.getElementById('res_ata').innerText = "R$ 0,00";
-        document.getElementById('res_atcrj').innerText = "R$ 0,00";
-        document.getElementById('res_var').innerText = "R$ 0,00";
-        return;
-    }
-
-    const custoBrasil = (usdInput * rateOraculo) * 1.06;
-    document.getElementById('calcResult').innerText = custoBrasil.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-    let atacado, atacarejo, varejo;
-    if (usdInput <= 750) {
-        atacado = custoBrasil * 1.30;
-        atacarejo = custoBrasil * 1.40;
-        varejo = custoBrasil * 1.75;
-    } else {
-        atacado = custoBrasil + 350;
-        atacarejo = custoBrasil + 550;
-        varejo = custoBrasil + 1000;
-    }
-
-    document.getElementById('res_alto').innerText = atacado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('res_ata').innerText = atacarejo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('res_atcrj').innerText = varejo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('res_var').innerText = varejo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-// ===============================
-// LOGIN INTELIGENTE
-// ===============================
-async function handleLogin() {
-    const uRaw = document.getElementById("user").value.trim();
-    const p = document.getElementById("pass").value.trim();
-    const type = document.getElementById("loginType").value;
-    const msg = document.getElementById("msg");
-
-    msg.innerText = "";
-    msg.className = "text-[9px] font-black text-center text-red-500 h-4 mt-3 uppercase tracking-widest";
-
-    if (!uRaw || !p) { msg.innerText = "PREENCHA TODOS OS CAMPOS."; return; }
-
-    const u = normalizeString(uRaw);
-
-    // MASTER FIXO (BYPASS)
-    const masterPass = localStorage.getItem('Master_Custom_Pass') || '96197577';
-    if (u === 'bryan' && p === masterPass) {
-        localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
-        localStorage.setItem('iFipe_Token', 'admin_bypass');
-        localStorage.setItem('iFipe_Anunciante', 'admin_bypass');
-        msg.classList.replace('text-red-500', 'text-green-500');
-        msg.innerText = "ACESSO MASTER. REDIRECIONANDO...";
-        setTimeout(() => window.location.replace('master.html'), 500);
-        return;
-    }
-
-    msg.innerText = "VERIFICANDO...";
-
-    if (type === 'anunciante') {
-        const { data } = await _s.from('fornecedores').select('id, email, whatsapp, senha, ativo');
-        if (data) {
-            const userMatch = data.find(c => (normalizeString(c.email) === u || normalizeString(c.whatsapp) === u) && c.senha === p);
-            if (userMatch) {
-                if (userMatch.ativo === false) { msg.innerText = "CONTA BLOQUEADA PELA GOVERNANÇA."; return; }
-                localStorage.setItem('iFipe_Anunciante', userMatch.id);
-                window.location.replace('atacadista.html');
-            } else { msg.innerText = "CREDENCIAIS INVÁLIDAS."; }
-        } else { msg.innerText = "ERRO DE CONEXÃO."; }
-    } else {
-        const { data } = await _s.from('clientes_buscador').select('id, email, whatsapp, senha, ativo, logins_count');
-        if (data) {
-            const userMatch = data.find(c => (normalizeString(c.email) === u || normalizeString(c.whatsapp) === u) && c.senha === p);
-            if (userMatch) {
-                if (userMatch.ativo === false) { msg.innerText = "CONTA BLOQUEADA PELA GOVERNANÇA."; return; }
-                await _s.from('clientes_buscador').update({ logins_count: (userMatch.logins_count || 0) + 1 }).eq('id', userMatch.id);
-                localStorage.setItem('iFipe_Token', userMatch.id);
-                window.location.replace('buscar.html');
-            } else { msg.innerText = "CREDENCIAIS INVÁLIDAS."; }
-        } else { msg.innerText = "ERRO DE CONEXÃO."; }
-    }
-}
-
-// ===============================
-// CADASTRO (ENFEITE)
-// ===============================
-function enviarCadastro() {
-    const nome = document.getElementById('regNome').value;
-    const zap = document.getElementById('regZap').value;
-    const msg = document.getElementById("msgReg");
-
-    if(!nome || !zap) {
-        msg.classList.replace('text-green-500', 'text-red-500');
-        msg.innerText = "PREENCHA NOME E WHATSAPP!";
-        return;
-    }
-
-    msg.classList.replace('text-red-500', 'text-green-500');
-    msg.innerText = "SOLICITAÇÃO ENVIADA COM SUCESSO!";
-    setTimeout(() => { document.getElementById("msgReg").innerText = ""; toggleForm(); }, 3000);
-}
-
-// ===============================
-// TROCAR LOGIN / CADASTRO
-// ===============================
-function toggleForm() {
-    document.getElementById("loginForm").classList.toggle("hidden");
-    document.getElementById("registerForm").classList.toggle("hidden");
-}
-</script>
-
+    <div class="absolute top-4 left-6 text-[10px] font-black text-[#32d74b] tracking-widest flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#32d74b] animate-pulse"></span>
+        USDT/BRL: $ <span id="topRateTicker">--,----</span>
+    </div>
+
+    <div class="mb-10 text-center flex items-center justify-center gap-3 w-full">
+        <h1 class="text-4xl md:text-5xl font-black italic text-white tracking-tighter select-none cursor-default" ondblclick="revelarLoginMaster()">iFipe</h1>
+        <div class="h-8 w-[2px] bg-[#2a2a2a]"></div>
+        <h2 class="text-lg md:text-xl font-black text-[#0071e3] uppercase tracking-widest italic">A Fipe do iPhone</h2>
+    </div>
+
+    <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-6xl items-stretch">
+        
+        <div class="glass-card order-1 lg:order-2 shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20 min-h-[400px]">
+            <div id="statusCheck" class="hidden mb-5">
+                <span class="text-yellow-500 text-[10px] font-black bg-yellow-500/10 p-4 rounded-xl block border border-yellow-500/20 text-center leading-relaxed">
+                    ESTAMOS EM ATUALIZAÇÃO PARA TRAZER MELHORIAS.<br><br>ATÉ LOGO, TIME IFIPE.
+                </span>
+            </div>
+
+            <div id="loginForm" class="flex flex-col">
+                <div class="text-center mb-6">
+                    <h3 class="text-lg font-black text-white italic">Acesso ao Sistema</h3>
+                    <p class="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-1">Selecione seu perfil abaixo</p>
+                </div>
+                <div class="space-y-4">
+                    <select id="loginType" class="apple-input !font-black !text-white bg-[#1c1c1e] border-[#0071e3]/50">
+                        <option value="buscador">SOU BUSCADOR</option>
+                        <option value="anunciante">SOU ANUNCIANTE</option>
+                    </select>
+                    <input type="text" id="user" class="apple-input !text-left font-mono" placeholder="END. DE ACESSO">
+                    <input type="password" id="pass" class="apple-input !text-left font-mono tracking-[0.2em]" placeholder="SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
+                </div>
+                <button onclick="handleLogin()" class="btn-primary mt-6">ENTRAR NO iFIPE</button>
+                <p id="msg" class="text-[9px] font-black text-center text-red-500 h-4 mt-3 uppercase tracking-widest"></p>
+                <span id="linkRegister" class="text-[#0071e3] cursor-pointer text-[10px] font-black uppercase block mt-2 text-center hover:underline" onclick="toggleForm()">FAZER MEU CADASTRO</span>
+            </div>
+
+            <div id="registerForm" class="hidden flex-col gap-3">
+                <div class="text-center mb-2"><h3 class="text-sm font-black text-white italic">Solicitar Cadastro</h3></div>
+                <input type="text" id="regNome" class="apple-input" placeholder="NOME COMPLETO" onkeyup="this.value = this.value.toUpperCase()">
+                <input type="text" id="regZap" class="apple-input" placeholder="WHATSAPP">
+                <select id="regPerfil" class="apple-input !font-black text-white bg-[#1c1c1e] border-[#0071e3]/50">
+                    <option value="buscador">BUSCADOR</option>
+                    <option value="anunciante">ANUNCIANTE</option>
+                </select>
+                <button onclick="enviarCadastro()" class="btn-primary mt-6">SOLICITAR ACESSO</button>
+                <p id="msgReg" class="text-[9px] font-black text-center text-green-500 h-4 mt-3 uppercase tracking-widest"></p>
+                <span class="text-[#0071e3] cursor-pointer text-[10px] font-black uppercase block mt-2 text-center hover:underline" onclick="toggleForm()">JÁ TENHO ACESSO</span>
+            </div>
+        </div>
+
+        <div class="glass-card order-2 lg:order-1 shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20">
+            <div class="text-center mb-5 mt-2">
+                <h2 class="text-lg font-black text-white italic">Calculadora de iPhone Importado</h2>
+                <p class="text-[9px] text-gray-500 font-bold uppercase mt-2 tracking-widest leading-relaxed">Dólar PY p/ Custo Final Brasil</p>
+            </div>
+            <div class="relative mb-4">
+                <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
+                <input type="number" id="calcUsd" class="apple-input !pl-12 !text-left font-mono text-xl font-black" oninput="calcularImportacao()">
+            </div>
+            <div class="bg-[#0a0a0a] border border-[#2c2c2e] rounded-2xl p-4 text-right mb-4">
+                <span class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP</span>
+                <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-2">R$ 0,00</div>
+            </div>
+            <div class="bg-[#1c1c1e] border border-[#2a2a2a] rounded-xl p-4 text-[10px] font-black uppercase space-y-2">
+                <div class="flex justify-between text-white"><span>ALTO ATACADO</span><span id="res_alto">R$ 0,00</span></div>
+                <div class="flex justify-between text-gray-300"><span>ATACADO</span><span id="res_ata">R$ 0,00</span></div>
+                <div class="flex justify-between text-gray-400"><span>ATACAREJO</span><span id="res_atcrj">R$ 0,00</span></div>
+                <div class="flex justify-between text-gray-500"><span>VAREJO</span><span id="res_var">R$ 0,00</span></div>
+            </div>
+        </div>
+
+        <div class="order-3 lg:order-3">
+            <a href="https://fabricademarcas.mercos.com/" target="_blank" class="banner-fabrica h-full w-full group">
+                <div class="iphone-shape"></div>
+                <div class="relative z-10 text-center px-6">
+                    <h3 class="text-xl font-black text-white italic tracking-tight">Fábrica de Marcas</h3>
+                    <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">Logos • Identidade Visual • Sites</p>
+                    <div class="mt-6 inline-block bg-white text-black font-black text-[10px] px-6 py-3 rounded-full uppercase tracking-widest hover:bg-[#0071e3] hover:text-white transition">Conhecer Agora</div>
+                </div>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+        const systemStatus = "on";
+        let rateBinance = 0;
+        let rateOraculo = 0;
+
+        function normalizeString(str) { return str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : ''; }
+
+        window.onload = async () => {
+            if(systemStatus === 'off') {
+                document.getElementById('statusCheck').classList.remove('hidden');
+                document.getElementById('loginForm').classList.add('hidden');
+            }
+            iniciarTicker();
+            if(localStorage.getItem('iFipe_Master_Auth') === 'gov_absoluto') return window.location.replace('master.html');
+            
+            const tB = localStorage.getItem('iFipe_Token');
+            if(tB && tB !== 'admin_bypass') {
+                const { data } = await _s.from('clientes_buscador').select('id, ativo').eq('id', tB).maybeSingle();
+                if(data && data.ativo !== false) window.location.replace('buscar.html');
+            }
+            const tA = localStorage.getItem('iFipe_Anunciante');
+            if(tA && tA !== 'admin_bypass') {
+                const { data } = await _s.from('fornecedores').select('id, ativo').eq('id', tA).maybeSingle();
+                if(data && data.ativo !== false) window.location.replace('atacadista.html');
+            }
+        };
+
+        function revelarLoginMaster() {
+            document.getElementById('statusCheck').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+        }
+
+        function iniciarTicker() {
+            const ws = new WebSocket("wss://stream.binance.com:9443/ws/usdtbrl@ticker");
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                rateBinance = parseFloat(data.c);
+                rateOraculo = rateBinance + 0.06;
+                document.getElementById("topRateTicker").innerText = rateBinance.toLocaleString("pt-BR", { minimumFractionDigits: 4 });
+                calcularImportacao();
+            };
+        }
+
+        function calcularImportacao() {
+            const usd = parseFloat(document.getElementById('calcUsd').value);
+            if (!usd || rateOraculo === 0) return;
+            const custo = (usd * rateOraculo) * 1.06;
+            document.getElementById('calcResult').innerText = custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            
+            let a, b, c;
+            if (usd <= 750) { a = custo * 1.30; b = custo * 1.40; c = custo * 1.75; } 
+            else { a = custo + 350; b = custo + 550; c = custo + 1000; }
+            
+            document.getElementById('res_alto').innerText = a.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('res_ata').innerText = b.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('res_atcrj').innerText = c.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('res_var').innerText = c.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        async function handleLogin() {
+            const uRaw = document.getElementById("user").value;
+            const p = document.getElementById("pass").value;
+            const type = document.getElementById("loginType").value;
+            const msg = document.getElementById("msg");
+            if (!uRaw || !p) { msg.innerText = "PREENCHA TUDO."; return; }
+            const u = normalizeString(uRaw);
+
+            if (u === 'bryan' && p === '96197577') {
+                localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
+                localStorage.setItem('iFipe_Token', 'admin_bypass');
+                localStorage.setItem('iFipe_Anunciante', 'admin_bypass');
+                window.location.replace('master.html');
+                return;
+            }
+
+            if (type === 'anunciante') {
+                const { data } = await _s.from('fornecedores').select('*');
+                const user = data.find(c => (normalizeString(c.email) === u || normalizeString(c.whatsapp) === u) && c.senha === p);
+                if (user) {
+                    if (user.ativo === false) return msg.innerText = "BLOQUEADO.";
+                    localStorage.setItem('iFipe_Anunciante', user.id);
+                    window.location.replace('atacadista.html');
+                } else msg.innerText = "ERRO.";
+            } else {
+                const { data } = await _s.from('clientes_buscador').select('*');
+                const user = data.find(c => (normalizeString(c.email) === u || normalizeString(c.whatsapp) === u) && c.senha === p);
+                if (user) {
+                    if (user.ativo === false) return msg.innerText = "BLOQUEADO.";
+                    await _s.from('clientes_buscador').update({ logins_count: (user.logins_count || 0) + 1 }).eq('id', user.id);
+                    localStorage.setItem('iFipe_Token', user.id);
+                    window.location.replace('buscar.html');
+                } else msg.innerText = "ERRO.";
+            }
+        }
+
+        function enviarCadastro() {
+            document.getElementById("msgReg").innerText = "SOLICITAÇÃO ENVIADA!";
+            setTimeout(() => { document.getElementById("msgReg").innerText = ""; toggleForm(); }, 2000);
+        }
+
+        function toggleForm() {
+            document.getElementById("loginForm").classList.toggle("hidden");
+            document.getElementById("registerForm").classList.toggle("hidden");
+        }
+    </script>
 </body>
 </html>
