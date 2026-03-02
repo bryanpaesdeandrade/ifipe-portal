@@ -8,102 +8,135 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --blue: #0071e3; }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; }
-        .apple-input { background: #1c1c1e; border: 1px solid var(--border); border-radius: 12px; padding: 12px; color: #fff; width: 100%; outline: none; text-align: center; }
-        .btn-main { background: var(--blue); color: #fff; font-weight: 900; border-radius: 12px; padding: 14px; width: 100%; cursor: pointer; border: none; text-transform: uppercase; }
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --blue-apple: #0071e3; }
+        body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
+        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; }
+        
+        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
+        .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
+        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; }
+
+        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px; transition: 0.3s; position: relative; }
+        .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
+        .price-text { font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.05em; text-align: right; }
+        .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 16px; transition: 0.3s; letter-spacing: 0.05em; }
+        
+        #loginOverlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .auth-box { border: 1px solid var(--border); padding: 40px; border-radius: 24px; background: #0a0a0a; text-align: center; width: 380px; }
+        .btn-apple { background: var(--blue-apple); color: #fff; font-weight: 900; border-radius: 12px; padding: 14px; cursor: pointer; border: none; font-size: 11px; transition: 0.3s; width: 100%; text-transform: uppercase; }
         .hidden { display: none !important; }
     </style>
 </head>
-<body>
+<body id="appBody">
 
-    <div id="authSection" class="min-h-screen flex items-center justify-center p-4">
-        <div class="w-full max-w-[350px] text-center">
+    <div id="loginOverlay">
+        <div class="auth-box">
             <h1 class="text-4xl font-black italic mb-2">iFipe</h1>
-            <p class="text-[10px] text-zinc-500 mb-8 tracking-widest font-bold uppercase">Buscador VIP 1.0</p>
+            <p class="text-[10px] text-zinc-500 mb-8 tracking-widest font-bold">O BUSCADOR DO ATACADO</p>
             
-            <div class="space-y-3">
-                <input type="text" id="user" class="apple-input" placeholder="WHATSAPP OU EMAIL">
-                <input type="password" id="pass" class="apple-input" placeholder="SENHA">
-                <button onclick="handleLogin()" class="btn-main">Entrar no Sistema</button>
-                <p id="msg" class="text-[10px] font-bold text-red-500 mt-2 h-4"></p>
+            <div id="loginForm">
+                <input type="text" id="user" class="apple-input mb-3" placeholder="WHATSAPP OU EMAIL">
+                <input type="password" id="pass" class="apple-input mb-4" placeholder="SUA SENHA" onkeypress="if(event.key==='Enter') handleUniversalLogin()">
+                <button onclick="handleUniversalLogin()" class="btn-apple">ENTRAR NO iFIPE</button>
+                <p id="msg" class="text-[10px] font-black text-red-500 mt-4 h-4"></p>
             </div>
         </div>
     </div>
 
-    <div id="appSection" class="hidden">
-        <nav class="p-6 border-b border-zinc-800 flex justify-between items-center">
-            <h1 class="text-xl font-black italic">iFipe</h1>
-            <button onclick="logout()" class="text-red-500 text-[10px] font-black uppercase">Sair</button>
-        </nav>
-        
-        <main class="max-w-6xl mx-auto p-6">
-            <div class="mb-8">
-                <input type="text" id="search" class="apple-input !text-left px-6 py-4 text-lg" placeholder="Qual iPhone você busca?" oninput="renderData()">
+    <div id="mainContent" class="hidden">
+        <nav class="nav-bar">
+            <h1 class="text-2xl font-black italic m-0">iFipe</h1>
+            <div class="flex gap-4 items-center">
+                <span id="welcomeMsg" class="text-[10px] font-bold text-zinc-500 uppercase"></span>
+                <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
             </div>
-            <div id="grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+        </nav>
+
+        <main class="max-w-7xl mx-auto px-4 pb-20 pt-8">
+            <div class="filter-bar grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <input type="text" id="buscaTexto" class="apple-input" placeholder="🔍 BUSCAR APARELHO..." oninput="renderizarRanking()">
+                <select id="f_cond" class="apple-input" onchange="renderizarRanking()">
+                    <option value="">TODAS AS CONDIÇÕES</option>
+                    <option value="NOVO">NOVO</option>
+                    <option value="SEMINOVO">SEMINOVO</option>
+                </select>
+            </div>
+            <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
         </main>
     </div>
 
-<script>
-    const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-    let dbOfertas = [];
+    <script>
+        const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+        let ofertasAtuais = [], clienteLogado = null;
 
-    async function handleLogin() {
-        const u = document.getElementById('user').value.trim().toLowerCase();
-        const p = document.getElementById('pass').value;
-        const msg = document.getElementById('msg');
-        msg.innerText = "VERIFICANDO...";
+        async function handleUniversalLogin() {
+            const u = document.getElementById('user').value.trim().toLowerCase();
+            const p = document.getElementById('pass').value;
+            const msg = document.getElementById('msg');
+            msg.innerText = "VERIFICANDO...";
 
-        // 1. TENTA LOGIN ATACADISTA
-        const { data: ata } = await _s.from('fornecedores').select('id, ativo').or(`email.eq.${u},whatsapp.eq.${u}`).eq('senha', p).maybeSingle();
-        if (ata) {
-            localStorage.setItem('iFipe_Anunciante', ata.id);
-            window.location.replace('atacadista.html');
-            return;
+            // 1. TENTA LOGIN ATACADISTA
+            const { data: ata } = await _s.from('fornecedores').select('id, nome, ativo').or(`email.eq.${u},whatsapp.eq.${u}`).eq('senha', p).maybeSingle();
+            if (ata) {
+                localStorage.setItem('iFipe_Anunciante', ata.id);
+                window.location.replace('atacadista.html'); // Manda pro arquivo certo
+                return;
+            }
+
+            // 2. TENTA LOGIN CLIENTE
+            const { data: cli } = await _s.from('clientes_buscador').select('id, nome, ativo').or(`email.eq.${u},whatsapp.eq.${u}`).eq('senha', p).maybeSingle();
+            if (cli) {
+                localStorage.setItem('iFipe_Token', cli.id);
+                localStorage.setItem('iFipe_User_Name', cli.nome);
+                location.reload();
+                return;
+            }
+            msg.innerText = "CREDENCIAIS INVÁLIDAS.";
         }
 
-        // 2. TENTA LOGIN CLIENTE
-        const { data: cli } = await _s.from('clientes_buscador').select('id, ativo').or(`email.eq.${u},whatsapp.eq.${u}`).eq('senha', p).maybeSingle();
-        if (cli) {
-            localStorage.setItem('iFipe_Token', cli.id);
-            startApp();
-            return;
+        async function carregarDados() {
+            const { data } = await _s.from('ofertas').select('*, fornecedores(nome, whatsapp), variacoes(capacidade, cor, produtos_mestre(nome))').gt('quantidade', 0);
+            ofertasAtuais = data || [];
+            renderizarRanking();
         }
-        msg.innerText = "ACESSO NEGADO.";
-    }
 
-    async function startApp() {
-        document.getElementById('authSection').classList.add('hidden');
-        document.getElementById('appSection').classList.remove('hidden');
-        const { data } = await _s.from('ofertas').select('*, fornecedores(nome), variacoes(capacidade, cor, produtos_mestre(nome))').gt('quantidade', 0);
-        dbOfertas = data || [];
-        renderData();
-    }
+        function renderizarRanking() {
+            const txt = document.getElementById('buscaTexto').value.toLowerCase();
+            const cond = document.getElementById('f_cond').value;
+            
+            let filtrados = ofertasAtuais.filter(o => 
+                (!txt || o.variacoes.produtos_mestre.nome.toLowerCase().includes(txt)) &&
+                (!cond || o.condicao === cond)
+            );
 
-    function renderData() {
-        const term = document.getElementById('search').value.toLowerCase();
-        const filtered = dbOfertas.filter(o => 
-            o.variacoes.produtos_mestre.nome.toLowerCase().includes(term) || 
-            o.fornecedores.nome.toLowerCase().includes(term)
-        );
-
-        document.getElementById('grid').innerHTML = filtered.map(o => `
-            <div class="product-card">
-                <h3 class="font-black">${o.variacoes.produtos_mestre.nome}</h3>
-                <p class="text-[10px] text-zinc-400 uppercase">${o.variacoes.capacidade} | ${o.variacoes.cor}</p>
-                <div class="mt-4 flex justify-between items-end">
-                    <span class="text-zinc-500 text-[9px] font-bold">${o.fornecedores.nome}</span>
-                    <span class="text-xl font-black text-blue-500">R$ ${o.preco.toLocaleString('pt-BR')}</span>
+            document.getElementById('gridGeral').innerHTML = filtrados.map(o => `
+                <div class="product-card">
+                    <h2 class="font-black text-lg">${o.variacoes.produtos_mestre.nome}</h2>
+                    <p class="text-[10px] text-zinc-500 uppercase">${o.variacoes.capacidade} | ${o.variacoes.cor} | ${o.condicao}</p>
+                    <div class="mt-4 flex justify-between items-end">
+                        <div class="text-[9px] font-bold text-green-500 uppercase">🏢 ${o.fornecedores.nome}</div>
+                        <div class="price-text">R$ ${o.preco.toLocaleString('pt-BR')}</div>
+                    </div>
+                    <a href="https://wa.me/${o.fornecedores.whatsapp}" class="buy-button mt-4">Comprar</a>
                 </div>
-            </div>
-        `).join('');
-    }
+            `).join('');
+        }
 
-    function logout() { localStorage.clear(); window.location.reload(); }
+        function logout() { localStorage.clear(); location.reload(); }
 
-    window.onload = () => { if(localStorage.getItem('iFipe_Token')) startApp(); };
-</script>
+        window.onload = async () => {
+            const token = localStorage.getItem('iFipe_Token');
+            if(token) {
+                const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
+                if(data) {
+                    clienteLogado = data;
+                    document.getElementById('loginOverlay').classList.add('hidden');
+                    document.getElementById('mainContent').classList.remove('hidden');
+                    document.getElementById('welcomeMsg').innerText = "Olá, " + data.nome;
+                    carregarDados();
+                }
+            }
+        };
+    </script>
 </body>
 </html>
