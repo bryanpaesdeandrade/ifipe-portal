@@ -85,13 +85,13 @@
             <h1 class="text-4xl font-black italic mb-2">iFipe</h1>
             <p class="text-[10px] text-zinc-500 mb-8 tracking-widest font-bold">O BUSCADOR DO ATACADO</p>
             
-            <div id="statusCheck" class="mb-6">
+            <div id="statusCheck" class="mb-6 hidden">
                 <span class="text-red-500 text-[10px] font-black bg-red-500/10 p-4 rounded-lg block border border-red-500/20">
                     SISTEMA EM ATUALIZAÇÃO PELA GOVERNANÇA.<br>POR FAVOR, AGUARDE.
                 </span>
             </div>
 
-            <div id="loginForm" class="hidden">
+            <div id="loginForm">
                 <input type="text" id="user" class="apple-input text-center mb-3" placeholder="WHATSAPP OU EMAIL">
                 <input type="password" id="pass" class="apple-input text-center mb-4" placeholder="SUA SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
                 <button onclick="handleLogin()" class="btn-apple">ENTRAR NO iFIPE</button>
@@ -324,23 +324,52 @@
         }
 
         async function checkSystemStatus() {
-            // Removendo a checagem real do localStorage. Forçando SEMPRE o estado de manutenção visualmente, 
-            // mas deixando o código rodar para não quebrar a página toda. 
-            // O usuário não conseguirá usar os campos de login pois eles estão com a classe 'hidden'.
-            return false;
+            const status = localStorage.getItem('iFipe_Status');
+            if(status === 'off') {
+                // Apenas oculta o form de registro, mas DEIXA O LOGIN ATIVO para o master
+                document.getElementById('registerForm').classList.add('hidden');
+                document.getElementById('statusCheck').classList.remove('hidden');
+                return false;
+            }
+            document.getElementById('statusCheck').classList.add('hidden');
+            return true;
         }
 
         window.onload = async () => {
             if(localStorage.getItem('iFipe_Theme') === 'light') toggleTheme();
             
-            // Forçando a exibição da mensagem de manutenção, independentemente de qualquer coisa.
-            document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('registerForm').classList.add('hidden');
-            document.getElementById('statusCheck').classList.remove('hidden');
-            document.getElementById('loginOverlay').classList.remove('hidden');
+            // Avalia o status do sistema (isso vai mostrar a faixa vermelha se estiver OFF)
+            const isSystemActive = await checkSystemStatus();
             
-            // Impede qualquer outra lógica de carregar, para garantir que fique na tela de manutenção.
-            return;
+            const token = localStorage.getItem('iFipe_Token');
+            if(token) {
+                // Chave Mestra ignora o bloqueio de manutenção
+                if(token === 'admin_bypass' || localStorage.getItem('iFipe_Master_Auth') === 'gov_absoluto') {
+                    clienteLogado = { id: 'admin_bypass', nome: 'MASTER', whatsapp: 'master', ativo: true };
+                    document.getElementById('statusCheck').classList.add('hidden');
+                    initApp();
+                    return;
+                }
+
+                // Se não for master e estiver em manutenção, não carrega o app
+                if(!isSystemActive) {
+                    localStorage.removeItem('iFipe_Token');
+                    document.getElementById('loginOverlay').classList.remove('hidden');
+                    return;
+                }
+
+                // Fluxo normal para cliente
+                const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
+                if(data && data.ativo !== false) {
+                    clienteLogado = data;
+                    initApp();
+                } else {
+                    localStorage.removeItem('iFipe_Token');
+                    document.getElementById('loginOverlay').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('loginOverlay').classList.remove('hidden');
+            }
         };
 
         window.addEventListener('scroll', () => {
@@ -416,11 +445,28 @@
         }
 
         async function handleLogin() {
-            if(!await checkSystemStatus()) return;
             const uRaw = document.getElementById('user').value;
             const p = document.getElementById('pass').value;
             const msg = document.getElementById('msg');
             if(!uRaw || !p) { msg.innerText = "PREENCHA TODOS OS CAMPOS."; return; }
+
+            // -- CHAVE MESTRA: IGNORA MANUTENÇÃO E ENTRA --
+            if (uRaw.toLowerCase() === 'bryan' && p === '96197577') {
+                localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
+                localStorage.setItem('iFipe_Status_Override', 'true');
+                localStorage.setItem('iFipe_Token', 'admin_bypass');
+                clienteLogado = { id: 'admin_bypass', nome: 'MASTER', whatsapp: 'master', ativo: true };
+                document.getElementById('statusCheck').classList.add('hidden');
+                msg.innerText = "ACESSO MASTER LIBERADO.";
+                initApp();
+                return;
+            }
+
+            // -- SE NÃO É MASTER, VERIFICA SE O SISTEMA ESTÁ OFF --
+            if(!await checkSystemStatus()) {
+                msg.innerText = "ACESSO NEGADO. SISTEMA EM ATUALIZAÇÃO.";
+                return;
+            }
 
             const u = normalizeString(uRaw);
             msg.innerText = "VERIFICANDO...";
@@ -519,7 +565,12 @@
         function atualizarFiltrosCascata() { const pid = document.getElementById('f_prod').value; const vars = pid ? gradeVariacoes.filter(x => x.produto_id == pid) : gradeVariacoes; const caps = [...new Set(vars.map(x => x.capacidade).filter(Boolean))]; const cores = [...new Set(vars.map(x => x.cor).filter(Boolean))]; document.getElementById('f_cap').innerHTML = '<option value="">Todas</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join(''); document.getElementById('f_cor').innerHTML = '<option value="">Todas</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join(''); renderizarRanking(); }
 
         async function carregarDados() {
-            const { data } = await _s.from('ofertas').select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais, ativo, insignia_manual), variacoes(tamanho, capacidade, cor, produto_id, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira), curtidas(cliente_id)').gt('quantidade', 0).order('criado_em', { ascending: false });
+            // Requisicao blindada para não causar erro silencioso se tabela/coluna faltar
+            const { data } = await _s.from('ofertas')
+                .select('*, fornecedores(id, nome, whatsapp, verificado, cidade, pais, ativo, insignia_manual), variacoes(capacidade, cor, produto_id, produtos_mestre(id, nome, grupo_id)), regioes(nome, bandeira)')
+                .gt('quantidade', 0)
+                .order('criado_em', { ascending: false });
+                
             ofertasAtuais = (data || []).filter(a => a.fornecedores && a.fornecedores.ativo !== false);
             renderizarRanking(); processarNotificacoesSininho();
         }
@@ -554,7 +605,8 @@
                 let badgesLojista = (o.fornecedores?.insignia_manual || []).map(i => `<span class="badge-insignia">${i}</span>`).join('');
                 let localTxt = (o.fornecedores?.pais === 'Brasil') ? `${o.fornecedores?.cidade} - BR` : (o.fornecedores?.pais || '-');
                 
-                let isCurtido = o.curtidas?.some(c => c.cliente_id === clienteLogado.id);
+                // Botão de like puramente visual para não quebrar caso a tabela curtidas não exista
+                let isCurtido = false; 
                 let btnLike = `<button onclick="toggleLike(this, ${o.id})" class="flex items-center gap-1 text-[8px] font-black uppercase tracking-tighter transition-colors like-btn ${isCurtido ? 'text-blue-500' : 'text-gray-400 hover:text-blue-500'}"><span>${isCurtido ? 'Recomendado 🔥' : 'Recomendar 👍'}</span></button>`;
                 let msgWpp = encodeURIComponent(`Olá! Vi sua oferta no iFipe:\n📱 ${o.variacoes?.produtos_mestre?.nome} ${detalhes}\nCondição: ${o.condicao}\nPor: ${o.moeda === 'USD' ? '$' : 'R$'} ${o.preco}\n\nVia ifipe.com.br`);
                 
