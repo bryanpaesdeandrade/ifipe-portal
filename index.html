@@ -35,14 +35,13 @@ USDT/BRL: $ <span id="topRateTicker">--,----</span>
 </div>
 
 <div class="mb-10 text-center flex items-center justify-center gap-3 w-full">
-<h1 class="text-4xl md:text-5xl font-black italic text-white tracking-tighter">iFipe</h1>
+<h1 class="text-4xl md:text-5xl font-black italic text-white tracking-tighter select-none cursor-default" ondblclick="revelarLoginMaster()">iFipe</h1>
 <div class="h-8 w-[2px] bg-[#2a2a2a]"></div>
 <h2 class="text-lg md:text-xl font-black text-[#0071e3] uppercase tracking-widest italic">A Fipe do iPhone</h2>
 </div>
 
 <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-6xl items-stretch">
 
-<!-- CALCULADORA -->
 <div class="glass-card order-2 lg:order-1 shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20">
 <div class="text-center mb-5 mt-2">
 <h2 class="text-lg font-black text-white italic">Calculadora de iPhone Importado</h2>
@@ -55,19 +54,17 @@ USDT/BRL: $ <span id="topRateTicker">--,----</span>
 </div>
 
 <div class="bg-[#0a0a0a] border border-[#2c2c2e] rounded-2xl p-4 text-right mb-4">
-<span class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP</span>
+<span class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP (+6%)</span>
 <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-2">R$ 0,00</div>
 </div>
 
 <div class="bg-[#1c1c1e] border border-[#2a2a2a] rounded-xl p-4 text-[10px] font-black uppercase space-y-2">
-<div class="flex justify-between text-white"><span>ALTO ATACADO</span><span id="res_alto">R$ 0,00</span></div>
 <div class="flex justify-between text-gray-300"><span>ATACADO</span><span id="res_ata">R$ 0,00</span></div>
 <div class="flex justify-between text-gray-400"><span>ATACAREJO</span><span id="res_atcrj">R$ 0,00</span></div>
 <div class="flex justify-between text-gray-500"><span>VAREJO</span><span id="res_var">R$ 0,00</span></div>
 </div>
 </div>
 
-<!-- LOGIN -->
 <div class="glass-card order-1 lg:order-2 shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20 min-h-[400px]">
 
 <div id="statusCheck" class="hidden mb-5">
@@ -97,13 +94,11 @@ SISTEMA EM ATUALIZAÇÃO PARA MELHORIAS.
 </div>
 </div>
 
-<!-- BANNER -->
 <div class="order-3">
 <a href="https://fabricademarcas.mercos.com/" target="_blank" class="banner-fabrica h-full w-full">
 <div class="iphone-shape"></div>
 <div class="relative z-10 text-center px-6">
 <h3 class="text-xl font-black text-white italic">Fábrica de Marcas</h3>
-<p class="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">Identidade Visual • Sites</p>
 <div class="mt-6 inline-block bg-white text-black font-black text-[10px] px-6 py-3 rounded-full uppercase hover:bg-[#0071e3] hover:text-white transition">Conhecer</div>
 </div>
 </a>
@@ -136,6 +131,11 @@ return;
 iniciarTicker();
 };
 
+function revelarLoginMaster() {
+document.getElementById('statusCheck').classList.add('hidden');
+document.getElementById('loginForm').classList.remove('hidden');
+}
+
 function iniciarTicker(){
 const ws = new WebSocket("wss://stream.binance.com:9443/ws/usdtbrl@ticker");
 ws.onmessage = e => {
@@ -150,28 +150,31 @@ calcularImportacao();
 
 function calcularImportacao(){
 const usd = parseFloat(document.getElementById('calcUsd').value);
-if(!usd || rateOraculo === 0) return;
+if(!usd || rateOraculo === 0) {
+document.getElementById('calcResult').innerText = "R$ 0,00";
+document.getElementById('res_ata').innerText = "R$ 0,00";
+document.getElementById('res_atcrj').innerText = "R$ 0,00";
+document.getElementById('res_var').innerText = "R$ 0,00";
+return;
+}
 
 const custo = (usd * rateOraculo) * 1.06;
 
 document.getElementById('calcResult').innerText =
 custo.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
-let alto, atacado, atacarejo, varejo;
+let atacado, atacarejo, varejo;
 
 if(usd <= 750){
-alto = custo * 1.10;
 atacado = custo * 1.20;
 atacarejo = custo * 1.40;
 varejo = custo * 1.55;
 }else{
-alto = custo + 200;
 atacado = custo + 350;
 atacarejo = custo + 550;
 varejo = custo + 1000;
 }
 
-document.getElementById('res_alto').innerText = alto.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 document.getElementById('res_ata').innerText = atacado.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 document.getElementById('res_atcrj').innerText = atacarejo.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 document.getElementById('res_var').innerText = varejo.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -189,8 +192,10 @@ if(!uRaw || !p){ msg.innerText="PREENCHA TUDO."; return; }
 
 const uNorm = normalizeString(uRaw);
 
-// MASTER SEMPRE ENTRA
+// MASTER SEMPRE ENTRA - LIMPA OS CACHES ANTES PARA EVITAR O LOOP
 if(uNorm === 'bryan' && p === '96197577'){
+localStorage.removeItem('iFipe_Token');
+localStorage.removeItem('iFipe_Anunciante');
 localStorage.setItem('iFipe_Master_Auth','gov_absoluto');
 window.location.replace('master.html');
 return;
@@ -209,6 +214,9 @@ String(c.senha) === String(p)
 );
 if(!user){ msg.innerText="ERRO."; return; }
 if(user.ativo === false){ msg.innerText="BLOQUEADO."; return; }
+
+localStorage.removeItem('iFipe_Token');
+localStorage.removeItem('iFipe_Master_Auth');
 localStorage.setItem('iFipe_Anunciante', user.id);
 window.location.replace('atacadista.html');
 return;
@@ -222,6 +230,8 @@ String(c.senha) === String(p)
 if(!user){ msg.innerText="ERRO."; return; }
 if(user.ativo === false){ msg.innerText="BLOQUEADO."; return; }
 
+localStorage.removeItem('iFipe_Anunciante');
+localStorage.removeItem('iFipe_Master_Auth');
 localStorage.setItem('iFipe_Token', user.id);
 window.location.replace('buscar.html');
 }
