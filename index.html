@@ -1,50 +1,23 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - A Fipe do iPhone</title>
+    <title>iFipe - Teste</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root { --bg:#050505; --card:#121212; --border:#2a2a2a; --blue:#0071e3; }
-        body { background:var(--bg); color:#fff; font-family:-apple-system, sans-serif; }
-        .apple-input{ background:#151515; border:1px solid var(--border); border-radius:12px; padding:14px; width:100%; color:#fff; outline:none; }
-        .btn-primary{ background:#fff; color:#000; font-weight:900; border-radius:50px; padding:14px; cursor:pointer; width:100%; }
-        .glass-card{ background:var(--card); border:1px solid var(--border); border-radius:20px; padding:30px; }
-        .hidden{ display:none!important; }
-        .status-badge { background: rgba(255, 204, 0, 0.1); border: 1px solid #ffcc00; color: #ffcc00; padding: 12px; border-radius: 12px; margin-bottom: 20px; }
-    </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-
-    <div class="w-full max-w-md">
-        <!-- Ticker simples -->
-        <div class="text-center mb-4 text-sm text-[#32d74b]">
-            USDT/BRL: $ <span id="topRateTicker">--,----</span>
-        </div>
-
-        <!-- Título -->
-        <h1 class="text-4xl font-black italic text-center mb-2">iFipe</h1>
-        <h2 class="text-lg font-black text-[#0071e3] text-center mb-8">A Fipe do iPhone</h2>
-
-        <!-- Card de login -->
-        <div class="glass-card">
-            <div id="statusCheck" class="hidden status-badge text-center">
-                ⚠️ Estamos em atualização para trazer melhorias para você time iFipe
-            </div>
-
-            <div class="space-y-4">
-                <select id="loginType" class="apple-input">
-                    <option value="buscador">SOU BUSCADOR</option>
-                    <option value="anunciante">SOU ANUNCIANTE</option>
-                </select>
-                <input id="user" class="apple-input" placeholder="WHATSAPP OU EMAIL">
-                <input id="pass" type="password" class="apple-input" placeholder="SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
-                <button onclick="handleLogin()" class="btn-primary">ENTRAR</button>
-                <p id="msg" class="text-sm text-center text-red-500 h-4"></p>
-            </div>
-        </div>
+<body class="bg-black text-white p-8">
+    <h1 class="text-3xl font-bold">iFipe - Diagnóstico</h1>
+    <div id="status" class="mt-4 p-4 bg-yellow-900 rounded"></div>
+    <div class="mt-4">
+        <select id="tipo" class="bg-gray-800 p-2 rounded">
+            <option value="anunciante">Anunciante</option>
+            <option value="buscador">Buscador</option>
+        </select>
+        <input id="user" placeholder="WhatsApp ou Email" class="bg-gray-800 p-2 rounded block mt-2 w-64">
+        <input id="pass" type="password" placeholder="Senha" class="bg-gray-800 p-2 rounded block mt-2 w-64">
+        <button onclick="logar()" class="bg-blue-600 px-4 py-2 rounded mt-2">Logar</button>
+        <p id="msg" class="mt-2 text-red-400"></p>
     </div>
 
     <script>
@@ -53,137 +26,67 @@
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M'
         );
 
-        window.onload = () => {
-            const status = localStorage.getItem('iFipe_Status') || 'on';
-            console.log('Status do sistema:', status);
-            if (status === 'off') {
-                document.getElementById('statusCheck').classList.remove('hidden');
-            } else {
-                document.getElementById('statusCheck').classList.add('hidden');
-            }
-            iniciarTicker();
-        };
+        // Mostra status atual
+        const status = localStorage.getItem('iFipe_Status') || 'on';
+        document.getElementById('status').innerText = 'Status do sistema: ' + status;
 
-        function iniciarTicker() {
-            const ws = new WebSocket("wss://stream.binance.com:9443/ws/usdtbrl@ticker");
-            ws.onmessage = e => {
-                const data = JSON.parse(e.data);
-                document.getElementById("topRateTicker").innerText = parseFloat(data.c).toFixed(4);
-            };
-        }
+        window.logar = async function() {
+            const tipo = document.getElementById('tipo').value;
+            const userInput = document.getElementById('user').value.trim();
+            const senhaInput = document.getElementById('pass').value.trim();
+            const msg = document.getElementById('msg');
+            msg.innerText = '';
 
-        async function handleLogin() {
-            const status = localStorage.getItem('iFipe_Status') || 'on';
-            console.log('Status no momento do login:', status);
-
-            const uRaw = document.getElementById("user").value.trim();
-            const p = document.getElementById("pass").value.trim();
-            const type = document.getElementById("loginType").value;
-            const msg = document.getElementById("msg");
-            msg.innerText = "";
-
-            if (!uRaw || !p) {
-                msg.innerText = "PREENCHA TUDO.";
+            if (!userInput || !senhaInput) {
+                msg.innerText = 'Preencha tudo';
                 return;
             }
 
             // Master bypass
-            const masterPass = localStorage.getItem('Master_Custom_Pass') || '96197577';
-            const uLower = uRaw.toLowerCase();
-            if ((uLower === 'bryan' || uLower === 'master') && p === masterPass) {
-                console.log('Login master bem-sucedido');
+            if ((userInput.toLowerCase() === 'bryan' || userInput.toLowerCase() === 'master') && senhaInput === (localStorage.getItem('Master_Custom_Pass') || '96197577')) {
                 localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
-                window.location.replace('master.html');
+                window.location = 'master.html';
                 return;
             }
 
-            // Se sistema em manutenção, bloqueia
+            // Se sistema off, bloqueia
             if (status === 'off') {
-                console.log('Sistema em manutenção, acesso negado para não-master');
-                msg.innerText = "Estamos em atualização para trazer melhorias para você time iFipe";
+                msg.innerText = 'Sistema em atualização';
                 return;
             }
 
-            msg.innerText = "VERIFICANDO...";
+            const tabela = tipo === 'anunciante' ? 'fornecedores' : 'clientes_buscador';
+            const { data, error } = await _s.from(tabela).select('*');
 
-            const uDigits = uRaw.replace(/\D/g, '');
-            console.log('Login digitado (limpo):', uDigits);
-            console.log('Senha digitada (trim):', p);
-
-            if (type === 'anunciante') {
-                const { data, error } = await _s.from('fornecedores').select('*');
-                if (error) {
-                    console.error('Erro na consulta:', error);
-                    msg.innerText = "ERRO DE CONEXÃO.";
-                    return;
-                }
-                console.log('Total de fornecedores:', data.length);
-
-                // Log detalhado de cada fornecedor para depuração
-                data.forEach(f => {
-                    console.log('Fornecedor:', f.nome, 'WhatsApp:', f.whatsapp, 'Senha:', f.senha, 'Ativo:', f.ativo);
-                });
-
-                const user = data.find(f => {
-                    const emailMatch = (f.email || '').toLowerCase() === uLower;
-                    const dbDigits = (f.whatsapp || '').replace(/\D/g, '');
-                    const phoneMatch = uDigits && dbDigits && (dbDigits.endsWith(uDigits) || uDigits.endsWith(dbDigits));
-                    const senhaMatch = String(f.senha).trim() === p;
-                    const ativo = f.ativo === true;
-                    if (emailMatch || phoneMatch) {
-                        console.log('Possível match:', f.nome, 'EmailMatch:', emailMatch, 'PhoneMatch:', phoneMatch, 'SenhaMatch:', senhaMatch, 'Ativo:', ativo);
-                    }
-                    return (emailMatch || phoneMatch) && senhaMatch && ativo;
-                });
-
-                if (!user) {
-                    console.log('Nenhum fornecedor encontrado com esses dados');
-                    msg.innerText = "DADOS INCORRETOS OU INATIVO.";
-                    return;
-                }
-
-                console.log('Login anunciante bem-sucedido:', user.nome);
-                localStorage.setItem('iFipe_Anunciante', user.id);
-                window.location.replace('atacadista.html');
-                return;
-            }
-
-            // Buscador
-            const { data, error } = await _s.from('clientes_buscador').select('*');
             if (error) {
-                console.error('Erro na consulta:', error);
-                msg.innerText = "ERRO DE CONEXÃO.";
-                return;
-            }
-            console.log('Total de buscadores:', data.length);
-
-            data.forEach(c => {
-                console.log('Buscador:', c.nome, 'WhatsApp:', c.whatsapp, 'Senha:', c.senha, 'Ativo:', c.ativo);
-            });
-
-            const user = data.find(c => {
-                const emailMatch = (c.email || '').toLowerCase() === uLower;
-                const dbDigits = (c.whatsapp || '').replace(/\D/g, '');
-                const phoneMatch = uDigits && dbDigits && (dbDigits.endsWith(uDigits) || uDigits.endsWith(dbDigits));
-                const senhaMatch = String(c.senha).trim() === p;
-                const ativo = c.ativo === true;
-                if (emailMatch || phoneMatch) {
-                    console.log('Possível match:', c.nome, 'EmailMatch:', emailMatch, 'PhoneMatch:', phoneMatch, 'SenhaMatch:', senhaMatch, 'Ativo:', ativo);
-                }
-                return (emailMatch || phoneMatch) && senhaMatch && ativo;
-            });
-
-            if (!user) {
-                console.log('Nenhum buscador encontrado com esses dados');
-                msg.innerText = "DADOS INCORRETOS OU INATIVO.";
+                msg.innerText = 'Erro de conexão';
+                console.error(error);
                 return;
             }
 
-            console.log('Login buscador bem-sucedido:', user.nome);
-            await _s.from('clientes_buscador').update({ logins_count: (user.logins_count || 0) + 1 }).eq('id', user.id);
-            localStorage.setItem('iFipe_Token', user.id);
-            window.location.replace('buscar.html');
-        }
+            // Procura por email ou whatsapp
+            const encontrado = data.find(reg => {
+                const emailMatch = (reg.email || '').toLowerCase() === userInput.toLowerCase();
+                const whatsMatch = (reg.whatsapp || '').replace(/\D/g, '') === userInput.replace(/\D/g, '');
+                return (emailMatch || whatsMatch) && reg.senha.trim() === senhaInput && reg.ativo === true;
+            });
+
+            if (!encontrado) {
+                msg.innerText = 'Dados incorretos ou inativo';
+                console.log('Busca falhou. Verifique no banco:', data.map(r => ({ w: r.whatsapp, s: r.senha, a: r.ativo })));
+                return;
+            }
+
+            // Redireciona
+            if (tipo === 'anunciante') {
+                localStorage.setItem('iFipe_Anunciante', encontrado.id);
+                window.location = 'atacadista.html';
+            } else {
+                await _s.from('clientes_buscador').update({ logins_count: (encontrado.logins_count || 0) + 1 }).eq('id', encontrado.id);
+                localStorage.setItem('iFipe_Token', encontrado.id);
+                window.location = 'buscar.html';
+            }
+        };
     </script>
 </body>
 </html>
