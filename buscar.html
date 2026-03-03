@@ -102,6 +102,29 @@
         }
         .btn-apple-secondary:hover {
             background: var(--input);
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+        /* Classe para botões do header com hover glow */
+        .header-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-weight: 500;
+            padding: 0.375rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .header-btn:hover {
+            background: var(--input);
+            border-color: var(--blue);
+            color: var(--blue);
         }
         .product-card {
             background: var(--card);
@@ -359,6 +382,14 @@
             font-weight: 600;
             display: inline-block;
         }
+        /* Remove possível duplicação de texto oráculo */
+        .oraculo-text {
+            display: none;
+        }
+        /* Ajuste para barra de filtros com mesma largura da busca */
+        .filter-bar {
+            width: 100%;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -439,7 +470,7 @@
             <span class="text-xs lg:text-sm text-gray-400 hidden sm:inline">A TABELA FIPE DO IPHONE</span>
         </div>
         <div class="flex items-center gap-2 lg:gap-4">
-            <!-- Índices Binance e Oráculo (desktop) -->
+            <!-- Índices Binance e Oráculo (desktop) - sem duplicidade -->
             <div class="desktop-only items-center gap-3 text-xs">
                 <div>
                     <span class="text-gray-400">Binance</span>
@@ -454,20 +485,24 @@
             <a id="comprarUsdtBtn" href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="bg-green-600 text-white px-3 lg:px-4 py-1.5 rounded-full text-xs lg:text-sm font-bold hover:bg-green-700 transition flex items-center gap-1 whitespace-nowrap">
                 <i class="fab fa-whatsapp"></i> COMPRAR USDT <span id="taxaVip" class="ml-1">R$ 5,3507</span>
             </a>
-            <!-- Botão Criar Alerta (desktop) -->
-            <button class="desktop-only btn-apple-secondary text-xs py-1.5 px-3" onclick="abrirCriarAlerta()">
+            <!-- Botão Criar Alerta (desktop) com classe header-btn -->
+            <button class="desktop-only header-btn text-xs" onclick="abrirCriarAlerta()">
                 <i class="fas fa-bell mr-1"></i> Criar Alerta
             </button>
-            <!-- Botão Histórico (desktop) -->
-            <button class="desktop-only btn-apple-secondary text-xs py-1.5 px-3" onclick="abrirHistoricoGeral()">
+            <!-- Botão Histórico (desktop) com classe header-btn -->
+            <button class="desktop-only header-btn text-xs" onclick="abrirHistoricoGeral()">
                 <i class="fas fa-chart-line mr-1"></i> Histórico
             </button>
-            <!-- Ícone de notificações -->
-            <div class="notification-icon" onclick="abrirNotificacoes()">
+            <!-- Ícone de notificações com hover (usando header-btn para consistência) -->
+            <button class="header-btn notification-icon" onclick="abrirNotificacoes()">
                 <i class="far fa-bell"></i>
                 <span id="notificacaoBadge" class="notification-badge hidden">0</span>
-            </div>
-            <!-- Nome do usuário (desktop) - sem "MASTER" -->
+            </button>
+            <!-- Botão Suporte (exemplo, se existir) -->
+            <a href="https://wa.me/5568999999999" target="_blank" class="header-btn text-xs">
+                <i class="fab fa-whatsapp"></i> Suporte
+            </a>
+            <!-- Nome do usuário (desktop) - não é botão -->
             <span id="userName" class="text-xs lg:text-sm font-medium hidden sm:inline">Carregando...</span>
         </div>
     </nav>
@@ -522,11 +557,12 @@
         <div class="lg:col-span-4">
             <!-- Barra de busca -->
             <div class="mb-3">
-                <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-4 pr-4 py-2 text-base lg:text-lg">
+                <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-4 pr-4 py-2 text-base lg:text-lg" onkeyup="mostrarSugestoes(this.value)">
+                <div id="sugestoes" class="absolute bg-[#1c1c1e] border border-[#38383a] rounded-lg mt-1 w-full max-h-60 overflow-y-auto hidden"></div>
             </div>
 
-            <!-- Filtros rápidos (roláveis no mobile) -->
-            <div class="flex overflow-x-auto gap-2 mb-3 pb-1">
+            <!-- Filtros rápidos (roláveis no mobile) com mesma largura da busca -->
+            <div class="flex overflow-x-auto gap-2 mb-3 pb-1 filter-bar">
                 <select id="filtroCategoria" class="apple-input w-auto text-xs py-1.5 flex-shrink-0">
                     <option value="">Todos modelos</option>
                 </select>
@@ -541,6 +577,13 @@
                 </select>
                 <select id="filtroCor" class="apple-input w-auto text-xs py-1.5 flex-shrink-0">
                     <option value="">Todas cores</option>
+                </select>
+                <!-- Novos filtros: Cidades e Lojistas -->
+                <select id="filtroCidade" class="apple-input w-auto text-xs py-1.5 flex-shrink-0">
+                    <option value="">Todas cidades</option>
+                </select>
+                <select id="filtroLojista" class="apple-input w-auto text-xs py-1.5 flex-shrink-0">
+                    <option value="">Todos lojistas</option>
                 </select>
             </div>
 
@@ -672,7 +715,7 @@
         async function carregarDados() {
             try {
                 const [p, v, f, o, r] = await Promise.all([
-                    _s.from('produtos_mestre').select('*').order('nome'),
+                    _s.from('produtos_mestre').select('*').order('id', { ascending: false }), // ordenado por id decrescente para sugestões
                     _s.from('variacoes').select('*'),
                     _s.from('fornecedores').select('*').eq('ativo', true),
                     _s.from('ofertas').select('*, fornecedores!inner(*), variacoes(*, produtos_mestre(*)), regioes(*)').gt('quantidade', 0),
@@ -715,6 +758,19 @@
             const corSelect = document.getElementById('filtroCor');
             cores.forEach(c => {
                 corSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+
+            // Cidades (a partir de fornecedores)
+            const cidades = [...new Set(fornecedores.map(f => f.cidade).filter(Boolean))];
+            const cidadeSelect = document.getElementById('filtroCidade');
+            cidades.forEach(c => {
+                cidadeSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+
+            // Lojistas (ativos)
+            const lojistaSelect = document.getElementById('filtroLojista');
+            fornecedores.forEach(f => {
+                lojistaSelect.innerHTML += `<option value="${f.id}">${f.nome}</option>`;
             });
 
             // Para o modal de alerta
@@ -810,6 +866,29 @@
             document.getElementById('precoVarejoMobile').innerText = `R$ ${varejo.toFixed(2)}`;
         }
 
+        // Função de sugestões ordenada por mais recente (id decrescente)
+        function mostrarSugestoes(termo) {
+            const sugestoesDiv = document.getElementById('sugestoes');
+            if (!termo || termo.length < 2) {
+                sugestoesDiv.classList.add('hidden');
+                return;
+            }
+            const termoLower = termo.toLowerCase();
+            const matches = produtos.filter(p => p.nome.toLowerCase().includes(termoLower)).slice(0, 10);
+            if (matches.length === 0) {
+                sugestoesDiv.classList.add('hidden');
+                return;
+            }
+            sugestoesDiv.innerHTML = matches.map(p => `<div class="p-2 hover:bg-[#2c2c2e] cursor-pointer" onclick="selecionarSugestao('${p.nome}')">${p.nome}</div>`).join('');
+            sugestoesDiv.classList.remove('hidden');
+        }
+
+        function selecionarSugestao(nome) {
+            document.getElementById('searchInput').value = nome;
+            document.getElementById('sugestoes').classList.add('hidden');
+            renderizarCards(); // re-renderiza com filtro
+        }
+
         function renderizarCards() {
             const grid = document.getElementById('produtosGrid');
             grid.innerHTML = '';
@@ -819,17 +898,24 @@
                 return;
             }
 
-            // Aplica filtros (simplificado)
+            // Aplica filtros
             const filtroCat = document.getElementById('filtroCategoria').value;
             const filtroCond = document.getElementById('filtroCondicao').value;
             const filtroCap = document.getElementById('filtroCapacidade').value;
             const filtroCor = document.getElementById('filtroCor').value;
+            const filtroCidade = document.getElementById('filtroCidade').value;
+            const filtroLojista = document.getElementById('filtroLojista').value;
+            const busca = document.getElementById('searchInput').value.toLowerCase();
 
             let ofertasFiltradas = ofertas.filter(o => {
+                const produtoNome = o.variacoes?.produtos_mestre?.nome?.toLowerCase() || '';
+                if (busca && !produtoNome.includes(busca)) return false;
                 if (filtroCat && o.variacoes?.produto_id != filtroCat) return false;
                 if (filtroCond && o.condicao !== filtroCond) return false;
                 if (filtroCap && o.variacoes?.capacidade !== filtroCap) return false;
                 if (filtroCor && o.variacoes?.cor !== filtroCor) return false;
+                if (filtroCidade && o.fornecedores?.cidade !== filtroCidade) return false;
+                if (filtroLojista && o.fornecedor_id != filtroLojista) return false;
                 return true;
             });
 
@@ -859,7 +945,7 @@
                     </div>
                     <p class="text-xs text-gray-400 mb-1">${variacao?.capacidade || ''} | ${cor}</p>
                     <div class="flex items-center gap-1 mb-1 flex-wrap">
-                        <span class="badge ${o.condicao === 'Novo' ? 'badge-blue' : 'badge-yellow'}">${o.condicao}</span>
+                        <span class="badge ${o.condicao === 'Novo' ? 'badge-blue' : o.condicao === 'Seminovo' ? 'badge-yellow' : 'badge-purple'}">${o.condicao}</span>
                         ${isMenor ? '<span class="badge badge-green">🔥 MENOR PREÇO</span>' : ''}
                     </div>
                     <div class="flex items-center gap-1 mb-1">
@@ -909,7 +995,6 @@
         }
 
         async function abrirPerguntas(ofertaId) {
-            // Implementar modal de perguntas
             alert('Abrir perguntas para oferta ' + ofertaId);
         }
 
@@ -993,6 +1078,8 @@
         window.compartilhar = compartilhar;
         window.atualizarCalculadora = atualizarCalculadora;
         window.atualizarCalculadoraMobile = atualizarCalculadoraMobile;
+        window.mostrarSugestoes = mostrarSugestoes;
+        window.selecionarSugestao = selecionarSugestao;
     </script>
 </body>
 </html>
