@@ -184,29 +184,33 @@
 
             msg.innerText = "VERIFICANDO...";
 
-            // Extrai dígitos para comparar telefone
+            // Extrai dígitos do que foi digitado (para comparar com whatsapp)
             const uDigits = uRaw.replace(/\D/g, '');
 
-            // Função para comparar telefone (aceita com ou sem DDI)
-            const phoneMatches = (dbPhone) => {
-                const dbDigits = (dbPhone || '').replace(/\D/g, '');
-                if (!uDigits || !dbDigits) return false;
-                return dbDigits.endsWith(uDigits) || uDigits.endsWith(dbDigits);
-            };
-
-            // Determina a tabela
+            // Determina a tabela e faz a busca
             const tabela = type === 'anunciante' ? 'fornecedores' : 'clientes_buscador';
+
+            // Busca todos os registros (é rápido, poucos registros)
             const { data, error } = await _s.from(tabela).select('*');
             if (error) {
                 msg.innerText = "ERRO DE CONEXÃO.";
                 return;
             }
 
-            // Busca o usuário correspondente
+            // Procura o usuário que corresponda
             const user = data.find(reg => {
-                const emailMatch = (reg.email || '').toLowerCase() === uLower;
-                const phoneMatch = phoneMatches(reg.whatsapp);
-                return (emailMatch || phoneMatch) && String(reg.senha).trim() === p && reg.ativo === true;
+                // Verifica email (case insensitive)
+                const emailMatch = reg.email && reg.email.toLowerCase() === uLower;
+
+                // Verifica whatsapp: remove tudo que não é dígito do banco e compara com os dígitos digitados
+                const dbDigits = reg.whatsapp ? reg.whatsapp.replace(/\D/g, '') : '';
+                const phoneMatch = uDigits && dbDigits && (dbDigits === uDigits || dbDigits.endsWith(uDigits) || uDigits.endsWith(dbDigits));
+
+                // Senha e ativo
+                const senhaOk = reg.senha && reg.senha.trim() === p;
+                const ativoOk = reg.ativo === true;
+
+                return (emailMatch || phoneMatch) && senhaOk && ativoOk;
             });
 
             if (!user) {
