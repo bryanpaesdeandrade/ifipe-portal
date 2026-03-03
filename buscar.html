@@ -4,457 +4,491 @@
 
 <head>
 
-    <meta charset="UTF-8">
+  <meta charset="UTF-8" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>iFipe - Buscador VIP</title>
+  <title>iFipe - Buscador</title>
 
 
 
-    <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
 
 
+  <style>
 
-    <style>
+    :root { --bg:#000; --card:#1c1c1e; --text:#fff; --border:#38383a; --input:#2c2c2e; --blue:#0071e3; }
 
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --blue-apple: #0071e3; }
+    body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; margin:0; }
 
-        body.light-mode { --bg: #f5f5f7; --card: #fff; --text: #1d1d1f; --border: #d2d2d7; --input: #e8e8ed; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:16px; }
 
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; }
+    .inp { background:var(--input); border:1px solid var(--border); border-radius:12px; padding:12px 14px; width:100%; color:var(--text); outline:none; }
 
+    .btn { border-radius:12px; padding:10px 14px; font-weight:900; text-transform:uppercase; font-size:12px; border:1px solid var(--border); }
 
+    .btn-blue { background:rgba(0,113,227,.15); color:var(--blue); }
 
-        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
+    .btn-blue:hover { background:var(--blue); color:#fff; border-color:var(--blue); }
 
-        .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
+    .btn-red { background:rgba(255,59,48,.15); color:#ff3b30; }
 
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; }
+    .btn-red:hover { background:#ff3b30; color:#fff; border-color:#ff3b30; }
 
+    .tag { font-size:10px; font-weight:900; text-transform:uppercase; padding:4px 8px; border-radius:999px; display:inline-block; }
 
+    .tag-ok { background:rgba(50,215,75,.2); color:#32d74b; border:1px solid rgba(50,215,75,.35); }
 
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px; transition: 0.3s; position: relative; }
+    .tag-warn { background:rgba(255,204,0,.2); color:#ffcc00; border:1px solid rgba(255,204,0,.35); }
 
-        .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
+    .tag-bad { background:rgba(255,59,48,.2); color:#ff3b30; border:1px solid rgba(255,59,48,.35); }
 
-
-
-        .tag-status { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 50px; letter-spacing: 0.05em; display: inline-block; margin-bottom: 3px; }
-
-        .tag-menor { background: #ff3b30; color: #fff; }
-
-        .tag-poucas { background: #ffcc00; color: #000; }
-
-        .tag-muitas { background: #0071e3; color: #fff; }
-
-        .tag-estoque-alto { background: #32d74b; color: #000; }
-
-
-
-        .hidden { display: none !important; }
-
-        .btn-header { display: flex; align-items: center; justify-content: center; border-radius: 12px; height: 38px; padding: 0 12px; transition: 0.3s; border: 1px solid var(--border); text-decoration: none; gap: 6px; }
-
-        .btn-calc-top { background: rgba(0, 113, 227, 0.1); color: #0071e3; }
-
-        .btn-calc-top:hover { background: #0071e3; color: #fff; }
-
-        .btn-wpp-top { background: rgba(37, 211, 102, 0.1); color: #25d366; }
-
-        .btn-wpp-top:hover { background: #25d366; color: #fff; }
-
-        .btn-header span { font-size: 10px; font-weight: 900; text-transform: uppercase; }
-
-
-
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-
-        .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
-
-        .custom-scroll::-webkit-scrollbar-thumb { background: #0071e3; border-radius: 10px; }
-
-
-
-        @keyframes likePulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-
-        .like-anim { animation: likePulse 0.3s ease-in-out; }
-
-
-
-        .btn-scroll-top { position: fixed; bottom: 80px; right: 20px; background-color: var(--card); border: 1px solid var(--border); color: var(--text); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 999; transition: 0.3s; opacity: 0; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-
-        .btn-scroll-top.show { opacity: 1; pointer-events: auto; }
-
-        .btn-scroll-top:hover { background-color: #0071e3; border-color: #0071e3; color: #fff; }
-
-
-
-        .btn-alerta-card { position: absolute; top: 12px; right: 12px; background: rgba(255, 204, 0, 0.1); border: 1px solid rgba(255, 204, 0, 0.3); border-radius: 50px; padding: 4px 8px; display: flex; align-items: center; gap: 4px; cursor: pointer; transition: 0.3s; }
-
-        .btn-alerta-card:hover { background: rgba(255, 204, 0, 0.2); border-color: #ffcc00; }
-
-        .btn-alerta-card svg { width: 12px; height: 12px; fill: #ffcc00; }
-
-
-
-        .search-suggestion-item { padding: 12px 20px; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-weight: 900; font-size: 13px; text-transform: uppercase; transition: 0.2s; color: #1d1d1f; }
-
-        .search-suggestion-item:hover { background-color: #f5f5f7; color: #0071e3; }
-
-        .search-suggestion-item:last-child { border-bottom: none; }
-
-
-
-        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
-
-
-
-        .badge-insignia { display: inline-flex; align-items: center; background: rgba(147, 51, 234, 0.15); color: #d8b4fe; border: 1px solid #9333ea; font-size: 8px; font-weight: 900; padding: 3px 6px; border-radius: 6px; margin-right: 4px; margin-bottom: 4px; letter-spacing: 0.5px; text-transform: uppercase; }
-
-    </style>
+  </style>
 
 </head>
 
 
 
-<body id="appBody">
+<body>
 
-<div id="mainContent" class="hidden">
+  <header class="sticky top-0 z-50 border-b" style="border-color:var(--border); background:rgba(28,28,30,.85); backdrop-filter:blur(14px);">
 
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
 
+      <div class="flex items-center gap-3">
 
-<nav class="nav-bar">
+        <div class="text-2xl font-black italic">iFipe</div>
 
-    <div class="flex items-center gap-2 sm:gap-3">
+        <span id="statusBadge" class="tag tag-warn">carregando</span>
 
-        <h1 class="text-2xl font-black italic m-0 mr-2">iFipe</h1>
+      </div>
 
-        <button onclick="abrirCalc()" class="btn-header btn-calc-top">
+      <div class="flex items-center gap-2">
 
-            <span>Calculadora VIP</span>
+        <button class="btn btn-blue" onclick="abrirSuporte()">suporte</button>
 
-        </button>
+        <button class="btn btn-red" onclick="logout()">sair</button>
 
-        <a href="https://wa.me/556896003049" target="_blank" class="btn-header btn-wpp-top">
-
-            <span>Suporte</span>
-
-        </a>
+      </div>
 
     </div>
 
+  </header>
 
 
-    <div class="flex gap-4 items-center">
 
-        <button onclick="abrirSininho()" class="text-[10px] text-yellow-500 font-black uppercase">🔔 Alertas</button>
+  <main class="max-w-7xl mx-auto px-4 py-6">
 
-        <button onclick="toggleTheme()" id="themeBtn">🌙</button>
+    <section class="card p-4 mb-4">
 
-        <button onclick="abrirConta()" class="text-[10px] text-blue-400 font-black uppercase">Conta</button>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
 
-        <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase">Sair</button>
+        <input id="q" class="inp font-black uppercase text-sm" placeholder="buscar produto / modelo" oninput="render()" />
 
-    </div>
+        <select id="f_cat" class="inp font-black uppercase text-sm" onchange="render()">
 
-</nav>
+          <option value="">todas categorias</option>
 
+          <option value="1">iphone</option>
 
+          <option value="2">apple watch</option>
 
-<main class="max-w-7xl mx-auto px-4 pb-20 pt-8">
+          <option value="3">ipad</option>
 
-<div class="relative w-full max-w-3xl mx-auto mb-6">
+          <option value="4">macbook</option>
 
-    <input type="text" id="buscaTexto"
+          <option value="5">imac</option>
 
-        class="w-full bg-white text-black px-6 py-4 outline-none font-black uppercase text-sm"
+          <option value="6">acessórios</option>
 
-        placeholder="ENCONTRE O MELHOR PREÇO"
+          <option value="7">xiaomi</option>
 
-        oninput="mostrarSugestoes(this.value)">
+          <option value="8">realme</option>
 
-    <div id="sugestoesBusca" class="hidden"></div>
+        </select>
 
-</div>
+        <select id="f_cond" class="inp font-black uppercase text-sm" onchange="render()">
 
+          <option value="">todas condições</option>
 
+          <option value="NOVO">novo</option>
 
-<div class="filter-bar grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+          <option value="SEMINOVO">seminovo</option>
 
-    <select id="f_cat" class="apple-input" onchange="popularAparelhos()">
+          <option value="CPO">cpo</option>
 
-        <option value="">Todas</option>
+        </select>
 
-        <option value="1">IPHONE</option>
+        <select id="f_ord" class="inp font-black uppercase text-sm" onchange="render()">
 
-        <option value="2">APPLE WATCH</option>
+          <option value="preco_asc">menor preço</option>
 
-        <option value="3">IPAD</option>
+          <option value="preco_desc">maior preço</option>
 
-        <option value="4">MACBOOK</option>
+          <option value="estoque_desc">maior estoque</option>
 
-        <option value="5">IMAC</option>
+        </select>
 
-        <option value="6">ACESSÓRIOS</option>
+      </div>
 
-        <option value="7">XIAOMI</option>
+      <div class="mt-3 text-xs opacity-80">
 
-        <option value="8">REALME</option>
+        <span id="who"></span>
 
-    </select>
+      </div>
 
+    </section>
 
 
-    <select id="f_prod" class="apple-input" onchange="atualizarFiltrosCascata()">
 
-        <option value="">Todos</option>
+    <section id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></section>
 
-    </select>
+  </main>
 
+  <script>
 
+    // ===== CONFIG =====
 
-    <select id="f_cond" class="apple-input" onchange="renderizarRanking()">
+    const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
 
-        <option value="">Todas</option>
+    const SUPABASE_ANON_KEY = 'SUA_CHAVE_PUBLICA';
 
-        <option value="NOVO">Novo</option>
+    const _s = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        <option value="SEMINOVO">Seminovo</option>
 
-        <option value="CPO">CPO</option>
 
-    </select>
+    // ===== ESTADO =====
 
+    let clienteLogado = null;
 
+    let ofertasAtuais = [];
 
-    <select id="f_cap" class="apple-input" onchange="renderizarRanking()">
 
-        <option value="">Todas</option>
 
-    </select>
+    // ===== DESBLOQUEIO GLOBAL (resolve "manutenção/bloqueio" vindo do index/localStorage) =====
 
+    // Não depende de procurar código em lugar nenhum.
 
+    localStorage.removeItem('iFipe_Status');
 
-    <select id="f_cor" class="apple-input" onchange="renderizarRanking()">
 
-        <option value="">Todas</option>
 
-    </select>
+    // ===== HELPERS =====
 
-</div>
+    function setBadge(type, text){
 
+      const el = document.getElementById('statusBadge');
 
+      el.className = 'tag ' + (type === 'ok' ? 'tag-ok' : type === 'bad' ? 'tag-bad' : 'tag-warn');
 
-<div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+      el.textContent = text;
 
-</main>
+    }
 
-<button id="scrollTopBtn" class="btn-scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
 
+    function norm(s){
 
-</div>
+      return (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 
+    }
 
 
-<script>
 
-const _s = supabase.createClient(
+    function abrirSuporte(){
 
- 'https://zmgosywpwidypxyhxkry.supabase.co',
+      window.open('https://wa.me/556896003049', '_blank');
 
- 'SUA_CHAVE_PUBLICA'
+    }
 
-);
 
 
+    function logout(){
 
-let ofertasAtuais = [];
+      localStorage.removeItem('iFipe_Token');
 
-let gradeVariacoes = [];
+      window.location.replace('index.html');
 
-let clienteLogado = null;
+    }
 
-let todosProdutosMestre = [];
 
-let currentUsdtRate = 0;
 
+    // ===== LOGIN (buscador) =====
 
+    async function autenticar(){
 
-function normalizeString(str){
+      const token = localStorage.getItem('iFipe_Token');
 
- return str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase() : '';
+      if(!token){
 
-}
+        window.location.replace('index.html');
 
-window.onload = async () => {
+        return;
 
- const token = localStorage.getItem('iFipe_Token');
+      }
 
- if(!token){
 
-   window.location.replace('index.html');
 
-   return;
+      // master bypass
 
- }
+      if(token === 'admin_bypass'){
 
+        clienteLogado = { id:'admin_bypass', nome:'MASTER', ativo:true };
 
+        document.getElementById('who').textContent = 'Logado: MASTER';
 
- if(token === 'admin_bypass'){
+        return;
 
-   clienteLogado = { id:'admin_bypass', nome:'MASTER' };
+      }
 
-   initApp();
 
-   return;
 
- }
+      // cliente buscador
 
+      const { data, error } = await _s
 
+        .from('clientes_buscador')
 
- const { data } = await _s.from('clientes_buscador').select('*').eq('id',token).single();
+        .select('*')
 
- if(data && data.ativo !== false){
+        .eq('id', token)
 
-   clienteLogado = data;
+        .single();
 
-   initApp();
 
- } else {
 
-   logout();
+      if(error || !data || data.ativo === false){
 
- }
+        logout();
 
-};
+        return;
 
+      }
 
 
-function logout(){
 
- localStorage.removeItem('iFipe_Token');
+      clienteLogado = data;
 
- window.location.replace('index.html');
+      document.getElementById('who').textContent = `Logado: ${data.nome || data.email || data.id}`;
 
-}
+    }
 
-async function initApp(){
 
- document.getElementById('mainContent').classList.remove('hidden');
 
+    // ===== DADOS =====
 
+    async function carregarOfertas(){
 
- const p = await _s.from('produtos_mestre').select('*').order('nome');
+      setBadge('warn','carregando');
 
- const v = await _s.from('variacoes').select('*');
 
 
+      const { data, error } = await _s
 
- todosProdutosMestre = p.data || [];
+        .from('ofertas')
 
- gradeVariacoes = v.data || [];
+        .select('id, preco, quantidade, condicao, variacoes(id, capacidade, cor, produtos_mestre(id, nome, grupo_id)), fornecedores(id, nome, whatsapp)')
 
+        .gt('quantidade', 0);
 
 
- document.getElementById('f_prod').innerHTML += todosProdutosMestre.map(x =>
 
-   `<option value="${x.id}">${x.nome}</option>`
+      if(error){
 
- ).join('');
+        setBadge('bad','erro');
 
+        console.error(error);
 
+        return;
 
- carregarDados();
+      }
 
- setInterval(carregarDados,5000);
 
-}
 
-async function carregarDados(){
+      ofertasAtuais = data || [];
 
- const { data } = await _s.from('ofertas')
+      setBadge('ok', `${ofertasAtuais.length} ofertas`);
 
-   .select('*, variacoes(*, produtos_mestre(*)), fornecedores(*)')
+      render();
 
-   .gt('quantidade',0);
+    }
 
+    // ===== RENDER =====
 
+    function render(){
 
- ofertasAtuais = data || [];
+      const q = norm(document.getElementById('q').value);
 
- renderizarRanking();
+      const fCat = document.getElementById('f_cat').value;
 
-}
+      const fCond = document.getElementById('f_cond').value;
 
+      const fOrd = document.getElementById('f_ord').value;
 
 
-function renderizarRanking(){
 
- const grid = document.getElementById('gridGeral');
+      let list = ofertasAtuais.slice();
 
- if(ofertasAtuais.length === 0){
 
-   grid.innerHTML = '<p>Nenhuma oferta encontrada</p>';
 
-   return;
+      if(fCat){
 
- }
+        list = list.filter(o => String(o?.variacoes?.produtos_mestre?.grupo_id || '') === String(fCat));
 
+      }
 
+      if(fCond){
 
- grid.innerHTML = ofertasAtuais.map(o => `
+        list = list.filter(o => String(o?.condicao || '').toUpperCase() === String(fCond).toUpperCase());
 
-   <div class="product-card">
+      }
 
-     <h2>${o.variacoes.produtos_mestre.nome}</h2>
+      if(q){
 
-     <p>${o.variacoes.capacidade || ''}</p>
+        list = list.filter(o => {
 
-     <strong>R$ ${o.preco}</strong>
+          const nome = norm(o?.variacoes?.produtos_mestre?.nome);
 
-   </div>
+          const cap = norm(o?.variacoes?.capacidade);
 
- `).join('');
+          const cor = norm(o?.variacoes?.cor);
 
-}
+          const forn = norm(o?.fornecedores?.nome);
 
-function popularAparelhos(){
+          return (nome + ' ' + cap + ' ' + cor + ' ' + forn).includes(q);
 
- const cat = document.getElementById('f_cat').value;
+        });
 
- const filtrados = cat ? todosProdutosMestre.filter(p=>p.grupo_id==cat) : todosProdutosMestre;
+      }
 
- document.getElementById('f_prod').innerHTML =
 
-   '<option value="">Todos</option>' +
 
-   filtrados.map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
+      if(fOrd === 'preco_asc') list.sort((a,b)=>(a.preco||0)-(b.preco||0));
 
-}
+      if(fOrd === 'preco_desc') list.sort((a,b)=>(b.preco||0)-(a.preco||0));
 
+      if(fOrd === 'estoque_desc') list.sort((a,b)=>(b.quantidade||0)-(a.quantidade||0));
 
 
-function atualizarFiltrosCascata(){
 
- renderizarRanking();
+      const grid = document.getElementById('grid');
 
-}
+      if(!list.length){
 
-function mostrarSugestoes(txt){
+        grid.innerHTML = `<div class="card p-4 opacity-80">Nenhuma oferta encontrada.</div>`;
 
- if(!txt || txt.length < 2) return;
+        return;
 
-}
+      }
 
 
 
-</script>
+      grid.innerHTML = list.map(o => {
+
+        const nome = o?.variacoes?.produtos_mestre?.nome || 'Produto';
+
+        const cap = o?.variacoes?.capacidade || '';
+
+        const cor = o?.variacoes?.cor || '';
+
+        const cond = (o?.condicao || '').toUpperCase();
+
+        const qtd = o?.quantidade ?? 0;
+
+        const preco = Number(o?.preco || 0);
+
+
+
+        const forn = o?.fornecedores?.nome || 'Fornecedor';
+
+        const wpp = o?.fornecedores?.whatsapp || '';
+
+
+
+        const tag = qtd <= 2 ? 'tag-bad' : qtd <= 5 ? 'tag-warn' : 'tag-ok';
+
+        const tagTxt = qtd <= 2 ? 'poucas' : qtd <= 5 ? 'médio' : 'alto';
+
+
+
+        const wppLink = wpp ? `https://wa.me/${String(wpp).replace(/\D/g,'')}` : '';
+
+
+
+        return `
+
+          <div class="card p-4 relative">
+
+            <div class="flex items-start justify-between gap-2">
+
+              <div class="font-black uppercase text-sm">${nome}</div>
+
+              <span class="tag ${tag}">${tagTxt}</span>
+
+            </div>
+
+
+
+            <div class="mt-2 text-xs opacity-80 font-black uppercase">
+
+              ${[cap, cor, cond].filter(Boolean).join(' • ')}
+
+            </div>
+
+
+
+            <div class="mt-3 text-2xl font-black">R$ ${preco.toLocaleString('pt-BR')}</div>
+
+
+
+            <div class="mt-1 text-xs opacity-80 font-black uppercase">estoque: ${qtd}</div>
+
+
+
+            <div class="mt-3 flex items-center justify-between gap-2">
+
+              <div class="text-xs opacity-80 font-black uppercase">${forn}</div>
+
+              ${wppLink ? `<a class="btn btn-blue" href="${wppLink}" target="_blank" rel="noopener">whatsapp</a>` : `<span class="text-xs opacity-60">sem whatsapp</span>`}
+
+            </div>
+
+          </div>
+
+        `;
+
+      }).join('');
+
+    }
+
+
+
+    // ===== BOOT =====
+
+    (async function boot(){
+
+      try{
+
+        await autenticar();
+
+        await carregarOfertas();
+
+        setInterval(carregarOfertas, 5000);
+
+      }catch(e){
+
+        console.error(e);
+
+        setBadge('bad','erro');
+
+      }
+
+    })();
+
+  </script>
 
 </body>
 
