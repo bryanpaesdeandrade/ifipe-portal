@@ -1,9 +1,17 @@
 <!DOCTYPE html><html lang="pt-br"><head>
     <script>
-        // ESCUDO DE CONTENÇÃO (NÃO TOCAR)
+        // VERIFICAÇÃO DE ACESSO AO PAINEL DO ANUNCIANTE (CORRIGIDO)
         const a_tok = localStorage.getItem('iFipe_Anunciante');
-        const m_tok = localStorage.getItem('iFipe_Token');
-        if (a_tok !== 'admin_bypass' && m_tok !== 'admin_bypass') {
+        const masterAuth = localStorage.getItem('iFipe_Master_Auth');
+        const status = localStorage.getItem('iFipe_Status');
+
+        // Se não tem token de anunciante nem é master, volta para o login
+        if (!a_tok && masterAuth !== 'gov_absoluto') {
+            window.location.replace('index.html');
+        }
+
+        // Se o sistema estiver em manutenção e não for master, mostra mensagem de bloqueio
+        if (status === 'off' && masterAuth !== 'gov_absoluto') {
             document.documentElement.innerHTML = '<body style="background:#050505;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif;text-align:center;padding:20px;margin:0;"><div><h1 style="color:#0071e3;margin-bottom:15px;font-style:italic;font-weight:900;font-size:2.5rem;text-transform:uppercase;letter-spacing:-2px;">iFipe</h1><p style="color:#888;font-weight:bold;letter-spacing:1px;font-size:12px;line-height:1.6;text-transform:uppercase;">Estamos em atualização para trazer melhorias para você.<br><br>Até logo, time iFipe.</p><button onclick="window.location.replace(\'index.html\')" style="margin-top:30px;background:#1a1a1a;color:#fff;border:1px solid #333;padding:12px 24px;border-radius:50px;font-weight:900;cursor:pointer;font-size:10px;text-transform:uppercase;">Voltar ao Início</button></div></body>';
             window.stop();
         }
@@ -333,7 +341,7 @@
 
         window.onload = async () => {
             const tokenAta = localStorage.getItem('iFipe_Anunciante');
-            const tokenMaster = localStorage.getItem('iFipe_Token') === 'admin_bypass';
+            const tokenMaster = localStorage.getItem('iFipe_Token') === 'admin_bypass' || localStorage.getItem('iFipe_Master_Auth') === 'gov_absoluto';
             const status = localStorage.getItem('iFipe_Status');
 
             // 1. VERIFICAÇÃO DE MANUTENÇÃO (BLOQUEIO GERAL)
