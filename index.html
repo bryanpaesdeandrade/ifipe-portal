@@ -1,492 +1,130 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>iFipe - A Fipe do iPhone</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iFipe - Login</title>
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <style>
-    :root { --bg: #050505; --card: #121212; --border: #2a2a2a; --blue-brand: #0071e3; }
-    body { background-color: var(--bg); color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin: 0; min-height: 100vh; }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-
-    .apple-input { background: #151515; border: 1px solid var(--border); border-radius: 12px; padding: 14px; width: 100%; color: #fff; outline: none; font-size: 11px; text-align: center; transition: 0.3s; }
-    .apple-input:focus { border-color: var(--blue-brand); }
-    .btn-primary { background: #ffffff; color: #000000; font-weight: 900; border-radius: 50px; padding: 14px; cursor: pointer; border: none; font-size: 11px; width: 100%; transition: 0.3s; text-transform: uppercase; letter-spacing: 0.05em; }
-    .btn-primary:hover { background: var(--blue-brand); color: #fff; }
-    .glass-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 30px; display: flex; flex-direction: column; justify-content: center; }
-    .banner-fabrica { background: #000; border: 1px solid var(--border); border-radius: 20px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; transition: 0.4s; text-decoration: none; min-height: 350px; cursor: pointer; }
-    .banner-fabrica:hover { border-color: #444; }
-    .iphone-shape { position: absolute; width: 130px; height: 260px; border: 2px solid #222; border-radius: 24px; background: linear-gradient(135deg, #111 0%, #000 100%); z-index: 1; opacity: 0.4; transition: 0.5s; }
-    .hidden { display: none !important; }
-  </style>
+<style>
+body {
+  background:#050505;
+  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
+}
+input,select {
+  background:#151515;
+  border:1px solid #2a2a2a;
+  border-radius:12px;
+  padding:14px;
+  width:100%;
+  color:#fff;
+  font-size:12px;
+}
+button {
+  background:#fff;
+  color:#000;
+  font-weight:900;
+  border-radius:50px;
+  padding:14px;
+  width:100%;
+  margin-top:16px;
+}
+</style>
 </head>
 
-<body class="flex flex-col items-center justify-center p-4 py-12 md:py-20">
+<body class="flex items-center justify-center min-h-screen p-4">
 
-  <div class="absolute top-4 left-6 text-[10px] font-black text-[#32d74b] tracking-widest flex items-center gap-2">
-    <span class="w-1.5 h-1.5 rounded-full bg-[#32d74b] animate-pulse"></span>
-    USDT/BRL: $ <span id="topRateTicker">--,----</span>
-  </div>
+<div id="manutencao" class="hidden text-center max-w-sm">
+  <h1 class="text-4xl font-black italic mb-4">iFipe</h1>
+  <p class="text-yellow-400 font-black text-sm uppercase tracking-widest">
+    Sistema em atualização<br>Voltamos em breve
+  </p>
+</div>
 
-  <div class="mb-10 text-center flex items-center justify-center gap-3 w-full">
-    <h1 class="text-4xl md:text-5xl font-black italic text-white tracking-tighter select-none cursor-default" ondblclick="revelarLoginMaster()">iFipe</h1>
-    <div class="h-8 w-[2px] bg-[#2a2a2a]"></div>
-    <h2 class="text-lg md:text-xl font-black text-[#0071e3] uppercase tracking-widest italic">A Fipe do iPhone</h2>
-  </div>
+<div id="loginBox" class="w-full max-w-sm space-y-4 hidden">
 
-  <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-6xl items-stretch">
+<h1 class="text-4xl font-black italic text-center">iFipe</h1>
 
-    <!-- COLUNA LOGIN -->
-    <div class="glass-card order-1 lg:order-2 shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20 min-h-[400px]">
+<select id="tipo">
+  <option value="buscador">Sou Buscador</option>
+  <option value="anunciante">Sou Anunciante</option>
+</select>
 
-      <div id="statusCheck" class="hidden mb-5">
-        <span class="text-yellow-500 text-[10px] font-black bg-yellow-500/10 p-4 rounded-xl block border border-yellow-500/20 text-center leading-relaxed">
-          SISTEMA EM MANUTENÇÃO PARA MELHORIAS.
-        </span>
-      </div>
+<input id="login" placeholder="WhatsApp ou Email">
+<input id="senha" type="password" placeholder="Senha">
 
-      <div id="loginForm" class="flex flex-col">
-        <div class="text-center mb-6">
-          <h3 class="text-lg font-black text-white italic">Acesso ao Sistema</h3>
-          <p class="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-1">Selecione seu perfil</p>
-        </div>
+<button onclick="login()">Entrar</button>
 
-        <div class="space-y-4">
-          <select id="loginType" class="apple-input !font-black !text-white bg-[#1c1c1e] border-[#0071e3]/50">
-            <option value="buscador">SOU BUSCADOR</option>
-            <option value="anunciante">SOU ANUNCIANTE</option>
-          </select>
+<p id="msg" class="text-red-500 text-xs text-center font-black"></p>
 
-          <input type="text" id="user" class="apple-input !text-left font-mono" placeholder="WHATSAPP OU EMAIL">
-          <input type="password" id="pass" class="apple-input !text-left font-mono tracking-[0.2em]" placeholder="SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
-        </div>
+</div>
 
-        <button onclick="handleLogin()" class="btn-primary mt-6">ENTRAR</button>
+<script>
+const supabase = supabaseJs.createClient(
+  'https://zmgosywpwidypxyhxkry.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M'
+);
 
-        <p id="msg" class="text-[9px] font-black text-center text-red-500 h-4 mt-3 uppercase tracking-widest"></p>
+function norm(v){
+  return v.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+}
 
-        <span id="linkRegister" class="text-[#0071e3] cursor-pointer text-[10px] font-black uppercase block mt-2 text-center hover:underline" onclick="toggleForm()">CADASTRE-SE</span>
-      </div>
+// CONTROLE ON / OFF
+const status = localStorage.getItem('IFIPE_STATUS') || 'on';
 
-      <!-- FORM CADASTRO -->
-      <div id="registerForm" class="hidden flex-col gap-3">
-        <div class="text-center mb-2">
-          <h3 class="text-sm font-black text-white italic">Solicitar Cadastro</h3>
-          <p class="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-1">Selecione o tipo de acesso</p>
-        </div>
+if(status === 'off'){
+  document.getElementById('manutencao').classList.remove('hidden');
+}else{
+  document.getElementById('loginBox').classList.remove('hidden');
+}
 
-        <select id="cadTipo" class="apple-input !font-black !text-white bg-[#1c1c1e] border-[#0071e3]/50" onchange="atualizarTipoCadastro()">
-          <option value="buscador">BUSCADOR</option>
-          <option value="anunciante">ANUNCIANTE</option>
-        </select>
+async function login(){
+  const tipo = document.getElementById('tipo').value;
+  const u = norm(document.getElementById('login').value);
+  const p = document.getElementById('senha').value;
+  const msg = document.getElementById('msg');
+  msg.innerText = '';
 
-        <!-- CAMPOS BUSCADOR -->
-        <div id="cadBuscador" class="flex flex-col gap-3 mt-3">
-          <input type="text" id="b_nome" class="apple-input" placeholder="NOME COMPLETO">
-          <input type="text" id="b_cpf" class="apple-input" placeholder="CPF">
-          <input type="email" id="b_email" class="apple-input" placeholder="EMAIL">
-          <input type="text" id="b_whatsapp" class="apple-input" placeholder="WHATSAPP">
-          <input type="password" id="b_senha" class="apple-input" placeholder="SENHA">
+  if(!u || !p){ msg.innerText='Preencha tudo'; return; }
 
-          <input type="text" id="b_pais" class="apple-input" placeholder="PAÍS" oninput="atualizarPais('buscador')">
+  // MASTER
+  const masterPass = localStorage.getItem('Master_Custom_Pass') || '96197577';
+  if(u === 'bryan' && p === masterPass){
+    localStorage.clear();
+    localStorage.setItem('iFipe_Master_Auth','gov_absoluto');
+    window.location.replace('master.html');
+    return;
+  }
 
-          <select id="b_estado" class="apple-input hidden"></select>
-          <select id="b_cidade" class="apple-input hidden"></select>
-        </div>
-
-        <!-- CAMPOS ANUNCIANTE -->
-        <div id="cadAnunciante" class="flex flex-col gap-3 mt-3 hidden">
-          <input type="text" id="a_nome_loja" class="apple-input" placeholder="NOME DA LOJA">
-          <input type="text" id="a_nome_dono" class="apple-input" placeholder="NOME DO DONO DA LOJA">
-          <input type="text" id="a_whatsapp" class="apple-input" placeholder="WHATSAPP QUE VAI ATENDER">
-          <input type="password" id="a_senha" class="apple-input" placeholder="SENHA">
-
-          <input type="text" id="a_pais" class="apple-input" placeholder="PAÍS" oninput="atualizarPais('anunciante')">
-
-          <select id="a_estado" class="apple-input hidden"></select>
-          <select id="a_cidade" class="apple-input hidden"></select>
-        </div>
-
-        <button onclick="enviarCadastro()" class="btn-primary mt-6">SOLICITAR ACESSO</button>
-
-        <p id="msgReg" class="text-[9px] font-black text-center text-green-500 h-4 mt-3 uppercase tracking-widest"></p>
-
-        <span class="text-[#0071e3] cursor-pointer text-[10px] font-black uppercase block mt-2 text-center hover:underline" onclick="toggleForm()">VOLTAR</span>
-      </div>
-    </div>
-
-    <!-- COLUNA CALCULADORA -->
-    <div class="glass-card order-2 lg:order-1 shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20">
-      <div class="text-center mb-5 mt-2">
-        <h2 class="text-lg font-black text-white italic">Calculadora de iPhone Importado</h2>
-        <p class="text-[9px] text-gray-500 font-bold uppercase mt-2 tracking-widest leading-relaxed">Custo Final Brasil</p>
-      </div>
-
-      <div class="relative mb-4">
-        <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
-        <input type="number" id="calcUsd" class="apple-input !pl-12 !text-left font-mono text-xl font-black" oninput="calcularImportacao()">
-      </div>
-
-      <div class="bg-[#0a0a0a] border border-[#2c2c2e] rounded-2xl p-4 text-right mb-4">
-        <span class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final SP</span>
-        <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-2">R$ 0,00</div>
-      </div>
-
-      <div class="bg-[#1c1c1e] border border-[#2a2a2a] rounded-xl p-4 text-[10px] font-black uppercase space-y-2">
-        <div class="flex justify-between text-white"><span>ALTO ATACADO</span><span id="res_alto">R$ 0,00</span></div>
-        <div class="flex justify-between text-gray-300"><span>ATACADO</span><span id="res_ata">R$ 0,00</span></div>
-        <div class="flex justify-between text-gray-400"><span>ATACAREJO</span><span id="res_atcrj">R$ 0,00</span></div>
-        <div class="flex justify-between text-gray-500"><span>VAREJO</span><span id="res_var">R$ 0,00</span></div>
-      </div>
-    </div>
-
-    <!-- COLUNA BANNER -->
-    <div class="order-3 lg:order-3">
-      <a href="https://fabricademarcas.mercos.com/" target="_blank" class="banner-fabrica h-full w-full group">
-        <div class="iphone-shape"></div>
-        <div class="relative z-10 text-center px-6">
-          <h3 class="text-xl font-black text-white italic tracking-tight">Fábrica de Marcas</h3>
-          <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-2">Identidade Visual • Sites</p>
-          <div class="mt-6 inline-block bg-white text-black font-black text-[10px] px-6 py-3 rounded-full uppercase tracking-widest hover:bg-[#0071e3] hover:text-white transition">Conhecer</div>
-        </div>
-      </a>
-    </div>
-
-  </main>
-
-  <script>
-    const _s = supabase.createClient(
-      'https://zmgosywpwidypxyhxkry.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M'
+  if(tipo === 'anunciante'){
+    const { data } = await supabase.from('fornecedores').select('*');
+    const user = data?.find(x =>
+      (norm(x.whatsapp) === u || norm(x.email||'') === u) && x.senha === p
     );
+    if(!user){ msg.innerText='Erro'; return; }
+    if(user.ativo === false){ msg.innerText='Bloqueado'; return; }
 
-    const systemStatus = "on";
+    localStorage.clear();
+    localStorage.setItem('iFipe_Anunciante', user.id);
+    window.location.replace('atacadista.html');
+    return;
+  }
 
-    let rateBinance = 0;
-    let rateOraculo = 0;
+  const { data } = await supabase.from('clientes_buscador').select('*');
+  const user = data?.find(x =>
+    (norm(x.whatsapp) === u || norm(x.email||'') === u) && x.senha === p
+  );
+  if(!user){ msg.innerText='Erro'; return; }
+  if(user.ativo === false){ msg.innerText='Bloqueado'; return; }
 
-    function normalizeString(str) {
-      return str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() : '';
-    }
+  localStorage.clear();
+  localStorage.setItem('iFipe_Token', user.id);
+  window.location.replace('buscar.html');
+}
+</script>
 
-    window.onload = () => {
-      if (systemStatus === 'off') {
-        document.getElementById('statusCheck').classList.remove('hidden');
-        document.getElementById('loginForm').classList.add('hidden');
-        return;
-      }
-
-      iniciarTicker();
-    };
-
-    function revelarLoginMaster() {
-      document.getElementById('statusCheck').classList.add('hidden');
-      document.getElementById('loginForm').classList.remove('hidden');
-    }
-
-    function iniciarTicker() {
-      const ws = new WebSocket("wss://stream.binance.com:9443/ws/usdtbrl@ticker");
-      ws.onmessage = (e) => {
-        const data = JSON.parse(e.data);
-        rateBinance = parseFloat(data.c);
-        rateOraculo = rateBinance + 0.06;
-        document.getElementById("topRateTicker").innerText =
-          rateBinance.toLocaleString("pt-BR", { minimumFractionDigits: 4 });
-        calcularImportacao();
-      };
-    }
-
-    function calcularImportacao() {
-      const usd = parseFloat(document.getElementById('calcUsd').value);
-      if (!usd || rateOraculo === 0) return;
-
-      const custo = (usd * rateOraculo) * 1.06;
-      document.getElementById('calcResult').innerText =
-        custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-      let a, b, c;
-      if (usd <= 750) {
-        a = custo * 1.30;
-        b = custo * 1.40;
-        c = custo * 1.75;
-      } else {
-        a = custo + 350;
-        b = custo + 550;
-        c = custo + 1000;
-      }
-
-      document.getElementById('res_alto').innerText = a.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      document.getElementById('res_ata').innerText = b.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      document.getElementById('res_atcrj').innerText = c.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      document.getElementById('res_var').innerText = c.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    }
-
-    async function handleLogin() {
-      const uRaw = document.getElementById("user").value;
-      const p = document.getElementById("pass").value;
-      const type = document.getElementById("loginType").value;
-      const msg = document.getElementById("msg");
-
-      msg.innerText = "";
-
-      if (!uRaw || !p) {
-        msg.innerText = "PREENCHA TUDO.";
-        return;
-      }
-
-      const uNorm = normalizeString(uRaw);
-
-      // MASTER
-      const masterPass = localStorage.getItem('Master_Custom_Pass') || '96197577';
-      if (uNorm === 'bryan' && p === masterPass) {
-        localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
-        window.location.replace('master.html');
-        return;
-      }
-
-      if (type === 'anunciante') {
-        const { data, error } = await _s.from('fornecedores').select('*');
-        if (error || !data) {
-          msg.innerText = "ERRO.";
-          return;
-        }
-
-        const user = data.find(c =>
-          (normalizeString(c.email) === uNorm || normalizeString(c.whatsapp) === uNorm) &&
-          c.senha === p
-        );
-
-        if (user) {
-          if (user.ativo === false) {
-            msg.innerText = "BLOQUEADO.";
-            return;
-          }
-          localStorage.setItem('iFipe_Anunciante', user.id);
-          window.location.replace('atacadista.html');
-        } else {
-          msg.innerText = "ERRO.";
-        }
-      } else {
-        const { data, error } = await _s.from('clientes_buscador').select('*');
-        if (error || !data) {
-          msg.innerText = "ERRO.";
-          return;
-        }
-
-        const user = data.find(c =>
-          (normalizeString(c.email) === uNorm || normalizeString(c.whatsapp) === uNorm) &&
-          c.senha === p
-        );
-
-        if (user) {
-          if (user.ativo === false) {
-            msg.innerText = "BLOQUEADO.";
-            return;
-          }
-          await _s.from('clientes_buscador')
-            .update({ logins_count: (user.logins_count || 0) + 1 })
-            .eq('id', user.id);
-
-          localStorage.setItem('iFipe_Token', user.id);
-          window.location.replace('buscar.html');
-        } else {
-          msg.innerText = "ERRO.";
-        }
-      }
-    }
-
-    function toggleForm() {
-      document.getElementById("loginForm").classList.toggle("hidden");
-      document.getElementById("registerForm").classList.toggle("hidden");
-    }
-
-    function atualizarTipoCadastro() {
-      const tipo = document.getElementById('cadTipo').value;
-      document.getElementById('cadBuscador').classList.toggle('hidden', tipo !== 'buscador');
-      document.getElementById('cadAnunciante').classList.toggle('hidden', tipo !== 'anunciante');
-    }
-
-    async function carregarEstados(prefixo) {
-      const estadoSelect = document.getElementById(prefixo + '_estado');
-      const cidadeSelect = document.getElementById(prefixo + '_cidade');
-
-      estadoSelect.innerHTML = '<option value="">SELECIONE O ESTADO</option>';
-      cidadeSelect.innerHTML = '<option value="">SELECIONE A CIDADE</option>';
-
-      try {
-        const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados');
-        const estados = await res.json();
-        estados.sort((a, b) => a.nome.localeCompare(b.nome));
-        estados.forEach(e => {
-          const opt = document.createElement('option');
-          opt.value = e.sigla;
-          opt.textContent = e.nome;
-          estadoSelect.appendChild(opt);
-        });
-      } catch (e) {
-        console.error('Erro ao carregar estados IBGE', e);
-      }
-    }
-
-    async function carregarCidades(prefixo) {
-      const estadoSelect = document.getElementById(prefixo + '_estado');
-      const cidadeSelect = document.getElementById(prefixo + '_cidade');
-      const uf = estadoSelect.value;
-
-      cidadeSelect.innerHTML = '<option value="">SELECIONE A CIDADE</option>';
-
-      if (!uf) return;
-
-      try {
-        const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
-        const cidades = await res.json();
-        cidades.sort((a, b) => a.nome.localeCompare(b.nome));
-        cidades.forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c.nome;
-          opt.textContent = c.nome;
-          cidadeSelect.appendChild(opt);
-        });
-      } catch (e) {
-        console.error('Erro ao carregar cidades IBGE', e);
-      }
-    }
-
-    function atualizarPais(tipo) {
-      let paisInput, estadoSelect, cidadeSelect;
-
-      if (tipo === 'buscador') {
-        paisInput = document.getElementById('b_pais');
-        estadoSelect = document.getElementById('b_estado');
-        cidadeSelect = document.getElementById('b_cidade');
-      } else {
-        paisInput = document.getElementById('a_pais');
-        estadoSelect = document.getElementById('a_estado');
-        cidadeSelect = document.getElementById('a_cidade');
-      }
-
-      const pais = normalizeString(paisInput.value);
-
-      if (pais === 'brasil') {
-        estadoSelect.classList.remove('hidden');
-        cidadeSelect.classList.remove('hidden');
-        carregarEstados(tipo === 'buscador' ? 'b' : 'a');
-        estadoSelect.onchange = () => carregarCidades(tipo === 'buscador' ? 'b' : 'a');
-      } else if (pais === 'estados unidos' || pais === 'eua' || pais === 'paraguai') {
-        estadoSelect.classList.add('hidden');
-        cidadeSelect.classList.add('hidden');
-        estadoSelect.innerHTML = '';
-        cidadeSelect.innerHTML = '';
-      } else {
-        estadoSelect.classList.add('hidden');
-        cidadeSelect.classList.add('hidden');
-        estadoSelect.innerHTML = '';
-        cidadeSelect.innerHTML = '';
-      }
-    }
-
-    async function enviarCadastro() {
-      const tipo = document.getElementById('cadTipo').value;
-      const msg = document.getElementById('msgReg');
-      msg.innerText = "";
-
-      try {
-        if (tipo === 'buscador') {
-          let nome = document.getElementById('b_nome').value.trim();
-          const cpf = document.getElementById('b_cpf').value.trim();
-          const email = document.getElementById('b_email').value.trim();
-          const whatsapp = document.getElementById('b_whatsapp').value.trim();
-          const senha = document.getElementById('b_senha').value.trim();
-          const pais = document.getElementById('b_pais').value.trim();
-          const estado = document.getElementById('b_estado').value || null;
-          const cidade = document.getElementById('b_cidade').value || null;
-
-          if (!nome || !cpf || !email || !whatsapp || !senha || !pais) {
-            msg.innerText = "PREENCHA TUDO.";
-            return;
-          }
-
-          nome = nome.toUpperCase();
-
-          const { data: existentes } = await _s
-            .from('clientes_buscador')
-            .select('id, email, whatsapp')
-            .or(`email.eq.${email},whatsapp.eq.${whatsapp}`);
-
-          if (existentes && existentes.length > 0) {
-            msg.innerText = "EMAIL OU WHATSAPP JÁ CADASTRADO.";
-            return;
-          }
-
-          await _s.from('clientes_buscador').insert({
-            nome,
-            cpf,
-            email,
-            whatsapp,
-            senha,
-            pais,
-            estado,
-            cidade,
-            ativo: false
-          });
-
-          msg.innerText = "SOLICITAÇÃO ENVIADA!";
-        } else {
-          let nome_loja = document.getElementById('a_nome_loja').value.trim();
-          const nome_dono = document.getElementById('a_nome_dono').value.trim();
-          const whatsapp = document.getElementById('a_whatsapp').value.trim();
-          const senha = document.getElementById('a_senha').value.trim();
-          const pais = document.getElementById('a_pais').value.trim();
-          const estado = document.getElementById('a_estado').value || null;
-          const cidade = document.getElementById('a_cidade').value || null;
-
-          if (!nome_loja || !nome_dono || !whatsapp || !senha || !pais) {
-            msg.innerText = "PREENCHA TUDO.";
-            return;
-          }
-
-          nome_loja = nome_loja.toUpperCase();
-
-          const { data: existentes } = await _s
-            .from('fornecedores')
-            .select('id, whatsapp')
-            .eq('whatsapp', whatsapp);
-
-          if (existentes && existentes.length > 0) {
-            msg.innerText = "WHATSAPP JÁ CADASTRADO.";
-            return;
-          }
-
-          await _s.from('fornecedores').insert({
-            nome_loja,
-            nome_dono,
-            whatsapp,
-            senha,
-            pais,
-            estado,
-            cidade,
-            ativo: false
-          });
-
-          msg.innerText = "SOLICITAÇÃO ENVIADA!";
-        }
-
-        setTimeout(() => {
-          msg.innerText = "";
-          toggleForm();
-        }, 2000);
-      } catch (e) {
-        console.error(e);
-        msg.innerText = "ERRO AO ENVIAR.";
-      }
-    }
-  </script>
 </body>
 </html>
