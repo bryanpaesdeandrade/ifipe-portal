@@ -214,12 +214,6 @@
             visibility: visible;
             opacity: 1;
         }
-        .sidebar {
-            position: sticky;
-            top: 100px;
-            height: calc(100vh - 120px);
-            overflow-y: auto;
-        }
         .modal {
             position: fixed;
             top: 0;
@@ -274,38 +268,167 @@
         .action-button:hover {
             color: var(--blue);
         }
-        .grid-4 {
+        .grid-cards {
             display: grid;
-            grid-template-columns: repeat(1, 1fr);
+            grid-template-columns: 1fr;
             gap: 1.5rem;
         }
-        @media (min-width: 768px) {
-            .grid-4 {
+        @media (min-width: 640px) {
+            .grid-cards {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
         @media (min-width: 1024px) {
-            .grid-4 {
+            .grid-cards {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
         @media (min-width: 1280px) {
-            .grid-4 {
+            .grid-cards {
                 grid-template-columns: repeat(4, 1fr);
             }
+        }
+        /* Drawer (menu lateral) */
+        .drawer {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100vh;
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            transition: left 0.3s ease;
+            z-index: 2000;
+            padding: 2rem 1rem;
+            overflow-y: auto;
+        }
+        .drawer.open {
+            left: 0;
+        }
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1999;
+            display: none;
+        }
+        .drawer-overlay.open {
+            display: block;
+        }
+        .desktop-only {
+            display: none;
+        }
+        @media (min-width: 1024px) {
+            .desktop-only {
+                display: flex;
+            }
+        }
+        .mobile-only {
+            display: flex;
+        }
+        @media (min-width: 1024px) {
+            .mobile-only {
+                display: none;
+            }
+        }
+        .btn-oraculo {
+            background: #10b981;
+            color: white;
+            border-radius: 9999px;
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            white-space: nowrap;
+        }
+        .btn-oraculo:hover {
+            background: #059669;
         }
     </style>
 </head>
 <body class="dark-mode">
-    <!-- NAVBAR -->
-    <nav class="nav-blur fixed top-0 w-full z-50 px-6 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-black tracking-tight">iFipe</h1>
-            <span class="text-sm text-gray-400">A TABELA FIPE DO IPHONE</span>
+    <!-- DRAWER (menu lateral para mobile) -->
+    <div id="drawerOverlay" class="drawer-overlay" onclick="fecharDrawer()"></div>
+    <div id="drawer" class="drawer">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold">Menu</h2>
+            <button onclick="fecharDrawer()" class="text-2xl">&times;</button>
         </div>
-        <div class="flex items-center gap-6">
-            <!-- Cotações e Oráculo -->
-            <div class="flex items-center gap-4 text-xs">
+        <!-- Calculadora dentro do drawer (mobile) -->
+        <div class="apple-card mb-4">
+            <h3 class="text-lg font-bold mb-2">Calculadora iPhone</h3>
+            <div class="mb-2">
+                <label class="text-xs text-gray-400">Preço USD</label>
+                <input type="number" id="calcUsdMobile" class="apple-input" placeholder="0.00" min="0" step="0.01" oninput="atualizarCalculadoraMobile()" value="">
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+                <div>
+                    <span class="text-gray-400">Binance</span>
+                    <div id="calcBinanceMobile" class="font-bold">R$ 5,2741</div>
+                </div>
+                <div>
+                    <span class="text-gray-400">Oráculo</span>
+                    <div id="calcOraculoMobile" class="font-bold text-green-400">R$ 5,3341</div>
+                </div>
+            </div>
+            <div class="bg-[#2c2c2e] p-2 rounded-xl mb-2">
+                <span class="text-xs text-gray-400">Custo final no Brasil</span>
+                <div id="custoFinalMobile" class="text-xl font-bold text-blue-500">R$ 0,00</div>
+            </div>
+            <div class="grid grid-cols-3 gap-1 text-xs text-center">
+                <div class="p-1 bg-[#2c2c2e] rounded-lg">
+                    <span class="text-gray-400">Atacado</span>
+                    <div id="precoAtacadoMobile" class="font-bold">R$ 0</div>
+                </div>
+                <div class="p-1 bg-[#2c2c2e] rounded-lg">
+                    <span class="text-gray-400">Atacarejo</span>
+                    <div id="precoAtacarejoMobile" class="font-bold">R$ 0</div>
+                </div>
+                <div class="p-1 bg-[#2c2c2e] rounded-lg">
+                    <span class="text-gray-400">Varejo</span>
+                    <div id="precoVarejoMobile" class="font-bold">R$ 0</div>
+                </div>
+            </div>
+        </div>
+        <!-- Links do menu -->
+        <div class="space-y-2">
+            <div class="drawer-item p-2 hover:bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="abrirCriarAlerta(); fecharDrawer()">
+                <i class="fas fa-bell mr-2"></i> Criar Alerta
+            </div>
+            <div class="drawer-item p-2 hover:bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="abrirNotificacoes(); fecharDrawer()">
+                <i class="far fa-bell mr-2"></i> Notificações
+            </div>
+            <div class="drawer-item p-2 hover:bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="abrirHistoricoGeral(); fecharDrawer()">
+                <i class="fas fa-chart-line mr-2"></i> Histórico de Preços
+            </div>
+            <div class="drawer-item p-2 hover:bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="abrirMeusAlertas(); fecharDrawer()">
+                <i class="fas fa-bell mr-2"></i> Meus Alertas
+            </div>
+            <div class="drawer-item p-2 hover:bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="abrirFavoritos(); fecharDrawer()">
+                <i class="fas fa-star mr-2"></i> Favoritos
+            </div>
+            <div class="drawer-item p-2 hover:bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="logout()">
+                <i class="fas fa-sign-out-alt mr-2"></i> Sair
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav class="nav-blur fixed top-0 w-full z-50 px-4 lg:px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2 lg:gap-3">
+            <!-- Menu hambúrguer (mobile) -->
+            <button class="mobile-only text-2xl" onclick="abrirDrawer()">☰</button>
+            <h1 class="text-xl lg:text-2xl font-black tracking-tight">iFipe</h1>
+            <span class="text-xs lg:text-sm text-gray-400 hidden sm:inline">A TABELA FIPE DO IPHONE</span>
+        </div>
+        <div class="flex items-center gap-2 lg:gap-6">
+            <!-- Versão desktop: cotações + botões -->
+            <div class="desktop-only items-center gap-4 text-xs">
                 <div>
                     <span class="text-gray-400">Binance</span>
                     <span id="binanceRate" class="font-mono font-bold text-yellow-500 ml-1">R$ 5,2741</span>
@@ -315,104 +438,64 @@
                     <span id="oraculoRate" class="font-mono font-bold text-green-400 ml-1">R$ 5,3341</span>
                 </div>
                 <a href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-green-700 transition whitespace-nowrap">
-                    COMPRAR USDT COM TAXA VIP COM ORÁCULO
+                    COMPRAR USDT COM TAXA VIP
                 </a>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-blue-700 transition flex items-center gap-1 whitespace-nowrap" onclick="abrirCriarAlerta()">
+                    <i class="fas fa-bell"></i> CRIAR ALERTA
+                </button>
+                <button class="text-sm font-medium hover:text-blue-500 transition" onclick="abrirHistoricoGeral()">
+                    <i class="fas fa-chart-line mr-1"></i> Histórico
+                </button>
             </div>
-            <!-- Criar alerta (evidente) -->
-            <button onclick="abrirCriarAlerta()" class="bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-blue-700 transition flex items-center gap-1 whitespace-nowrap">
-                <i class="fas fa-bell"></i> CRIAR ALERTA DE PREÇO
-            </button>
-            <!-- Notificações (discreto) -->
-            <div class="notification-icon" onclick="abrirNotificacoes()">
-                <i class="far fa-bell"></i>
-                <span id="notificacaoBadge" class="notification-badge hidden">3</span>
+            <!-- Versão mobile: apenas botão do oráculo (já inclui a taxa) + notificações + nome do usuário (se couber) -->
+            <div class="mobile-only flex items-center gap-2">
+                <a href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="btn-oraculo">
+                    <i class="fab fa-usdt"></i> Comprar USDT VIP
+                </a>
+                <div class="notification-icon" onclick="abrirNotificacoes()">
+                    <i class="far fa-bell"></i>
+                    <span id="notificacaoBadge" class="notification-badge hidden">3</span>
+                </div>
+                <span id="userNameMobile" class="text-xs font-medium truncate max-w-[80px]">Usuário</span>
             </div>
-            <!-- Histórico de preços na barra -->
-            <button onclick="abrirHistoricoGeral()" class="text-sm font-medium hover:text-blue-500 transition">
-                <i class="fas fa-chart-line mr-1"></i> Histórico
-            </button>
-            <!-- Nome do usuário -->
-            <span id="userName" class="text-sm font-medium">Carregando...</span>
+            <!-- Nome do usuário desktop -->
+            <span id="userName" class="desktop-only text-sm font-medium">Carregando...</span>
         </div>
     </nav>
 
-    <!-- LAYOUT PRINCIPAL: SIDEBAR + CONTEÚDO -->
-    <div class="pt-24 px-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <!-- SIDEBAR ESQUERDA (calculadora) -->
-        <div class="lg:col-span-1 sidebar">
-            <div class="apple-card">
-                <h2 class="text-lg font-bold mb-3">Calculadora iPhone</h2>
-                <div class="mb-3">
-                    <label class="text-xs text-gray-400">Preço USD</label>
-                    <input type="number" id="calcUsd" class="apple-input" placeholder="0.00" min="0" step="0.01" oninput="atualizarCalculadora()" value="">
-                </div>
-                <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
-                    <div>
-                        <span class="text-gray-400">Binance</span>
-                        <div id="calcBinance" class="font-bold">R$ 5,2741</div>
-                    </div>
-                    <div>
-                        <span class="text-gray-400">Oráculo</span>
-                        <div id="calcOraculo" class="font-bold text-green-400">R$ 5,3341</div>
-                    </div>
-                </div>
-                <div class="bg-[#2c2c2e] p-3 rounded-xl mb-3">
-                    <span class="text-xs text-gray-400">Custo final no Brasil</span>
-                    <div id="custoFinal" class="text-2xl font-bold text-blue-500">R$ 0,00</div>
-                </div>
-                <div class="grid grid-cols-3 gap-1 text-xs text-center">
-                    <div class="p-2 bg-[#2c2c2e] rounded-lg">
-                        <span class="text-gray-400">Atacado</span>
-                        <div id="precoAtacado" class="font-bold">R$ 0</div>
-                    </div>
-                    <div class="p-2 bg-[#2c2c2e] rounded-lg">
-                        <span class="text-gray-400">Atacarejo</span>
-                        <div id="precoAtacarejo" class="font-bold">R$ 0</div>
-                    </div>
-                    <div class="p-2 bg-[#2c2c2e] rounded-lg">
-                        <span class="text-gray-400">Varejo</span>
-                        <div id="precoVarejo" class="font-bold">R$ 0</div>
-                    </div>
-                </div>
-            </div>
+    <!-- LAYOUT PRINCIPAL -->
+    <div class="pt-20 lg:pt-24 px-4 lg:px-6 max-w-7xl mx-auto">
+        <!-- Barra de busca (sempre visível) -->
+        <div class="mb-4">
+            <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-4 pr-4 py-3 text-base lg:text-lg">
         </div>
 
-        <!-- CONTEÚDO PRINCIPAL -->
-        <div class="lg:col-span-3">
-            <!-- Barra de busca -->
-            <div class="mb-4">
-                <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-4 pr-4 py-3 text-lg">
-            </div>
+        <!-- Filtros rápidos (roláveis no mobile) -->
+        <div class="flex overflow-x-auto gap-2 mb-4 pb-2">
+            <select class="apple-input w-auto text-sm py-2 flex-shrink-0">
+                <option>Todos os modelos</option>
+                <option>iPhone 15</option>
+                <option>iPhone 14</option>
+            </select>
+            <select class="apple-input w-auto text-sm py-2 flex-shrink-0">
+                <option>Todas condições</option>
+                <option>Novo</option>
+                <option>Seminovo</option>
+            </select>
+            <select class="apple-input w-auto text-sm py-2 flex-shrink-0">
+                <option>Todas capacidades</option>
+                <option>128GB</option>
+                <option>256GB</option>
+            </select>
+        </div>
 
-            <!-- Filtros rápidos -->
-            <div class="flex flex-wrap gap-2 mb-4">
-                <select class="apple-input w-auto text-sm py-2">
-                    <option>Todos os modelos</option>
-                    <option>iPhone 15</option>
-                    <option>iPhone 14</option>
-                </select>
-                <select class="apple-input w-auto text-sm py-2">
-                    <option>Todas condições</option>
-                    <option>Novo</option>
-                    <option>Seminovo</option>
-                </select>
-                <select class="apple-input w-auto text-sm py-2">
-                    <option>Todas capacidades</option>
-                    <option>128GB</option>
-                    <option>256GB</option>
-                </select>
-            </div>
-
-            <!-- Grid de cards (4 por linha) -->
-            <div id="produtosGrid" class="grid-4">
-                <!-- Cards serão gerados via JS -->
-            </div>
+        <!-- Grid de cards -->
+        <div id="produtosGrid" class="grid-cards">
+            <!-- Cards serão gerados via JS -->
         </div>
     </div>
 
-    <!-- MODAIS -->
-
-    <!-- Criar Alerta -->
+    <!-- MODAIS (Criar Alerta, Notificações, Histórico) -->
     <div id="criarAlertaModal" class="modal hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Criar Alerta de Preço</h2>
@@ -444,7 +527,6 @@
         </div>
     </div>
 
-    <!-- Notificações -->
     <div id="notificacoesModal" class="modal hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Notificações</h2>
@@ -468,7 +550,6 @@
         </div>
     </div>
 
-    <!-- Histórico Geral -->
     <div id="historicoGeralModal" class="modal hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Histórico de Preços</h2>
@@ -496,7 +577,7 @@
     <script>
         const _s = supabase.createClient(
             'https://zmgosywpwidypxyhxkry.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M'
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' // Substitua pela sua chave
         );
 
         let rateBinance = 5.2741;
@@ -520,6 +601,7 @@
                 else logout();
             }
             document.getElementById('userName').innerText = currentUser.nome || 'Usuário';
+            document.getElementById('userNameMobile').innerText = (currentUser.nome || 'Usuário').substring(0, 10);
 
             initTicker();
             gerarCardsReais();
@@ -535,6 +617,7 @@
                     document.getElementById('binanceRate').innerText = `R$ ${rateBinance.toFixed(4)}`;
                     document.getElementById('oraculoRate').innerText = `R$ ${rateOraculo.toFixed(4)}`;
                     atualizarCalculadora();
+                    atualizarCalculadoraMobile();
                 };
             } catch (e) {
                 console.warn('WebSocket falhou, usando valores fixos');
@@ -548,7 +631,6 @@
             document.getElementById('custoFinal').innerText = `R$ ${custo.toFixed(2)}`;
             document.getElementById('calcBinance').innerText = `R$ ${rateBinance.toFixed(4)}`;
             document.getElementById('calcOraculo').innerText = `R$ ${rateOraculo.toFixed(4)}`;
-            
             if (usd <= 750) {
                 document.getElementById('precoAtacado').innerText = `R$ ${(custo * 1.2).toFixed(2)}`;
                 document.getElementById('precoAtacarejo').innerText = `R$ ${(custo * 1.4).toFixed(2)}`;
@@ -560,12 +642,55 @@
             }
         }
 
-        // Gerar cards com dados realistas
+        function atualizarCalculadoraMobile() {
+            const usd = parseFloat(document.getElementById('calcUsdMobile').value) || 0;
+            if (usd < 0) document.getElementById('calcUsdMobile').value = 0;
+            const custo = usd * rateOraculo * 1.06;
+            document.getElementById('custoFinalMobile').innerText = `R$ ${custo.toFixed(2)}`;
+            document.getElementById('calcBinanceMobile').innerText = `R$ ${rateBinance.toFixed(4)}`;
+            document.getElementById('calcOraculoMobile').innerText = `R$ ${rateOraculo.toFixed(4)}`;
+            if (usd <= 750) {
+                document.getElementById('precoAtacadoMobile').innerText = `R$ ${(custo * 1.2).toFixed(2)}`;
+                document.getElementById('precoAtacarejoMobile').innerText = `R$ ${(custo * 1.4).toFixed(2)}`;
+                document.getElementById('precoVarejoMobile').innerText = `R$ ${(custo * 1.55).toFixed(2)}`;
+            } else {
+                document.getElementById('precoAtacadoMobile').innerText = `R$ ${(custo + 350).toFixed(2)}`;
+                document.getElementById('precoAtacarejoMobile').innerText = `R$ ${(custo + 550).toFixed(2)}`;
+                document.getElementById('precoVarejoMobile').innerText = `R$ ${(custo + 1000).toFixed(2)}`;
+            }
+        }
+
+        // Drawer functions
+        function abrirDrawer() {
+            document.getElementById('drawer').classList.add('open');
+            document.getElementById('drawerOverlay').classList.add('open');
+        }
+        function fecharDrawer() {
+            document.getElementById('drawer').classList.remove('open');
+            document.getElementById('drawerOverlay').classList.remove('open');
+        }
+
+        // Funções placeholder
+        function abrirCriarAlerta() { document.getElementById('criarAlertaModal').classList.remove('hidden'); }
+        function fecharCriarAlerta() { document.getElementById('criarAlertaModal').classList.add('hidden'); }
+        function criarAlerta() { alert('Alerta criado!'); fecharCriarAlerta(); }
+        function abrirNotificacoes() { document.getElementById('notificacoesModal').classList.remove('hidden'); }
+        function fecharNotificacoes() { document.getElementById('notificacoesModal').classList.add('hidden'); }
+        function abrirHistoricoGeral() { document.getElementById('historicoGeralModal').classList.remove('hidden'); }
+        function fecharHistoricoGeral() { document.getElementById('historicoGeralModal').classList.add('hidden'); }
+        function abrirMeusAlertas() { alert('Meus alertas'); }
+        function abrirFavoritos() { alert('Favoritos'); }
+        function selecionarProdutoHistorico(id) { alert(`Detalhes do produto ${id}`); fecharHistoricoGeral(); }
+        function logout() {
+            localStorage.removeItem('iFipe_Token');
+            localStorage.removeItem('iFipe_Master_Auth');
+            window.location.replace('index.html');
+        }
+
+        // Gerar cards mock (pode ser substituído pela versão real)
         function gerarCardsReais() {
             const grid = document.getElementById('produtosGrid');
             grid.innerHTML = '';
-
-            // Dados mockados realistas baseados nos CSVs
             const produtos = [
                 { nome: 'iPhone 15 Pro Max', cap: '256GB', cor: 'Preto', preco: 7890, qtd: 9, cond: 'Novo', forn: 'Loja Exemplo', verif: true, insignia: 'REI' },
                 { nome: 'iPhone 15 Pro Max', cap: '256GB', cor: 'Azul', preco: 7650, qtd: 1, cond: 'Novo', forn: 'Mobile BR', verif: true, insignia: 'MAGNATA' },
@@ -573,22 +698,12 @@
                 { nome: 'iPhone 14', cap: '128GB', cor: 'Preto', preco: 4590, qtd: 15, cond: 'Novo', forn: 'Loja A', verif: false, insignia: '' },
                 { nome: 'iPhone 14', cap: '128GB', cor: 'Branco', preco: 4490, qtd: 8, cond: 'Novo', forn: 'Loja B', verif: true, insignia: '' },
                 { nome: 'iPhone 13', cap: '128GB', cor: 'Azul', preco: 3790, qtd: 3, cond: 'Seminovo', forn: 'Loja C', verif: false, insignia: '' },
-                { nome: 'iPhone 15 Pro', cap: '256GB', cor: 'Titânio', preco: 6890, qtd: 2, cond: 'Novo', forn: 'TechCell', verif: false, insignia: '' },
-                { nome: 'iPhone 14 Plus', cap: '128GB', cor: 'Roxo', preco: 5290, qtd: 5, cond: 'Novo', forn: 'Loja D', verif: true, insignia: 'VERIFICADO' }
             ];
-
-            const corHex = {
-                'Preto': '#000', 'Branco': '#fff', 'Azul': '#215e7c', 'Vermelho': '#a50011', 
-                'Titânio': '#8c8c88', 'Roxo': '#6b21a8', 'Verde': '#16a34a', 'Amarelo': '#eab308'
-            };
-
+            const corHex = { 'Preto': '#000', 'Branco': '#fff', 'Azul': '#215e7c', 'Vermelho': '#a50011' };
             produtos.forEach(p => {
-                const precoFinal = p.preco; // em BRL
-                const menorPreco = p.preco === 7650; // só exemplo
-                
+                const precoFinal = p.preco;
                 const card = document.createElement('div');
                 card.className = 'product-card';
-                
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <div class="flex items-center">
@@ -600,7 +715,7 @@
                     <p class="text-xs text-gray-400 mb-2">${p.cap} | ${p.cor}</p>
                     <div class="flex items-center gap-1 mb-2 flex-wrap">
                         <span class="badge ${p.cond === 'Novo' ? 'badge-blue' : 'badge-yellow'} text-[9px]">${p.cond}</span>
-                        ${menorPreco ? '<span class="badge badge-green text-[9px]">🔥 MENOR PREÇO</span>' : ''}
+                        ${p.preco === 7650 ? '<span class="badge badge-green text-[9px]">🔥 MENOR PREÇO</span>' : ''}
                     </div>
                     <div class="flex items-center gap-1 mb-1">
                         <span class="text-xs font-medium">🏢 ${p.forn}</span>
@@ -613,15 +728,15 @@
                         <span class="text-xs text-gray-400">há 5 min</span>
                     </div>
                     <div class="flex justify-between items-center py-2 border-t border-b border-[#38383a] mb-3">
-                        <button class="action-button tooltip" onclick="recomendar(${p.nome})">
+                        <button class="action-button tooltip" onclick="recomendar()">
                             <i class="far fa-thumbs-up"></i> <span class="hidden sm:inline">Recomendar</span>
                             <span class="tooltiptext">Recomendar este anúncio</span>
                         </button>
-                        <button class="action-button tooltip" onclick="perguntar(${p.nome})">
+                        <button class="action-button tooltip" onclick="perguntar()">
                             <i class="far fa-question-circle"></i> <span class="hidden sm:inline">Perguntar</span>
                             <span class="tooltiptext">Fazer pergunta</span>
                         </button>
-                        <button class="action-button tooltip" onclick="compartilhar(${p.nome})">
+                        <button class="action-button tooltip" onclick="compartilhar()">
                             <i class="far fa-share-square"></i> <span class="hidden sm:inline">Compartilhar</span>
                             <span class="tooltiptext">Compartilhar oferta</span>
                         </button>
@@ -634,21 +749,14 @@
             });
         }
 
-        // Funções placeholder
-        function abrirCriarAlerta() { document.getElementById('criarAlertaModal').classList.remove('hidden'); }
-        function fecharCriarAlerta() { document.getElementById('criarAlertaModal').classList.add('hidden'); }
-        function criarAlerta() { alert('Alerta criado!'); fecharCriarAlerta(); }
-        function abrirNotificacoes() { document.getElementById('notificacoesModal').classList.remove('hidden'); }
-        function fecharNotificacoes() { document.getElementById('notificacoesModal').classList.add('hidden'); }
-        function abrirHistoricoGeral() { document.getElementById('historicoGeralModal').classList.remove('hidden'); }
-        function fecharHistoricoGeral() { document.getElementById('historicoGeralModal').classList.add('hidden'); }
-        function selecionarProdutoHistorico(id) { alert(`Detalhes do produto ${id}`); fecharHistoricoGeral(); }
-        function recomendar(prod) { alert('👍 Recomendado!'); }
-        function perguntar(prod) { alert('💬 Abrir perguntas'); }
-        function compartilhar(prod) { alert('📤 Link copiado!'); }
-        function logout() { localStorage.removeItem('iFipe_Token'); localStorage.removeItem('iFipe_Master_Auth'); window.location.replace('index.html'); }
+        // Placeholders para ações
+        function recomendar() { alert('👍 Recomendado!'); }
+        function perguntar() { alert('💬 Abrir perguntas'); }
+        function compartilhar() { alert('📤 Link copiado!'); }
 
-        // Expor funções
+        // Expor funções globalmente
+        window.abrirDrawer = abrirDrawer;
+        window.fecharDrawer = fecharDrawer;
         window.abrirCriarAlerta = abrirCriarAlerta;
         window.fecharCriarAlerta = fecharCriarAlerta;
         window.criarAlerta = criarAlerta;
@@ -656,12 +764,15 @@
         window.fecharNotificacoes = fecharNotificacoes;
         window.abrirHistoricoGeral = abrirHistoricoGeral;
         window.fecharHistoricoGeral = fecharHistoricoGeral;
-        window.selecionarProdutoHistorico = selecionarProdutoHistorico;
+        window.abrirMeusAlertas = abrirMeusAlertas;
+        window.abrirFavoritos = abrirFavoritos;
+        window.logout = logout;
+        window.atualizarCalculadora = atualizarCalculadora;
+        window.atualizarCalculadoraMobile = atualizarCalculadoraMobile;
         window.recomendar = recomendar;
         window.perguntar = perguntar;
         window.compartilhar = compartilhar;
-        window.logout = logout;
-        window.atualizarCalculadora = atualizarCalculadora;
+        window.selecionarProdutoHistorico = selecionarProdutoHistorico;
     </script>
 </body>
 </html>
