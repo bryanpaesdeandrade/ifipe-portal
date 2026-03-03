@@ -6,107 +6,52 @@
     <title>iFipe - A Fipe do iPhone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg:#050505; --card:#121212; --border:#2a2a2a; --blue:#0071e3; }
-        body { background:var(--bg); color:#fff; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; margin:0; min-height:100vh; }
-        ::-webkit-scrollbar{ width:4px; }
-        ::-webkit-scrollbar-track{ background:var(--bg); }
-        ::-webkit-scrollbar-thumb{ background:#333; border-radius:10px; }
-        .apple-input{ background:#151515; border:1px solid var(--border); border-radius:12px; padding:14px; width:100%; color:#fff; outline:none; font-size:11px; text-align:center; transition:.3s; }
-        .apple-input:focus{ border-color:var(--blue); }
-        .btn-primary{ background:#fff; color:#000; font-weight:900; border-radius:50px; padding:14px; cursor:pointer; border:none; font-size:11px; width:100%; transition:.3s; text-transform:uppercase; letter-spacing:.05em; }
-        .btn-primary:hover{ background:var(--blue); color:#fff; }
-        .glass-card{ background:var(--card); border:1px solid var(--border); border-radius:20px; padding:30px; display:flex; flex-direction:column; justify-content:center; }
-        .banner-fabrica{ background:#000; border:1px solid var(--border); border-radius:20px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; transition:.4s; text-decoration:none; min-height:350px; cursor:pointer; }
-        .banner-fabrica:hover{ border-color:#444; }
-        .iphone-shape{ position:absolute; width:130px; height:260px; border:2px solid #222; border-radius:24px; background:linear-gradient(135deg,#111 0%,#000 100%); z-index:1; opacity:.4; transition:.5s; }
+        body { background:var(--bg); color:#fff; font-family:-apple-system, sans-serif; }
+        .apple-input{ background:#151515; border:1px solid var(--border); border-radius:12px; padding:14px; width:100%; color:#fff; outline:none; }
+        .btn-primary{ background:#fff; color:#000; font-weight:900; border-radius:50px; padding:14px; cursor:pointer; width:100%; }
+        .glass-card{ background:var(--card); border:1px solid var(--border); border-radius:20px; padding:30px; }
         .hidden{ display:none!important; }
-        .status-badge { background: rgba(255, 204, 0, 0.1); border: 1px solid #ffcc00; color: #ffcc00; padding: 12px; border-radius: 12px; font-size: 10px; font-weight: 900; text-align: center; margin-bottom: 20px; }
+        .status-badge { background: rgba(255, 204, 0, 0.1); border: 1px solid #ffcc00; color: #ffcc00; padding: 12px; border-radius: 12px; margin-bottom: 20px; }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center p-4 py-12 md:py-20">
+<body class="flex items-center justify-center min-h-screen p-4">
 
-    <!-- Ticker Binance -->
-    <div class="absolute top-4 left-6 text-[10px] font-black text-[#32d74b] tracking-widest flex items-center gap-2">
-        <span class="w-1.5 h-1.5 rounded-full bg-[#32d74b] animate-pulse"></span>
-        USDT/BRL: $ <span id="topRateTicker">--,----</span>
-    </div>
-
-    <!-- Título -->
-    <div class="mb-10 text-center flex items-center justify-center gap-3 w-full">
-        <h1 class="text-4xl md:text-5xl font-black italic text-white tracking-tighter">iFipe</h1>
-        <div class="h-8 w-[2px] bg-[#2a2a2a]"></div>
-        <h2 class="text-lg md:text-xl font-black text-[#0071e3] uppercase tracking-widest italic">A Fipe do iPhone</h2>
-    </div>
-
-    <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-6xl items-stretch">
-
-        <!-- Calculadora -->
-        <div class="glass-card order-2 lg:order-1 shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20">
-            <div class="text-center mb-5 mt-2">
-                <h2 class="text-lg font-black text-white italic">Calculadora de iPhone Importado</h2>
-                <p class="text-[9px] text-gray-500 font-bold uppercase mt-2 tracking-widest">Custo Final Brasil</p>
-            </div>
-            <div class="relative mb-4">
-                <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
-                <input type="number" id="calcUsd" class="apple-input !pl-12 !text-left font-mono text-xl font-black" oninput="calcularImportacao()">
-            </div>
-            <div class="bg-[#0a0a0a] border border-[#2c2c2e] rounded-2xl p-4 text-right mb-4">
-                <span class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final Brasil</span>
-                <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-2">R$ 0,00</div>
-            </div>
-            <div class="bg-[#1c1c1e] border border-[#2a2a2a] rounded-xl p-4 text-[10px] font-black uppercase space-y-2">
-                <div class="flex justify-between text-gray-300"><span>ATACADO</span><span id="res_ata">R$ 0,00</span></div>
-                <div class="flex justify-between text-gray-400"><span>ATACAREJO</span><span id="res_atcrj">R$ 0,00</span></div>
-                <div class="flex justify-between text-gray-500"><span>VAREJO</span><span id="res_var">R$ 0,00</span></div>
-            </div>
+    <div class="w-full max-w-md">
+        <!-- Ticker simples -->
+        <div class="text-center mb-4 text-sm text-[#32d74b]">
+            USDT/BRL: $ <span id="topRateTicker">--,----</span>
         </div>
 
-        <!-- Login Card -->
-        <div class="glass-card order-1 lg:order-2 shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20 min-h-[400px] relative">
-            <div id="statusCheck" class="hidden status-badge">
+        <!-- Título -->
+        <h1 class="text-4xl font-black italic text-center mb-2">iFipe</h1>
+        <h2 class="text-lg font-black text-[#0071e3] text-center mb-8">A Fipe do iPhone</h2>
+
+        <!-- Card de login -->
+        <div class="glass-card">
+            <div id="statusCheck" class="hidden status-badge text-center">
                 ⚠️ Estamos em atualização para trazer melhorias para você time iFipe
             </div>
 
-            <div id="loginForm">
-                <div class="text-center mb-6">
-                    <h3 class="text-lg font-black text-white italic">Acesso ao Sistema</h3>
-                    <p class="text-[8px] text-gray-500 font-black uppercase tracking-widest mt-1">Selecione seu perfil</p>
-                </div>
-                <div class="space-y-4">
-                    <select id="loginType" class="apple-input !font-black bg-[#1c1c1e] border-[#0071e3]/50">
-                        <option value="buscador">SOU BUSCADOR</option>
-                        <option value="anunciante">SOU ANUNCIANTE</option>
-                    </select>
-                    <input id="user" class="apple-input !text-left font-mono" placeholder="WHATSAPP OU EMAIL" autocomplete="off">
-                    <input id="pass" type="password" class="apple-input !text-left font-mono tracking-[0.2em]" placeholder="SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
-                </div>
-                <button onclick="handleLogin()" class="btn-primary mt-6">ENTRAR</button>
-                <p id="msg" class="text-[9px] font-black text-center text-red-500 h-4 mt-3 uppercase tracking-widest"></p>
+            <div class="space-y-4">
+                <select id="loginType" class="apple-input">
+                    <option value="buscador">SOU BUSCADOR</option>
+                    <option value="anunciante">SOU ANUNCIANTE</option>
+                </select>
+                <input id="user" class="apple-input" placeholder="WHATSAPP OU EMAIL">
+                <input id="pass" type="password" class="apple-input" placeholder="SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
+                <button onclick="handleLogin()" class="btn-primary">ENTRAR</button>
+                <p id="msg" class="text-sm text-center text-red-500 h-4"></p>
             </div>
         </div>
-
-        <!-- Banner Fábrica de Marcas -->
-        <div class="order-3">
-            <a href="https://fabricademarcas.mercos.com/" target="_blank" class="banner-fabrica h-full w-full">
-                <div class="iphone-shape"></div>
-                <div class="relative z-10 text-center px-6">
-                    <h3 class="text-xl font-black text-white italic">Fábrica de Marcas</h3>
-                    <div class="mt-6 inline-block bg-white text-black font-black text-[10px] px-6 py-3 rounded-full uppercase hover:bg-[#0071e3] hover:text-white transition">Conhecer</div>
-                </div>
-            </a>
-        </div>
-    </main>
+    </div>
 
     <script>
         const _s = supabase.createClient(
             'https://zmgosywpwidypxyhxkry.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M'
         );
-
-        let rateBinance = 0;
-        let rateOraculo = 0;
 
         window.onload = () => {
             const status = localStorage.getItem('iFipe_Status') || 'on';
@@ -123,45 +68,19 @@
             const ws = new WebSocket("wss://stream.binance.com:9443/ws/usdtbrl@ticker");
             ws.onmessage = e => {
                 const data = JSON.parse(e.data);
-                rateBinance = parseFloat(data.c);
-                rateOraculo = rateBinance + 0.06;
-                document.getElementById("topRateTicker").innerText =
-                    rateBinance.toLocaleString("pt-BR", { minimumFractionDigits: 4 });
-                calcularImportacao();
+                document.getElementById("topRateTicker").innerText = parseFloat(data.c).toFixed(4);
             };
-        }
-
-        function calcularImportacao() {
-            const usd = parseFloat(document.getElementById('calcUsd').value);
-            if (!usd || rateOraculo === 0) return;
-            const custo = (usd * rateOraculo) * 1.06;
-            document.getElementById('calcResult').innerText =
-                custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-            let atacado, atacarejo, varejo;
-            if (usd <= 750) {
-                atacado = custo * 1.20;
-                atacarejo = custo * 1.40;
-                varejo = custo * 1.55;
-            } else {
-                atacado = custo + 350;
-                atacarejo = custo + 550;
-                varejo = custo + 1000;
-            }
-            document.getElementById('res_ata').innerText = atacado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('res_atcrj').innerText = atacarejo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('res_var').innerText = varejo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         async function handleLogin() {
             const status = localStorage.getItem('iFipe_Status') || 'on';
+            console.log('Status no momento do login:', status);
+
             const uRaw = document.getElementById("user").value.trim();
             const p = document.getElementById("pass").value.trim();
             const type = document.getElementById("loginType").value;
             const msg = document.getElementById("msg");
             msg.innerText = "";
-
-            console.log('Tentativa de login:', { uRaw, p, type });
 
             if (!uRaw || !p) {
                 msg.innerText = "PREENCHA TUDO.";
@@ -173,89 +92,94 @@
             const uLower = uRaw.toLowerCase();
             if ((uLower === 'bryan' || uLower === 'master') && p === masterPass) {
                 console.log('Login master bem-sucedido');
-                localStorage.removeItem('iFipe_Token');
-                localStorage.removeItem('iFipe_Anunciante');
                 localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
                 window.location.replace('master.html');
                 return;
             }
 
-            // Se sistema em manutenção, bloqueia não-master
+            // Se sistema em manutenção, bloqueia
             if (status === 'off') {
-                console.log('Sistema em manutenção, bloqueando');
+                console.log('Sistema em manutenção, acesso negado para não-master');
                 msg.innerText = "Estamos em atualização para trazer melhorias para você time iFipe";
                 return;
             }
 
             msg.innerText = "VERIFICANDO...";
 
-            // Extrai dígitos para comparar telefone
             const uDigits = uRaw.replace(/\D/g, '');
-            console.log('Dígitos do input:', uDigits);
-
-            // Função para comparar telefone (aceita com ou sem DDI)
-            const phoneMatches = (dbPhone) => {
-                const dbDigits = (dbPhone || '').replace(/\D/g, '');
-                console.log('Comparando telefone:', { dbDigits, uDigits });
-                if (!uDigits || !dbDigits) return false;
-                return dbDigits.endsWith(uDigits) || uDigits.endsWith(dbDigits);
-            };
+            console.log('Login digitado (limpo):', uDigits);
+            console.log('Senha digitada (trim):', p);
 
             if (type === 'anunciante') {
-                console.log('Buscando anunciante...');
-                const { data, error } = await _s.from('fornecedores').select('id, email, whatsapp, senha, ativo');
+                const { data, error } = await _s.from('fornecedores').select('*');
                 if (error) {
                     console.error('Erro na consulta:', error);
                     msg.innerText = "ERRO DE CONEXÃO.";
                     return;
                 }
-                console.log('Dados recebidos:', data);
-                const user = data.find(c => {
-                    const emailMatch = (c.email || '').trim().toLowerCase() === uLower;
-                    const phoneMatch = phoneMatches(c.whatsapp);
-                    const senhaMatch = String(c.senha).trim() === p;
-                    const ativo = c.ativo == true; // comparação solta
-                    console.log('Verificando:', { id: c.id, emailMatch, phoneMatch, senhaMatch, ativo });
+                console.log('Total de fornecedores:', data.length);
+
+                // Log detalhado de cada fornecedor para depuração
+                data.forEach(f => {
+                    console.log('Fornecedor:', f.nome, 'WhatsApp:', f.whatsapp, 'Senha:', f.senha, 'Ativo:', f.ativo);
+                });
+
+                const user = data.find(f => {
+                    const emailMatch = (f.email || '').toLowerCase() === uLower;
+                    const dbDigits = (f.whatsapp || '').replace(/\D/g, '');
+                    const phoneMatch = uDigits && dbDigits && (dbDigits.endsWith(uDigits) || uDigits.endsWith(dbDigits));
+                    const senhaMatch = String(f.senha).trim() === p;
+                    const ativo = f.ativo === true;
+                    if (emailMatch || phoneMatch) {
+                        console.log('Possível match:', f.nome, 'EmailMatch:', emailMatch, 'PhoneMatch:', phoneMatch, 'SenhaMatch:', senhaMatch, 'Ativo:', ativo);
+                    }
                     return (emailMatch || phoneMatch) && senhaMatch && ativo;
                 });
+
                 if (!user) {
-                    console.log('Nenhum anunciante encontrado');
+                    console.log('Nenhum fornecedor encontrado com esses dados');
                     msg.innerText = "DADOS INCORRETOS OU INATIVO.";
                     return;
                 }
-                console.log('Anunciante encontrado:', user);
-                localStorage.removeItem('iFipe_Token');
-                localStorage.removeItem('iFipe_Master_Auth');
+
+                console.log('Login anunciante bem-sucedido:', user.nome);
                 localStorage.setItem('iFipe_Anunciante', user.id);
                 window.location.replace('atacadista.html');
                 return;
             }
 
             // Buscador
-            console.log('Buscando buscador...');
-            const { data, error } = await _s.from('clientes_buscador').select('id, email, whatsapp, senha, ativo, logins_count');
+            const { data, error } = await _s.from('clientes_buscador').select('*');
             if (error) {
                 console.error('Erro na consulta:', error);
                 msg.innerText = "ERRO DE CONEXÃO.";
                 return;
             }
-            console.log('Dados recebidos:', data);
+            console.log('Total de buscadores:', data.length);
+
+            data.forEach(c => {
+                console.log('Buscador:', c.nome, 'WhatsApp:', c.whatsapp, 'Senha:', c.senha, 'Ativo:', c.ativo);
+            });
+
             const user = data.find(c => {
-                const emailMatch = (c.email || '').trim().toLowerCase() === uLower;
-                const phoneMatch = phoneMatches(c.whatsapp);
+                const emailMatch = (c.email || '').toLowerCase() === uLower;
+                const dbDigits = (c.whatsapp || '').replace(/\D/g, '');
+                const phoneMatch = uDigits && dbDigits && (dbDigits.endsWith(uDigits) || uDigits.endsWith(dbDigits));
                 const senhaMatch = String(c.senha).trim() === p;
-                const ativo = c.ativo == true;
-                console.log('Verificando:', { id: c.id, emailMatch, phoneMatch, senhaMatch, ativo });
+                const ativo = c.ativo === true;
+                if (emailMatch || phoneMatch) {
+                    console.log('Possível match:', c.nome, 'EmailMatch:', emailMatch, 'PhoneMatch:', phoneMatch, 'SenhaMatch:', senhaMatch, 'Ativo:', ativo);
+                }
                 return (emailMatch || phoneMatch) && senhaMatch && ativo;
             });
+
             if (!user) {
-                console.log('Nenhum buscador encontrado');
+                console.log('Nenhum buscador encontrado com esses dados');
                 msg.innerText = "DADOS INCORRETOS OU INATIVO.";
                 return;
             }
-            console.log('Buscador encontrado:', user);
-            localStorage.removeItem('iFipe_Anunciante');
-            localStorage.removeItem('iFipe_Master_Auth');
+
+            console.log('Login buscador bem-sucedido:', user.nome);
             await _s.from('clientes_buscador').update({ logins_count: (user.logins_count || 0) + 1 }).eq('id', user.id);
             localStorage.setItem('iFipe_Token', user.id);
             window.location.replace('buscar.html');
