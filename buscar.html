@@ -4,193 +4,323 @@
 
 <head>
 
-<meta charset="UTF-8">
+  <meta charset="UTF-8" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<title>iFipe - Buscador</title>
-
-
-
-<script>
-
-const status = localStorage.getItem('iFipe_Status');
-
-const token = localStorage.getItem('iFipe_Token');
+  <title>iFipe - Buscador VIP</title>
 
 
 
-if (status === 'off' && token !== 'admin_bypass') {
+  <script src="https://cdn.tailwindcss.com"></script>
 
-  document.documentElement.innerHTML = `
-
-  <body style="background:#000;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui;">
-
-    <div style="text-align:center">
-
-      <h1 style="color:#ff3b30;font-style:italic;font-weight:900">iFipe</h1>
-
-      <p style="font-size:12px;letter-spacing:1px">SISTEMA EM ATUALIZAÇÃO</p>
-
-      <button onclick="location.href='index.html'"
-
-        style="margin-top:20px;padding:12px 24px;border-radius:30px;border:none;background:#0071e3;color:#fff;font-weight:900">
-
-        VOLTAR
-
-      </button>
-
-    </div>
-
-  </body>`;
-
-  window.stop();
-
-}
-
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 
 
-<script src="https://cdn.tailwindcss.com"></script>
+  <style>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    :root { --bg:#000; --card:#1c1c1e; --text:#fff; --border:#38383a; --input:#2c2c2e; --blue:#0071e3; }
 
-<style>
+    body { background:var(--bg); color:var(--text); margin:0; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; }
 
-body { background:#000; color:#fff; margin:0; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; }
+    .hidden { display:none !important; }
 
-.card { background:#1c1c1e; border:1px solid #38383a; border-radius:16px; padding:14px; }
+    .nav { position:sticky; top:0; z-index:50; background:rgba(28,28,30,.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); }
 
-.btn { background:#0071e3; color:#fff; padding:10px; border-radius:30px; font-weight:900; text-transform:uppercase; font-size:11px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px; }
 
-.hidden { display:none }
+    .btn { background:var(--blue); color:#fff; font-weight:900; border-radius:999px; padding:10px 14px; text-transform:uppercase; font-size:11px; }
 
-</style>
+    .btn-danger { background:transparent; border:1px solid #ff3b30; color:#ff3b30; }
+
+    .input { background:#fff; color:#000; border-radius:999px; padding:14px 18px; width:100%; font-weight:900; text-transform:uppercase; outline:none; }
+
+  </style>
 
 </head>
 
 <body>
 
+  <div id="mainContent" class="hidden">
 
+    <div class="nav p-4 flex items-center justify-between gap-3">
 
-<header class="p-4 border-b border-[#38383a] flex justify-between items-center">
+      <div class="font-black italic text-2xl">iFipe</div>
 
-  <strong class="italic text-xl">iFipe</strong>
+      <div class="flex items-center gap-2">
 
-  <button onclick="logout()" class="text-red-500 font-black text-xs">SAIR</button>
-
-</header>
-
-
-
-<main class="p-4">
-
-<input id="busca" placeholder="BUSCAR PRODUTO"
-
-  class="w-full p-3 rounded bg-white text-black font-black uppercase">
-
-<div id="grid" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6"></div>
-
-</main>
-
-<script>
-
-const sb = supabase.createClient(
-
-  'https://zmgosywpwidypxyhxkry.supabase.co',
-
-  'SUA_CHAVE_ANON_AQUI'
-
-);
-
-
-
-let ofertas = [];
-
-window.onload = async () => {
-
-  const token = localStorage.getItem('iFipe_Token');
-
-  if (!token) return location.href = 'index.html';
-
-
-
-  const { data } = await sb.from('clientes_buscador')
-
-    .select('*').eq('id', token).single();
-
-
-
-  if (!data || data.ativo === false) logout();
-
-  carregar();
-
-};
-
-
-
-function logout() {
-
-  localStorage.removeItem('iFipe_Token');
-
-  location.href = 'index.html';
-
-}
-
-async function carregar() {
-
-  const { data } = await sb.from('ofertas')
-
-    .select('*, variacoes(produtos_mestre(nome)), fornecedores(nome, whatsapp)')
-
-    .gt('quantidade', 0);
-
-
-
-  ofertas = data || [];
-
-  render();
-
-}
-
-function render() {
-
-  const grid = document.getElementById('grid');
-
-  const q = document.getElementById('busca').value.toLowerCase();
-
-
-
-  grid.innerHTML = ofertas
-
-    .filter(o => o.variacoes.produtos_mestre.nome.toLowerCase().includes(q))
-
-    .map(o => `
-
-      <div class="card">
-
-        <strong>${o.variacoes.produtos_mestre.nome}</strong>
-
-        <div class="text-xl font-black mt-2">R$ ${o.preco}</div>
-
-        <a class="btn block text-center mt-3"
-
-          target="_blank"
-
-          href="https://wa.me/${o.fornecedores.whatsapp}">
-
-          COMPRAR
-
-        </a>
+        <button class="btn btn-danger" onclick="logout()">Sair</button>
 
       </div>
 
-    `).join('');
+    </div>
 
-}
 
-document.getElementById('busca').addEventListener('input', render);</script></body>
+
+    <main class="max-w-6xl mx-auto p-4 pb-20">
+
+      <div class="max-w-3xl mx-auto">
+
+        <input id="buscaTexto" class="input" placeholder="ENCONTRE O MELHOR PREÇO" />
+
+      </div>
+
+
+
+      <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6"></div>
+
+    </main>
+
+  </div>
+
+
+
+  <div id="blockScreen" class="hidden"></div>
+
+  <script>
+
+    // ====== CONFIG SUPABASE (MANTÉM O SEU PROJETO) ======
+
+    const _s = supabase.createClient(
+
+      'https://zmgosywpwidypxyhxkry.supabase.co',
+
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M'
+
+    );
+
+
+
+    let clienteLogado = null;
+
+    let ofertasAtuais = [];
+
+
+
+    function logout() {
+
+      localStorage.removeItem('iFipe_Token');
+
+      location.replace('index.html');
+
+    }
+
+
+
+    function renderBlockScreen() {
+
+      document.getElementById('mainContent').classList.add('hidden');
+
+      const b = document.getElementById('blockScreen');
+
+      b.classList.remove('hidden');
+
+      b.innerHTML = `
+
+        <div style="background:#000;color:#fff;height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui;text-align:center;padding:20px;">
+
+          <div>
+
+            <h1 style="color:#ff3b30;margin:0 0 12px 0;font-style:italic;font-weight:900;font-size:2rem;text-transform:uppercase;">iFipe</h1>
+
+            <p style="color:#888;font-weight:900;letter-spacing:1px;font-size:12px;line-height:1.6;text-transform:uppercase;">
+
+              Sistema em atualização.<br><br>Até logo.
+
+            </p>
+
+            <button onclick="location.replace('index.html')" style="margin-top:22px;background:#0071e3;color:#fff;border:none;padding:12px 24px;border-radius:999px;font-weight:900;cursor:pointer;font-size:10px;text-transform:uppercase;">
+
+              Voltar ao Início
+
+            </button>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }
+
+    async function validarLoginOuSair() {
+
+      const token = localStorage.getItem('iFipe_Token');
+
+      if (!token) return logout();
+
+
+
+      if (token === 'admin_bypass' || localStorage.getItem('iFipe_Master_Auth') === 'gov_absoluto') {
+
+        clienteLogado = { id: 'admin_bypass', nome: 'MASTER', ativo: true };
+
+        return true;
+
+      }
+
+
+
+      const { data, error } = await _s
+
+        .from('clientes_buscador')
+
+        .select('*')
+
+        .eq('id', token)
+
+        .single();
+
+
+
+      if (error || !data || data.ativo === false) return logout();
+
+
+
+      clienteLogado = data;
+
+      return true;
+
+    }
+
+
+
+    function checarStatusDepoisDoLogin() {
+
+      const status = localStorage.getItem('iFipe_Status'); // "on" | "off" | null
+
+      const token = localStorage.getItem('iFipe_Token');
+
+      const isMaster = token === 'admin_bypass' || localStorage.getItem('iFipe_Master_Auth') === 'gov_absoluto';
+
+
+
+      if (status === 'off' && !isMaster) {
+
+        renderBlockScreen();
+
+        return false;
+
+      }
+
+      return true;
+
+    }
+
+    async function carregarOfertas() {
+
+      const { data } = await _s
+
+        .from('ofertas')
+
+        .select('id, preco, moeda, quantidade, condicao, fornecedores(nome, whatsapp, ativo), variacoes(produtos_mestre(nome))')
+
+        .gt('quantidade', 0)
+
+        .order('criado_em', { ascending: false });
+
+
+
+      ofertasAtuais = (data || []).filter(o => o.fornecedores && o.fornecedores.ativo !== false);
+
+      renderizar();
+
+    }
+
+
+
+    function renderizar() {
+
+      const q = (document.getElementById('buscaTexto').value || '').toLowerCase().trim();
+
+      const grid = document.getElementById('gridGeral');
+
+
+
+      const lista = ofertasAtuais.filter(o => {
+
+        const nome = (o.variacoes?.produtos_mestre?.nome || '').toLowerCase();
+
+        return !q || nome.includes(q);
+
+      });
+
+
+
+      if (lista.length === 0) {
+
+        grid.innerHTML = '<p class="text-gray-500 text-center col-span-full py-10 font-black uppercase tracking-widest">Nenhuma oferta encontrada.</p>';
+
+        return;
+
+      }
+
+
+
+      grid.innerHTML = lista.map(o => {
+
+        const nome = o.variacoes?.produtos_mestre?.nome || '-';
+
+        const wpp = (o.fornecedores?.whatsapp || '').replace(/\D/g,'');
+
+        const loja = o.fornecedores?.nome || '-';
+
+        const preco = Number(o.preco || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+
+
+        return `
+
+          <div class="card">
+
+            <div class="text-sm font-black uppercase text-gray-400 mb-1">🏢 ${loja}</div>
+
+            <div class="text-lg font-black">${nome}</div>
+
+            <div class="text-2xl font-black mt-2">R$ ${preco}</div>
+
+            <a class="btn block text-center mt-4 no-underline" target="_blank" href="https://wa.me/${wpp}">
+
+              Comprar no WhatsApp
+
+            </a>
+
+          </div>
+
+        `;
+
+      }).join('');
+
+    }
+
+    window.onload = async () => {
+
+      const ok = await validarLoginOuSair();
+
+      if (!ok) return;
+
+
+
+      if (!checarStatusDepoisDoLogin()) return;
+
+
+
+      document.getElementById('mainContent').classList.remove('hidden');
+
+      document.getElementById('buscaTexto').addEventListener('input', renderizar);
+
+
+
+      await carregarOfertas();
+
+      setInterval(carregarOfertas, 5000);
+
+    };
+
+  </script>
+
+</body>
 
 </html>
 
