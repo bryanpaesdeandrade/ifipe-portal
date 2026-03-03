@@ -6,385 +6,76 @@
     <title>iFipe - Buscar Ofertas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --blue-apple: #0071e3; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; transition: 0.3s; }
-        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px; }
-        .filter-bar { background: var(--card); padding:15px; border-radius:16px; margin-top:20px; border:1px solid var(--border); }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; }
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px; transition: 0.3s; position: relative; }
-        .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
-        .tag-status { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 50px; letter-spacing: 0.05em; display: inline-block; margin-bottom: 3px; }
-        .tag-menor { background: #ff3b30; color: #fff; }
-        .tag-poucas { background: #ffcc00; color: #000; }
-        .tag-muitas { background: #0071e3; color: #fff; }
-        .badge-verificado { background: rgba(0, 113, 227, 0.1); color: #0071e3; border: 1px solid #0071e3; padding: 2px 6px; border-radius: 12px; font-size: 8px; font-weight: 900; }
-        .price-text { font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.05em; text-align: right; }
-        .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 16px; transition: 0.3s; }
-        .buy-button:hover { background: #005bb5; }
-        .hidden { display: none !important; }
-        .btn-header { display: flex; align-items: center; justify-content: center; border-radius: 12px; height: 38px; padding: 0 12px; transition: 0.3s; border: 1px solid var(--border); text-decoration: none; gap: 6px; }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #0071e3; border-radius: 10px; }
-        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); }
-        .badge-insignia { display: inline-flex; align-items: center; background: rgba(147, 51, 234, 0.15); color: #d8b4fe; border: 1px solid #9333ea; font-size: 8px; font-weight: 900; padding: 3px 6px; border-radius: 6px; margin-right: 4px; margin-bottom: 4px; }
-        .user-menu { position: relative; display: inline-block; }
-        .user-dropdown { display: none; position: absolute; right: 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; min-width: 200px; z-index: 1000; }
-        .user-menu:hover .user-dropdown { display: block; }
-        .user-dropdown a { display: block; padding: 10px 15px; color: var(--text); text-decoration: none; font-size: 11px; font-weight: 900; border-bottom: 1px solid var(--border); }
-        .user-dropdown a:last-child { border-bottom: none; }
-        .user-dropdown a:hover { background: #0071e3; color: #fff; }
+        body { background: #000; color: #fff; font-family: system-ui; margin: 0; }
+        .error-box { background: #330000; border: 1px solid #ff0000; color: #ff8888; padding: 20px; margin: 20px; border-radius: 10px; }
+        .loading { text-align: center; padding: 50px; color: #0071e3; }
     </style>
 </head>
-<body id="appBody">
-    <!-- Área de manutenção (se necessário) -->
-    <div id="manutencaoOverlay" class="hidden fixed inset-0 bg-black z-50 flex items-center justify-center">
-        <div class="border border-[#38383a] p-10 rounded-2xl bg-[#0a0a0a] text-center w-[380px]">
-            <h1 class="text-4xl font-black italic mb-2">iFipe</h1>
-            <p class="text-[10px] text-zinc-500 mb-8">BUSCADOR EM MANUTENÇÃO</p>
-            <span class="text-red-500 text-[10px] font-black block">Voltamos em breve.</span>
-            <button onclick="window.location.replace('index.html')" class="mt-6 bg-[#0071e3] text-white font-black rounded-lg p-3 text-[10px] uppercase w-full">VOLTAR</button>
-        </div>
+<body>
+    <div id="loading" class="loading">
+        <h2 class="text-2xl">Carregando iFipe...</h2>
+    </div>
+
+    <div id="error" class="error-box hidden">
+        <h3 class="text-xl mb-2">❌ Erro ao carregar</h3>
+        <p id="errorMessage"></p>
     </div>
 
     <div id="mainContent" class="hidden">
-        <!-- NAVBAR -->
-        <nav class="nav-bar">
-            <div class="flex items-center gap-3">
-                <h1 class="text-2xl font-black italic">iFipe</h1>
-                <span class="text-[10px] text-gray-400 font-black border-l border-[#38383a] pl-3">BUSCADOR</span>
-            </div>
-
-            <div class="flex items-center gap-4">
-                <!-- Ticker Binance -->
-                <div class="bg-[#1c1c1e] border border-[#38383a] rounded-lg px-4 py-1 text-center">
-                    <span class="text-[8px] text-yellow-400 font-black">USDT/BRL</span>
-                    <span id="ticker" class="text-[13px] font-mono font-black text-[#32d74b]">R$ --</span>
-                </div>
-
-                <!-- Alertas -->
-                <button onclick="abrirSininho()" class="relative text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
-                    🔔 Alertas
-                    <span id="badgeSininho" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
-                </button>
-
-                <!-- Menu do usuário -->
-                <div class="user-menu">
-                    <button class="text-[10px] text-blue-400 font-black uppercase hover:text-white flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
-                        <span id="userNameDisplay">Carregando...</span> ▼
-                    </button>
-                    <div class="user-dropdown">
-                        <a href="#" onclick="abrirMeusAlertas()">🔔 Meus Alertas</a>
-                        <a href="#" onclick="abrirFavoritos()">⭐ Meus Favoritos</a>
-                        <a href="#" onclick="abrirHistorico()">📊 Histórico de Preços</a>
-                        <a href="#" onclick="abrirConfiguracoes()">⚙️ Configurações</a>
-                        <a href="#" onclick="logout()" class="text-red-500">🚪 Sair</a>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
-        <!-- MAIN -->
-        <main class="max-w-7xl mx-auto px-4 pb-20 pt-8">
-            <!-- Indicadores de performance -->
-            <div class="flex flex-wrap justify-between items-center mb-6 bg-[#1c1c1e] p-4 rounded-xl border border-[#38383a]">
-                <div class="flex gap-6 text-[10px] font-black">
-                    <span>📦 <span id="totalProdutos">0</span> produtos</span>
-                    <span>🏢 <span id="totalFornecedores">0</span> fornecedores</span>
-                    <span>🕒 Última atualização: <span id="ultimaAtualizacao">--:--:--</span></span>
-                </div>
-                <div class="text-[#32d74b] text-[12px] font-mono font-black">
-                    USDT/BRL: R$ <span id="tickerGrande">--</span>
-                </div>
-            </div>
-
-            <!-- Barra de busca principal -->
-            <div class="relative w-full max-w-3xl mx-auto mb-8">
-                <div class="flex items-center bg-white border-4 border-[#0071e3] rounded-full overflow-hidden shadow-2xl">
-                    <input type="text" id="buscaTexto" class="w-full bg-white text-black px-6 py-4 outline-none font-black uppercase text-sm" placeholder="BUSCAR PRODUTO, CATEGORIA OU FORNECEDOR" onkeyup="buscarComSugestoes()">
-                    <button onclick="executarBusca()" class="bg-white text-[#0071e3] px-6 py-4 hover:bg-gray-100 border-l border-gray-200">
-                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Filtros (em linha) -->
-            <div class="filter-bar grid grid-cols-2 md:grid-cols-5 lg:grid-cols-7 gap-3 mb-8">
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-blue-500 mb-1">Categoria</label>
-                    <select id="f_cat" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todas</option>
-                        <!-- preenchido via js -->
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1">Produto</label>
-                    <select id="f_prod" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todos</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1">Capacidade</label>
-                    <select id="f_cap" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todas</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1">Cor</label>
-                    <select id="f_cor" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todas</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1">Região</label>
-                    <select id="f_reg" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todas</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1">Fornecedor</label>
-                    <select id="f_forn" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todos</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1">Condição</label>
-                    <select id="f_cond" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todas</option>
-                        <option value="Novo">Novo</option>
-                        <option value="Seminovo">Seminovo</option>
-                        <option value="CPO">CPO</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Seção: Melhores preços por cor (aparece quando um modelo é selecionado) -->
-            <div id="melhoresPorCorSection" class="hidden mb-8">
-                <h2 class="text-sm font-black text-white mb-3 border-b border-[#38383a] pb-2">🔥 Melhores preços por cor</h2>
-                <div id="melhoresPorCorGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- cards gerados dinamicamente -->
-                </div>
-            </div>
-
-            <!-- Grade de resultados -->
-            <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                <!-- Cards serão inseridos aqui -->
-            </div>
-        </main>
+        <!-- Seu conteúdo aparecerá aqui -->
+        <nav class="bg-[#1c1c1e] p-4">Navbar teste</nav>
+        <main class="p-4">Conteúdo principal</main>
     </div>
 
-    <!-- Modais (Alertas, Histórico, Perguntas) - simplificados, você já tem no original -->
-    <div id="sininhoModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50 px-4">...</div>
-    <div id="historicoModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50 px-4">...</div>
-    <div id="comentarioModal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50 px-4">...</div>
-
     <script>
-        const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'); // sua chave
+        // === CONFIGURAÇÃO ===
+        const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
+        
+        const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let currentUser = null;
-        let todosProdutos = [];
-        let todasVariacoes = [];
-        let todosFornecedores = [];
-        let todasOfertas = [];
-        let todasRegioes = [];
-        let rateBinance = 0;
+        // === FUNÇÃO PARA MOSTRAR ERRO ===
+        function showError(msg) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('error').classList.remove('hidden');
+            document.getElementById('errorMessage').innerText = msg;
+        }
 
-        // Inicialização
+        // === INICIALIZAÇÃO ===
         window.onload = async () => {
-            // Verifica se usuário está logado (buscador ou master)
-            const token = localStorage.getItem('iFipe_Token');
-            const masterAuth = localStorage.getItem('iFipe_Master_Auth');
-            if (!token && masterAuth !== 'gov_absoluto') {
-                window.location.replace('index.html');
-                return;
-            }
+            try {
+                // 1. Verifica login
+                const token = localStorage.getItem('iFipe_Token');
+                const masterAuth = localStorage.getItem('iFipe_Master_Auth');
 
-            // Carrega dados do usuário
-            if (masterAuth === 'gov_absoluto') {
-                currentUser = { nome: 'MASTER', email: 'master@ifipe' };
-            } else {
-                const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
-                if (data) currentUser = data;
-                else {
-                    logout();
+                if (!token && masterAuth !== 'gov_absoluto') {
+                    window.location.replace('index.html');
                     return;
                 }
+
+                // 2. Carrega dados básicos (teste de conexão)
+                const { error } = await _s.from('clientes_buscador').select('count', { count: 'exact', head: true });
+                if (error) throw new Error('Erro ao conectar com Supabase: ' + error.message);
+
+                // 3. Se tudo OK, mostra o conteúdo
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+
+                // Aqui você pode inserir o conteúdo completo do BUSCAR
+                // Por enquanto, apenas um placeholder
+                document.getElementById('mainContent').innerHTML = `
+                    <div class="text-center p-10">
+                        <h1 class="text-3xl text-[#0071e3]">BUSCAR funcionando!</h1>
+                        <p class="mt-4">Agora podemos colocar o layout completo.</p>
+                    </div>
+                `;
+
+            } catch (err) {
+                console.error(err);
+                showError(err.toString());
             }
-            document.getElementById('userNameDisplay').innerText = currentUser.nome || currentUser.email || 'Usuário';
-
-            // Inicia WebSocket da Binance
-            iniciarTicker();
-
-            // Carrega dados iniciais (produtos, fornecedores, etc.)
-            await carregarDadosIniciais();
-
-            // Renderiza grade com todas as ofertas (inicial)
-            renderizarGrade();
         };
-
-        function iniciarTicker() {
-            const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-            ws.onmessage = e => {
-                const data = JSON.parse(e.data);
-                rateBinance = parseFloat(data.c);
-                document.getElementById('ticker').innerText = `R$ ${rateBinance.toFixed(4)}`;
-                document.getElementById('tickerGrande').innerText = rateBinance.toFixed(4);
-            };
-        }
-
-        async function carregarDadosIniciais() {
-            // Carrega produtos, variações, fornecedores, ofertas, regiões
-            const [p, v, f, o, r] = await Promise.all([
-                _s.from('produtos_mestre').select('*'),
-                _s.from('variacoes').select('*'),
-                _s.from('fornecedores').select('*').eq('ativo', true),
-                _s.from('ofertas').select('*, fornecedores!inner(*), variacoes(*, produtos_mestre(*)), regioes(*)').gt('quantidade', 0),
-                _s.from('regioes').select('*')
-            ]);
-            todosProdutos = p.data || [];
-            todasVariacoes = v.data || [];
-            todosFornecedores = f.data || [];
-            todasOfertas = o.data || [];
-            todasRegioes = r.data || [];
-
-            // Atualiza contadores
-            document.getElementById('totalProdutos').innerText = todasOfertas.length;
-            document.getElementById('totalFornecedores').innerText = [...new Set(todasOfertas.map(of => of.fornecedor_id))].length;
-            document.getElementById('ultimaAtualizacao').innerText = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-            // Popula selects de filtro
-            popularSelects();
-        }
-
-        function popularSelects() {
-            // Categorias (grupos)
-            const categorias = [...new Set(todosProdutos.map(p => p.grupo_id))];
-            // (implementar)
-
-            // Fornecedores
-            const fornecedoresSelect = document.getElementById('f_forn');
-            todosFornecedores.forEach(f => {
-                fornecedoresSelect.innerHTML += `<option value="${f.id}">${f.nome}</option>`;
-            });
-
-            // Regiões
-            const regioesSelect = document.getElementById('f_reg');
-            todasRegioes.forEach(r => {
-                regioesSelect.innerHTML += `<option value="${r.id}">${r.nome}</option>`;
-            });
-        }
-
-        function aplicarFiltros() {
-            // Lógica para filtrar ofertas baseado nos selects e campo de busca
-            // Atualiza a grade e a seção de melhores preços
-            renderizarGrade();
-        }
-
-        function executarBusca() {
-            aplicarFiltros();
-        }
-
-        function renderizarGrade() {
-            // Implementar a lógica de renderização dos cards, similar ao original mas com mais informações
-            // Aqui vai um exemplo de card:
-            const grid = document.getElementById('gridGeral');
-            grid.innerHTML = ''; // limpa
-
-            // Mock: supondo que temos ofertas filtradas
-            const ofertasMock = todasOfertas.slice(0, 10); // exemplo
-
-            ofertasMock.forEach(o => {
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.innerHTML = `
-                    <div class="absolute top-3 right-3 cursor-pointer" onclick="abrirAlerta(${o.id})">
-                        <span class="text-yellow-500 text-[8px] font-black">🔔 Alerta</span>
-                    </div>
-                    <div class="flex flex-wrap gap-1 mb-2">
-                        <span class="tag-status ${o.quantidade <= 3 ? 'tag-poucas' : 'tag-muitas'}">${o.quantidade} UN</span>
-                        ${o.preco === menorPreco ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : ''}
-                    </div>
-                    <h2 class="text-lg font-black mb-1">${o.variacoes?.produtos_mestre?.nome || 'Produto'}</h2>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-[9px] text-zinc-400">${o.variacoes?.capacidade || ''} | ${o.variacoes?.cor || ''}</span>
-                        <span class="text-[8px] font-black ${o.condicao === 'Novo' ? 'bg-blue-900/30 text-blue-400' : 'bg-yellow-900/30 text-yellow-500'} px-2 py-1 rounded">${o.condicao}</span>
-                        ${o.fornecedores?.verificado ? '<span class="badge-verificado">VERIFICADO</span>' : ''}
-                    </div>
-                    <div class="flex items-center text-[11px] text-[#25d366] font-black mb-1">
-                        🏢 ${o.fornecedores?.nome}
-                    </div>
-                    <div class="text-[8px] text-zinc-500 mb-2">📍 ${o.fornecedores?.cidade || ''} - ${o.fornecedores?.pais || ''}</div>
-                    <div class="flex justify-between items-end border-t border-[#38383a] pt-2 mt-2">
-                        <div class="price-text">R$ ${(o.preco * (o.moeda === 'USD' ? rateBinance+0.06 : 1)).toFixed(2)}</div>
-                        <span class="text-[8px] text-zinc-500">${new Date(o.criado_em).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</span>
-                    </div>
-                    <div class="flex justify-between mt-3 text-[8px] font-black text-gray-400">
-                        <button onclick="recomendar(${o.id})" class="hover:text-blue-500">👍 Recomendar</button>
-                        <button onclick="abrirHistorico(${o.id})" class="hover:text-blue-500">📈 Histórico</button>
-                        <button onclick="abrirPerguntas(${o.id})" class="hover:text-blue-500">💬 Perguntas</button>
-                        <button onclick="compartilhar(${o.id})" class="hover:text-green-500">📤 Compartilhar</button>
-                    </div>
-                    <a href="https://wa.me/${o.fornecedores?.whatsapp?.replace(/\D/g,'')}?text=Olá! Vi no iFipe..." target="_blank" class="buy-button mt-4">Comprar no WhatsApp</a>
-                `;
-                grid.appendChild(card);
-            });
-
-            // Atualiza também a seção de melhores preços por cor (se houver filtro por produto)
-            const produtoSelecionado = document.getElementById('f_prod').value;
-            if (produtoSelecionado) {
-                mostrarMelhoresPorCor(produtoSelecionado);
-            } else {
-                document.getElementById('melhoresPorCorSection').classList.add('hidden');
-            }
-        }
-
-        function mostrarMelhoresPorCor(produtoId) {
-            // Lógica para agrupar ofertas do produto por cor e pegar a mais barata de cada cor
-            const ofertasDoProduto = todasOfertas.filter(o => o.variacoes?.produto_id == produtoId && o.quantidade > 0);
-            const cores = [...new Set(ofertasDoProduto.map(o => o.variacoes?.cor))];
-            const melhores = cores.map(cor => {
-                const ofertasCor = ofertasDoProduto.filter(o => o.variacoes?.cor === cor);
-                const menor = ofertasCor.reduce((min, o) => (o.preco < min.preco ? o : min), ofertasCor[0]);
-                return menor;
-            }).sort((a, b) => a.preco - b.preco).slice(0, 3);
-
-            const grid = document.getElementById('melhoresPorCorGrid');
-            grid.innerHTML = '';
-            melhores.forEach(o => {
-                if (!o) return;
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.innerHTML = `
-                    <span class="color-dot" style="background: ${getCorHex(o.variacoes?.cor)}"></span>
-                    <h3 class="font-black text-sm">${o.variacoes?.produtos_mestre?.nome}</h3>
-                    <p class="text-[9px]">${o.variacoes?.capacidade} | ${o.variacoes?.cor}</p>
-                    <p class="text-[10px] text-[#25d366]">🏢 ${o.fornecedores?.nome}</p>
-                    <p class="text-lg font-black mt-2">R$ ${(o.preco * (o.moeda === 'USD' ? rateBinance+0.06 : 1)).toFixed(2)}</p>
-                `;
-                grid.appendChild(card);
-            });
-            document.getElementById('melhoresPorCorSection').classList.remove('hidden');
-        }
-
-        function getCorHex(cor) {
-            // Mapeia cores para hex (pode ser a mesma função do original)
-            const cores = { 'preto':'#000', 'branco':'#fff', 'azul':'#215e7c', 'vermelho':'#a50011' };
-            return cores[cor?.toLowerCase()] || '#808080';
-        }
-
-        // Funções dos modais (simplificadas)
-        function abrirSininho() { /* abrir modal de alertas */ }
-        function abrirHistorico(id) { /* abrir histórico */ }
-        function abrirPerguntas(id) { /* abrir perguntas */ }
-        function recomendar(id) { /* like/unlike */ }
-        function compartilhar(id) { /* compartilhar */ }
-        function logout() {
-            localStorage.removeItem('iFipe_Token');
-            localStorage.removeItem('iFipe_Master_Auth');
-            window.location.replace('index.html');
-        }
     </script>
 </body>
 </html>
