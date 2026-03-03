@@ -65,7 +65,7 @@
         <!-- Login Card -->
         <div class="glass-card order-1 lg:order-2 shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20 min-h-[400px] relative">
             <div id="statusCheck" class="hidden status-badge">
-                ⚠️ SISTEMA EM ATUALIZAÇÃO PARA MELHORIAS. Tente novamente mais tarde.
+                ⚠️ SISTEMA EM ATUALIZAÇÃO (apenas MASTER pode acessar)
             </div>
 
             <div id="loginForm">
@@ -111,9 +111,9 @@
             const status = localStorage.getItem('iFipe_Status') || 'on';
             if (status === 'off') {
                 document.getElementById('statusCheck').classList.remove('hidden');
-                document.getElementById('loginForm').classList.add('hidden');
+                // formulário permanece visível para o master
             } else {
-                document.getElementById('loginForm').classList.remove('hidden');
+                document.getElementById('statusCheck').classList.add('hidden');
             }
             iniciarTicker();
         };
@@ -133,6 +133,7 @@
         function calcularImportacao() {
             const usd = parseFloat(document.getElementById('calcUsd').value);
             if (!usd || rateOraculo === 0) return;
+            // Custo final = (dólar * (binance + 0,06)) * 1,06
             const custo = (usd * rateOraculo) * 1.06;
             document.getElementById('calcResult').innerText =
                 custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -182,9 +183,9 @@
                 return;
             }
 
-            // 2. BLOQUEIO DE MANUTENÇÃO (se não for master)
+            // 2. Se sistema em atualização, só o master passou, então bloqueia outros
             if (status === 'off') {
-                msg.innerText = "SISTEMA EM ATUALIZAÇÃO.";
+                msg.innerText = "SISTEMA EM ATUALIZAÇÃO. Apenas MASTER pode acessar.";
                 return;
             }
 
