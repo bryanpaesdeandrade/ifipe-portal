@@ -66,6 +66,14 @@
             border-color: var(--blue);
             box-shadow: 0 0 0 3px rgba(0,113,227,0.2);
         }
+        .apple-input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .apple-input[type="number"]::-webkit-inner-spin-button,
+        .apple-input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
         .btn-apple {
             background: var(--blue);
             color: white;
@@ -102,6 +110,9 @@
             padding: 1.5rem;
             transition: all 0.2s;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         .product-card:hover {
             transform: translateY(-4px);
@@ -192,14 +203,36 @@
             display: inline-block;
             margin-right: 4px;
         }
-        .historico-item {
-            padding: 12px;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            transition: background 0.2s;
+        .tooltip {
+            position: relative;
+            display: inline-block;
         }
-        .historico-item:hover {
-            background: var(--input);
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background: var(--card);
+            color: var(--text);
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid var(--border);
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .sidebar {
+            position: sticky;
+            top: 100px;
+            height: calc(100vh - 120px);
+            overflow-y: auto;
         }
         .modal {
             position: fixed;
@@ -241,43 +274,77 @@
             padding: 2px 6px;
             border-radius: 20px;
         }
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 120px;
-            background: var(--card);
+        .menu-hamburger {
+            cursor: pointer;
+            font-size: 24px;
             color: var(--text);
-            text-align: center;
-            border-radius: 6px;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -60px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            border: 1px solid var(--border);
         }
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
+        .drawer {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100vh;
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            transition: left 0.3s ease;
+            z-index: 2000;
+            padding: 2rem 1rem;
         }
-        .sidebar {
-            position: sticky;
-            top: 100px;
-            height: calc(100vh - 120px);
-            overflow-y: auto;
+        .drawer.open {
+            left: 0;
+        }
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1999;
+            display: none;
+        }
+        .drawer-overlay.open {
+            display: block;
+        }
+        .drawer-item {
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .drawer-item:hover {
+            background: var(--input);
         }
     </style>
 </head>
 <body class="dark-mode">
+    <!-- DRAWER (menu hambúrguer) -->
+    <div id="drawerOverlay" class="drawer-overlay" onclick="fecharDrawer()"></div>
+    <div id="drawer" class="drawer">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold">Menu</h2>
+            <button onclick="fecharDrawer()" class="text-2xl">&times;</button>
+        </div>
+        <div class="drawer-item" onclick="abrirHistoricoGeral(); fecharDrawer()">
+            <i class="fas fa-chart-line mr-3"></i> Histórico de Preços
+        </div>
+        <div class="drawer-item" onclick="abrirMeusAlertas(); fecharDrawer()">
+            <i class="fas fa-bell mr-3"></i> Meus Alertas
+        </div>
+        <div class="drawer-item" onclick="abrirFavoritos(); fecharDrawer()">
+            <i class="fas fa-star mr-3"></i> Favoritos
+        </div>
+        <div class="drawer-item" onclick="logout(); fecharDrawer()">
+            <i class="fas fa-sign-out-alt mr-3"></i> Sair
+        </div>
+    </div>
+
     <!-- NAVBAR -->
     <nav class="nav-blur fixed top-0 w-full z-50 px-6 py-3 flex items-center justify-between">
         <div class="flex items-center gap-3">
+            <span class="menu-hamburger" onclick="abrirDrawer()">☰</span>
             <h1 class="text-2xl font-black tracking-tight">iFipe</h1>
             <span class="text-sm text-gray-400">A TABELA FIPE DO IPHONE</span>
         </div>
@@ -288,50 +355,37 @@
                     <span class="text-gray-400">Binance</span>
                     <span id="binanceRate" class="font-mono font-bold text-yellow-500 ml-1">R$ 5,2630</span>
                 </div>
-                <div class="tooltip">
-                    <span class="cursor-help border-b border-dotted">Oráculo</span>
+                <div>
+                    <span class="text-gray-400">Oráculo</span>
                     <span id="oraculoRate" class="font-mono font-bold text-green-400 ml-1">R$ 5,3230</span>
-                    <span class="tooltiptext">Taxa VIP (+R$0,06)</span>
                 </div>
-                <a href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="bg-[#ffcc00] text-black px-3 py-1 rounded-full text-[10px] font-bold hover:bg-yellow-400 transition">
-                    Comprar USDT com Oráculo
+                <a href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-green-700 transition">
+                    COMPRAR USDT COM TAXA VIP COM ORÁCULO
                 </a>
             </div>
-            <!-- Sininho de notificações -->
+            <!-- Notificações (discreto) -->
             <div class="sininho" onclick="abrirNotificacoes()">
                 <span class="text-2xl">🔔</span>
                 <span id="notificacaoBadge" class="sininho-badge hidden">3</span>
             </div>
-            <!-- Criar alerta -->
-            <button onclick="abrirCriarAlerta()" class="btn-apple-secondary text-sm">
-                <i class="fas fa-bell mr-1"></i> Criar Alerta
+            <!-- Criar alerta (evidente) -->
+            <button onclick="abrirCriarAlerta()" class="bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-blue-700 transition flex items-center gap-1">
+                <i class="fas fa-bell"></i> CRIAR ALERTA DE PREÇO
             </button>
-            <!-- Menu usuário -->
-            <div class="relative">
-                <button onclick="toggleUserMenu()" class="flex items-center gap-2 text-sm font-medium">
-                    <span id="userName">Carregando...</span>
-                    <span>▼</span>
-                </button>
-                <div id="userMenu" class="absolute right-0 mt-2 w-48 bg-[#1c1c1e] border border-[#38383a] rounded-xl shadow-xl hidden">
-                    <a href="#" onclick="abrirMeusAlertas()" class="block px-4 py-3 text-sm hover:bg-[#2c2c2e] rounded-t-xl">🔔 Meus Alertas</a>
-                    <a href="#" onclick="abrirFavoritos()" class="block px-4 py-3 text-sm hover:bg-[#2c2c2e]">⭐ Favoritos</a>
-                    <a href="#" onclick="abrirHistoricoGeral()" class="block px-4 py-3 text-sm hover:bg-[#2c2c2e]">📊 Histórico de Preços</a>
-                    <a href="#" onclick="logout()" class="block px-4 py-3 text-sm text-red-500 hover:bg-[#2c2c2e] rounded-b-xl">🚪 Sair</a>
-                </div>
-            </div>
+            <!-- Nome do usuário (opcional) -->
+            <span id="userName" class="text-sm font-medium">Carregando...</span>
         </div>
     </nav>
 
     <!-- LAYOUT PRINCIPAL: SIDEBAR + CONTEÚDO -->
     <div class="pt-24 px-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <!-- SIDEBAR ESQUERDA (calculadora e ferramentas) -->
+        <!-- SIDEBAR ESQUERDA (calculadora) -->
         <div class="lg:col-span-1 sidebar">
-            <!-- Calculadora -->
-            <div class="apple-card mb-6">
+            <div class="apple-card">
                 <h2 class="text-lg font-bold mb-3">Calculadora iPhone</h2>
                 <div class="mb-3">
                     <label class="text-xs text-gray-400">Preço USD</label>
-                    <input type="number" id="calcUsd" class="apple-input" value="999" oninput="atualizarCalculadora()">
+                    <input type="number" id="calcUsd" class="apple-input" value="0.00" min="0" step="0.01" oninput="atualizarCalculadora()">
                 </div>
                 <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
                     <div>
@@ -362,29 +416,16 @@
                     </div>
                 </div>
             </div>
-            <!-- Ferramentas extras (ex: histórico rápido, dicas) -->
-            <div class="apple-card">
-                <h3 class="font-bold mb-2">Ferramentas</h3>
-                <button onclick="abrirHistoricoGeral()" class="w-full text-left py-2 hover:bg-[#2c2c2e] rounded-lg px-2">
-                    📊 Histórico de preços
-                </button>
-                <button onclick="abrirMeusAlertas()" class="w-full text-left py-2 hover:bg-[#2c2c2e] rounded-lg px-2">
-                    🔔 Meus alertas
-                </button>
-                <button onclick="abrirFavoritos()" class="w-full text-left py-2 hover:bg-[#2c2c2e] rounded-lg px-2">
-                    ⭐ Favoritos
-                </button>
-            </div>
         </div>
 
-        <!-- CONTEÚDO PRINCIPAL (busca e cards) -->
+        <!-- CONTEÚDO PRINCIPAL -->
         <div class="lg:col-span-3">
             <!-- Barra de busca -->
-            <div class="mb-6">
+            <div class="mb-4">
                 <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-4 pr-4 py-3 text-lg">
             </div>
 
-            <!-- Filtros rápidos -->
+            <!-- Filtros rápidos (opcional, manter simples) -->
             <div class="flex flex-wrap gap-2 mb-4">
                 <select class="apple-input w-auto text-sm py-2">
                     <option>Categoria</option>
@@ -407,18 +448,6 @@
                     <option>Preto</option>
                     <option>Branco</option>
                 </select>
-                <select class="apple-input w-auto text-sm py-2">
-                    <option>Região</option>
-                    <option>São Paulo</option>
-                    <option>Paraguai</option>
-                </select>
-            </div>
-
-            <!-- Informações discretas -->
-            <div class="flex justify-end items-center gap-4 mb-4 text-xs text-gray-400">
-                <span>📦 2.547 produtos</span>
-                <span>🏢 104 fornecedores</span>
-                <span>🕒 Última atualização: <span id="ultimaAtualizacao">17:04:30</span></span>
             </div>
 
             <!-- Grid de cards -->
@@ -453,7 +482,7 @@
             </div>
             <div class="mb-6">
                 <label class="block text-sm font-medium mb-2">Preço máximo (R$)</label>
-                <input type="number" id="alertaPreco" class="apple-input" placeholder="Ex: 5000">
+                <input type="number" id="alertaPreco" class="apple-input" placeholder="Ex: 5000" min="0" step="0.01">
             </div>
             <div class="flex gap-3">
                 <button onclick="criarAlerta()" class="btn-apple flex-1">Criar Alerta</button>
@@ -486,25 +515,32 @@
         </div>
     </div>
 
-    <!-- Histórico Geral -->
+    <!-- Histórico Geral (modal com lista de produtos) -->
     <div id="historicoGeralModal" class="modal hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Histórico de Preços</h2>
-            <p class="text-sm text-gray-400 mb-4">Média dos últimos 10 dias</p>
+            <p class="text-sm text-gray-400 mb-4">Média dos últimos 10 dias por produto</p>
             <div class="space-y-2 max-h-96 overflow-y-auto">
-                <div class="historico-item">
+                <div class="historico-item p-3 bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="selecionarProdutoHistorico(1)">
                     <div class="flex justify-between">
                         <span class="font-medium">iPhone 15 Pro Max 256GB</span>
                         <span class="font-bold text-blue-500">R$ 7.890</span>
                     </div>
                     <span class="text-xs text-gray-400">Média 10 dias • 8 ofertas</span>
                 </div>
-                <div class="historico-item">
+                <div class="historico-item p-3 bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="selecionarProdutoHistorico(2)">
                     <div class="flex justify-between">
                         <span class="font-medium">iPhone 15 Pro 128GB</span>
                         <span class="font-bold text-blue-500">R$ 6.450</span>
                     </div>
                     <span class="text-xs text-gray-400">Média 10 dias • 12 ofertas</span>
+                </div>
+                <div class="historico-item p-3 bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="selecionarProdutoHistorico(3)">
+                    <div class="flex justify-between">
+                        <span class="font-medium">iPhone 14 128GB</span>
+                        <span class="font-bold text-blue-500">R$ 4.999</span>
+                    </div>
+                    <span class="text-xs text-gray-400">Último preço • 3 ofertas</span>
                 </div>
             </div>
             <button onclick="fecharHistoricoGeral()" class="btn-apple-secondary w-full mt-6">Fechar</button>
@@ -541,8 +577,6 @@
             document.getElementById('userName').innerText = currentUser.nome || 'Usuário';
 
             initTicker();
-            document.getElementById('ultimaAtualizacao').innerText = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
             gerarCardsMock();
         };
 
@@ -566,6 +600,7 @@
         // Calculadora
         function atualizarCalculadora() {
             const usd = parseFloat(document.getElementById('calcUsd').value) || 0;
+            if (usd < 0) document.getElementById('calcUsd').value = 0;
             const custo = usd * rateOraculo * 1.06;
             document.getElementById('custoFinal').innerText = `R$ ${custo.toFixed(2)}`;
             document.getElementById('calcBinance').innerText = `R$ ${rateBinance.toFixed(4)}`;
@@ -581,6 +616,16 @@
             }
         }
 
+        // Drawer
+        function abrirDrawer() {
+            document.getElementById('drawer').classList.add('open');
+            document.getElementById('drawerOverlay').classList.add('open');
+        }
+        function fecharDrawer() {
+            document.getElementById('drawer').classList.remove('open');
+            document.getElementById('drawerOverlay').classList.remove('open');
+        }
+
         // Funções dos modais
         function abrirCriarAlerta() { document.getElementById('criarAlertaModal').classList.remove('hidden'); }
         function fecharCriarAlerta() { document.getElementById('criarAlertaModal').classList.add('hidden'); }
@@ -589,98 +634,82 @@
         function fecharNotificacoes() { document.getElementById('notificacoesModal').classList.add('hidden'); }
         function abrirHistoricoGeral() { document.getElementById('historicoGeralModal').classList.remove('hidden'); }
         function fecharHistoricoGeral() { document.getElementById('historicoGeralModal').classList.add('hidden'); }
-        function toggleUserMenu() { document.getElementById('userMenu').classList.toggle('hidden'); }
         function abrirMeusAlertas() { alert('Meus alertas (mock)'); }
         function abrirFavoritos() { alert('Favoritos (mock)'); }
+        function selecionarProdutoHistorico(id) {
+            alert(`Detalhes do histórico do produto ${id} (mock)`);
+            fecharHistoricoGeral();
+        }
         function logout() {
             localStorage.removeItem('iFipe_Token');
             localStorage.removeItem('iFipe_Master_Auth');
             window.location.replace('index.html');
         }
 
-        // Gerar cards mock com todas as características
+        // Gerar cards mock com layout harmonioso
         function gerarCardsMock() {
             const grid = document.getElementById('produtosGrid');
             grid.innerHTML = '';
 
-            const cores = ['Preto', 'Branco', 'Azul', 'Vermelho', 'Titânio'];
-            const condicoes = ['Novo', 'Seminovo', 'CPO'];
-            const fornecedores = [
-                { nome: 'Loja Exemplo', verificado: true, insignias: ['MAGNATA'] },
-                { nome: 'TechCell', verificado: false, insignias: [] },
-                { nome: 'Mobile BR', verificado: true, insignias: ['REI', 'VERIFICADO'] }
+            const produtos = [
+                { nome: 'iPhone 15 Pro Max', cap: '256GB', cores: ['Preto', 'Vermelho', 'Branco', 'Titânio', 'Azul'], precoBase: 7700, qtdBase: 9, condBase: 'CPO', fornecedor: 'Loja Exemplo', verificado: true, insignia: 'MAGNATA' },
+                { nome: 'iPhone 15 Pro Max', cap: '256GB', cores: ['Vermelho'], precoBase: 7628, qtdBase: 9, condBase: 'Seminovo', fornecedor: 'TechCell', verificado: false, insignia: '' },
+                { nome: 'iPhone 15 Pro Max', cap: '256GB', cores: ['Branco'], precoBase: 29553, qtdBase: 10, condBase: 'CPO', fornecedor: 'TechCell', verificado: false, insignia: '' },
+                { nome: 'iPhone 15 Pro Max', cap: '256GB', cores: ['Titânio'], precoBase: 8323, qtdBase: 10, condBase: 'Seminovo', fornecedor: 'TechCell', verificado: false, insignia: '' },
+                { nome: 'iPhone 15 Pro Max', cap: '256GB', cores: ['Azul'], precoBase: 5714, qtdBase: 1, condBase: 'Novo', fornecedor: 'Mobile BR', verificado: true, insignia: 'REI' }
             ];
-            const molduras = ['pix', 'usdt', 'coleta', 'envio', 'boy', 'negocia'];
 
-            for (let i = 0; i < 6; i++) {
-                const cor = cores[Math.floor(Math.random() * cores.length)];
-                const cond = condicoes[Math.floor(Math.random() * condicoes.length)];
-                const forn = fornecedores[Math.floor(Math.random() * fornecedores.length)];
-                const preco = Math.floor(5000 + Math.random() * 4000);
-                const qtd = Math.floor(Math.random() * 10) + 1;
-                const moeda = Math.random() > 0.7 ? 'USD' : 'BRL';
-                const precoFinal = moeda === 'USD' ? preco * rateOraculo : preco;
+            const corHex = {
+                'Preto': '#000', 'Branco': '#fff', 'Azul': '#215e7c', 'Vermelho': '#a50011', 'Titânio': '#8c8c88'
+            };
 
-                // Define cor da bolinha
-                const corHex = {
-                    'Preto': '#000', 'Branco': '#fff', 'Azul': '#215e7c', 'Vermelho': '#a50011', 'Titânio': '#8c8c88'
-                }[cor] || '#808080';
-
-                const card = document.createElement('div');
-                card.className = 'product-card';
-
-                // Molduras (ícones)
-                const moldurasHTML = molduras.map(m => {
-                    const icones = {
-                        pix: 'fa-pix',
-                        usdt: 'fa-coins',
-                        coleta: 'fa-box',
-                        envio: 'fa-truck',
-                        boy: 'fa-person-biking',
-                        negocia: 'fa-handshake'
-                    };
-                    return `<span class="moldura tooltip"><i class="fas ${icones[m]}"></i><span class="tooltiptext">${m}</span></span>`;
-                }).join('');
-
-                // Insígnias (apenas a mais elevada, se houver)
-                const insignia = forn.insignias.length ? `<span class="insignia">${forn.insignias[0]}</span>` : '';
-
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex items-center">
-                            <span class="color-dot" style="background: ${corHex}; border: 1px solid ${corHex === '#fff' ? '#000' : 'transparent'};"></span>
-                            <h3 class="font-bold text-base">iPhone 15 Pro Max</h3>
+            produtos.forEach(p => {
+                p.cores.forEach(cor => {
+                    const precoFinal = p.precoBase * rateOraculo; // simulação
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center">
+                                <span class="color-dot" style="background: ${corHex[cor]}; border: 1px solid ${cor === 'Branco' ? '#000' : 'transparent'};"></span>
+                                <h3 class="font-bold text-base">${p.nome}</h3>
+                            </div>
+                            <span class="badge ${p.qtdBase <= 3 ? 'badge-red' : 'badge-blue'}">${p.qtdBase} UN</span>
                         </div>
-                        <span class="badge ${qtd <= 3 ? 'badge-red' : 'badge-blue'}">${qtd} UN</span>
-                    </div>
-                    <p class="text-xs text-gray-400 mb-1">256GB | ${cor}</p>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="badge ${cond === 'Novo' ? 'badge-blue' : cond === 'Seminovo' ? 'badge-yellow' : 'badge-purple'}">${cond}</span>
-                        <span class="badge badge-green">MENOR PREÇO</span>
-                    </div>
-                    <div class="flex items-center gap-1 mb-2">
-                        <span class="text-sm font-medium">🏢 ${forn.nome}</span>
-                        ${forn.verificado ? '<span class="verified-badge">✓</span>' : ''}
-                        ${insignia}
-                    </div>
-                    <p class="text-xs text-gray-400 mb-3">📍 São Paulo - BR</p>
-                    <div class="flex flex-wrap gap-1 mb-3">
-                        ${moldurasHTML}
-                    </div>
-                    <div class="flex justify-between items-end">
-                        <span class="price">R$ ${precoFinal.toFixed(2)}</span>
-                        <span class="text-xs text-gray-400">há 5 min</span>
-                    </div>
-                    <div class="flex justify-between mt-4 text-xs font-medium">
-                        <button onclick="alert('Recomendar')" class="hover:text-blue-500">👍 Recomendar</button>
-                        <button onclick="alert('Histórico')" class="hover:text-blue-500">📈 Histórico</button>
-                        <button onclick="alert('Perguntas')" class="hover:text-blue-500">💬 Perguntas</button>
-                        <button onclick="alert('Compartilhar')" class="hover:text-green-500">📤 Compartilhar</button>
-                    </div>
-                    <a href="https://wa.me/5511999999999" target="_blank" class="btn-apple w-full text-center mt-4">Comprar no WhatsApp</a>
-                `;
-                grid.appendChild(card);
-            }
+                        <p class="text-xs text-gray-400 mb-1">${p.cap} | ${cor}</p>
+                        <div class="flex items-center gap-2 mb-2 flex-wrap">
+                            <span class="badge ${p.condBase === 'Novo' ? 'badge-blue' : p.condBase === 'Seminovo' ? 'badge-yellow' : 'badge-purple'}">${p.condBase}</span>
+                            ${p.precoBase === 7628 ? '<span class="badge badge-green">MENOR PREÇO</span>' : ''}
+                        </div>
+                        <div class="flex items-center gap-1 mb-2">
+                            <span class="text-sm font-medium">🏢 ${p.fornecedor}</span>
+                            ${p.verificado ? '<span class="verified-badge">✓</span>' : ''}
+                            ${p.insignia ? `<span class="insignia">${p.insignia}</span>` : ''}
+                        </div>
+                        <p class="text-xs text-gray-400 mb-3">📍 São Paulo - BR</p>
+                        <div class="flex flex-wrap gap-1 mb-3">
+                            <span class="moldura"><i class="fas fa-pix"></i></span>
+                            <span class="moldura"><i class="fas fa-coins"></i></span>
+                            <span class="moldura"><i class="fas fa-box"></i></span>
+                            <span class="moldura"><i class="fas fa-truck"></i></span>
+                            <span class="moldura"><i class="fas fa-person-biking"></i></span>
+                            <span class="moldura"><i class="fas fa-handshake"></i></span>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <span class="price">R$ ${precoFinal.toFixed(2)}</span>
+                            <span class="text-xs text-gray-400">há 5 min</span>
+                        </div>
+                        <div class="flex justify-between mt-4 text-xs font-medium">
+                            <button onclick="alert('Recomendar')" class="hover:text-blue-500">👍 Recomendar</button>
+                            <button onclick="alert('Histórico')" class="hover:text-blue-500">📈 Histórico</button>
+                            <button onclick="alert('Perguntas')" class="hover:text-blue-500">💬 Perguntas</button>
+                            <button onclick="alert('Compartilhar')" class="hover:text-green-500">📤 Compartilhar</button>
+                        </div>
+                        <a href="https://wa.me/5511999999999" target="_blank" class="btn-apple w-full text-center mt-4">Comprar no WhatsApp</a>
+                    `;
+                    grid.appendChild(card);
+                });
+            });
         }
 
         // Expor funções globalmente
@@ -692,10 +721,12 @@
         window.fecharNotificacoes = fecharNotificacoes;
         window.abrirHistoricoGeral = abrirHistoricoGeral;
         window.fecharHistoricoGeral = fecharHistoricoGeral;
-        window.toggleUserMenu = toggleUserMenu;
+        window.abrirDrawer = abrirDrawer;
+        window.fecharDrawer = fecharDrawer;
         window.logout = logout;
         window.abrirMeusAlertas = abrirMeusAlertas;
         window.abrirFavoritos = abrirFavoritos;
+        window.selecionarProdutoHistorico = selecionarProdutoHistorico;
     </script>
 </body>
 </html>
