@@ -4,37 +4,39 @@
 
 <head>
 
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>iFipe - Buscador</title>
+
 
 
 <script>
 
 const status = localStorage.getItem('iFipe_Status');
 
-const isMaster = localStorage.getItem('iFipe_Token') === 'admin_bypass';
+const token = localStorage.getItem('iFipe_Token');
 
 
 
-if (status === 'off' && !isMaster) {
+if (status === 'off' && token !== 'admin_bypass') {
 
   document.documentElement.innerHTML = `
 
-  <body style="background:#050505;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif;text-align:center;padding:20px;margin:0;">
+  <body style="background:#000;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui;">
 
-    <div>
+    <div style="text-align:center">
 
-      <h1 style="color:#ff3b30;font-style:italic;font-weight:900;">iFipe</h1>
+      <h1 style="color:#ff3b30;font-style:italic;font-weight:900">iFipe</h1>
 
-      <p style="color:#888;font-weight:bold;font-size:12px;text-transform:uppercase;">
-
-        Sistema em atualização
-
-      </p>
+      <p style="font-size:12px;letter-spacing:1px">SISTEMA EM ATUALIZAÇÃO</p>
 
       <button onclick="location.href='index.html'"
 
-        style="margin-top:20px;background:#0071e3;color:#fff;border:none;padding:12px 24px;border-radius:50px;font-weight:900;">
+        style="margin-top:20px;padding:12px 24px;border-radius:30px;border:none;background:#0071e3;color:#fff;font-weight:900">
 
-        Voltar
+        VOLTAR
 
       </button>
 
@@ -50,31 +52,19 @@ if (status === 'off' && !isMaster) {
 
 
 
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>iFipe - Buscador VIP</title>
-
-
-
 <script src="https://cdn.tailwindcss.com"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
-
 <style>
 
-:root { --bg:#000; --card:#1c1c1e; --text:#fff; --border:#38383a; --input:#2c2c2e; }
+body { background:#000; color:#fff; margin:0; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; }
 
-body { background:var(--bg); color:var(--text); margin:0; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; }
+.card { background:#1c1c1e; border:1px solid #38383a; border-radius:16px; padding:14px; }
 
-.hidden { display:none!important; }
+.btn { background:#0071e3; color:#fff; padding:10px; border-radius:30px; font-weight:900; text-transform:uppercase; font-size:11px; }
 
-.product-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:12px; }
-
-.buy-button { background:#0071e3;color:#fff;font-weight:900;border-radius:50px;padding:12px;text-align:center;display:block;margin-top:12px;text-transform:uppercase;font-size:11px; }
+.hidden { display:none }
 
 </style>
 
@@ -84,35 +74,29 @@ body { background:var(--bg); color:var(--text); margin:0; font-family:-apple-sys
 
 
 
-<div id="manutencaoOverlay" class="hidden"></div>
+<header class="p-4 border-b border-[#38383a] flex justify-between items-center">
 
-
-
-<div id="mainContent" class="hidden">
-
-<nav class="p-4 border-b border-[#38383a] flex justify-between">
-
-  <strong class="italic">iFipe</strong>
+  <strong class="italic text-xl">iFipe</strong>
 
   <button onclick="logout()" class="text-red-500 font-black text-xs">SAIR</button>
 
-</nav>
+</header>
 
 
 
 <main class="p-4">
 
-  <input id="buscaTexto" class="w-full p-3 rounded bg-white text-black font-black uppercase" placeholder="Buscar produto">
+<input id="busca" placeholder="BUSCAR PRODUTO"
 
-  <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6"></div>
+  class="w-full p-3 rounded bg-white text-black font-black uppercase">
+
+<div id="grid" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6"></div>
 
 </main>
 
-</div>
-
 <script>
 
-const _s = supabase.createClient(
+const sb = supabase.createClient(
 
   'https://zmgosywpwidypxyhxkry.supabase.co',
 
@@ -122,9 +106,7 @@ const _s = supabase.createClient(
 
 
 
-let ofertasAtuais = [];
-
-let clienteLogado = null;
+let ofertas = [];
 
 window.onload = async () => {
 
@@ -134,17 +116,15 @@ window.onload = async () => {
 
 
 
-  const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
+  const { data } = await sb.from('clientes_buscador')
 
-  if (!data || data.ativo === false) return logout();
+    .select('*').eq('id', token).single();
 
 
 
-  clienteLogado = data;
+  if (!data || data.ativo === false) logout();
 
-  document.getElementById('mainContent').classList.remove('hidden');
-
-  carregarDados();
+  carregar();
 
 };
 
@@ -158,9 +138,9 @@ function logout() {
 
 }
 
-async function carregarDados() {
+async function carregar() {
 
-  const { data } = await _s.from('ofertas')
+  const { data } = await sb.from('ofertas')
 
     .select('*, variacoes(produtos_mestre(nome)), fornecedores(nome, whatsapp)')
 
@@ -168,41 +148,49 @@ async function carregarDados() {
 
 
 
-  ofertasAtuais = data || [];
+  ofertas = data || [];
 
-  renderizar();
-
-}
-
-function renderizar() {
-
-  const grid = document.getElementById('gridGeral');
-
-  grid.innerHTML = ofertasAtuais.map(o => `
-
-    <div class="product-card">
-
-      <strong>${o.variacoes.produtos_mestre.nome}</strong>
-
-      <div class="text-xl font-black mt-2">R$ ${o.preco}</div>
-
-      <a class="buy-button" target="_blank"
-
-        href="https://wa.me/${o.fornecedores.whatsapp}">
-
-        Comprar
-
-      </a>
-
-    </div>
-
-  `).join('');
+  render();
 
 }
 
-</script>
+function render() {
 
-</body>
+  const grid = document.getElementById('grid');
+
+  const q = document.getElementById('busca').value.toLowerCase();
+
+
+
+  grid.innerHTML = ofertas
+
+    .filter(o => o.variacoes.produtos_mestre.nome.toLowerCase().includes(q))
+
+    .map(o => `
+
+      <div class="card">
+
+        <strong>${o.variacoes.produtos_mestre.nome}</strong>
+
+        <div class="text-xl font-black mt-2">R$ ${o.preco}</div>
+
+        <a class="btn block text-center mt-3"
+
+          target="_blank"
+
+          href="https://wa.me/${o.fornecedores.whatsapp}">
+
+          COMPRAR
+
+        </a>
+
+      </div>
+
+    `).join('');
+
+}
+
+document.getElementById('busca').addEventListener('input', render);</script></body>
 
 </html>
 
