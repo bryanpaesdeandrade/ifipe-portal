@@ -3,124 +3,135 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>iFipe - Login</title>
+<title>iFipe - A Fipe do iPhone</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
 
 <style>
-body {
-  background:#050505;
-  color:#fff;
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
-}
-input,select {
-  background:#151515;
-  border:1px solid #2a2a2a;
-  border-radius:12px;
-  padding:14px;
-  width:100%;
-  color:#fff;
-  font-size:12px;
-}
-button {
-  background:#fff;
-  color:#000;
-  font-weight:900;
-  border-radius:50px;
-  padding:14px;
-  width:100%;
-  margin-top:16px;
-}
+:root { --bg:#050505; --card:#121212; --border:#2a2a2a; --blue:#0071e3; }
+body { background:var(--bg); color:#fff; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; margin:0; min-height:100vh; }
+.apple-input { background:#151515; border:1px solid var(--border); border-radius:12px; padding:14px; width:100%; color:#fff; font-size:11px; text-align:center; }
+.apple-input:focus { border-color:var(--blue); }
+.btn-primary { background:#fff; color:#000; font-weight:900; border-radius:50px; padding:14px; width:100%; font-size:11px; }
+.hidden { display:none!important; }
 </style>
 </head>
 
-<body class="flex items-center justify-center min-h-screen p-4">
+<body class="flex flex-col items-center justify-center p-4 py-12">
 
-<div id="manutencao" class="hidden text-center max-w-sm">
-  <h1 class="text-4xl font-black italic mb-4">iFipe</h1>
-  <p class="text-yellow-400 font-black text-sm uppercase tracking-widest">
-    Sistema em atualização<br>Voltamos em breve
-  </p>
-</div>
+<h1 class="text-5xl font-black italic mb-6">iFipe</h1>
 
-<div id="loginBox" class="w-full max-w-sm space-y-4">
+<div class="w-full max-w-md bg-[#121212] border border-[#2a2a2a] rounded-2xl p-6">
 
-<h1 class="text-4xl font-black italic text-center">iFipe</h1>
-
-<select id="tipo">
-  <option value="buscador">Sou Buscador</option>
-  <option value="anunciante">Sou Anunciante</option>
+<!-- LOGIN -->
+<div id="loginForm">
+<select id="loginType" class="apple-input mb-3">
+<option value="buscador">SOU BUSCADOR</option>
+<option value="anunciante">SOU ANUNCIANTE</option>
 </select>
 
-<input id="login" placeholder="WhatsApp ou Email">
-<input id="senha" type="password" placeholder="Senha">
+<input id="user" class="apple-input mb-3" placeholder="WHATSAPP OU EMAIL">
+<input id="pass" type="password" class="apple-input mb-4" placeholder="SENHA">
 
-<button onclick="login()">Entrar</button>
+<button class="btn-primary" onclick="handleLogin()">ENTRAR</button>
 
-<p id="msg" class="text-red-500 text-xs text-center font-black"></p>
+<p id="msg" class="text-red-500 text-xs text-center mt-3 font-black"></p>
+
+<span class="block text-blue-500 text-xs text-center mt-4 cursor-pointer" onclick="toggleForm()">CADASTRE-SE</span>
+</div>
+
+<!-- CADASTRO -->
+<div id="registerForm" class="hidden">
+
+<select id="cadTipo" class="apple-input mb-3" onchange="atualizarTipoCadastro()">
+<option value="buscador">BUSCADOR</option>
+<option value="anunciante">ANUNCIANTE</option>
+</select>
+
+<!-- BUSCADOR -->
+<div id="cadBuscador">
+<input id="b_nome" class="apple-input mb-2" placeholder="NOME COMPLETO" oninput="this.value=this.value.toUpperCase()">
+<input id="b_cpf" class="apple-input mb-2" placeholder="CPF">
+<input id="b_email" class="apple-input mb-2" placeholder="EMAIL">
+<input id="b_whatsapp" class="apple-input mb-2" placeholder="WHATSAPP">
+<input id="b_senha" type="password" class="apple-input mb-2" placeholder="SENHA">
+
+<select id="b_pais" class="apple-input mb-2" onchange="paisChange('b')">
+<option value="">PAÍS</option>
+<option value="Brasil">BRASIL</option>
+<option value="EUA">EUA</option>
+<option value="Paraguai">PARAGUAI</option>
+</select>
+
+<select id="b_estado" class="apple-input mb-2 hidden" onchange="carregarCidades('b')"></select>
+<select id="b_cidade" class="apple-input mb-2 hidden"></select>
+</div>
+
+<!-- ANUNCIANTE -->
+<div id="cadAnunciante" class="hidden">
+<input id="a_nome_loja" class="apple-input mb-2" placeholder="NOME DA LOJA" oninput="this.value=this.value.toUpperCase()">
+<input id="a_nome_dono" class="apple-input mb-2" placeholder="NOME DO DONO">
+<input id="a_whatsapp" class="apple-input mb-2" placeholder="WHATSAPP">
+<input id="a_senha" type="password" class="apple-input mb-2" placeholder="SENHA">
+
+<select id="a_pais" class="apple-input mb-2" onchange="paisChange('a')">
+<option value="">PAÍS</option>
+<option value="Brasil">BRASIL</option>
+<option value="EUA">EUA</option>
+<option value="Paraguai">PARAGUAI</option>
+</select>
+
+<select id="a_estado" class="apple-input mb-2 hidden" onchange="carregarCidades('a')"></select>
+<select id="a_cidade" class="apple-input mb-2 hidden"></select>
+</div>
+
+<button class="btn-primary mt-4" onclick="enviarCadastro()">SOLICITAR ACESSO</button>
+
+<p id="msgReg" class="text-green-500 text-xs text-center mt-3 font-black"></p>
+
+<span class="block text-blue-500 text-xs text-center mt-4 cursor-pointer" onclick="toggleForm()">VOLTAR</span>
+</div>
 
 </div>
 
 <script>
-const supabase = supabaseJs.createClient(
-  'https://zmgosywpwidypxyhxkry.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M'
-);
+const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co','PUBLIC_KEY');
 
-function norm(v){
-  return v.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+function toggleForm(){
+document.getElementById('loginForm').classList.toggle('hidden');
+document.getElementById('registerForm').classList.toggle('hidden');
 }
 
-// STATUS GLOBAL
-const status = localStorage.getItem('IFIPE_STATUS');
-if(status === 'off'){
-  document.getElementById('loginBox').classList.add('hidden');
-  document.getElementById('manutencao').classList.remove('hidden');
+function atualizarTipoCadastro(){
+const t=document.getElementById('cadTipo').value;
+document.getElementById('cadBuscador').classList.toggle('hidden',t!=='buscador');
+document.getElementById('cadAnunciante').classList.toggle('hidden',t!=='anunciante');
 }
 
-async function login(){
-  const tipo = document.getElementById('tipo').value;
-  const u = norm(document.getElementById('login').value);
-  const p = document.getElementById('senha').value;
-  const msg = document.getElementById('msg');
-  msg.innerText = '';
+async function paisChange(p){
+const pais=document.getElementById(p+'_pais').value;
+const est=document.getElementById(p+'_estado');
+const cid=document.getElementById(p+'_cidade');
+if(pais==='Brasil'){
+est.classList.remove('hidden');
+cid.classList.remove('hidden');
+const r=await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados');
+const e=await r.json();
+est.innerHTML='<option value="">ESTADO</option>'+e.map(x=>`<option value="${x.sigla}">${x.nome}</option>`).join('');
+}else{
+est.classList.add('hidden'); cid.classList.add('hidden');
+est.innerHTML=''; cid.innerHTML='';
+}
+}
 
-  if(!u || !p){ msg.innerText='Preencha tudo'; return; }
-
-  // MASTER
-  const masterPass = localStorage.getItem('Master_Custom_Pass') || '96197577';
-  if(u === 'bryan' && p === masterPass){
-    localStorage.clear();
-    localStorage.setItem('iFipe_Master_Auth','gov_absoluto');
-    window.location.replace('master.html');
-    return;
-  }
-
-  if(tipo === 'anunciante'){
-    const { data } = await supabase.from('fornecedores').select('*');
-    const user = data?.find(x =>
-      (norm(x.whatsapp) === u || norm(x.email||'') === u) && x.senha === p
-    );
-    if(!user){ msg.innerText='Erro'; return; }
-    if(user.ativo === false){ msg.innerText='Bloqueado'; return; }
-
-    localStorage.clear();
-    localStorage.setItem('iFipe_Anunciante', user.id);
-    window.location.replace('atacadista.html');
-    return;
-  }
-
-  const { data } = await supabase.from('clientes_buscador').select('*');
-  const user = data?.find(x =>
-    (norm(x.whatsapp) === u || norm(x.email||'') === u) && x.senha === p
-  );
-  if(!user){ msg.innerText='Erro'; return; }
-  if(user.ativo === false){ msg.innerText='Bloqueado'; return; }
-
-  localStorage.clear();
-  localStorage.setItem('iFipe_Token', user.id);
-  window.location.replace('buscar.html');
+async function carregarCidades(p){
+const uf=document.getElementById(p+'_estado').value;
+const cid=document.getElementById(p+'_cidade');
+const r=await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
+const c=await r.json();
+cid.innerHTML='<option value="">CIDADE</option>'+c.map(x=>`<option>${x.nome}</option>`).join('');
 }
 </script>
 
