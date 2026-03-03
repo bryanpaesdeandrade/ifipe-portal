@@ -17,6 +17,7 @@
             --input: #f5f5f7;
             --blue: #0071e3;
             --green: #34c759;
+            --gray: #8e8e93;
         }
         body.dark-mode {
             --bg: #000;
@@ -52,8 +53,8 @@
             background: var(--input);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 10px 14px;
-            font-size: 14px;
+            padding: 12px 16px;
+            font-size: 15px;
             color: var(--text);
             outline: none;
             width: 100%;
@@ -63,16 +64,25 @@
             border-color: var(--blue);
             box-shadow: 0 0 0 3px rgba(0,113,227,0.2);
         }
+        .apple-input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .apple-input[type="number"]::-webkit-inner-spin-button,
+        .apple-input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
         .btn-apple {
             background: var(--blue);
             color: white;
             font-weight: 600;
-            padding: 8px 16px;
+            padding: 10px 20px;
             border-radius: 50px;
             font-size: 13px;
             border: none;
             cursor: pointer;
             transition: all 0.2s;
+            white-space: nowrap;
         }
         .btn-apple:hover {
             background: #005bb5;
@@ -83,11 +93,12 @@
             border: 1px solid var(--border);
             color: var(--text);
             font-weight: 500;
-            padding: 6px 12px;
+            padding: 8px 16px;
             border-radius: 50px;
             font-size: 12px;
             cursor: pointer;
             transition: all 0.2s;
+            white-space: nowrap;
         }
         .btn-apple-secondary:hover {
             background: var(--input);
@@ -96,8 +107,9 @@
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 18px;
-            padding: 1.2rem;
+            padding: 1rem;
             transition: all 0.2s;
+            position: relative;
             display: flex;
             flex-direction: column;
             height: 100%;
@@ -114,6 +126,7 @@
             border-radius: 50px;
             display: inline-flex;
             align-items: center;
+            gap: 4px;
         }
         .badge-blue {
             background: rgba(0,113,227,0.1);
@@ -129,6 +142,16 @@
             background: rgba(255,59,48,0.1);
             color: #ff3b30;
             border: 1px solid rgba(255,59,48,0.3);
+        }
+        .badge-yellow {
+            background: rgba(255,204,0,0.1);
+            color: #b8860b;
+            border: 1px solid rgba(255,204,0,0.3);
+        }
+        .badge-purple {
+            background: rgba(147,51,234,0.1);
+            color: #9333ea;
+            border: 1px solid #9333ea;
         }
         .verified-badge {
             display: inline-flex;
@@ -168,7 +191,7 @@
         .action-button {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
             font-size: 10px;
             font-weight: 700;
             color: #8e8e93;
@@ -276,6 +299,7 @@
             height: calc(100vh - 120px);
             overflow-y: auto;
         }
+        /* Ajuste para tela 13" */
         @media (min-width: 1024px) and (max-width: 1279px) {
             .sidebar {
                 width: 240px;
@@ -317,19 +341,23 @@
                 display: none;
             }
         }
-        .calc-result-row {
+        .calc-compact {
+            font-size: 13px;
+        }
+        .calc-compact .result-line {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
             margin-bottom: 4px;
         }
-        .status-item {
-            background: var(--input);
-            border-radius: 12px;
-            padding: 6px 10px;
+        .status-badge {
+            background: rgba(0,113,227,0.1);
+            color: var(--blue);
+            border: 1px solid rgba(0,113,227,0.3);
+            border-radius: 50px;
+            padding: 4px 12px;
             font-size: 11px;
             font-weight: 600;
+            display: inline-block;
         }
     </style>
 </head>
@@ -348,19 +376,21 @@
                 <label class="text-xs text-gray-400">Preço USD</label>
                 <input type="number" id="calcUsdMobile" class="apple-input text-sm py-2" placeholder="0.00" min="0" step="0.01" oninput="atualizarCalculadoraMobile()" value="">
             </div>
-            <div class="flex justify-between text-xs mb-1">
-                <span class="text-gray-400">Binance</span>
-                <span id="calcBinanceMobile" class="font-bold text-yellow-500">R$ 5,2907</span>
+            <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+                <div>
+                    <span class="text-gray-400">Binance</span>
+                    <div id="calcBinanceMobile" class="font-bold text-yellow-500">R$ 5,2907</div>
+                </div>
+                <div>
+                    <span class="text-gray-400">Oráculo</span>
+                    <div id="calcOraculoMobile" class="font-bold text-green-400">R$ 5,3507</div>
+                </div>
             </div>
-            <div class="flex justify-between text-xs mb-2">
-                <span class="text-gray-400">Oráculo</span>
-                <span id="calcOraculoMobile" class="font-bold text-green-400">R$ 5,3507</span>
-            </div>
-            <div class="bg-[#2c2c2e] p-2 rounded-xl mb-2 text-center">
+            <div class="bg-[#2c2c2e] p-2 rounded-xl mb-2">
                 <span class="text-xs text-gray-400">Custo final no Brasil</span>
                 <div id="custoFinalMobile" class="text-lg font-bold text-blue-500">R$ 0,00</div>
             </div>
-            <div class="grid grid-cols-3 gap-1 text-center text-xs">
+            <div class="grid grid-cols-3 gap-1 text-xs text-center mt-2">
                 <div>
                     <span class="text-gray-400">ATACADO</span>
                     <div id="precoAtacadoMobile" class="font-bold">R$ 0</div>
@@ -375,12 +405,10 @@
                 </div>
             </div>
         </div>
-        <!-- Status do usuário no drawer -->
+        <!-- Status do usuário no iFipe -->
         <div class="apple-card p-4 mb-4">
-            <h3 class="text-sm font-bold mb-2">Seus Status no iFipe</h3>
-            <div id="userStatusMobile" class="flex flex-wrap gap-2">
-                <!-- Insígnias serão inseridas aqui -->
-            </div>
+            <h3 class="text-sm font-bold mb-2">Seus status no iFipe 🏆</h3>
+            <div id="userInsigniasMobile" class="flex flex-wrap gap-1"></div>
         </div>
         <!-- Links do drawer -->
         <div class="drawer-item" onclick="abrirCriarAlerta(); fecharDrawer()">
@@ -437,9 +465,9 @@
             <!-- Ícone de notificações -->
             <div class="notification-icon" onclick="abrirNotificacoes()">
                 <i class="far fa-bell"></i>
-                <span id="notificacaoBadge" class="notification-badge hidden">3</span>
+                <span id="notificacaoBadge" class="notification-badge hidden">0</span>
             </div>
-            <!-- Nome do usuário (desktop) -->
+            <!-- Nome do usuário (desktop) - sem "MASTER" -->
             <span id="userName" class="text-xs lg:text-sm font-medium hidden sm:inline">Carregando...</span>
         </div>
     </nav>
@@ -448,26 +476,27 @@
     <div class="pt-16 lg:pt-20 px-4 lg:px-5 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-4">
         <!-- Sidebar com calculadora e status (desktop) -->
         <div class="desktop-only lg:col-span-1 sidebar">
-            <!-- Calculadora -->
             <div class="apple-card p-4 mb-4">
                 <h2 class="text-base font-bold mb-2">Calculadora iPhone</h2>
                 <div class="mb-2">
                     <label class="text-xs text-gray-400">Preço USD</label>
                     <input type="number" id="calcUsd" class="apple-input text-sm py-2" placeholder="0.00" min="0" step="0.01" oninput="atualizarCalculadora()" value="">
                 </div>
-                <div class="flex justify-between text-xs mb-1">
-                    <span class="text-gray-400">Binance</span>
-                    <span id="calcBinance" class="font-bold text-yellow-500">R$ 5,2907</span>
+                <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+                    <div>
+                        <span class="text-gray-400">Binance</span>
+                        <div id="calcBinance" class="font-bold text-yellow-500">R$ 5,2907</div>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Oráculo</span>
+                        <div id="calcOraculo" class="font-bold text-green-400">R$ 5,3507</div>
+                    </div>
                 </div>
-                <div class="flex justify-between text-xs mb-2">
-                    <span class="text-gray-400">Oráculo</span>
-                    <span id="calcOraculo" class="font-bold text-green-400">R$ 5,3507</span>
-                </div>
-                <div class="bg-[#2c2c2e] p-2 rounded-xl mb-2 text-center">
+                <div class="bg-[#2c2c2e] p-2 rounded-xl mb-2">
                     <span class="text-xs text-gray-400">Custo final no Brasil</span>
                     <div id="custoFinal" class="text-lg font-bold text-blue-500">R$ 0,00</div>
                 </div>
-                <div class="grid grid-cols-3 gap-1 text-center text-xs">
+                <div class="grid grid-cols-3 gap-1 text-xs text-center">
                     <div>
                         <span class="text-gray-400">ATACADO</span>
                         <div id="precoAtacado" class="font-bold">R$ 0</div>
@@ -482,12 +511,10 @@
                     </div>
                 </div>
             </div>
-            <!-- Status do usuário -->
+            <!-- Status no iFipe -->
             <div class="apple-card p-4">
-                <h3 class="text-sm font-bold mb-2">Seus Status no iFipe</h3>
-                <div id="userStatusDesktop" class="flex flex-wrap gap-2">
-                    <!-- Insígnias serão inseridas aqui -->
-                </div>
+                <h3 class="text-sm font-bold mb-2">Seus status no iFipe 🏆</h3>
+                <div id="userInsignias" class="flex flex-wrap gap-1"></div>
             </div>
         </div>
 
@@ -507,9 +534,13 @@
                     <option value="">Todas condições</option>
                     <option value="Novo">Novo</option>
                     <option value="Seminovo">Seminovo</option>
+                    <option value="CPO">CPO</option>
                 </select>
                 <select id="filtroCapacidade" class="apple-input w-auto text-xs py-1.5 flex-shrink-0">
                     <option value="">Todas capacidades</option>
+                </select>
+                <select id="filtroCor" class="apple-input w-auto text-xs py-1.5 flex-shrink-0">
+                    <option value="">Todas cores</option>
                 </select>
             </div>
 
@@ -551,8 +582,8 @@
     <div id="notificacoesModal" class="modal hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Notificações</h2>
-            <div id="listaNotificacoes" class="space-y-3">
-                <!-- Serão preenchidas -->
+            <div id="listaNotificacoes" class="space-y-3 max-h-96 overflow-y-auto">
+                <!-- Será preenchido via JS -->
             </div>
             <button onclick="fecharNotificacoes()" class="btn-apple-secondary w-full mt-6">Fechar</button>
         </div>
@@ -563,17 +594,16 @@
             <h2 class="text-2xl font-bold mb-4">Histórico de Preços</h2>
             <p class="text-sm text-gray-400 mb-4">Média dos últimos 10 dias por produto</p>
             <div id="listaHistorico" class="space-y-3 max-h-96 overflow-y-auto">
-                <!-- Serão preenchidas -->
+                <!-- Será preenchido via JS -->
             </div>
             <button onclick="fecharHistoricoGeral()" class="btn-apple-secondary w-full mt-6">Fechar</button>
         </div>
     </div>
 
     <script>
-        const _s = supabase.createClient(
-            'https://zmgosywpwidypxyhxkry.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M'
-        );
+        const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
+        const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let rateBinance = 5.2907;
         let rateOraculo = rateBinance + 0.06;
@@ -583,6 +613,23 @@
         let fornecedores = [];
         let ofertas = [];
         let regioes = [];
+        let meusAlertas = [];
+        let minhasCurtidas = [];
+
+        // Cores aproximadas
+        const corHex = {
+            'PRETO': '#000', 'BLACK': '#000',
+            'BRANCO': '#fff', 'WHITE': '#fff',
+            'AZUL': '#215e7c', 'BLUE': '#215e7c',
+            'VERMELHO': '#a50011', 'RED': '#a50011',
+            'ROXO': '#6b21a8', 'PURPLE': '#6b21a8',
+            'VERDE': '#16a34a', 'GREEN': '#16a34a',
+            'AMARELO': '#eab308', 'YELLOW': '#eab308',
+            'CINZA': '#4b5563', 'GRAY': '#4b5563',
+            'DOURADO': '#b8860b', 'GOLD': '#b8860b',
+            'PRATA': '#a0a0a0', 'SILVER': '#a0a0a0',
+            'TITÂNIO': '#8c8c88', 'TITANIUM': '#8c8c88'
+        };
 
         window.onload = async () => {
             const token = localStorage.getItem('iFipe_Token');
@@ -593,18 +640,37 @@
                 return;
             }
 
-            try {
-                // Carrega dados do usuário
-                if (masterAuth === 'gov_absoluto') {
-                    currentUser = { id: 'master', nome: 'Master', insignia_manual: ['👑 MASTER'] };
-                } else {
-                    const { data: userData, error } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
-                    if (error || !userData) throw new Error('Usuário não encontrado');
-                    currentUser = userData;
+            // Carrega dados do usuário
+            if (masterAuth === 'gov_absoluto') {
+                currentUser = { id: 0, nome: 'MASTER', email: 'master@ifipe', logins_count: 0, insignia_manual: [] };
+                document.getElementById('userName').innerText = 'MASTER';
+            } else {
+                const { data, error } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
+                if (error || !data) {
+                    logout();
+                    return;
                 }
-                document.getElementById('userName').innerText = currentUser.nome || 'Usuário';
+                currentUser = data;
+                document.getElementById('userName').innerText = currentUser.nome || currentUser.email || 'Usuário';
+            }
 
-                // Carrega dados de produtos, variações, fornecedores, ofertas
+            // Carrega dados do Supabase
+            await carregarDados();
+
+            // Inicia WebSocket
+            initTicker();
+
+            // Renderiza cards
+            renderizarCards();
+
+            // Carrega alertas e notificações
+            if (!masterAuth) {
+                await carregarAlertas();
+            }
+        };
+
+        async function carregarDados() {
+            try {
                 const [p, v, f, o, r] = await Promise.all([
                     _s.from('produtos_mestre').select('*').order('nome'),
                     _s.from('variacoes').select('*'),
@@ -622,42 +688,61 @@
                 // Popula filtros
                 popularFiltros();
 
-                // Exibe status do usuário
-                exibirStatusUsuario();
-
-                initTicker();
-                renderizarCards();
+                // Atualiza status do usuário (insígnias)
+                atualizarStatusUsuario();
 
             } catch (err) {
                 console.error('Erro ao carregar dados:', err);
-                document.getElementById('produtosGrid').innerHTML = '<p class="text-center text-red-500 col-span-full">Erro ao carregar dados. Tente novamente.</p>';
             }
-        };
+        }
 
         function popularFiltros() {
+            // Categorias (produtos)
             const catSelect = document.getElementById('filtroCategoria');
-            const uniqueProdutos = [...new Set(produtos.map(p => p.nome))];
-            uniqueProdutos.forEach(nome => {
-                catSelect.innerHTML += `<option value="${nome}">${nome}</option>`;
+            produtos.forEach(p => {
+                catSelect.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
             });
 
+            // Capacidades (únicas)
+            const caps = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
             const capSelect = document.getElementById('filtroCapacidade');
-            const uniqueCaps = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
-            uniqueCaps.forEach(cap => {
-                capSelect.innerHTML += `<option value="${cap}">${cap}</option>`;
+            caps.forEach(c => {
+                capSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+
+            // Cores
+            const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
+            const corSelect = document.getElementById('filtroCor');
+            cores.forEach(c => {
+                corSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+
+            // Para o modal de alerta
+            const alertaProd = document.getElementById('alertaProduto');
+            produtos.forEach(p => {
+                alertaProd.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+            });
+
+            const alertaCap = document.getElementById('alertaCapacidade');
+            caps.forEach(c => {
+                alertaCap.innerHTML += `<option value="${c}">${c}</option>`;
             });
         }
 
-        function exibirStatusUsuario() {
-            const insignias = currentUser.insignia_manual || [];
-            const containerDesktop = document.getElementById('userStatusDesktop');
-            const containerMobile = document.getElementById('userStatusMobile');
-            if (insignias.length === 0) {
-                containerDesktop.innerHTML = '<span class="text-xs text-gray-400">Nenhuma insígnia ainda</span>';
-                containerMobile.innerHTML = '<span class="text-xs text-gray-400">Nenhuma insígnia ainda</span>';
+        function atualizarStatusUsuario() {
+            // Exemplo: insígnias baseadas em número de logins ou manual
+            let insignias = currentUser.insignia_manual || [];
+            if (currentUser.logins_count >= 10) insignias.push('10+ LOGINS');
+            if (currentUser.logins_count >= 50) insignias.push('50+ LOGINS');
+
+            const container = document.getElementById('userInsignias');
+            const containerMobile = document.getElementById('userInsigniasMobile');
+            if (insignias.length) {
+                container.innerHTML = insignias.map(i => `<span class="status-badge">${i}</span>`).join('');
+                containerMobile.innerHTML = insignias.map(i => `<span class="status-badge">${i}</span>`).join('');
             } else {
-                containerDesktop.innerHTML = insignias.map(ins => `<span class="status-item">${ins}</span>`).join('');
-                containerMobile.innerHTML = insignias.map(ins => `<span class="status-item">${ins}</span>`).join('');
+                container.innerHTML = '<span class="text-xs text-gray-400">Nenhuma insígnia ainda</span>';
+                containerMobile.innerHTML = '<span class="text-xs text-gray-400">Nenhuma insígnia ainda</span>';
             }
         }
 
@@ -686,15 +771,20 @@
             document.getElementById('custoFinal').innerText = `R$ ${custo.toFixed(2)}`;
             document.getElementById('calcBinance').innerText = `R$ ${rateBinance.toFixed(4)}`;
             document.getElementById('calcOraculo').innerText = `R$ ${rateOraculo.toFixed(4)}`;
+
+            let atacado, atacarejo, varejo;
             if (usd <= 750) {
-                document.getElementById('precoAtacado').innerText = `R$ ${(custo * 1.2).toFixed(2)}`;
-                document.getElementById('precoAtacarejo').innerText = `R$ ${(custo * 1.4).toFixed(2)}`;
-                document.getElementById('precoVarejo').innerText = `R$ ${(custo * 1.55).toFixed(2)}`;
+                atacado = custo * 1.2;
+                atacarejo = custo * 1.4;
+                varejo = custo * 1.55;
             } else {
-                document.getElementById('precoAtacado').innerText = `R$ ${(custo + 350).toFixed(2)}`;
-                document.getElementById('precoAtacarejo').innerText = `R$ ${(custo + 550).toFixed(2)}`;
-                document.getElementById('precoVarejo').innerText = `R$ ${(custo + 1000).toFixed(2)}`;
+                atacado = custo + 350;
+                atacarejo = custo + 550;
+                varejo = custo + 1000;
             }
+            document.getElementById('precoAtacado').innerText = `R$ ${atacado.toFixed(2)}`;
+            document.getElementById('precoAtacarejo').innerText = `R$ ${atacarejo.toFixed(2)}`;
+            document.getElementById('precoVarejo').innerText = `R$ ${varejo.toFixed(2)}`;
         }
 
         function atualizarCalculadoraMobile() {
@@ -704,31 +794,20 @@
             document.getElementById('custoFinalMobile').innerText = `R$ ${custo.toFixed(2)}`;
             document.getElementById('calcBinanceMobile').innerText = `R$ ${rateBinance.toFixed(4)}`;
             document.getElementById('calcOraculoMobile').innerText = `R$ ${rateOraculo.toFixed(4)}`;
-            if (usd <= 750) {
-                document.getElementById('precoAtacadoMobile').innerText = `R$ ${(custo * 1.2).toFixed(2)}`;
-                document.getElementById('precoAtacarejoMobile').innerText = `R$ ${(custo * 1.4).toFixed(2)}`;
-                document.getElementById('precoVarejoMobile').innerText = `R$ ${(custo * 1.55).toFixed(2)}`;
-            } else {
-                document.getElementById('precoAtacadoMobile').innerText = `R$ ${(custo + 350).toFixed(2)}`;
-                document.getElementById('precoAtacarejoMobile').innerText = `R$ ${(custo + 550).toFixed(2)}`;
-                document.getElementById('precoVarejoMobile').innerText = `R$ ${(custo + 1000).toFixed(2)}`;
-            }
-        }
 
-        function getCorHex(cor) {
-            const map = {
-                'PRETO': '#000', 'BLACK': '#000',
-                'BRANCO': '#fff', 'WHITE': '#fff',
-                'AZUL': '#215e7c', 'BLUE': '#215e7c',
-                'VERMELHO': '#a50011', 'RED': '#a50011',
-                'ROXO': '#6b21a8', 'PURPLE': '#6b21a8',
-                'VERDE': '#16a34a', 'GREEN': '#16a34a',
-                'AMARELO': '#eab308', 'YELLOW': '#eab308',
-                'CINZA': '#4b5563', 'GRAY': '#4b5563',
-                'DOURADO': '#b8860b', 'GOLD': '#b8860b',
-                'PRATA': '#a0a0a0', 'SILVER': '#a0a0a0'
-            };
-            return map[cor?.toUpperCase()] || '#808080';
+            let atacado, atacarejo, varejo;
+            if (usd <= 750) {
+                atacado = custo * 1.2;
+                atacarejo = custo * 1.4;
+                varejo = custo * 1.55;
+            } else {
+                atacado = custo + 350;
+                atacarejo = custo + 550;
+                varejo = custo + 1000;
+            }
+            document.getElementById('precoAtacadoMobile').innerText = `R$ ${atacado.toFixed(2)}`;
+            document.getElementById('precoAtacarejoMobile').innerText = `R$ ${atacarejo.toFixed(2)}`;
+            document.getElementById('precoVarejoMobile').innerText = `R$ ${varejo.toFixed(2)}`;
         }
 
         function renderizarCards() {
@@ -740,34 +819,40 @@
                 return;
             }
 
-            // Calcula menor preço por produto para destacar
-            const menoresPorProduto = {};
-            ofertas.forEach(o => {
-                const prodId = o.variacoes?.produto_id;
-                if (!prodId) return;
-                const precoBRL = o.moeda === 'USD' ? o.preco * rateOraculo : o.preco;
-                if (!menoresPorProduto[prodId] || precoBRL < menoresPorProduto[prodId]) {
-                    menoresPorProduto[prodId] = precoBRL;
-                }
+            // Aplica filtros (simplificado)
+            const filtroCat = document.getElementById('filtroCategoria').value;
+            const filtroCond = document.getElementById('filtroCondicao').value;
+            const filtroCap = document.getElementById('filtroCapacidade').value;
+            const filtroCor = document.getElementById('filtroCor').value;
+
+            let ofertasFiltradas = ofertas.filter(o => {
+                if (filtroCat && o.variacoes?.produto_id != filtroCat) return false;
+                if (filtroCond && o.condicao !== filtroCond) return false;
+                if (filtroCap && o.variacoes?.capacidade !== filtroCap) return false;
+                if (filtroCor && o.variacoes?.cor !== filtroCor) return false;
+                return true;
             });
 
-            ofertas.slice(0, 20).forEach(o => {
+            ofertasFiltradas.slice(0, 20).forEach(o => {
                 const produto = o.variacoes?.produtos_mestre;
                 const fornecedor = o.fornecedores;
                 const variacao = o.variacoes;
                 if (!produto || !fornecedor) return;
 
-                const precoBRL = o.moeda === 'USD' ? o.preco * rateOraculo : o.preco;
+                const precoFinal = o.moeda === 'USD' ? o.preco * rateOraculo : o.preco;
                 const cor = variacao?.cor || 'Desconhecida';
-                const corHex = getCorHex(cor);
-                const isMenor = precoBRL === menoresPorProduto[produto.id];
+                const corHexValue = corHex[cor.toUpperCase()] || '#808080';
+
+                // Verifica se é menor preço (simplificado)
+                const menorPreco = ofertasFiltradas.filter(of => of.variacoes?.produto_id === produto.id).reduce((min, of) => Math.min(min, of.moeda === 'USD' ? of.preco * rateOraculo : of.preco), Infinity);
+                const isMenor = precoFinal === menorPreco;
 
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-1">
                         <div class="flex items-center">
-                            <span class="color-dot" style="background: ${corHex}; border: 1px solid ${cor === 'BRANCO' || cor === 'WHITE' ? '#000' : 'transparent'};"></span>
+                            <span class="color-dot" style="background: ${corHexValue}; border: 1px solid ${cor.toUpperCase() === 'BRANCO' ? '#000' : 'transparent'};"></span>
                             <h3 class="font-bold text-sm">${produto.nome}</h3>
                         </div>
                         <span class="badge ${o.quantidade <= 3 ? 'badge-red' : 'badge-blue'}">${o.quantidade} UN</span>
@@ -782,16 +867,16 @@
                         ${fornecedor.verificado ? '<span class="verified-badge">✓</span>' : ''}
                         ${fornecedor.insignia_manual?.length ? `<span class="insignia">${fornecedor.insignia_manual[0]}</span>` : ''}
                     </div>
-                    <p class="text-xs text-gray-400 mb-1">📍 ${fornecedor.cidade || ''} - ${fornecedor.pais || 'BR'}</p>
+                    <p class="text-xs text-gray-400 mb-1">📍 ${fornecedor.cidade || ''} - ${fornecedor.pais || 'BR'} 🇧🇷</p>
                     <div class="flex justify-between items-center mb-2">
-                        <span class="price">R$ ${precoBRL.toFixed(2)}</span>
+                        <span class="price">R$ ${precoFinal.toFixed(2)}</span>
                         <span class="text-xs text-gray-400">${new Date(o.criado_em).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</span>
                     </div>
                     <div class="flex justify-between items-center py-1 border-t border-b border-[#38383a] mb-2">
-                        <button class="action-button" onclick="recomendar(${o.id})">
+                        <button class="action-button" onclick="toggleRecomendar(${o.id}, this)">
                             <i class="far fa-thumbs-up"></i> <span>Recomendar</span>
                         </button>
-                        <button class="action-button" onclick="perguntar(${o.id})">
+                        <button class="action-button" onclick="abrirPerguntas(${o.id})">
                             <i class="far fa-question-circle"></i> <span>Perguntar</span>
                         </button>
                         <button class="action-button" onclick="compartilhar(${o.id})">
@@ -806,31 +891,108 @@
             });
         }
 
-        // Funções de navegação e modais (placeholders que serão substituídos por lógica real)
-        function abrirDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('open'); }
-        function fecharDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); }
+        // Funções de interação
+        async function toggleRecomendar(ofertaId, btn) {
+            if (!currentUser || currentUser.id === 0) return;
+            const temCurtida = minhasCurtidas.includes(ofertaId);
+            if (temCurtida) {
+                await _s.from('curtidas').delete().eq('cliente_id', currentUser.id).eq('oferta_id', ofertaId);
+                minhasCurtidas = minhasCurtidas.filter(id => id !== ofertaId);
+                btn.classList.remove('text-blue-500');
+                btn.querySelector('span').innerText = 'Recomendar';
+            } else {
+                await _s.from('curtidas').insert({ cliente_id: currentUser.id, oferta_id: ofertaId });
+                minhasCurtidas.push(ofertaId);
+                btn.classList.add('text-blue-500');
+                btn.querySelector('span').innerText = 'Recomendado';
+            }
+        }
 
-        function abrirCriarAlerta() { document.getElementById('criarAlertaModal').classList.remove('hidden'); }
+        async function abrirPerguntas(ofertaId) {
+            // Implementar modal de perguntas
+            alert('Abrir perguntas para oferta ' + ofertaId);
+        }
+
+        function compartilhar(ofertaId) {
+            navigator.clipboard.writeText(window.location.href + '?oferta=' + ofertaId);
+            alert('Link copiado!');
+        }
+
+        // Alertas
+        async function carregarAlertas() {
+            const { data } = await _s.from('alertas_preco').select('*').eq('cliente_id', currentUser.id);
+            meusAlertas = data || [];
+            // Atualizar badge de notificações se algum alerta foi atingido
+        }
+
+        function abrirCriarAlerta() {
+            document.getElementById('criarAlertaModal').classList.remove('hidden');
+        }
         function fecharCriarAlerta() { document.getElementById('criarAlertaModal').classList.add('hidden'); }
-        function criarAlerta() { alert('Alerta criado (mock)'); fecharCriarAlerta(); }
+        async function criarAlerta() {
+            const produto = document.getElementById('alertaProduto').value;
+            const capacidade = document.getElementById('alertaCapacidade').value;
+            const preco = parseFloat(document.getElementById('alertaPreco').value);
+            if (!produto || !preco) return alert('Preencha todos os campos');
+            await _s.from('alertas_preco').insert({
+                cliente_id: currentUser.id,
+                produto_id: produto,
+                capacidade: capacidade || null,
+                preco_desejado: preco
+            });
+            alert('Alerta criado!');
+            fecharCriarAlerta();
+        }
 
-        function abrirNotificacoes() { document.getElementById('notificacoesModal').classList.remove('hidden'); }
+        function abrirNotificacoes() {
+            document.getElementById('notificacoesModal').classList.remove('hidden');
+            // Carregar notificações (alertas atingidos)
+        }
         function fecharNotificacoes() { document.getElementById('notificacoesModal').classList.add('hidden'); }
 
-        function abrirHistoricoGeral() { document.getElementById('historicoGeralModal').classList.remove('hidden'); }
+        function abrirHistoricoGeral() {
+            document.getElementById('historicoGeralModal').classList.remove('hidden');
+            // Carregar histórico real
+        }
         function fecharHistoricoGeral() { document.getElementById('historicoGeralModal').classList.add('hidden'); }
 
-        function abrirMeusAlertas() { alert('Meus alertas'); }
-        function abrirFavoritos() { alert('Favoritos'); }
-        function recomendar(id) { alert('Recomendar ' + id); }
-        function perguntar(id) { alert('Perguntar ' + id); }
-        function compartilhar(id) { alert('Compartilhar ' + id); }
+        function abrirMeusAlertas() { alert('Meus alertas (em breve)'); }
+        function abrirFavoritos() { alert('Favoritos (em breve)'); }
+
+        // Drawer
+        function abrirDrawer() {
+            document.getElementById('drawer').classList.add('open');
+            document.getElementById('drawerOverlay').classList.add('open');
+        }
+        function fecharDrawer() {
+            document.getElementById('drawer').classList.remove('open');
+            document.getElementById('drawerOverlay').classList.remove('open');
+        }
 
         function logout() {
             localStorage.removeItem('iFipe_Token');
             localStorage.removeItem('iFipe_Master_Auth');
             window.location.replace('index.html');
         }
+
+        // Expor funções
+        window.abrirDrawer = abrirDrawer;
+        window.fecharDrawer = fecharDrawer;
+        window.abrirCriarAlerta = abrirCriarAlerta;
+        window.fecharCriarAlerta = fecharCriarAlerta;
+        window.criarAlerta = criarAlerta;
+        window.abrirNotificacoes = abrirNotificacoes;
+        window.fecharNotificacoes = fecharNotificacoes;
+        window.abrirHistoricoGeral = abrirHistoricoGeral;
+        window.fecharHistoricoGeral = fecharHistoricoGeral;
+        window.abrirMeusAlertas = abrirMeusAlertas;
+        window.abrirFavoritos = abrirFavoritos;
+        window.logout = logout;
+        window.toggleRecomendar = toggleRecomendar;
+        window.abrirPerguntas = abrirPerguntas;
+        window.compartilhar = compartilhar;
+        window.atualizarCalculadora = atualizarCalculadora;
+        window.atualizarCalculadoraMobile = atualizarCalculadoraMobile;
     </script>
 </body>
 </html>
