@@ -131,7 +131,6 @@
         function calcularImportacao() {
             const usd = parseFloat(document.getElementById('calcUsd').value);
             if (!usd || rateOraculo === 0) return;
-            // Custo final = (dólar * (binance + 0,06)) * 1,06
             const custo = (usd * rateOraculo) * 1.06;
             document.getElementById('calcResult').innerText =
                 custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -164,7 +163,7 @@
                 return;
             }
 
-            // Master: bypass total
+            // Master: bypass
             const masterPass = localStorage.getItem('Master_Custom_Pass') || '96197577';
             const uLower = uRaw.toLowerCase();
             if ((uLower === 'bryan' || uLower === 'master') && p === masterPass) {
@@ -175,7 +174,7 @@
                 return;
             }
 
-            // Se sistema em manutenção, só master passou, então bloqueia
+            // Se sistema em manutenção, bloqueia
             if (status === 'off') {
                 msg.innerText = "Estamos em atualização para trazer melhorias para você time iFipe";
                 return;
@@ -183,30 +182,36 @@
 
             msg.innerText = "VERIFICANDO...";
 
-            // Normaliza telefone digitado: apenas dígitos
-            const uDigits = uRaw.replace(/\D/g, '');
-
-            // Função para comparar telefone (ignora formatação e DDI)
-            const phoneMatches = (dbPhone) => {
+            // Função para comparar telefone ignorando formatação
+            const phoneMatches = (dbPhone, inputDigits) => {
                 const dbDigits = (dbPhone || '').replace(/\D/g, '');
-                if (!uDigits || !dbDigits) return false;
-                // Verifica se os dígitos do banco terminam com os digitados (input sem DDI)
-                // ou se os digitados terminam com os do banco (input com DDI)
-                return dbDigits.endsWith(uDigits) || uDigits.endsWith(dbDigits);
+                return dbDigits.length > 0 && inputDigits.length > 0 && (dbDigits.endsWith(inputDigits) || inputDigits.endsWith(dbDigits));
             };
 
+            const inputDigits = uRaw.replace(/\D/g, '');
+
             if (type === 'anunciante') {
-                const { data, error } = await _s.from('fornecedores').select('id, email, whatsapp, senha, ativo');
-                if (error || !data) {
+                // Primeiro tenta busca exata por email ou whatsapp
+                let { data, error } = await _s
+                    .from('fornecedores')
+                    .select('*')
+                    .or(`email.ilike.${uLower},whatsapp.eq.${uRaw}`);
+                if (error) {
                     msg.innerText = "ERRO DE CONEXÃO.";
                     return;
                 }
-                const user = data.find(c => {
-                    const emailMatch = (c.email || '').trim().toLowerCase() === uLower;
-                    const phoneMatch = phoneMatches(c.whatsapp);
-                    return (emailMatch || phoneMatch) && String(c.senha).trim() === p;
-                });
+                let user = data?.[0];
+                // Se não achou, tenta buscar por telefone normalizado (traz todos e filtra)
+                if (!user && inputDigits.length > 0) {
+                    const { data: all } = await _s.from('fornecedores').select('*');
+                    user = all?.find(u => phoneMatches(u.whatsapp, inputDigits) && String(u.senha).trim() === p);
+                }
                 if (!user) {
+                    msg.innerText = "DADOS INCORRETOS.";
+                    return;
+                }
+                // Verifica senha (se já não foi verificada no fallback)
+                if (String(user.senha).trim() !== p) {
                     msg.innerText = "DADOS INCORRETOS.";
                     return;
                 }
@@ -222,29 +227,39 @@
             }
 
             // Buscador
-            const { data, error } = await _s.from('clientes_buscador').select('id, email, whatsapp, senha, ativo, logins_count');
-            if (error || !data) {
-                msg.innerText = "ERRO DE CONEXÃO.";
+            if (type === 'buscador') {
+                let { data, error } = await _s
+                    .from('clientes_buscador')
+                    .select('*')
+                    .or(`email.ilike.${uLower},whatsapp.eq.${uRaw}`);
+                if (error) {
+                    msg.innerText = "ERRO DE CONEXÃO.";
+                    return;
+                }
+                let user = data?.[0];
+                if (!user && inputDigits.length > 0) {
+                    const { data: all } = await _s.from('clientes_buscador').select('*');
+                    user = all?.find(u => phoneMatches(u.whatsapp, inputDigits) && String(u.senha).trim() === p);
+                }
+                if (!user) {
+                    msg.innerText = "DADOS INCORRETOS.";
+                    return;
+                }
+                if (String(user.senha).trim() !== p) {
+                    msg.innerText = "DADOS INCORRETOS.";
+                    return;
+                }
+                if (user.ativo === false) {
+                    msg.innerText = "BLOQUEADO.";
+                    return;
+                }
+                localStorage.removeItem('iFipe_Anunciante');
+                localStorage.removeItem('iFipe_Master_Auth');
+                await _s.from('clientes_buscador').update({ logins_count: (user.logins_count || 0) + 1 }).eq('id', user.id);
+                localStorage.setItem('iFipe_Token', user.id);
+                window.location.replace('buscar.html');
                 return;
             }
-            const user = data.find(c => {
-                const emailMatch = (c.email || '').trim().toLowerCase() === uLower;
-                const phoneMatch = phoneMatches(c.whatsapp);
-                return (emailMatch || phoneMatch) && String(c.senha).trim() === p;
-            });
-            if (!user) {
-                msg.innerText = "DADOS INCORRETOS.";
-                return;
-            }
-            if (user.ativo === false) {
-                msg.innerText = "BLOQUEADO.";
-                return;
-            }
-            localStorage.removeItem('iFipe_Anunciante');
-            localStorage.removeItem('iFipe_Master_Auth');
-            await _s.from('clientes_buscador').update({ logins_count: (user.logins_count || 0) + 1 }).eq('id', user.id);
-            localStorage.setItem('iFipe_Token', user.id);
-            window.location.replace('buscar.html');
         }
     </script>
 </body>
