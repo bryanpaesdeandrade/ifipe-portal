@@ -18,6 +18,7 @@
             --blue: #0071e3;
             --green: #34c759;
             --gray: #8e8e93;
+            --orange: #ff9f0a;
         }
         body.dark-mode {
             --bg: #000;
@@ -118,13 +119,13 @@
         }
         .header-btn:hover {
             background: rgba(255,255,255,0.1);
-            box-shadow: 0 0 15px rgba(255,255,255,0.05);
-            border-color: rgba(0,113,227,0.5);
+            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+            border-color: rgba(0,113,227,0.4);
             color: var(--blue);
         }
         .dark-mode .header-btn:hover {
             background: rgba(255,255,255,0.1);
-            border-color: rgba(0,113,227,0.5);
+            border-color: rgba(0,113,227,0.4);
             color: var(--blue);
         }
         .product-card {
@@ -176,6 +177,11 @@
             background: rgba(147,51,234,0.1);
             color: #9333ea;
             border: 1px solid #9333ea;
+        }
+        .badge-orange {
+            background: rgba(255,159,10,0.1);
+            color: #ff9f0a;
+            border: 1px solid #ff9f0a;
         }
         .verified-badge {
             display: inline-flex;
@@ -393,6 +399,13 @@
         .filter-bar {
             width: 100%;
         }
+        /* Calculadora quadrada (largura igual à altura?) - apenas estilização */
+        .calc-card {
+            aspect-ratio: 1 / 1; /* torna o card quadrado */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -427,18 +440,18 @@
             <span class="text-xs lg:text-sm text-gray-400 hidden sm:inline">A TABELA FIPE DO IPHONE</span>
         </div>
         <div class="flex items-center gap-2 lg:gap-4">
-            <!-- Índice Binance (apenas Binance, sem Oráculo duplicado) -->
+            <!-- Índice Binance (apenas Binance) -->
             <div class="desktop-only items-center gap-3 text-xs">
                 <div>
                     <span class="text-gray-400">Binance</span>
                     <span id="binanceRate" class="font-mono font-bold text-yellow-500 ml-1">R$ 5,2907</span>
                 </div>
             </div>
-            <!-- Botão único de comprar USDT com taxa VIP (sempre visível) - id="btnComprarUsdt" -->
+            <!-- Botão único de comprar USDT com taxa VIP -->
             <a id="btnComprarUsdt" href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="bg-green-600 text-white px-3 lg:px-4 py-1.5 rounded-full text-xs lg:text-sm font-bold hover:bg-green-700 transition flex items-center gap-1 whitespace-nowrap">
                 <i class="fab fa-whatsapp"></i> COMPRAR USDT <span id="taxaVip" class="ml-1">R$ 5,3507</span>
             </a>
-            <!-- Botões do header com hover glow (Suporte, Histórico, Conta, Sair) -->
+            <!-- Botões do header com hover glow -->
             <a href="https://wa.me/5568999999999" target="_blank" class="header-btn text-xs">
                 <i class="fab fa-whatsapp"></i> Suporte
             </a>
@@ -451,13 +464,12 @@
             <button class="header-btn text-xs" onclick="logout()">
                 <i class="fas fa-sign-out-alt mr-1"></i> Sair
             </button>
-            <!-- Ícone de notificações movido para o canto superior direito -->
+            <!-- Ícone de notificações no canto direito -->
             <div class="notification-icon" onclick="abrirNotificacoes()">
                 <i class="far fa-bell"></i>
                 <span id="notificacaoBadge" class="notification-badge hidden">0</span>
             </div>
-            <!-- Nome do usuário (apenas texto, não botão) -->
-            <span id="userName" class="text-xs lg:text-sm font-medium hidden sm:inline">Carregando...</span>
+            <!-- Nome do usuário removido (não deve aparecer) -->
         </div>
     </nav>
 
@@ -465,7 +477,8 @@
     <div class="pt-16 lg:pt-20 px-4 lg:px-5 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-4">
         <!-- Sidebar com calculadora e status (desktop) -->
         <div class="desktop-only lg:col-span-1 sidebar">
-            <div class="apple-card p-4 mb-4">
+            <!-- Calculadora em formato quadrado -->
+            <div class="apple-card p-4 mb-4 calc-card">
                 <h2 class="text-base font-bold mb-2">Calculadora iPhone</h2>
                 <div class="mb-2">
                     <label class="text-xs text-gray-400">Preço USD</label>
@@ -512,9 +525,9 @@
         <!-- Conteúdo principal -->
         <div class="lg:col-span-4">
             <!-- Barra de busca -->
-            <div class="mb-3">
+            <div class="mb-3 relative">
                 <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-4 pr-4 py-2 text-base lg:text-lg" onkeyup="mostrarSugestoes(this.value)">
-                <div id="sugestoes" class="absolute bg-[#1c1c1e] border border-[#38383a] rounded-lg mt-1 w-full max-h-60 overflow-y-auto hidden"></div>
+                <div id="sugestoes" class="absolute bg-[#1c1c1e] border border-[#38383a] rounded-lg mt-1 w-full max-h-60 overflow-y-auto hidden z-10"></div>
             </div>
 
             <!-- Filtros rápidos com mesma largura da busca -->
@@ -534,7 +547,7 @@
                 <select id="filtroCor" class="apple-input w-auto text-xs py-1.5 flex-shrink-0">
                     <option value="">Todas cores</option>
                 </select>
-                <!-- Novos filtros: Cidades e Lojistas -->
+                <!-- Filtros: Cidades e Lojistas -->
                 <select id="filtroCidade" class="apple-input w-auto text-xs py-1.5 flex-shrink-0">
                     <option value="">Todas cidades</option>
                 </select>
@@ -543,7 +556,7 @@
                 </select>
             </div>
 
-            <!-- Grid de cards com 4 por linha no desktop -->
+            <!-- Grid de cards com 4 por linha -->
             <div id="produtosGrid" class="grid-cards">
                 <!-- Cards serão gerados via JS -->
             </div>
@@ -642,10 +655,10 @@
                 return;
             }
 
-            // Carrega dados do usuário
+            // Carrega dados do usuário (mas não exibe nome)
             if (masterAuth === 'gov_absoluto') {
                 currentUser = { id: 0, nome: 'MASTER', email: 'master@ifipe', logins_count: 0, insignia_manual: [] };
-                document.getElementById('userName').innerText = 'MASTER';
+                // Não exibir nome
             } else {
                 const { data, error } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
                 if (error || !data) {
@@ -653,7 +666,7 @@
                     return;
                 }
                 currentUser = data;
-                document.getElementById('userName').innerText = currentUser.nome || currentUser.email || 'Usuário';
+                // Não exibir nome
             }
 
             // Carrega dados do Supabase
@@ -777,12 +790,12 @@
             }
         }
 
-        // NOVA LÓGICA DA CALCULADORA (conforme especificação)
+        // Lógica da calculadora
         function atualizarCalculadora() {
             const usd = parseFloat(document.getElementById('calcUsd').value) || 0;
             if (usd < 0) document.getElementById('calcUsd').value = 0;
-            const taxa = rateBinance + 0.06; // Binance + 0.06 fixo
-            const custoBase = (usd * taxa) * 1.06; // (USD * taxa) * 1.06
+            const taxa = rateBinance + 0.06;
+            const custoBase = (usd * taxa) * 1.06;
             document.getElementById('custoFinal').innerText = `R$ ${custoBase.toFixed(2)}`;
             document.getElementById('calcBinance').innerText = `R$ ${rateBinance.toFixed(4)}`;
             document.getElementById('calcOraculo').innerText = `R$ ${taxa.toFixed(4)}`;
@@ -826,7 +839,7 @@
             document.getElementById('precoVarejoMobile').innerText = `R$ ${varejo.toFixed(2)}`;
         }
 
-        // Função de sugestões ordenada por mais recente (id decrescente)
+        // Função de sugestões ordenada por mais recente
         function mostrarSugestoes(termo) {
             const sugestoesDiv = document.getElementById('sugestoes');
             if (!termo || termo.length < 2) {
@@ -834,7 +847,6 @@
                 return;
             }
             const termoLower = termo.toLowerCase();
-            // produtos já estão ordenados por id decrescente no carregamento
             const matches = produtos.filter(p => p.nome.toLowerCase().includes(termoLower)).slice(0, 10);
             if (matches.length === 0) {
                 sugestoesDiv.classList.add('hidden');
@@ -850,7 +862,24 @@
             renderizarCards();
         }
 
-        // Lógica de renderização dos cards
+        // Função para calcular média de preços do mesmo produto nos últimos 10 dias
+        function calcularMediaPreco(produtoId, capacidade) {
+            const dezDiasAtras = new Date();
+            dezDiasAtras.setDate(dezDiasAtras.getDate() - 10);
+            const ofertasProduto = ofertas.filter(o => 
+                o.variacoes?.produto_id == produtoId && 
+                o.variacoes?.capacidade == capacidade &&
+                new Date(o.criado_em) >= dezDiasAtras
+            );
+            if (ofertasProduto.length === 0) return null;
+            const soma = ofertasProduto.reduce((acc, o) => {
+                const preco = o.moeda === 'USD' ? o.preco * (rateBinance + 0.06) : o.preco;
+                return acc + preco;
+            }, 0);
+            return soma / ofertasProduto.length;
+        }
+
+        // Renderização dos cards
         function renderizarCards() {
             const grid = document.getElementById('produtosGrid');
             grid.innerHTML = '';
@@ -891,12 +920,23 @@
                 const cor = variacao?.cor || 'Desconhecida';
                 const corHexValue = corHex[cor.toUpperCase()] || '#808080';
 
-                // Menor preço do produto (considerando conversão USD)
+                // Menor preço do produto
                 const menorPreco = ofertasFiltradas.filter(of => of.variacoes?.produto_id === produto.id).reduce((min, of) => {
                     const p = of.moeda === 'USD' ? of.preco * (rateBinance + 0.06) : of.preco;
                     return Math.min(min, p);
                 }, Infinity);
                 const isMenor = precoFinal === menorPreco;
+
+                // Média dos últimos 10 dias para tags dinâmicas
+                const mediaPreco = calcularMediaPreco(produto.id, variacao?.capacidade);
+                let tagTrend = '';
+                if (mediaPreco !== null) {
+                    if (precoFinal < mediaPreco * 0.95) { // 5% abaixo da média
+                        tagTrend = '<span class="badge badge-green">💰 Oportunidade</span>';
+                    } else if (precoFinal > mediaPreco * 1.05) { // 5% acima da média
+                        tagTrend = '<span class="badge badge-orange">📈 Preço em Alta</span>';
+                    }
+                }
 
                 const card = document.createElement('div');
                 card.className = 'product-card';
@@ -912,6 +952,7 @@
                     <div class="flex items-center gap-1 mb-1 flex-wrap">
                         <span class="badge ${o.condicao === 'Novo' ? 'badge-blue' : o.condicao === 'Seminovo' ? 'badge-yellow' : 'badge-purple'}">${o.condicao}</span>
                         ${isMenor ? '<span class="badge badge-green">🔥 MENOR PREÇO</span>' : ''}
+                        ${tagTrend}
                     </div>
                     <div class="flex items-center gap-1 mb-1">
                         <span class="text-xs font-medium">🏢 ${fornecedor.nome}</span>
@@ -1000,28 +1041,27 @@
         }
         function fecharNotificacoes() { document.getElementById('notificacoesModal').classList.add('hidden'); }
 
-        // Função de histórico (lógica de média dos últimos 10 dias)
+        // Função de histórico (média dos últimos 10 dias)
         async function abrirHistoricoGeral() {
             document.getElementById('historicoGeralModal').classList.remove('hidden');
             const lista = document.getElementById('listaHistorico');
             lista.innerHTML = '<p class="text-center text-gray-400">Carregando...</p>';
 
-            // Agrupar ofertas por produto e calcular média dos últimos 10 dias
-            const historicoPorProduto = {};
             const dezDiasAtras = new Date();
             dezDiasAtras.setDate(dezDiasAtras.getDate() - 10);
+            const historicoPorProduto = {};
 
             ofertas.forEach(o => {
                 const produtoId = o.variacoes?.produto_id;
                 if (!produtoId) return;
                 const data = new Date(o.criado_em);
-                if (data < dezDiasAtras) return; // considerar apenas últimos 10 dias
+                if (data < dezDiasAtras) return;
 
                 if (!historicoPorProduto[produtoId]) {
                     historicoPorProduto[produtoId] = {
                         nome: o.variacoes?.produtos_mestre?.nome || 'Desconhecido',
-                        precos: [],
-                        capacidade: o.variacoes?.capacidade || ''
+                        capacidade: o.variacoes?.capacidade || '',
+                        precos: []
                     };
                 }
                 const preco = o.moeda === 'USD' ? o.preco * (rateBinance + 0.06) : o.preco;
@@ -1055,7 +1095,7 @@
         function fecharHistoricoGeral() { document.getElementById('historicoGeralModal').classList.add('hidden'); }
         function selecionarProdutoHistorico(id) { alert('Detalhes do produto ' + id); fecharHistoricoGeral(); }
 
-        // Funções do menu hambúrguer
+        // Drawer
         function abrirDrawer() {
             document.getElementById('drawer').classList.add('open');
             document.getElementById('drawerOverlay').classList.add('open');
@@ -1065,12 +1105,10 @@
             document.getElementById('drawerOverlay').classList.remove('open');
         }
 
-        // Placeholders para opções do drawer
+        // Placeholders
         function resetSenha() { alert('Redefinir senha (em breve)'); }
         function meusDados() { alert('Meus dados (em breve)'); }
         function abrirFavoritos() { alert('Meus favoritos (em breve)'); }
-
-        // Funções de conta e logout
         function abrirConta() { alert('Abrir configurações da conta'); }
         function logout() {
             localStorage.removeItem('iFipe_Token');
