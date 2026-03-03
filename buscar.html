@@ -262,12 +262,11 @@
         .sininho {
             position: relative;
             cursor: pointer;
-            font-size: 1.5rem;
         }
         .sininho-badge {
             position: absolute;
             top: -5px;
-            right: -10px;
+            right: -5px;
             background: var(--red);
             color: white;
             font-size: 10px;
@@ -318,19 +317,45 @@
         .drawer-item:hover {
             background: var(--input);
         }
-        /* Estilo para ícones do rodapé do card */
-        .card-action {
+        /* Ajustes para os cards */
+        .action-buttons {
             display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            color: #6b7280;
-            cursor: pointer;
-            transition: color 0.2s;
+            justify-content: space-around;
+            margin-top: 1rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
+            font-weight: 500;
         }
-        .card-action:hover {
+        .action-buttons button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            color: var(--text);
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .action-buttons button:hover {
+            opacity: 1;
             color: var(--blue);
+        }
+        .action-buttons i {
+            font-size: 1rem;
+        }
+        .resultado-linha {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .resultado-item {
+            background: var(--input);
+            padding: 0.5rem;
+            border-radius: 12px;
+            text-align: center;
+            flex: 1;
+            margin: 0 2px;
         }
     </style>
 </head>
@@ -341,6 +366,9 @@
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold">Menu</h2>
             <button onclick="fecharDrawer()" class="text-2xl">&times;</button>
+        </div>
+        <div class="drawer-item" onclick="abrirHistoricoGeral(); fecharDrawer()">
+            <i class="fas fa-chart-line mr-3"></i> Histórico de Preços
         </div>
         <div class="drawer-item" onclick="abrirMeusAlertas(); fecharDrawer()">
             <i class="fas fa-bell mr-3"></i> Meus Alertas
@@ -360,8 +388,8 @@
             <h1 class="text-2xl font-black tracking-tight">iFipe</h1>
             <span class="text-sm text-gray-400">A TABELA FIPE DO IPHONE</span>
         </div>
-        <div class="flex items-center gap-4">
-            <!-- Cotações -->
+        <div class="flex items-center gap-6">
+            <!-- Cotações e Oráculo -->
             <div class="flex items-center gap-4 text-xs">
                 <div>
                     <span class="text-gray-400">Binance</span>
@@ -371,25 +399,24 @@
                     <span class="text-gray-400">Oráculo</span>
                     <span id="oraculoRate" class="font-mono font-bold text-green-400 ml-1">R$ 5,3230</span>
                 </div>
+                <a href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-green-700 transition">
+                    COMPRAR USDT COM TAXA VIP COM ORÁCULO
+                </a>
             </div>
-            <!-- Botão Comprar USDT -->
-            <a href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="bg-green-600 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-green-700 transition">
-                COMPRAR USDT COM TAXA VIP COM ORÁCULO
-            </a>
-            <!-- Histórico de Preços -->
-            <button onclick="abrirHistoricoGeral()" class="flex items-center gap-1 text-sm font-medium text-blue-400 hover:text-blue-300">
-                <i class="fas fa-chart-line"></i> Histórico
+            <!-- Histórico na barra -->
+            <button onclick="abrirHistoricoGeral()" class="text-sm font-medium hover:text-blue-500 transition">
+                📊 Histórico
             </button>
-            <!-- Notificações (discreto) -->
+            <!-- Notificações (discreto) substituindo MASTER -->
             <div class="sininho" onclick="abrirNotificacoes()">
-                <span>🔔</span>
+                <span class="text-2xl">🔔</span>
                 <span id="notificacaoBadge" class="sininho-badge hidden">3</span>
             </div>
             <!-- Criar alerta (evidente) -->
             <button onclick="abrirCriarAlerta()" class="bg-blue-600 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-blue-700 transition flex items-center gap-1">
                 <i class="fas fa-bell"></i> CRIAR ALERTA DE PREÇO
             </button>
-            <!-- Nome do usuário -->
+            <!-- Nome do usuário (opcional) -->
             <span id="userName" class="text-sm font-medium">Carregando...</span>
         </div>
     </nav>
@@ -402,7 +429,7 @@
                 <h2 class="text-lg font-bold mb-3">Calculadora iPhone</h2>
                 <div class="mb-3">
                     <label class="text-xs text-gray-400">Preço USD</label>
-                    <input type="number" id="calcUsd" class="apple-input" value="" min="0" step="0.01" placeholder="0.00" oninput="atualizarCalculadora()">
+                    <input type="number" id="calcUsd" class="apple-input" placeholder="USD" min="0" step="0.01" oninput="atualizarCalculadora()">
                 </div>
                 <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
                     <div>
@@ -418,18 +445,18 @@
                     <span class="text-xs text-gray-400">Custo final no Brasil</span>
                     <div id="custoFinal" class="text-2xl font-bold text-blue-500">R$ 0,00</div>
                 </div>
-                <div class="grid grid-cols-3 gap-1 text-xs text-center">
-                    <div class="p-2 bg-[#2c2c2e] rounded-lg">
-                        <span class="text-gray-400">Atacado</span>
-                        <div id="precoAtacado" class="font-bold">R$ 0</div>
+                <div class="resultado-linha">
+                    <div class="resultado-item">
+                        <span class="text-xs text-gray-400">Atacado</span>
+                        <div id="precoAtacado" class="font-bold text-sm">R$ 0</div>
                     </div>
-                    <div class="p-2 bg-[#2c2c2e] rounded-lg">
-                        <span class="text-gray-400">Atacarejo</span>
-                        <div id="precoAtacarejo" class="font-bold">R$ 0</div>
+                    <div class="resultado-item">
+                        <span class="text-xs text-gray-400">Atacarejo</span>
+                        <div id="precoAtacarejo" class="font-bold text-sm">R$ 0</div>
                     </div>
-                    <div class="p-2 bg-[#2c2c2e] rounded-lg">
-                        <span class="text-gray-400">Varejo</span>
-                        <div id="precoVarejo" class="font-bold">R$ 0</div>
+                    <div class="resultado-item">
+                        <span class="text-xs text-gray-400">Varejo</span>
+                        <div id="precoVarejo" class="font-bold text-sm">R$ 0</div>
                     </div>
                 </div>
             </div>
@@ -442,30 +469,33 @@
                 <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-4 pr-4 py-3 text-lg">
             </div>
 
-            <!-- Filtros rápidos (podem ser populados com dados reais) -->
+            <!-- Filtros rápidos (opcional, manter simples) -->
             <div class="flex flex-wrap gap-2 mb-4">
-                <select id="filtroCategoria" class="apple-input w-auto text-sm py-2">
-                    <option value="">Categoria</option>
-                    <option value="1">iPhone</option>
-                    <!-- outros grupos -->
+                <select class="apple-input w-auto text-sm py-2">
+                    <option>Categoria</option>
+                    <option>iPhone</option>
+                    <option>iPad</option>
+                    <option>Mac</option>
                 </select>
-                <select id="filtroCondicao" class="apple-input w-auto text-sm py-2">
-                    <option value="">Condição</option>
-                    <option value="Novo">Novo</option>
-                    <option value="Seminovo">Seminovo</option>
+                <select class="apple-input w-auto text-sm py-2">
+                    <option>Condição</option>
+                    <option>Novo</option>
+                    <option>Seminovo</option>
                 </select>
-                <select id="filtroCapacidade" class="apple-input w-auto text-sm py-2">
-                    <option value="">Capacidade</option>
-                    <!-- preencher via JS -->
+                <select class="apple-input w-auto text-sm py-2">
+                    <option>Capacidade</option>
+                    <option>128GB</option>
+                    <option>256GB</option>
                 </select>
-                <select id="filtroCor" class="apple-input w-auto text-sm py-2">
-                    <option value="">Cor</option>
-                    <!-- preencher via JS -->
+                <select class="apple-input w-auto text-sm py-2">
+                    <option>Cor</option>
+                    <option>Preto</option>
+                    <option>Branco</option>
                 </select>
             </div>
 
-            <!-- Grid de cards (4 por linha) -->
-            <div id="produtosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Grid de cards (4 colunas) -->
+            <div id="produtosGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Cards serão gerados via JS -->
             </div>
         </div>
@@ -482,14 +512,16 @@
                 <label class="block text-sm font-medium mb-2">Produto</label>
                 <select id="alertaProduto" class="apple-input">
                     <option value="">Selecione...</option>
-                    <!-- preencher com produtos_mestre -->
+                    <option value="1">iPhone 15 Pro Max</option>
+                    <option value="2">iPhone 15 Pro</option>
                 </select>
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Capacidade</label>
                 <select id="alertaCapacidade" class="apple-input">
                     <option value="">Todas</option>
-                    <!-- preencher conforme produto selecionado -->
+                    <option value="128GB">128GB</option>
+                    <option value="256GB">256GB</option>
                 </select>
             </div>
             <div class="mb-6">
@@ -508,7 +540,6 @@
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Notificações</h2>
             <div class="space-y-3">
-                <!-- notificações mockadas -->
                 <div class="p-3 bg-[#2c2c2e] rounded-lg flex items-start gap-3">
                     <span class="text-yellow-500">🔔</span>
                     <div>
@@ -516,18 +547,45 @@
                         <p class="text-xs text-gray-400">iPhone 15 Pro Max chegou a R$ 7.500</p>
                     </div>
                 </div>
+                <div class="p-3 bg-[#2c2c2e] rounded-lg flex items-start gap-3">
+                    <span class="text-blue-500">📢</span>
+                    <div>
+                        <p class="text-sm font-medium">Oferta relâmpago</p>
+                        <p class="text-xs text-gray-400">Desconto de 10% na loja X</p>
+                    </div>
+                </div>
             </div>
             <button onclick="fecharNotificacoes()" class="btn-apple-secondary w-full mt-6">Fechar</button>
         </div>
     </div>
 
-    <!-- Histórico Geral -->
+    <!-- Histórico Geral (modal com lista de produtos) -->
     <div id="historicoGeralModal" class="modal hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Histórico de Preços</h2>
             <p class="text-sm text-gray-400 mb-4">Média dos últimos 10 dias por produto</p>
-            <div id="historicoLista" class="space-y-2 max-h-96 overflow-y-auto">
-                <!-- itens serão inseridos via JS -->
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+                <div class="historico-item p-3 bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="selecionarProdutoHistorico(1)">
+                    <div class="flex justify-between">
+                        <span class="font-medium">iPhone 15 Pro Max 256GB</span>
+                        <span class="font-bold text-blue-500">R$ 7.890</span>
+                    </div>
+                    <span class="text-xs text-gray-400">Média 10 dias • 8 ofertas</span>
+                </div>
+                <div class="historico-item p-3 bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="selecionarProdutoHistorico(2)">
+                    <div class="flex justify-between">
+                        <span class="font-medium">iPhone 15 Pro 128GB</span>
+                        <span class="font-bold text-blue-500">R$ 6.450</span>
+                    </div>
+                    <span class="text-xs text-gray-400">Média 10 dias • 12 ofertas</span>
+                </div>
+                <div class="historico-item p-3 bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="selecionarProdutoHistorico(3)">
+                    <div class="flex justify-between">
+                        <span class="font-medium">iPhone 14 128GB</span>
+                        <span class="font-bold text-blue-500">R$ 4.999</span>
+                    </div>
+                    <span class="text-xs text-gray-400">Último preço • 3 ofertas</span>
+                </div>
             </div>
             <button onclick="fecharHistoricoGeral()" class="btn-apple-secondary w-full mt-6">Fechar</button>
         </div>
@@ -542,13 +600,6 @@
         let rateBinance = 5.2630;
         let rateOraculo = rateBinance + 0.06;
         let currentUser = null;
-
-        // Dados carregados do banco
-        let produtosMestre = [];
-        let variacoes = [];
-        let regioes = [];
-        let fornecedores = [];
-        let ofertas = [];
 
         // Inicialização
         window.onload = async () => {
@@ -570,191 +621,10 @@
             document.getElementById('userName').innerText = currentUser.nome || 'Usuário';
 
             initTicker();
-            await carregarDadosIniciais();
+            gerarCardsMock();
         };
 
-        // Carregar dados das tabelas
-        async function carregarDadosIniciais() {
-            try {
-                // Carregar produtos_mestre
-                const { data: pData } = await _s.from('produtos_mestre').select('*');
-                produtosMestre = pData || [];
-
-                // Carregar variações
-                const { data: vData } = await _s.from('variacoes').select('*');
-                variacoes = vData || [];
-
-                // Carregar regiões
-                const { data: rData } = await _s.from('regioes').select('*');
-                regioes = rData || [];
-
-                // Carregar fornecedores ativos
-                const { data: fData } = await _s.from('fornecedores').select('*').eq('ativo', true);
-                fornecedores = fData || [];
-
-                // Carregar ofertas com joins
-                const { data: oData } = await _s
-                    .from('ofertas')
-                    .select('*, fornecedores(*), variacoes(*, produtos_mestre(*)), regioes(*)')
-                    .gt('quantidade', 0);
-                ofertas = oData || [];
-
-                // Atualizar filtros e renderizar cards
-                popularFiltros();
-                renderizarCards();
-
-                // Carregar histórico (mock ou real)
-                carregarHistorico();
-
-            } catch (err) {
-                console.error('Erro ao carregar dados:', err);
-                // Fallback para dados mock (opcional)
-            }
-        }
-
-        // Popular selects de filtro com dados reais
-        function popularFiltros() {
-            // Categoria (grupo) - como só temos iPhone, pode ser fixo
-            // Mas se houver mais grupos, preencher dinamicamente
-
-            // Capacidade - extrair das variações
-            const capacidades = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
-            const capSelect = document.getElementById('filtroCapacidade');
-            capSelect.innerHTML = '<option value="">Capacidade</option>';
-            capacidades.forEach(cap => {
-                capSelect.innerHTML += `<option value="${cap}">${cap}</option>`;
-            });
-
-            // Cor
-            const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
-            const corSelect = document.getElementById('filtroCor');
-            corSelect.innerHTML = '<option value="">Cor</option>';
-            cores.forEach(cor => {
-                corSelect.innerHTML += `<option value="${cor}">${cor}</option>`;
-            });
-        }
-
-        // Renderizar cards (4 por linha)
-        function renderizarCards() {
-            const grid = document.getElementById('produtosGrid');
-            grid.innerHTML = '';
-
-            if (ofertas.length === 0) {
-                grid.innerHTML = '<p class="col-span-4 text-center text-gray-500">Nenhuma oferta disponível</p>';
-                return;
-            }
-
-            // Para cada oferta, criar card
-            ofertas.slice(0, 20).forEach(o => {
-                const produto = o.variacoes?.produtos_mestre;
-                const fornecedor = o.fornecedores;
-                const variacao = o.variacoes;
-                const regiao = o.regioes;
-
-                const nomeProduto = produto?.nome || 'Produto';
-                const capacidade = variacao?.capacidade || '';
-                const cor = variacao?.cor || '';
-                const preco = o.moeda === 'USD' ? o.preco * rateOraculo : o.preco;
-                const condicao = o.condicao || 'Novo';
-                const qtd = o.quantidade || 0;
-                const verificado = fornecedor?.verificado || false;
-                const insignias = fornecedor?.insignia_manual || [];
-                // Pegar a primeira insígnia (mais relevante)
-                const insignia = insignias.length ? insignias[0] : '';
-                const cidade = fornecedor?.cidade || '';
-                const pais = fornecedor?.pais || '';
-                const local = pais === 'Brasil' ? cidade : pais;
-
-                // Cor aproximada
-                const corLower = cor.toLowerCase();
-                let corHex = '#808080'; // padrão cinza
-                if (corLower.includes('preto')) corHex = '#000000';
-                else if (corLower.includes('branco')) corHex = '#ffffff';
-                else if (corLower.includes('azul')) corHex = '#215e7c';
-                else if (corLower.includes('vermelho')) corHex = '#a50011';
-                else if (corLower.includes('verde')) corHex = '#505c4c';
-                else if (corLower.includes('roxo')) corHex = '#5c5b57';
-                else if (corLower.includes('dourado')) corHex = '#ccb390';
-                else if (corLower.includes('prateado')) corHex = '#e3e4e5';
-                else if (corLower.includes('cinza')) corHex = '#808080';
-
-                // Badge de quantidade
-                const qtdBadge = qtd <= 3 ? 'badge-red' : 'badge-blue';
-                const qtdTexto = qtd <= 3 ? `${qtd} UN` : `${qtd} UN`;
-
-                // Condição badge
-                const condBadge = condicao === 'Novo' ? 'badge-blue' : (condicao === 'Seminovo' ? 'badge-yellow' : 'badge-purple');
-
-                // Molduras (baseado nos campos booleanos da oferta)
-                const molduras = [];
-                if (o.aceita_pix) molduras.push('<span class="moldura"><i class="fas fa-pix"></i></span>');
-                if (o.aceita_usdt) molduras.push('<span class="moldura"><i class="fas fa-coins"></i></span>');
-                if (o.aceita_coleta) molduras.push('<span class="moldura"><i class="fas fa-box"></i></span>');
-                if (o.faz_envio) molduras.push('<span class="moldura"><i class="fas fa-truck"></i></span>');
-                if (o.aceita_proposta) molduras.push('<span class="moldura"><i class="fas fa-handshake"></i></span>');
-                // Adicione outras se houver
-
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <div class="flex items-center">
-                            <span class="color-dot" style="background: ${corHex}; border: 1px solid ${corHex === '#ffffff' ? '#000' : 'transparent'};"></span>
-                            <h3 class="font-bold text-base">${nomeProduto}</h3>
-                        </div>
-                        <span class="badge ${qtdBadge}">${qtdTexto}</span>
-                    </div>
-                    <p class="text-xs text-gray-400 mb-1">${capacidade} | ${cor}</p>
-                    <div class="flex items-center gap-2 mb-2 flex-wrap">
-                        <span class="badge ${condBadge}">${condicao}</span>
-                        ${o.preco === Math.min(...ofertas.map(of => of.preco)) ? '<span class="badge badge-green">MENOR PREÇO</span>' : ''}
-                    </div>
-                    <div class="flex items-center gap-1 mb-2">
-                        <span class="text-sm font-medium">🏢 ${fornecedor?.nome || 'Desconhecido'}</span>
-                        ${verificado ? '<span class="verified-badge">✓</span>' : ''}
-                        ${insignia ? `<span class="insignia">${insignia}</span>` : ''}
-                    </div>
-                    <p class="text-xs text-gray-400 mb-3">📍 ${local}</p>
-                    <div class="flex flex-wrap gap-1 mb-3">
-                        ${molduras.join('')}
-                    </div>
-                    <div class="flex justify-between items-end">
-                        <span class="price">R$ ${preco.toFixed(2)}</span>
-                        <span class="text-xs text-gray-400">${new Date(o.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                    <div class="flex justify-between mt-4 text-xs font-medium">
-                        <span class="card-action" onclick="recomendar(${o.id})"><i class="far fa-thumbs-up"></i> Recomendar</span>
-                        <span class="card-action" onclick="abrirPerguntas(${o.id})"><i class="far fa-comment"></i> Perguntas</span>
-                        <span class="card-action" onclick="compartilhar(${o.id})"><i class="far fa-share-square"></i> Compartilhar</span>
-                    </div>
-                    <a href="https://wa.me/${fornecedor?.whatsapp?.replace(/\D/g, '')}?text=Olá! Vi no iFipe..." target="_blank" class="btn-apple w-full text-center mt-4">Comprar no WhatsApp</a>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        // Histórico de preços (mock, substituir por consulta real)
-        function carregarHistorico() {
-            const lista = document.getElementById('historicoLista');
-            lista.innerHTML = `
-                <div class="historico-item p-3 bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="selecionarProdutoHistorico(1)">
-                    <div class="flex justify-between">
-                        <span class="font-medium">iPhone 15 Pro Max 256GB</span>
-                        <span class="font-bold text-blue-500">R$ 7.890</span>
-                    </div>
-                    <span class="text-xs text-gray-400">Média 10 dias • 8 ofertas</span>
-                </div>
-                <div class="historico-item p-3 bg-[#2c2c2e] rounded-lg cursor-pointer" onclick="selecionarProdutoHistorico(2)">
-                    <div class="flex justify-between">
-                        <span class="font-medium">iPhone 15 Pro 128GB</span>
-                        <span class="font-bold text-blue-500">R$ 6.450</span>
-                    </div>
-                    <span class="text-xs text-gray-400">Média 10 dias • 12 ofertas</span>
-                </div>
-            `;
-        }
-
-        // Funções auxiliares (ticker, calculadora, modais, etc.)
+        // Ticker Binance
         function initTicker() {
             try {
                 const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
@@ -771,6 +641,7 @@
             }
         }
 
+        // Calculadora
         function atualizarCalculadora() {
             const usd = parseFloat(document.getElementById('calcUsd').value) || 0;
             if (usd < 0) document.getElementById('calcUsd').value = 0;
@@ -799,7 +670,7 @@
             document.getElementById('drawerOverlay').classList.remove('open');
         }
 
-        // Modais
+        // Funções dos modais
         function abrirCriarAlerta() { document.getElementById('criarAlertaModal').classList.remove('hidden'); }
         function fecharCriarAlerta() { document.getElementById('criarAlertaModal').classList.add('hidden'); }
         function criarAlerta() { alert('Alerta criado!'); fecharCriarAlerta(); }
@@ -809,15 +680,81 @@
         function fecharHistoricoGeral() { document.getElementById('historicoGeralModal').classList.add('hidden'); }
         function abrirMeusAlertas() { alert('Meus alertas (mock)'); }
         function abrirFavoritos() { alert('Favoritos (mock)'); }
-        function selecionarProdutoHistorico(id) { alert(`Detalhes do produto ${id}`); fecharHistoricoGeral(); }
-        function recomendar(id) { alert('Recomendar oferta ' + id); }
-        function abrirPerguntas(id) { alert('Perguntas da oferta ' + id); }
-        function compartilhar(id) { alert('Compartilhar oferta ' + id); }
-
+        function selecionarProdutoHistorico(id) {
+            alert(`Detalhes do histórico do produto ${id} (mock)`);
+            fecharHistoricoGeral();
+        }
         function logout() {
             localStorage.removeItem('iFipe_Token');
             localStorage.removeItem('iFipe_Master_Auth');
             window.location.replace('index.html');
+        }
+
+        // Gerar cards mock com layout harmonioso (4 por linha)
+        function gerarCardsMock() {
+            const grid = document.getElementById('produtosGrid');
+            grid.innerHTML = '';
+
+            const produtos = [
+                { nome: 'iPhone 15 Pro Max', cap: '256GB', cor: 'Preto', preco: 7702, qtd: 9, cond: 'CPO', fornecedor: 'Loja Exemplo', verificado: true, insignia: 'MAGNATA' },
+                { nome: 'iPhone 15 Pro Max', cap: '256GB', cor: 'Vermelho', preco: 7628, qtd: 9, cond: 'Seminovo', fornecedor: 'TechCell', verificado: false, insignia: '' },
+                { nome: 'iPhone 15 Pro Max', cap: '256GB', cor: 'Branco', preco: 29553, qtd: 10, cond: 'CPO', fornecedor: 'TechCell', verificado: false, insignia: '' },
+                { nome: 'iPhone 15 Pro Max', cap: '256GB', cor: 'Titânio', preco: 8323, qtd: 10, cond: 'Seminovo', fornecedor: 'TechCell', verificado: false, insignia: '' },
+                { nome: 'iPhone 15 Pro Max', cap: '256GB', cor: 'Azul', preco: 5714, qtd: 1, cond: 'Novo', fornecedor: 'Mobile BR', verificado: true, insignia: 'REI' },
+                { nome: 'iPhone 14', cap: '128GB', cor: 'Preto', preco: 4500, qtd: 5, cond: 'Novo', fornecedor: 'Loja A', verificado: true, insignia: '' },
+                { nome: 'iPhone 14', cap: '128GB', cor: 'Branco', preco: 4550, qtd: 3, cond: 'Novo', fornecedor: 'Loja B', verificado: false, insignia: '' },
+                { nome: 'iPhone 13', cap: '128GB', cor: 'Azul', preco: 3800, qtd: 8, cond: 'Seminovo', fornecedor: 'Loja C', verificado: true, insignia: 'MAGNATA' },
+            ];
+
+            const corHex = {
+                'Preto': '#000', 'Branco': '#fff', 'Azul': '#215e7c', 'Vermelho': '#a50011', 'Titânio': '#8c8c88'
+            };
+
+            produtos.forEach(p => {
+                const precoFinal = p.preco * rateOraculo; // simulação
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center">
+                            <span class="color-dot" style="background: ${corHex[p.cor]}; border: 1px solid ${p.cor === 'Branco' ? '#000' : 'transparent'};"></span>
+                            <h3 class="font-bold text-sm">${p.nome}</h3>
+                        </div>
+                        <span class="badge ${p.qtd <= 3 ? 'badge-red' : 'badge-blue'} text-xs">${p.qtd} UN</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mb-1">${p.cap} | ${p.cor}</p>
+                    <div class="flex items-center gap-2 mb-2 flex-wrap">
+                        <span class="badge ${p.cond === 'Novo' ? 'badge-blue' : p.cond === 'Seminovo' ? 'badge-yellow' : 'badge-purple'} text-xs">${p.cond}</span>
+                        ${p.preco === 7628 ? '<span class="badge badge-green text-xs">MENOR PREÇO</span>' : ''}
+                    </div>
+                    <div class="flex items-center gap-1 mb-2">
+                        <span class="text-xs font-medium">🏢 ${p.fornecedor}</span>
+                        ${p.verificado ? '<span class="verified-badge">✓</span>' : ''}
+                        ${p.insignia ? `<span class="insignia text-xs">${p.insignia}</span>` : ''}
+                    </div>
+                    <p class="text-xs text-gray-400 mb-2">📍 São Paulo - BR</p>
+                    <div class="flex flex-wrap gap-1 mb-2">
+                        <span class="moldura text-xs"><i class="fas fa-pix"></i></span>
+                        <span class="moldura text-xs"><i class="fas fa-coins"></i></span>
+                        <span class="moldura text-xs"><i class="fas fa-box"></i></span>
+                        <span class="moldura text-xs"><i class="fas fa-truck"></i></span>
+                        <span class="moldura text-xs"><i class="fas fa-person-biking"></i></span>
+                        <span class="moldura text-xs"><i class="fas fa-handshake"></i></span>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <span class="price text-lg">R$ ${precoFinal.toFixed(2)}</span>
+                        <span class="text-xs text-gray-400">há 5 min</span>
+                    </div>
+                    <!-- Ações centralizadas -->
+                    <div class="action-buttons">
+                        <button onclick="alert('Recomendar')"><i class="fas fa-thumbs-up"></i><span>Recomendar</span></button>
+                        <button onclick="alert('Perguntas')"><i class="fas fa-question-circle"></i><span>Perguntar</span></button>
+                        <button onclick="alert('Compartilhar')"><i class="fas fa-share-alt"></i><span>Compartilhar</span></button>
+                    </div>
+                    <a href="https://wa.me/5511999999999" target="_blank" class="btn-apple w-full text-center mt-3 text-sm py-2">Comprar no WhatsApp</a>
+                `;
+                grid.appendChild(card);
+            });
         }
 
         // Expor funções globalmente
@@ -835,9 +772,6 @@
         window.abrirMeusAlertas = abrirMeusAlertas;
         window.abrirFavoritos = abrirFavoritos;
         window.selecionarProdutoHistorico = selecionarProdutoHistorico;
-        window.recomendar = recomendar;
-        window.abrirPerguntas = abrirPerguntas;
-        window.compartilhar = compartilhar;
     </script>
 </body>
 </html>
