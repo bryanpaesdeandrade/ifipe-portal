@@ -156,7 +156,7 @@
             const status = localStorage.getItem('iFipe_Status') || 'on';
             const uRaw = document.getElementById("user").value.trim();
             const p = document.getElementById("pass").value.trim();
-            const type = document.getElementById("loginType").value;
+            const tipo = document.getElementById("loginType").value;
             const msg = document.getElementById("msg");
             msg.innerText = "";
 
@@ -184,33 +184,24 @@
 
             msg.innerText = "VERIFICANDO...";
 
-            // Extrai dígitos do que foi digitado (para comparar com whatsapp)
+            // Extrai dígitos do que foi digitado
             const uDigits = uRaw.replace(/\D/g, '');
 
             // Determina a tabela
-            const tabela = type === 'anunciante' ? 'fornecedores' : 'clientes_buscador';
+            const tabela = tipo === 'anunciante' ? 'fornecedores' : 'clientes_buscador';
 
-            // Busca todos os registros
+            // Busca todos os registros (poucos registros, sem exposição)
             const { data, error } = await _s.from(tabela).select('*');
             if (error) {
                 msg.innerText = "ERRO DE CONEXÃO.";
                 return;
             }
 
-            // Procura o usuário
-            const user = data.find(reg => {
-                // Comparação de email (case insensitive)
-                const emailMatch = reg.email && reg.email.toLowerCase() === uLower;
-
-                // Comparação de whatsapp: remove não dígitos e compara
-                const dbDigits = reg.whatsapp ? reg.whatsapp.replace(/\D/g, '') : '';
-                const phoneMatch = uDigits && dbDigits && (dbDigits === uDigits || dbDigits.endsWith(uDigits) || uDigits.endsWith(dbDigits));
-
-                // Senha e ativo
-                const senhaOk = reg.senha && reg.senha.trim() === p;
-                const ativoOk = reg.ativo === true;
-
-                return (emailMatch || phoneMatch) && senhaOk && ativoOk;
+            // Procura o usuário (mesma lógica do diagnóstico que funcionou)
+            const user = data.find(r => {
+                const emailMatch = (r.email || '').toLowerCase() === uLower;
+                const whatsMatch = (r.whatsapp || '').replace(/\D/g, '') === uDigits;
+                return (emailMatch || whatsMatch) && r.senha.trim() === p && r.ativo === true;
             });
 
             if (!user) {
@@ -219,11 +210,10 @@
             }
 
             // Login bem-sucedido
-            if (type === 'anunciante') {
+            if (tipo === 'anunciante') {
                 localStorage.setItem('iFipe_Anunciante', user.id);
                 window.location.replace('atacadista.html');
             } else {
-                // Incrementa contador de logins
                 await _s.from('clientes_buscador').update({ logins_count: (user.logins_count || 0) + 1 }).eq('id', user.id);
                 localStorage.setItem('iFipe_Token', user.id);
                 window.location.replace('buscar.html');
