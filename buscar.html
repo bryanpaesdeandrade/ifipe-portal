@@ -3,416 +3,571 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Buscar Ofertas</title>
+    <title>iFipe - Buscar</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --blue-apple: #0071e3; }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin: 0; }
-        .nav-bar { background: rgba(28, 28, 30, 0.8); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; flex-wrap: wrap; gap: 10px; }
-        .filter-bar { background: var(--card); padding: 15px; border-radius: 16px; border: 1px solid var(--border); }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 12px; text-align: center; }
-        .product-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 12px; transition: 0.3s; position: relative; }
-        .product-card:hover { border-color: #0071e3; transform: translateY(-4px); }
-        .tag-status { font-size: 8px; font-weight: 900; text-transform: uppercase; padding: 4px 8px; border-radius: 50px; display: inline-block; margin-bottom: 3px; }
-        .tag-menor { background: #ff3b30; color: #fff; }
-        .tag-poucas { background: #ffcc00; color: #000; }
-        .tag-muitas { background: #0071e3; color: #fff; }
-        .badge-verificado { background: rgba(0, 113, 227, 0.1); color: #0071e3; border: 1px solid #0071e3; padding: 2px 6px; border-radius: 12px; font-size: 8px; font-weight: 900; }
-        .price-text { font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.05em; text-align: right; }
-        .buy-button { background: #0071e3; color: #fff; font-weight: 900; border-radius: 50px; padding: 12px; width: 100%; cursor: pointer; text-transform: uppercase; font-size: 11px; text-align: center; display: block; text-decoration: none; margin-top: 16px; }
-        .buy-button:hover { background: #005bb5; }
-        .hidden { display: none !important; }
-        .btn-header { display: flex; align-items: center; justify-content: center; border-radius: 12px; height: 38px; padding: 0 12px; border: 1px solid var(--border); text-decoration: none; gap: 6px; }
-        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); }
-        .badge-insignia { display: inline-flex; align-items: center; background: rgba(147, 51, 234, 0.15); color: #d8b4fe; border: 1px solid #9333ea; font-size: 8px; font-weight: 900; padding: 3px 6px; border-radius: 6px; margin-right: 4px; margin-bottom: 4px; }
-        .user-menu { position: relative; display: inline-block; }
-        .user-dropdown { display: none; position: absolute; right: 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; min-width: 200px; z-index: 1000; }
-        .user-menu:hover .user-dropdown { display: block; }
-        .user-dropdown a { display: block; padding: 10px 15px; color: var(--text); text-decoration: none; font-size: 11px; font-weight: 900; border-bottom: 1px solid var(--border); }
-        .user-dropdown a:last-child { border-bottom: none; }
-        .user-dropdown a:hover { background: #0071e3; color: #fff; }
-        #diagnostico { background: #111; border: 1px solid #ffcc00; color: #ffcc00; padding: 10px; font-size: 10px; white-space: pre-wrap; display: none; }
+        :root {
+            --bg: #f5f5f7;
+            --card: #ffffff;
+            --text: #1d1d1f;
+            --border: #d2d2d7;
+            --input: #f5f5f7;
+            --blue: #0071e3;
+            --green: #32d74b;
+            --yellow: #ffcc00;
+            --red: #ff3b30;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .dark-mode {
+            --bg: #000;
+            --card: #1c1c1e;
+            --text: #fff;
+            --border: #38383a;
+            --input: #2c2c2e;
+        }
+        .nav-blur {
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        .dark-mode .nav-blur {
+            background: rgba(0,0,0,0.8);
+        }
+        .apple-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        .apple-input {
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 15px;
+            color: var(--text);
+            outline: none;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .apple-input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(0,113,227,0.2);
+        }
+        .btn-apple {
+            background: var(--blue);
+            color: white;
+            font-weight: 600;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-apple:hover {
+            background: #005bb5;
+            transform: scale(1.02);
+        }
+        .btn-apple-secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-apple-secondary:hover {
+            background: var(--input);
+        }
+        .product-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1.5rem;
+            transition: all 0.2s;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: var(--blue);
+        }
+        .badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .badge-blue {
+            background: rgba(0,113,227,0.1);
+            color: var(--blue);
+            border: 1px solid rgba(0,113,227,0.3);
+        }
+        .badge-green {
+            background: rgba(50,215,75,0.1);
+            color: var(--green);
+            border: 1px solid rgba(50,215,75,0.3);
+        }
+        .badge-yellow {
+            background: rgba(255,204,0,0.1);
+            color: #b8860b;
+            border: 1px solid rgba(255,204,0,0.3);
+        }
+        .badge-red {
+            background: rgba(255,59,48,0.1);
+            color: var(--red);
+            border: 1px solid rgba(255,59,48,0.3);
+        }
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--blue);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            margin-left: 4px;
+        }
+        .price {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        .historico-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .historico-item:hover {
+            background: var(--input);
+        }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .hidden {
+            display: none;
+        }
+        .sininho {
+            position: relative;
+            cursor: pointer;
+        }
+        .sininho-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--red);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 20px;
+        }
     </style>
 </head>
-<body>
-    <!-- Área de diagnóstico (invisível, aparece se houver erro) -->
-    <div id="diagnostico"></div>
-
-    <div id="loading" class="text-center p-10 text-[#0071e3]">
-        <h2 class="text-2xl">Carregando iFipe...</h2>
-    </div>
-
-    <div id="error" class="hidden text-center p-10 text-red-500">
-        <h2 class="text-2xl">Erro ao carregar</h2>
-        <p id="errorMessage"></p>
-    </div>
-
-    <div id="mainContent" class="hidden">
-        <!-- NAVBAR -->
-        <nav class="nav-bar">
-            <div class="flex items-center gap-3">
-                <h1 class="text-2xl font-black italic">iFipe</h1>
-                <span class="text-[10px] text-gray-400 font-black border-l border-[#38383a] pl-3">BUSCADOR</span>
-            </div>
-
-            <div class="flex items-center gap-4">
-                <!-- Ticker Binance -->
-                <div class="bg-[#1c1c1e] border border-[#38383a] rounded-lg px-4 py-1 text-center">
-                    <span class="text-[8px] text-yellow-400 font-black">USDT/BRL</span>
-                    <span id="ticker" class="text-[13px] font-mono font-black text-[#32d74b]">R$ --</span>
+<body class="dark-mode">
+    <!-- NAVBAR -->
+    <nav class="nav-blur fixed top-0 w-full z-50 px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-black tracking-tight">iFipe</h1>
+            <span class="text-sm text-gray-400">Buscador</span>
+        </div>
+        <div class="flex items-center gap-6">
+            <!-- Calculadora de iPhone (ícone) -->
+            <button onclick="toggleCalculadora()" class="text-sm font-medium hover:text-blue-500 transition">
+                📱 Calculadora
+            </button>
+            <!-- Cotações -->
+            <div class="flex items-center gap-4 text-xs">
+                <div>
+                    <span class="text-gray-400">Binance</span>
+                    <span id="binanceRate" class="font-mono font-bold text-yellow-500 ml-1">R$ 5,2630</span>
                 </div>
-
-                <!-- Alertas -->
-                <button onclick="abrirSininho()" class="relative text-[10px] text-yellow-500 font-black uppercase hover:text-yellow-400 flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
-                    🔔 Alertas
-                    <span id="badgeSininho" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                <div>
+                    <span class="text-gray-400">Oráculo</span>
+                    <span id="oraculoRate" class="font-mono font-bold text-green-400 ml-1">R$ 5,3230</span>
+                </div>
+            </div>
+            <!-- Sininho de alertas -->
+            <div class="sininho" onclick="abrirPainelAlertas()">
+                <span class="text-2xl">🔔</span>
+                <span id="alertaBadge" class="sininho-badge hidden">0</span>
+            </div>
+            <!-- Menu usuário -->
+            <div class="relative">
+                <button onclick="toggleUserMenu()" class="flex items-center gap-2 text-sm font-medium">
+                    <span id="userName">Carregando...</span>
+                    <span>▼</span>
                 </button>
-
-                <!-- Menu do usuário -->
-                <div class="user-menu">
-                    <button class="text-[10px] text-blue-400 font-black uppercase hover:text-white flex items-center gap-1 border border-[#38383a] px-3 py-1.5 rounded-full bg-[#1c1c1e]">
-                        <span id="userNameDisplay">Carregando...</span> ▼
-                    </button>
-                    <div class="user-dropdown">
-                        <a href="#" onclick="abrirMeusAlertas()">🔔 Meus Alertas</a>
-                        <a href="#" onclick="abrirFavoritos()">⭐ Meus Favoritos</a>
-                        <a href="#" onclick="abrirHistorico()">📊 Histórico de Preços</a>
-                        <a href="#" onclick="abrirConfiguracoes()">⚙️ Configurações</a>
-                        <a href="#" onclick="logout()" class="text-red-500">🚪 Sair</a>
-                    </div>
+                <div id="userMenu" class="absolute right-0 mt-2 w-48 bg-[#1c1c1e] border border-[#38383a] rounded-xl shadow-xl hidden">
+                    <a href="#" onclick="abrirHistoricoGeral()" class="block px-4 py-3 text-sm hover:bg-[#2c2c2e] rounded-t-xl">📊 Histórico de Preços</a>
+                    <a href="#" onclick="abrirMeusAlertas()" class="block px-4 py-3 text-sm hover:bg-[#2c2c2e]">🔔 Meus Alertas</a>
+                    <a href="#" onclick="abrirFavoritos()" class="block px-4 py-3 text-sm hover:bg-[#2c2c2e]">⭐ Favoritos</a>
+                    <a href="#" onclick="logout()" class="block px-4 py-3 text-sm text-red-500 hover:bg-[#2c2c2e] rounded-b-xl">🚪 Sair</a>
                 </div>
             </div>
-        </nav>
+        </div>
+    </nav>
 
-        <!-- MAIN -->
-        <main class="max-w-7xl mx-auto px-4 pb-20 pt-8">
-            <!-- Indicadores de performance -->
-            <div class="flex flex-wrap justify-between items-center mb-6 bg-[#1c1c1e] p-4 rounded-xl border border-[#38383a]">
-                <div class="flex gap-6 text-[10px] font-black">
-                    <span>📦 <span id="totalProdutos">0</span> produtos</span>
-                    <span>🏢 <span id="totalFornecedores">0</span> fornecedores</span>
-                    <span>🕒 Última atualização: <span id="ultimaAtualizacao">--:--:--</span></span>
+    <!-- CALCULADORA MODAL -->
+    <div id="calculadoraModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Calculadora de iPhone</h2>
+            <p class="text-sm text-gray-400 mb-6">Descubra o custo final no Brasil</p>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Preço em dólar (USD)</label>
+                <input type="number" id="calcUsd" class="apple-input" placeholder="Ex: 999" value="999">
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <span class="text-xs text-gray-400">Taxa Binance</span>
+                    <div id="calcBinance" class="text-lg font-bold">R$ 5,2630</div>
                 </div>
-                <div class="text-[#32d74b] text-[12px] font-mono font-black">
-                    USDT/BRL: R$ <span id="tickerGrande">--</span>
+                <div>
+                    <span class="text-xs text-gray-400">Taxa Oráculo (+0,06)</span>
+                    <div id="calcOraculo" class="text-lg font-bold text-green-400">R$ 5,3230</div>
                 </div>
             </div>
-
-            <!-- Barra de busca principal -->
-            <div class="relative w-full max-w-3xl mx-auto mb-8">
-                <div class="flex items-center bg-white border-4 border-[#0071e3] rounded-full overflow-hidden shadow-2xl">
-                    <input type="text" id="buscaTexto" class="w-full bg-white text-black px-6 py-4 outline-none font-black uppercase text-sm" placeholder="BUSCAR PRODUTO, CATEGORIA OU FORNECEDOR" onkeyup="buscarComSugestoes()">
-                    <button onclick="executarBusca()" class="bg-white text-[#0071e3] px-6 py-4 hover:bg-gray-100 border-l border-gray-200">
-                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
-                    </button>
+            <div class="bg-[#2c2c2e] p-4 rounded-xl mb-4">
+                <span class="text-sm text-gray-400">Custo final no Brasil</span>
+                <div id="custoFinal" class="text-3xl font-bold text-blue-500">R$ 0,00</div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-xs text-center">
+                <div class="p-2 bg-[#2c2c2e] rounded-lg">
+                    <span class="text-gray-400">Atacado</span>
+                    <div id="precoAtacado" class="font-bold">R$ 0,00</div>
+                </div>
+                <div class="p-2 bg-[#2c2c2e] rounded-lg">
+                    <span class="text-gray-400">Atacarejo</span>
+                    <div id="precoAtacarejo" class="font-bold">R$ 0,00</div>
+                </div>
+                <div class="p-2 bg-[#2c2c2e] rounded-lg">
+                    <span class="text-gray-400">Varejo</span>
+                    <div id="precoVarejo" class="font-bold">R$ 0,00</div>
                 </div>
             </div>
-
-            <!-- Filtros -->
-            <div class="filter-bar grid grid-cols-2 md:grid-cols-5 lg:grid-cols-7 gap-3 mb-8">
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-blue-500 mb-1">Categoria</label>
-                    <select id="f_cat" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todas</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1">Produto</label>
-                    <select id="f_prod" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todos</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1">Capacidade</label>
-                    <select id="f_cap" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todas</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1">Cor</label>
-                    <select id="f_cor" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todas</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1">Região</label>
-                    <select id="f_reg" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todas</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1">Fornecedor</label>
-                    <select id="f_forn" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todos</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[8px] uppercase font-black text-gray-500 mb-1">Condição</label>
-                    <select id="f_cond" class="apple-input" onchange="aplicarFiltros()">
-                        <option value="">Todas</option>
-                        <option value="Novo">Novo</option>
-                        <option value="Seminovo">Seminovo</option>
-                        <option value="CPO">CPO</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Seção: Melhores preços por cor -->
-            <div id="melhoresPorCorSection" class="hidden mb-8">
-                <h2 class="text-sm font-black text-white mb-3 border-b border-[#38383a] pb-2">🔥 Melhores preços por cor</h2>
-                <div id="melhoresPorCorGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-            </div>
-
-            <!-- Grade de resultados -->
-            <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
-        </main>
+            <button onclick="toggleCalculadora()" class="btn-apple-secondary w-full mt-6">Fechar</button>
+        </div>
     </div>
+
+    <!-- PAINEL DE ALERTAS (criar alerta) -->
+    <div id="painelAlertas" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Criar Alerta de Preço</h2>
+            <p class="text-sm text-gray-400 mb-6">Escolha o produto e o preço desejado</p>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Produto</label>
+                <select id="alertaProduto" class="apple-input">
+                    <option value="">Selecione...</option>
+                    <option value="1">iPhone 15 Pro Max</option>
+                    <option value="2">iPhone 15 Pro</option>
+                    <option value="3">iPhone 14</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Capacidade</label>
+                <select id="alertaCapacidade" class="apple-input">
+                    <option value="">Todas</option>
+                    <option value="128GB">128GB</option>
+                    <option value="256GB">256GB</option>
+                    <option value="512GB">512GB</option>
+                </select>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2">Preço máximo (R$)</label>
+                <input type="number" id="alertaPreco" class="apple-input" placeholder="Ex: 5000">
+            </div>
+            <div class="flex gap-3">
+                <button onclick="criarAlerta()" class="btn-apple flex-1">Criar Alerta</button>
+                <button onclick="fecharPainelAlertas()" class="btn-apple-secondary flex-1">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAINEL HISTÓRICO GERAL -->
+    <div id="historicoGeralModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Histórico de Preços</h2>
+            <p class="text-sm text-gray-400 mb-4">Média dos últimos 10 dias</p>
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+                <!-- Items serão preenchidos via JS -->
+                <div class="historico-item">
+                    <div class="flex justify-between">
+                        <span class="font-medium">iPhone 15 Pro Max 256GB</span>
+                        <span class="font-bold text-blue-500">R$ 7.890</span>
+                    </div>
+                    <span class="text-xs text-gray-400">Média 10 dias • 8 ofertas</span>
+                </div>
+                <div class="historico-item">
+                    <div class="flex justify-between">
+                        <span class="font-medium">iPhone 15 Pro 128GB</span>
+                        <span class="font-bold text-blue-500">R$ 6.450</span>
+                    </div>
+                    <span class="text-xs text-gray-400">Média 10 dias • 12 ofertas</span>
+                </div>
+            </div>
+            <button onclick="fecharHistoricoGeral()" class="btn-apple-secondary w-full mt-6">Fechar</button>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="pt-24 px-6 max-w-7xl mx-auto">
+        <!-- Barra de busca -->
+        <div class="mb-8">
+            <div class="relative">
+                <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-12 pr-4 py-4 text-lg">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+            </div>
+        </div>
+
+        <!-- Filtros rápidos -->
+        <div class="flex flex-wrap gap-2 mb-8">
+            <select class="apple-input w-auto text-sm">
+                <option>Categoria</option>
+                <option>iPhone</option>
+                <option>iPad</option>
+                <option>Mac</option>
+            </select>
+            <select class="apple-input w-auto text-sm">
+                <option>Condição</option>
+                <option>Novo</option>
+                <option>Seminovo</option>
+            </select>
+            <select class="apple-input w-auto text-sm">
+                <option>Capacidade</option>
+                <option>128GB</option>
+                <option>256GB</option>
+            </select>
+            <select class="apple-input w-auto text-sm">
+                <option>Cor</option>
+                <option>Preto</option>
+                <option>Branco</option>
+            </select>
+            <select class="apple-input w-auto text-sm">
+                <option>Região</option>
+                <option>São Paulo</option>
+                <option>Paraguai</option>
+            </select>
+        </div>
+
+        <!-- Informações discretas -->
+        <div class="flex justify-end items-center gap-4 mb-4 text-xs text-gray-400">
+            <span>📦 2.547 produtos</span>
+            <span>🏢 104 fornecedores</span>
+            <span>🕒 Última atualização: <span id="ultimaAtualizacao">17:04:30</span></span>
+        </div>
+
+        <!-- Grid de produtos -->
+        <div id="produtosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Cards serão gerados via JS -->
+        </div>
+    </main>
 
     <script>
-        // === CONFIGURAÇÃO ===
-        const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
-        const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const _s = supabase.createClient(
+            'https://zmgosywpwidypxyhxkry.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M'
+        );
 
-        // === VARIÁVEIS GLOBAIS ===
+        let rateBinance = 5.2630;
+        let rateOraculo = rateBinance + 0.06;
         let currentUser = null;
-        let rateBinance = 5.2630; // fallback
-        let ofertas = [];
-        let produtos = [];
-        let variacoes = [];
-        let fornecedores = [];
-        let regioes = [];
 
-        // === FUNÇÕES DE APOIO ===
-        function showError(msg) {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('error').classList.remove('hidden');
-            document.getElementById('errorMessage').innerText = msg;
-        }
-
-        function atualizarTicker() {
-            document.getElementById('ticker').innerText = `R$ ${rateBinance.toFixed(4)}`;
-            document.getElementById('tickerGrande').innerText = rateBinance.toFixed(4);
-        }
-
-        // === INICIALIZAÇÃO ===
-        window.onload = async () => {
+        // Atualiza cotações via WebSocket
+        function initTicker() {
             try {
-                // Verifica login
-                const token = localStorage.getItem('iFipe_Token');
-                const masterAuth = localStorage.getItem('iFipe_Master_Auth');
-
-                if (!token && masterAuth !== 'gov_absoluto') {
-                    window.location.replace('index.html');
-                    return;
-                }
-
-                // Carrega dados do usuário
-                if (masterAuth === 'gov_absoluto') {
-                    currentUser = { nome: 'MASTER', email: 'master@ifipe' };
-                } else {
-                    const { data, error } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
-                    if (error || !data) throw new Error('Usuário não encontrado');
-                    currentUser = data;
-                }
-                document.getElementById('userNameDisplay').innerText = currentUser.nome || currentUser.email || 'Usuário';
-
-                // Inicia WebSocket da Binance (fallback se falhar)
-                try {
-                    const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-                    ws.onmessage = e => {
-                        const data = JSON.parse(e.data);
-                        rateBinance = parseFloat(data.c);
-                        atualizarTicker();
-                    };
-                } catch (e) {
-                    console.warn('WebSocket falhou, usando valor fixo');
-                }
-                atualizarTicker();
-
-                // Carrega dados do Supabase com fallback para mock
-                try {
-                    const [p, v, f, o, r] = await Promise.all([
-                        _s.from('produtos_mestre').select('*'),
-                        _s.from('variacoes').select('*'),
-                        _s.from('fornecedores').select('*').eq('ativo', true),
-                        _s.from('ofertas').select('*, fornecedores!inner(*), variacoes(*, produtos_mestre(*)), regioes(*)').gt('quantidade', 0),
-                        _s.from('regioes').select('*')
-                    ]);
-                    produtos = p.data || [];
-                    variacoes = v.data || [];
-                    fornecedores = f.data || [];
-                    ofertas = o.data || [];
-                    regioes = r.data || [];
-                } catch (err) {
-                    console.warn('Erro ao carregar dados do Supabase, usando dados mockados', err);
-                    // Dados mockados para exemplo
-                    produtos = [{ id: 1, nome: 'iPhone 15 Pro Max', grupo_id: 1 }];
-                    variacoes = [{ id: 1, produto_id: 1, capacidade: '256GB', cor: 'Titânio Natural' }];
-                    fornecedores = [{ id: 1, nome: 'Loja Exemplo', cidade: 'São Paulo', pais: 'Brasil', verificado: true, whatsapp: '5511999999999' }];
-                    ofertas = [{
-                        id: 1,
-                        fornecedor_id: 1,
-                        variacao_id: 1,
-                        regiao_id: 1,
-                        preco: 7890.00,
-                        moeda: 'BRL',
-                        quantidade: 5,
-                        condicao: 'Novo',
-                        criado_em: new Date().toISOString(),
-                        fornecedores: fornecedores[0],
-                        variacoes: { ...variacoes[0], produtos_mestre: produtos[0] }
-                    }];
-                    regioes = [{ id: 1, nome: 'São Paulo', bandeira: '🇧🇷' }];
-                }
-
-                // Atualiza contadores
-                document.getElementById('totalProdutos').innerText = ofertas.length;
-                document.getElementById('totalFornecedores').innerText = [...new Set(ofertas.map(o => o.fornecedor_id))].length;
-                document.getElementById('ultimaAtualizacao').innerText = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-                // Popula selects
-                popularSelects();
-
-                // Renderiza grade
-                renderizarGrade();
-
-                // Esconde loading e mostra conteúdo
-                document.getElementById('loading').classList.add('hidden');
-                document.getElementById('mainContent').classList.remove('hidden');
-
-            } catch (err) {
-                console.error(err);
-                showError(err.toString());
+                const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+                ws.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    rateBinance = parseFloat(data.c);
+                    rateOraculo = rateBinance + 0.06;
+                    document.getElementById('binanceRate').innerText = `R$ ${rateBinance.toFixed(4)}`;
+                    document.getElementById('oraculoRate').innerText = `R$ ${rateOraculo.toFixed(4)}`;
+                    atualizarCalculadora();
+                };
+            } catch (e) {
+                console.warn('WebSocket falhou, usando valores fixos');
             }
-        };
-
-        function popularSelects() {
-            // Categorias (grupos)
-            const catSelect = document.getElementById('f_cat');
-            const categorias = [...new Set(produtos.map(p => p.grupo_id))];
-            categorias.forEach(cat => {
-                catSelect.innerHTML += `<option value="${cat}">Categoria ${cat}</option>`;
-            });
-
-            // Fornecedores
-            const fornSelect = document.getElementById('f_forn');
-            fornecedores.forEach(f => {
-                fornSelect.innerHTML += `<option value="${f.id}">${f.nome}</option>`;
-            });
-
-            // Regiões
-            const regSelect = document.getElementById('f_reg');
-            regioes.forEach(r => {
-                regSelect.innerHTML += `<option value="${r.id}">${r.nome}</option>`;
-            });
         }
 
-        function getCorHex(cor) {
-            const map = {
-                'preto': '#000000',
-                'branco': '#ffffff',
-                'azul': '#215e7c',
-                'vermelho': '#a50011',
-                'titânio natural': '#8c8c88',
-                'cosmic orange': '#ff6b35',
-                'silver': '#e3e4e5'
-            };
-            return map[cor?.toLowerCase()] || '#808080';
-        }
-
-        function renderizarGrade() {
-            const grid = document.getElementById('gridGeral');
-            grid.innerHTML = '';
-
-            if (ofertas.length === 0) {
-                grid.innerHTML = '<p class="text-center text-gray-500 col-span-full">Nenhuma oferta encontrada.</p>';
-                return;
-            }
-
-            ofertas.slice(0, 12).forEach(o => {
-                const precoFinal = o.moeda === 'USD' ? o.preco * (rateBinance + 0.06) : o.preco;
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.innerHTML = `
-                    <div class="absolute top-3 right-3 cursor-pointer" onclick="abrirAlerta(${o.id})">
-                        <span class="text-yellow-500 text-[8px] font-black">🔔 Alerta</span>
-                    </div>
-                    <div class="flex flex-wrap gap-1 mb-2">
-                        <span class="tag-status ${o.quantidade <= 3 ? 'tag-poucas' : 'tag-muitas'}">${o.quantidade} UN</span>
-                        ${o.preco === Math.min(...ofertas.map(of => of.preco)) ? '<span class="tag-status tag-menor">🔥 MENOR PREÇO</span>' : ''}
-                    </div>
-                    <h2 class="text-lg font-black mb-1">${o.variacoes?.produtos_mestre?.nome || 'Produto'}</h2>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-[9px] text-zinc-400">${o.variacoes?.capacidade || ''} | ${o.variacoes?.cor || ''}</span>
-                        <span class="text-[8px] font-black ${o.condicao === 'Novo' ? 'bg-blue-900/30 text-blue-400' : 'bg-yellow-900/30 text-yellow-500'} px-2 py-1 rounded">${o.condicao}</span>
-                        ${o.fornecedores?.verificado ? '<span class="badge-verificado">VERIFICADO</span>' : ''}
-                    </div>
-                    <div class="flex items-center text-[11px] text-[#25d366] font-black mb-1">
-                        🏢 ${o.fornecedores?.nome || 'Desconhecido'}
-                    </div>
-                    <div class="text-[8px] text-zinc-500 mb-2">📍 ${o.fornecedores?.cidade || ''} - ${o.fornecedores?.pais || ''}</div>
-                    <div class="flex justify-between items-end border-t border-[#38383a] pt-2 mt-2">
-                        <div class="price-text">R$ ${precoFinal.toFixed(2)}</div>
-                        <span class="text-[8px] text-zinc-500">${new Date(o.criado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                    <div class="flex justify-between mt-3 text-[8px] font-black text-gray-400">
-                        <button onclick="recomendar(${o.id})" class="hover:text-blue-500">👍 Recomendar</button>
-                        <button onclick="abrirHistorico(${o.id})" class="hover:text-blue-500">📈 Histórico</button>
-                        <button onclick="abrirPerguntas(${o.id})" class="hover:text-blue-500">💬 Perguntas</button>
-                        <button onclick="compartilhar(${o.id})" class="hover:text-green-500">📤 Compartilhar</button>
-                    </div>
-                    <a href="https://wa.me/${o.fornecedores?.whatsapp?.replace(/\D/g, '')}?text=Olá! Vi no iFipe..." target="_blank" class="buy-button mt-4">Comprar no WhatsApp</a>
-                `;
-                grid.appendChild(card);
-            });
-
-            // Seção melhores por cor (mock)
-            const produtoSelecionado = document.getElementById('f_prod').value;
-            if (produtoSelecionado) {
-                const melhores = ofertas.filter(o => o.variacoes?.produto_id == produtoSelecionado).slice(0, 3);
-                const gridCor = document.getElementById('melhoresPorCorGrid');
-                gridCor.innerHTML = '';
-                melhores.forEach(o => {
-                    const cor = o.variacoes?.cor || 'Desconhecida';
-                    const card = document.createElement('div');
-                    card.className = 'product-card p-3';
-                    card.innerHTML = `
-                        <span class="color-dot" style="background: ${getCorHex(cor)}"></span>
-                        <h3 class="font-black text-sm mt-1">${o.variacoes?.produtos_mestre?.nome}</h3>
-                        <p class="text-[9px]">${o.variacoes?.capacidade} | ${cor}</p>
-                        <p class="text-[10px] text-[#25d366]">🏢 ${o.fornecedores?.nome}</p>
-                        <p class="text-lg font-black mt-2">R$ ${(o.moeda === 'USD' ? o.preco * (rateBinance + 0.06) : o.preco).toFixed(2)}</p>
-                    `;
-                    gridCor.appendChild(card);
-                });
-                document.getElementById('melhoresPorCorSection').classList.remove('hidden');
+        // Atualiza cálculos da calculadora
+        function atualizarCalculadora() {
+            const usd = parseFloat(document.getElementById('calcUsd').value) || 0;
+            const custo = usd * rateOraculo * 1.06;
+            document.getElementById('custoFinal').innerText = `R$ ${custo.toFixed(2)}`;
+            if (usd <= 750) {
+                document.getElementById('precoAtacado').innerText = `R$ ${(custo * 1.2).toFixed(2)}`;
+                document.getElementById('precoAtacarejo').innerText = `R$ ${(custo * 1.4).toFixed(2)}`;
+                document.getElementById('precoVarejo').innerText = `R$ ${(custo * 1.55).toFixed(2)}`;
             } else {
-                document.getElementById('melhoresPorCorSection').classList.add('hidden');
+                document.getElementById('precoAtacado').innerText = `R$ ${(custo + 350).toFixed(2)}`;
+                document.getElementById('precoAtacarejo').innerText = `R$ ${(custo + 550).toFixed(2)}`;
+                document.getElementById('precoVarejo').innerText = `R$ ${(custo + 1000).toFixed(2)}`;
+            }
+            document.getElementById('calcBinance').innerText = `R$ ${rateBinance.toFixed(4)}`;
+            document.getElementById('calcOraculo').innerText = `R$ ${rateOraculo.toFixed(4)}`;
+        }
+
+        // Toggle calculadora
+        function toggleCalculadora() {
+            const modal = document.getElementById('calculadoraModal');
+            modal.classList.toggle('hidden');
+            if (!modal.classList.contains('hidden')) {
+                atualizarCalculadora();
             }
         }
 
-        // Funções placeholder para os botões
-        function abrirAlerta(id) { alert('Abrir alerta para oferta ' + id); }
-        function recomendar(id) { alert('Recomendar oferta ' + id); }
-        function abrirHistorico(id) { alert('Histórico da oferta ' + id); }
-        function abrirPerguntas(id) { alert('Perguntas da oferta ' + id); }
-        function compartilhar(id) { alert('Compartilhar oferta ' + id); }
-        function abrirSininho() { alert('Abrir alertas'); }
-        function abrirMeusAlertas() { alert('Meus alertas'); }
-        function abrirFavoritos() { alert('Meus favoritos'); }
-        function abrirConfiguracoes() { alert('Configurações'); }
-        function executarBusca() { renderizarGrade(); }
-        function buscarComSugestoes() { /* implementar se quiser */ }
-        function aplicarFiltros() { renderizarGrade(); }
+        // Abrir painel de alertas (criar alerta)
+        function abrirPainelAlertas() {
+            document.getElementById('painelAlertas').classList.remove('hidden');
+        }
 
+        function fecharPainelAlertas() {
+            document.getElementById('painelAlertas').classList.add('hidden');
+        }
+
+        function criarAlerta() {
+            alert('Alerta criado (mock)');
+            fecharPainelAlertas();
+        }
+
+        // Histórico geral
+        function abrirHistoricoGeral() {
+            document.getElementById('historicoGeralModal').classList.remove('hidden');
+        }
+
+        function fecharHistoricoGeral() {
+            document.getElementById('historicoGeralModal').classList.add('hidden');
+        }
+
+        // Menu usuário
+        function toggleUserMenu() {
+            document.getElementById('userMenu').classList.toggle('hidden');
+        }
+
+        // Logout
         function logout() {
             localStorage.removeItem('iFipe_Token');
             localStorage.removeItem('iFipe_Master_Auth');
             window.location.replace('index.html');
         }
+
+        // Placeholders
+        function abrirMeusAlertas() { alert('Meus alertas'); }
+        function abrirFavoritos() { alert('Favoritos'); }
+
+        // Carregar dados do usuário e ofertas
+        window.onload = async () => {
+            const token = localStorage.getItem('iFipe_Token');
+            const masterAuth = localStorage.getItem('iFipe_Master_Auth');
+
+            if (!token && masterAuth !== 'gov_absoluto') {
+                window.location.replace('index.html');
+                return;
+            }
+
+            if (masterAuth === 'gov_absoluto') {
+                currentUser = { nome: 'MASTER' };
+            } else {
+                const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
+                if (data) currentUser = data;
+                else logout();
+            }
+            document.getElementById('userName').innerText = currentUser.nome || 'Usuário';
+
+            initTicker();
+            document.getElementById('ultimaAtualizacao').innerText = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+            // Gerar cards mockados
+            gerarCardsMock();
+        };
+
+        function gerarCardsMock() {
+            const grid = document.getElementById('produtosGrid');
+            grid.innerHTML = '';
+            const produtos = [
+                { nome: 'iPhone 15 Pro Max', capacidade: '256GB', cor: 'Titânio Natural', preco: 7890, fornecedor: 'Loja Exemplo', verificado: true, cidade: 'São Paulo', condicao: 'Novo', qtd: 5 },
+                { nome: 'iPhone 15 Pro', capacidade: '128GB', cor: 'Preto', preco: 6450, fornecedor: 'TechCell', verificado: false, cidade: 'Rio de Janeiro', condicao: 'Novo', qtd: 2 },
+                { nome: 'iPhone 14', capacidade: '128GB', cor: 'Azul', preco: 4990, fornecedor: 'Mobile BR', verificado: true, cidade: 'Curitiba', condicao: 'Seminovo', qtd: 1 },
+            ];
+            produtos.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="font-bold text-lg">${p.nome}</h3>
+                        <span class="badge ${p.qtd <= 3 ? 'badge-red' : 'badge-blue'}">${p.qtd} UN</span>
+                    </div>
+                    <p class="text-sm text-gray-400 mb-1">${p.capacidade} | ${p.cor}</p>
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="badge ${p.condicao === 'Novo' ? 'badge-blue' : 'badge-yellow'}">${p.condicao}</span>
+                        ${p.verificado ? '<span class="verified-badge">✓</span>' : ''}
+                    </div>
+                    <p class="text-sm font-medium">🏢 ${p.fornecedor}</p>
+                    <p class="text-xs text-gray-400 mb-3">📍 ${p.cidade}</p>
+                    <div class="flex justify-between items-end">
+                        <span class="price">R$ ${p.preco}</span>
+                        <span class="text-xs text-gray-400">há 2 min</span>
+                    </div>
+                    <div class="flex justify-between mt-4 text-xs font-medium">
+                        <button onclick="alert('Recomendar')" class="hover:text-blue-500">👍 Recomendar</button>
+                        <button onclick="alert('Histórico')" class="hover:text-blue-500">📈 Histórico</button>
+                        <button onclick="alert('Perguntas')" class="hover:text-blue-500">💬 Perguntas</button>
+                        <button onclick="alert('Compartilhar')" class="hover:text-green-500">📤 Compartilhar</button>
+                    </div>
+                    <a href="https://wa.me/5511999999999" target="_blank" class="btn-apple w-full text-center mt-4">Comprar no WhatsApp</a>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Expor funções globalmente
+        window.toggleCalculadora = toggleCalculadora;
+        window.abrirPainelAlertas = abrirPainelAlertas;
+        window.fecharPainelAlertas = fecharPainelAlertas;
+        window.criarAlerta = criarAlerta;
+        window.abrirHistoricoGeral = abrirHistoricoGeral;
+        window.fecharHistoricoGeral = fecharHistoricoGeral;
+        window.toggleUserMenu = toggleUserMenu;
+        window.logout = logout;
+        window.abrirMeusAlertas = abrirMeusAlertas;
+        window.abrirFavoritos = abrirFavoritos;
     </script>
 </body>
 </html>
