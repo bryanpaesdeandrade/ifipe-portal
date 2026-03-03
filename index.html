@@ -27,13 +27,11 @@
 </head>
 <body class="flex flex-col items-center justify-center p-4 py-12 md:py-20">
 
-    <!-- Ticker Binance -->
     <div class="absolute top-4 left-6 text-[10px] font-black text-[#32d74b] tracking-widest flex items-center gap-2">
         <span class="w-1.5 h-1.5 rounded-full bg-[#32d74b] animate-pulse"></span>
         USDT/BRL: $ <span id="topRateTicker">--,----</span>
     </div>
 
-    <!-- Título -->
     <div class="mb-10 text-center flex items-center justify-center gap-3 w-full">
         <h1 class="text-4xl md:text-5xl font-black italic text-white tracking-tighter">iFipe</h1>
         <div class="h-8 w-[2px] bg-[#2a2a2a]"></div>
@@ -65,7 +63,6 @@
 
         <!-- Login Card -->
         <div class="glass-card order-1 lg:order-2 shadow-[0_0_40px_rgba(0,113,227,0.05)] border-[#0071e3]/20 min-h-[400px] relative">
-            <!-- Mensagem de atualização (só aparece se status off) -->
             <div id="statusCheck" class="hidden status-badge">
                 ⚠️ Estamos em atualização para trazer melhorias para você time iFipe
             </div>
@@ -109,7 +106,6 @@
         let rateBinance = 0;
         let rateOraculo = 0;
 
-        // Inicialização
         window.onload = () => {
             const status = localStorage.getItem('iFipe_Status') || 'on';
             if (status === 'off') {
@@ -120,7 +116,6 @@
             iniciarTicker();
         };
 
-        // WebSocket Binance
         function iniciarTicker() {
             const ws = new WebSocket("wss://stream.binance.com:9443/ws/usdtbrl@ticker");
             ws.onmessage = e => {
@@ -133,7 +128,6 @@
             };
         }
 
-        // Calculadora (fórmula correta)
         function calcularImportacao() {
             const usd = parseFloat(document.getElementById('calcUsd').value);
             if (!usd || rateOraculo === 0) return;
@@ -156,11 +150,17 @@
             document.getElementById('res_var').innerText = varejo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
-        // Função principal de login
+        // Remove caracteres invisíveis e normaliza string
+        function cleanString(str) {
+            if (!str) return '';
+            // Remove caracteres de controle e espaços invisíveis
+            return str.replace(/[\u200B-\u200D\uFEFF\u202A-\u202E]/g, '').trim();
+        }
+
         async function handleLogin() {
             const status = localStorage.getItem('iFipe_Status') || 'on';
-            const uRaw = document.getElementById("user").value.trim();
-            const p = document.getElementById("pass").value.trim();
+            const uRaw = cleanString(document.getElementById("user").value);
+            const p = cleanString(document.getElementById("pass").value);
             const type = document.getElementById("loginType").value;
             const msg = document.getElementById("msg");
             msg.innerText = "";
@@ -170,11 +170,10 @@
                 return;
             }
 
-            // 1. Verifica se é MASTER (sempre pode logar, mesmo em manutenção)
+            // Master bypass
             const masterPass = localStorage.getItem('Master_Custom_Pass') || '96197577';
             const uLower = uRaw.toLowerCase();
             if ((uLower === 'bryan' || uLower === 'master') && p === masterPass) {
-                // Limpa tokens antigos e seta auth master
                 localStorage.removeItem('iFipe_Token');
                 localStorage.removeItem('iFipe_Anunciante');
                 localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
@@ -182,7 +181,6 @@
                 return;
             }
 
-            // 2. Se sistema em manutenção, bloqueia qualquer outro usuário
             if (status === 'off') {
                 msg.innerText = "Estamos em atualização para trazer melhorias para você time iFipe";
                 return;
@@ -190,18 +188,17 @@
 
             msg.innerText = "VERIFICANDO...";
 
-            // Normaliza o telefone digitado: extrai apenas dígitos
+            // Extrai apenas dígitos do que foi digitado (para telefone)
             const uDigits = uRaw.replace(/\D/g, '');
 
-            // Função que compara telefone ignorando formatação e DDI
+            // Função que compara telefones ignorando DDI e formatação
             const phoneMatches = (dbPhone) => {
                 const dbDigits = (dbPhone || '').replace(/\D/g, '');
                 if (!uDigits || !dbDigits) return false;
-                // Se um é substring do outro no final, considera match
+                // Se um termina com o outro (ignorando DDI)
                 return dbDigits.endsWith(uDigits) || uDigits.endsWith(dbDigits);
             };
 
-            // 3. Login de ANUNCIANTE
             if (type === 'anunciante') {
                 const { data, error } = await _s.from('fornecedores').select('id, email, whatsapp, senha, ativo');
                 if (error || !data) {
@@ -211,17 +208,16 @@
                 const user = data.find(c => {
                     const emailMatch = (c.email || '').trim().toLowerCase() === uLower;
                     const phoneMatch = phoneMatches(c.whatsapp);
-                    return (emailMatch || phoneMatch) && String(c.senha).trim() === p;
+                    return (emailMatch || phoneMatch) && c.senha === p;
                 });
                 if (!user) {
                     msg.innerText = "DADOS INCORRETOS.";
                     return;
                 }
-                if (user.ativo === false) {
+                if (user.ativo !== true) {
                     msg.innerText = "BLOQUEADO.";
                     return;
                 }
-                // Sucesso: salva token e redireciona
                 localStorage.removeItem('iFipe_Token');
                 localStorage.removeItem('iFipe_Master_Auth');
                 localStorage.setItem('iFipe_Anunciante', user.id);
@@ -229,7 +225,7 @@
                 return;
             }
 
-            // 4. Login de BUSCADOR
+            // Buscador
             const { data, error } = await _s.from('clientes_buscador').select('id, email, whatsapp, senha, ativo, logins_count');
             if (error || !data) {
                 msg.innerText = "ERRO DE CONEXÃO.";
@@ -238,17 +234,16 @@
             const user = data.find(c => {
                 const emailMatch = (c.email || '').trim().toLowerCase() === uLower;
                 const phoneMatch = phoneMatches(c.whatsapp);
-                return (emailMatch || phoneMatch) && String(c.senha).trim() === p;
+                return (emailMatch || phoneMatch) && c.senha === p;
             });
             if (!user) {
                 msg.innerText = "DADOS INCORRETOS.";
                 return;
             }
-            if (user.ativo === false) {
+            if (user.ativo !== true) {
                 msg.innerText = "BLOQUEADO.";
                 return;
             }
-            // Incrementa contador de logins
             await _s.from('clientes_buscador').update({ logins_count: (user.logins_count || 0) + 1 }).eq('id', user.id);
             localStorage.removeItem('iFipe_Anunciante');
             localStorage.removeItem('iFipe_Master_Auth');
