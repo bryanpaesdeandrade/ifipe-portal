@@ -35,7 +35,7 @@ USDT/BRL: $ <span id="topRateTicker">--,----</span>
 </div>
 
 <div class="mb-10 text-center flex items-center justify-center gap-3 w-full">
-<h1 class="text-4xl md:text-5xl font-black italic text-white tracking-tighter select-none cursor-default" ondblclick="revelarLoginMaster()">iFipe</h1>
+<h1 class="text-4xl md:text-5xl font-black italic text-white tracking-tighter">iFipe</h1>
 <div class="h-8 w-[2px] bg-[#2a2a2a]"></div>
 <h2 class="text-lg md:text-xl font-black text-[#0071e3] uppercase tracking-widest italic">A Fipe do iPhone</h2>
 </div>
@@ -59,6 +59,7 @@ USDT/BRL: $ <span id="topRateTicker">--,----</span>
 </div>
 
 <div class="bg-[#1c1c1e] border border-[#2a2a2a] rounded-xl p-4 text-[10px] font-black uppercase space-y-2">
+<div class="flex justify-between text-white"><span>ALTO ATACADO</span><span id="res_alto">R$ 0,00</span></div>
 <div class="flex justify-between text-gray-300"><span>ATACADO</span><span id="res_ata">R$ 0,00</span></div>
 <div class="flex justify-between text-gray-400"><span>ATACAREJO</span><span id="res_atcrj">R$ 0,00</span></div>
 <div class="flex justify-between text-gray-500"><span>VAREJO</span><span id="res_var">R$ 0,00</span></div>
@@ -112,29 +113,19 @@ const _s = supabase.createClient(
 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M'
 );
 
-function normalizeString(str){
-return str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim() : '';
-}
-
 let rateBinance = 0;
 let rateOraculo = 0;
 
 window.onload = () => {
     const status = localStorage.getItem('iFipe_Status') || 'on';
-
+    
     if(status === 'off'){
         document.getElementById('statusCheck').classList.remove('hidden');
-        document.getElementById('loginForm').classList.add('hidden');
+        // O Formulário não é mais escondido. Fica aberto para o Master poder logar.
     }
-
+    
     iniciarTicker();
 };
-
-// Destrava manutenção para o Master
-function revelarLoginMaster() {
-    document.getElementById('statusCheck').classList.add('hidden');
-    document.getElementById('loginForm').classList.remove('hidden');
-}
 
 function iniciarTicker(){
     const ws = new WebSocket("wss://stream.binance.com:9443/ws/usdtbrl@ticker");
@@ -142,37 +133,36 @@ function iniciarTicker(){
         const data = JSON.parse(e.data);
         rateBinance = parseFloat(data.c);
         rateOraculo = rateBinance + 0.06;
-        document.getElementById("topRateTicker").innerText = rateBinance.toLocaleString("pt-BR",{minimumFractionDigits:4});
+        document.getElementById("topRateTicker").innerText =
+        rateBinance.toLocaleString("pt-BR",{minimumFractionDigits:4});
         calcularImportacao();
     };
 }
 
 function calcularImportacao(){
     const usd = parseFloat(document.getElementById('calcUsd').value);
-    if(!usd || rateOraculo === 0) {
-        document.getElementById('calcResult').innerText = "R$ 0,00";
-        document.getElementById('res_ata').innerText = "R$ 0,00";
-        document.getElementById('res_atcrj').innerText = "R$ 0,00";
-        document.getElementById('res_var').innerText = "R$ 0,00";
-        return;
-    }
+    if(!usd || rateOraculo === 0) return;
 
     const custo = (usd * rateOraculo) * 1.06;
 
-    document.getElementById('calcResult').innerText = custo.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    document.getElementById('calcResult').innerText =
+    custo.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
-    let atacado, atacarejo, varejo;
+    let alto, atacado, atacarejo, varejo;
 
     if(usd <= 750){
+        alto = custo * 1.10;
         atacado = custo * 1.20;
         atacarejo = custo * 1.40;
         varejo = custo * 1.55;
     }else{
+        alto = custo + 200;
         atacado = custo + 350;
         atacarejo = custo + 550;
         varejo = custo + 1000;
     }
 
+    document.getElementById('res_alto').innerText = alto.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
     document.getElementById('res_ata').innerText = atacado.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
     document.getElementById('res_atcrj').innerText = atacarejo.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
     document.getElementById('res_var').innerText = varejo.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -188,17 +178,23 @@ async function handleLogin(){
 
     if(!uRaw || !p){ msg.innerText="PREENCHA TUDO."; return; }
 
-    const uNorm = normalizeString(uRaw);
+    // Limpador inteligente: extrai o texto limpo para e-mails E só os números para WhatsApp
+    const uLower = uRaw.trim().toLowerCase();
+    const uDigits = uRaw.replace(/\D/g, '');
 
-    // MASTER SEMPRE ENTRA - LIMPA OS CACHES PARA EVITAR O LOOP AO SAIR
-    if(uNorm === 'bryan' && p === '96197577'){
+    // 1. MASTER (Passa por cima de tudo)
+    const masterPass = localStorage.getItem('Master_Custom_Pass') || '96197577';
+    if((uLower === 'bryan' || uLower === 'master') && p === masterPass){
+        // Limpa os caches anteriores para evitar o bug de loop ao clicar em SAIR no painel
         localStorage.removeItem('iFipe_Token');
         localStorage.removeItem('iFipe_Anunciante');
+        
         localStorage.setItem('iFipe_Master_Auth','gov_absoluto');
         window.location.replace('master.html');
         return;
     }
 
+    // 2. BLOQUEIO DE MANUTENÇÃO (Se não for o Master, esbarra aqui)
     if(status === 'off'){
         msg.innerText = "SISTEMA EM ATUALIZAÇÃO.";
         return;
@@ -206,13 +202,19 @@ async function handleLogin(){
 
     msg.innerText = "VERIFICANDO...";
 
+    // 3. LOGIN ANUNCIANTE
     if(type === 'anunciante'){
-        const { data } = await _s.from('fornecedores').select('*');
-        const user = data?.find(c =>
-            (normalizeString(c.whatsapp) === uNorm || normalizeString(c.email||'') === uNorm) &&
-            String(c.senha) === String(p)
-        );
-        if(!user){ msg.innerText="ERRO DE ACESSO."; return; }
+        const { data, error } = await _s.from('fornecedores').select('id, email, whatsapp, senha, ativo');
+        if(error || !data) { msg.innerText="ERRO DE CONEXÃO."; return; }
+
+        const user = data.find(c => {
+            const dbEmail = (c.email || '').trim().toLowerCase();
+            const dbWhats = (c.whatsapp || '').replace(/\D/g, '');
+            const matchUser = (dbEmail !== '' && dbEmail === uLower) || (uDigits !== '' && dbWhats === uDigits);
+            return matchUser && String(c.senha) === String(p);
+        });
+
+        if(!user){ msg.innerText="DADOS INCORRETOS."; return; }
         if(user.ativo === false){ msg.innerText="BLOQUEADO."; return; }
         
         localStorage.removeItem('iFipe_Token');
@@ -222,16 +224,23 @@ async function handleLogin(){
         return;
     }
 
-    const { data } = await _s.from('clientes_buscador').select('*');
-    const user = data?.find(c =>
-        (normalizeString(c.whatsapp) === uNorm || normalizeString(c.email||'') === uNorm) &&
-        String(c.senha) === String(p)
-    );
-    if(!user){ msg.innerText="ERRO DE ACESSO."; return; }
+    // 4. LOGIN BUSCADOR
+    const { data, error } = await _s.from('clientes_buscador').select('id, email, whatsapp, senha, ativo, logins_count');
+    if(error || !data) { msg.innerText="ERRO DE CONEXÃO."; return; }
+
+    const user = data.find(c => {
+        const dbEmail = (c.email || '').trim().toLowerCase();
+        const dbWhats = (c.whatsapp || '').replace(/\D/g, '');
+        const matchUser = (dbEmail !== '' && dbEmail === uLower) || (uDigits !== '' && dbWhats === uDigits);
+        return matchUser && String(c.senha) === String(p);
+    });
+
+    if(!user){ msg.innerText="DADOS INCORRETOS."; return; }
     if(user.ativo === false){ msg.innerText="BLOQUEADO."; return; }
 
     localStorage.removeItem('iFipe_Anunciante');
     localStorage.removeItem('iFipe_Master_Auth');
+    await _s.from('clientes_buscador').update({ logins_count: (user.logins_count || 0) + 1 }).eq('id', user.id);
     localStorage.setItem('iFipe_Token', user.id);
     window.location.replace('buscar.html');
 }
