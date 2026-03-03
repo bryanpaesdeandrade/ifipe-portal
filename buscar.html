@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Buscar</title>
+    <title>iFipe - A Tabela Fipe do iPhone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
             --bg: #f5f5f7;
@@ -18,6 +19,14 @@
             --green: #32d74b;
             --yellow: #ffcc00;
             --red: #ff3b30;
+            --purple: #9333ea;
+        }
+        body.dark-mode {
+            --bg: #000;
+            --card: #1c1c1e;
+            --text: #fff;
+            --border: #38383a;
+            --input: #2c2c2e;
         }
         body {
             background: var(--bg);
@@ -25,13 +34,7 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             margin: 0;
             -webkit-font-smoothing: antialiased;
-        }
-        .dark-mode {
-            --bg: #000;
-            --card: #1c1c1e;
-            --text: #fff;
-            --border: #38383a;
-            --input: #2c2c2e;
+            transition: background 0.3s, color 0.3s;
         }
         .nav-blur {
             background: rgba(255,255,255,0.8);
@@ -98,6 +101,7 @@
             border-radius: 18px;
             padding: 1.5rem;
             transition: all 0.2s;
+            position: relative;
         }
         .product-card:hover {
             transform: translateY(-4px);
@@ -133,6 +137,11 @@
             color: var(--red);
             border: 1px solid rgba(255,59,48,0.3);
         }
+        .badge-purple {
+            background: rgba(147,51,234,0.1);
+            color: var(--purple);
+            border: 1px solid var(--purple);
+        }
         .verified-badge {
             display: inline-flex;
             align-items: center;
@@ -145,10 +154,43 @@
             font-size: 12px;
             margin-left: 4px;
         }
+        .color-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            border: 1px solid var(--border);
+        }
         .price {
             font-size: 24px;
             font-weight: 700;
             letter-spacing: -0.02em;
+        }
+        .moldura {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .moldura i {
+            font-size: 12px;
+        }
+        .insignia {
+            background: linear-gradient(135deg, #9333ea, #c084fc);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 50px;
+            display: inline-block;
+            margin-right: 4px;
         }
         .historico-item {
             padding: 12px;
@@ -199,6 +241,37 @@
             padding: 2px 6px;
             border-radius: 20px;
         }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background: var(--card);
+            color: var(--text);
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid var(--border);
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .sidebar {
+            position: sticky;
+            top: 100px;
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -206,29 +279,33 @@
     <nav class="nav-blur fixed top-0 w-full z-50 px-6 py-3 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <h1 class="text-2xl font-black tracking-tight">iFipe</h1>
-            <span class="text-sm text-gray-400">Buscador</span>
+            <span class="text-sm text-gray-400">A TABELA FIPE DO IPHONE</span>
         </div>
         <div class="flex items-center gap-6">
-            <!-- Calculadora de iPhone (ícone) -->
-            <button onclick="toggleCalculadora()" class="text-sm font-medium hover:text-blue-500 transition">
-                📱 Calculadora
-            </button>
-            <!-- Cotações -->
+            <!-- Cotações e Oráculo -->
             <div class="flex items-center gap-4 text-xs">
                 <div>
                     <span class="text-gray-400">Binance</span>
                     <span id="binanceRate" class="font-mono font-bold text-yellow-500 ml-1">R$ 5,2630</span>
                 </div>
-                <div>
-                    <span class="text-gray-400">Oráculo</span>
+                <div class="tooltip">
+                    <span class="cursor-help border-b border-dotted">Oráculo</span>
                     <span id="oraculoRate" class="font-mono font-bold text-green-400 ml-1">R$ 5,3230</span>
+                    <span class="tooltiptext">Taxa VIP (+R$0,06)</span>
                 </div>
+                <a href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="bg-[#ffcc00] text-black px-3 py-1 rounded-full text-[10px] font-bold hover:bg-yellow-400 transition">
+                    Comprar USDT com Oráculo
+                </a>
             </div>
-            <!-- Sininho de alertas -->
-            <div class="sininho" onclick="abrirPainelAlertas()">
+            <!-- Sininho de notificações -->
+            <div class="sininho" onclick="abrirNotificacoes()">
                 <span class="text-2xl">🔔</span>
-                <span id="alertaBadge" class="sininho-badge hidden">0</span>
+                <span id="notificacaoBadge" class="sininho-badge hidden">3</span>
             </div>
+            <!-- Criar alerta -->
+            <button onclick="abrirCriarAlerta()" class="btn-apple-secondary text-sm">
+                <i class="fas fa-bell mr-1"></i> Criar Alerta
+            </button>
             <!-- Menu usuário -->
             <div class="relative">
                 <button onclick="toggleUserMenu()" class="flex items-center gap-2 text-sm font-medium">
@@ -236,68 +313,134 @@
                     <span>▼</span>
                 </button>
                 <div id="userMenu" class="absolute right-0 mt-2 w-48 bg-[#1c1c1e] border border-[#38383a] rounded-xl shadow-xl hidden">
-                    <a href="#" onclick="abrirHistoricoGeral()" class="block px-4 py-3 text-sm hover:bg-[#2c2c2e] rounded-t-xl">📊 Histórico de Preços</a>
-                    <a href="#" onclick="abrirMeusAlertas()" class="block px-4 py-3 text-sm hover:bg-[#2c2c2e]">🔔 Meus Alertas</a>
+                    <a href="#" onclick="abrirMeusAlertas()" class="block px-4 py-3 text-sm hover:bg-[#2c2c2e] rounded-t-xl">🔔 Meus Alertas</a>
                     <a href="#" onclick="abrirFavoritos()" class="block px-4 py-3 text-sm hover:bg-[#2c2c2e]">⭐ Favoritos</a>
+                    <a href="#" onclick="abrirHistoricoGeral()" class="block px-4 py-3 text-sm hover:bg-[#2c2c2e]">📊 Histórico de Preços</a>
                     <a href="#" onclick="logout()" class="block px-4 py-3 text-sm text-red-500 hover:bg-[#2c2c2e] rounded-b-xl">🚪 Sair</a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- CALCULADORA MODAL -->
-    <div id="calculadoraModal" class="modal hidden">
-        <div class="modal-content">
-            <h2 class="text-2xl font-bold mb-4">Calculadora de iPhone</h2>
-            <p class="text-sm text-gray-400 mb-6">Descubra o custo final no Brasil</p>
-            <div class="mb-4">
-                <label class="block text-sm font-medium mb-2">Preço em dólar (USD)</label>
-                <input type="number" id="calcUsd" class="apple-input" placeholder="Ex: 999" value="999">
+    <!-- LAYOUT PRINCIPAL: SIDEBAR + CONTEÚDO -->
+    <div class="pt-24 px-6 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- SIDEBAR ESQUERDA (calculadora e ferramentas) -->
+        <div class="lg:col-span-1 sidebar">
+            <!-- Calculadora -->
+            <div class="apple-card mb-6">
+                <h2 class="text-lg font-bold mb-3">Calculadora iPhone</h2>
+                <div class="mb-3">
+                    <label class="text-xs text-gray-400">Preço USD</label>
+                    <input type="number" id="calcUsd" class="apple-input" value="999" oninput="atualizarCalculadora()">
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-3 text-xs">
+                    <div>
+                        <span class="text-gray-400">Binance</span>
+                        <div id="calcBinance" class="font-bold">R$ 5,2630</div>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Oráculo</span>
+                        <div id="calcOraculo" class="font-bold text-green-400">R$ 5,3230</div>
+                    </div>
+                </div>
+                <div class="bg-[#2c2c2e] p-3 rounded-xl mb-3">
+                    <span class="text-xs text-gray-400">Custo final no Brasil</span>
+                    <div id="custoFinal" class="text-2xl font-bold text-blue-500">R$ 0,00</div>
+                </div>
+                <div class="grid grid-cols-3 gap-1 text-xs text-center">
+                    <div class="p-2 bg-[#2c2c2e] rounded-lg">
+                        <span class="text-gray-400">Atacado</span>
+                        <div id="precoAtacado" class="font-bold">R$ 0</div>
+                    </div>
+                    <div class="p-2 bg-[#2c2c2e] rounded-lg">
+                        <span class="text-gray-400">Atacarejo</span>
+                        <div id="precoAtacarejo" class="font-bold">R$ 0</div>
+                    </div>
+                    <div class="p-2 bg-[#2c2c2e] rounded-lg">
+                        <span class="text-gray-400">Varejo</span>
+                        <div id="precoVarejo" class="font-bold">R$ 0</div>
+                    </div>
+                </div>
             </div>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                    <span class="text-xs text-gray-400">Taxa Binance</span>
-                    <div id="calcBinance" class="text-lg font-bold">R$ 5,2630</div>
-                </div>
-                <div>
-                    <span class="text-xs text-gray-400">Taxa Oráculo (+0,06)</span>
-                    <div id="calcOraculo" class="text-lg font-bold text-green-400">R$ 5,3230</div>
-                </div>
+            <!-- Ferramentas extras (ex: histórico rápido, dicas) -->
+            <div class="apple-card">
+                <h3 class="font-bold mb-2">Ferramentas</h3>
+                <button onclick="abrirHistoricoGeral()" class="w-full text-left py-2 hover:bg-[#2c2c2e] rounded-lg px-2">
+                    📊 Histórico de preços
+                </button>
+                <button onclick="abrirMeusAlertas()" class="w-full text-left py-2 hover:bg-[#2c2c2e] rounded-lg px-2">
+                    🔔 Meus alertas
+                </button>
+                <button onclick="abrirFavoritos()" class="w-full text-left py-2 hover:bg-[#2c2c2e] rounded-lg px-2">
+                    ⭐ Favoritos
+                </button>
             </div>
-            <div class="bg-[#2c2c2e] p-4 rounded-xl mb-4">
-                <span class="text-sm text-gray-400">Custo final no Brasil</span>
-                <div id="custoFinal" class="text-3xl font-bold text-blue-500">R$ 0,00</div>
+        </div>
+
+        <!-- CONTEÚDO PRINCIPAL (busca e cards) -->
+        <div class="lg:col-span-3">
+            <!-- Barra de busca -->
+            <div class="mb-6">
+                <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-4 pr-4 py-3 text-lg">
             </div>
-            <div class="grid grid-cols-3 gap-2 text-xs text-center">
-                <div class="p-2 bg-[#2c2c2e] rounded-lg">
-                    <span class="text-gray-400">Atacado</span>
-                    <div id="precoAtacado" class="font-bold">R$ 0,00</div>
-                </div>
-                <div class="p-2 bg-[#2c2c2e] rounded-lg">
-                    <span class="text-gray-400">Atacarejo</span>
-                    <div id="precoAtacarejo" class="font-bold">R$ 0,00</div>
-                </div>
-                <div class="p-2 bg-[#2c2c2e] rounded-lg">
-                    <span class="text-gray-400">Varejo</span>
-                    <div id="precoVarejo" class="font-bold">R$ 0,00</div>
-                </div>
+
+            <!-- Filtros rápidos -->
+            <div class="flex flex-wrap gap-2 mb-4">
+                <select class="apple-input w-auto text-sm py-2">
+                    <option>Categoria</option>
+                    <option>iPhone</option>
+                    <option>iPad</option>
+                    <option>Mac</option>
+                </select>
+                <select class="apple-input w-auto text-sm py-2">
+                    <option>Condição</option>
+                    <option>Novo</option>
+                    <option>Seminovo</option>
+                </select>
+                <select class="apple-input w-auto text-sm py-2">
+                    <option>Capacidade</option>
+                    <option>128GB</option>
+                    <option>256GB</option>
+                </select>
+                <select class="apple-input w-auto text-sm py-2">
+                    <option>Cor</option>
+                    <option>Preto</option>
+                    <option>Branco</option>
+                </select>
+                <select class="apple-input w-auto text-sm py-2">
+                    <option>Região</option>
+                    <option>São Paulo</option>
+                    <option>Paraguai</option>
+                </select>
             </div>
-            <button onclick="toggleCalculadora()" class="btn-apple-secondary w-full mt-6">Fechar</button>
+
+            <!-- Informações discretas -->
+            <div class="flex justify-end items-center gap-4 mb-4 text-xs text-gray-400">
+                <span>📦 2.547 produtos</span>
+                <span>🏢 104 fornecedores</span>
+                <span>🕒 Última atualização: <span id="ultimaAtualizacao">17:04:30</span></span>
+            </div>
+
+            <!-- Grid de cards -->
+            <div id="produtosGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <!-- Cards serão gerados via JS -->
+            </div>
         </div>
     </div>
 
-    <!-- PAINEL DE ALERTAS (criar alerta) -->
-    <div id="painelAlertas" class="modal hidden">
+    <!-- MODAIS -->
+
+    <!-- Criar Alerta -->
+    <div id="criarAlertaModal" class="modal hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Criar Alerta de Preço</h2>
-            <p class="text-sm text-gray-400 mb-6">Escolha o produto e o preço desejado</p>
+            <p class="text-sm text-gray-400 mb-6">Receba uma notificação quando o preço cair</p>
             <div class="mb-4">
                 <label class="block text-sm font-medium mb-2">Produto</label>
                 <select id="alertaProduto" class="apple-input">
                     <option value="">Selecione...</option>
                     <option value="1">iPhone 15 Pro Max</option>
                     <option value="2">iPhone 15 Pro</option>
-                    <option value="3">iPhone 14</option>
                 </select>
             </div>
             <div class="mb-4">
@@ -306,7 +449,6 @@
                     <option value="">Todas</option>
                     <option value="128GB">128GB</option>
                     <option value="256GB">256GB</option>
-                    <option value="512GB">512GB</option>
                 </select>
             </div>
             <div class="mb-6">
@@ -315,18 +457,41 @@
             </div>
             <div class="flex gap-3">
                 <button onclick="criarAlerta()" class="btn-apple flex-1">Criar Alerta</button>
-                <button onclick="fecharPainelAlertas()" class="btn-apple-secondary flex-1">Cancelar</button>
+                <button onclick="fecharCriarAlerta()" class="btn-apple-secondary flex-1">Cancelar</button>
             </div>
         </div>
     </div>
 
-    <!-- PAINEL HISTÓRICO GERAL -->
+    <!-- Notificações -->
+    <div id="notificacoesModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Notificações</h2>
+            <div class="space-y-3">
+                <div class="p-3 bg-[#2c2c2e] rounded-lg flex items-start gap-3">
+                    <span class="text-yellow-500">🔔</span>
+                    <div>
+                        <p class="text-sm font-medium">Alerta de preço</p>
+                        <p class="text-xs text-gray-400">iPhone 15 Pro Max chegou a R$ 7.500</p>
+                    </div>
+                </div>
+                <div class="p-3 bg-[#2c2c2e] rounded-lg flex items-start gap-3">
+                    <span class="text-blue-500">📢</span>
+                    <div>
+                        <p class="text-sm font-medium">Oferta relâmpago</p>
+                        <p class="text-xs text-gray-400">Desconto de 10% na loja X</p>
+                    </div>
+                </div>
+            </div>
+            <button onclick="fecharNotificacoes()" class="btn-apple-secondary w-full mt-6">Fechar</button>
+        </div>
+    </div>
+
+    <!-- Histórico Geral -->
     <div id="historicoGeralModal" class="modal hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Histórico de Preços</h2>
             <p class="text-sm text-gray-400 mb-4">Média dos últimos 10 dias</p>
             <div class="space-y-2 max-h-96 overflow-y-auto">
-                <!-- Items serão preenchidos via JS -->
                 <div class="historico-item">
                     <div class="flex justify-between">
                         <span class="font-medium">iPhone 15 Pro Max 256GB</span>
@@ -346,59 +511,6 @@
         </div>
     </div>
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <main class="pt-24 px-6 max-w-7xl mx-auto">
-        <!-- Barra de busca -->
-        <div class="mb-8">
-            <div class="relative">
-                <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-12 pr-4 py-4 text-lg">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-            </div>
-        </div>
-
-        <!-- Filtros rápidos -->
-        <div class="flex flex-wrap gap-2 mb-8">
-            <select class="apple-input w-auto text-sm">
-                <option>Categoria</option>
-                <option>iPhone</option>
-                <option>iPad</option>
-                <option>Mac</option>
-            </select>
-            <select class="apple-input w-auto text-sm">
-                <option>Condição</option>
-                <option>Novo</option>
-                <option>Seminovo</option>
-            </select>
-            <select class="apple-input w-auto text-sm">
-                <option>Capacidade</option>
-                <option>128GB</option>
-                <option>256GB</option>
-            </select>
-            <select class="apple-input w-auto text-sm">
-                <option>Cor</option>
-                <option>Preto</option>
-                <option>Branco</option>
-            </select>
-            <select class="apple-input w-auto text-sm">
-                <option>Região</option>
-                <option>São Paulo</option>
-                <option>Paraguai</option>
-            </select>
-        </div>
-
-        <!-- Informações discretas -->
-        <div class="flex justify-end items-center gap-4 mb-4 text-xs text-gray-400">
-            <span>📦 2.547 produtos</span>
-            <span>🏢 104 fornecedores</span>
-            <span>🕒 Última atualização: <span id="ultimaAtualizacao">17:04:30</span></span>
-        </div>
-
-        <!-- Grid de produtos -->
-        <div id="produtosGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <!-- Cards serão gerados via JS -->
-        </div>
-    </main>
-
     <script>
         const _s = supabase.createClient(
             'https://zmgosywpwidypxyhxkry.supabase.co',
@@ -409,90 +521,7 @@
         let rateOraculo = rateBinance + 0.06;
         let currentUser = null;
 
-        // Atualiza cotações via WebSocket
-        function initTicker() {
-            try {
-                const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
-                ws.onmessage = (e) => {
-                    const data = JSON.parse(e.data);
-                    rateBinance = parseFloat(data.c);
-                    rateOraculo = rateBinance + 0.06;
-                    document.getElementById('binanceRate').innerText = `R$ ${rateBinance.toFixed(4)}`;
-                    document.getElementById('oraculoRate').innerText = `R$ ${rateOraculo.toFixed(4)}`;
-                    atualizarCalculadora();
-                };
-            } catch (e) {
-                console.warn('WebSocket falhou, usando valores fixos');
-            }
-        }
-
-        // Atualiza cálculos da calculadora
-        function atualizarCalculadora() {
-            const usd = parseFloat(document.getElementById('calcUsd').value) || 0;
-            const custo = usd * rateOraculo * 1.06;
-            document.getElementById('custoFinal').innerText = `R$ ${custo.toFixed(2)}`;
-            if (usd <= 750) {
-                document.getElementById('precoAtacado').innerText = `R$ ${(custo * 1.2).toFixed(2)}`;
-                document.getElementById('precoAtacarejo').innerText = `R$ ${(custo * 1.4).toFixed(2)}`;
-                document.getElementById('precoVarejo').innerText = `R$ ${(custo * 1.55).toFixed(2)}`;
-            } else {
-                document.getElementById('precoAtacado').innerText = `R$ ${(custo + 350).toFixed(2)}`;
-                document.getElementById('precoAtacarejo').innerText = `R$ ${(custo + 550).toFixed(2)}`;
-                document.getElementById('precoVarejo').innerText = `R$ ${(custo + 1000).toFixed(2)}`;
-            }
-            document.getElementById('calcBinance').innerText = `R$ ${rateBinance.toFixed(4)}`;
-            document.getElementById('calcOraculo').innerText = `R$ ${rateOraculo.toFixed(4)}`;
-        }
-
-        // Toggle calculadora
-        function toggleCalculadora() {
-            const modal = document.getElementById('calculadoraModal');
-            modal.classList.toggle('hidden');
-            if (!modal.classList.contains('hidden')) {
-                atualizarCalculadora();
-            }
-        }
-
-        // Abrir painel de alertas (criar alerta)
-        function abrirPainelAlertas() {
-            document.getElementById('painelAlertas').classList.remove('hidden');
-        }
-
-        function fecharPainelAlertas() {
-            document.getElementById('painelAlertas').classList.add('hidden');
-        }
-
-        function criarAlerta() {
-            alert('Alerta criado (mock)');
-            fecharPainelAlertas();
-        }
-
-        // Histórico geral
-        function abrirHistoricoGeral() {
-            document.getElementById('historicoGeralModal').classList.remove('hidden');
-        }
-
-        function fecharHistoricoGeral() {
-            document.getElementById('historicoGeralModal').classList.add('hidden');
-        }
-
-        // Menu usuário
-        function toggleUserMenu() {
-            document.getElementById('userMenu').classList.toggle('hidden');
-        }
-
-        // Logout
-        function logout() {
-            localStorage.removeItem('iFipe_Token');
-            localStorage.removeItem('iFipe_Master_Auth');
-            window.location.replace('index.html');
-        }
-
-        // Placeholders
-        function abrirMeusAlertas() { alert('Meus alertas'); }
-        function abrirFavoritos() { alert('Favoritos'); }
-
-        // Carregar dados do usuário e ofertas
+        // Inicialização
         window.onload = async () => {
             const token = localStorage.getItem('iFipe_Token');
             const masterAuth = localStorage.getItem('iFipe_Master_Auth');
@@ -514,36 +543,133 @@
             initTicker();
             document.getElementById('ultimaAtualizacao').innerText = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-            // Gerar cards mockados
             gerarCardsMock();
         };
 
+        // Ticker Binance
+        function initTicker() {
+            try {
+                const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+                ws.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    rateBinance = parseFloat(data.c);
+                    rateOraculo = rateBinance + 0.06;
+                    document.getElementById('binanceRate').innerText = `R$ ${rateBinance.toFixed(4)}`;
+                    document.getElementById('oraculoRate').innerText = `R$ ${rateOraculo.toFixed(4)}`;
+                    atualizarCalculadora();
+                };
+            } catch (e) {
+                console.warn('WebSocket falhou, usando valores fixos');
+            }
+        }
+
+        // Calculadora
+        function atualizarCalculadora() {
+            const usd = parseFloat(document.getElementById('calcUsd').value) || 0;
+            const custo = usd * rateOraculo * 1.06;
+            document.getElementById('custoFinal').innerText = `R$ ${custo.toFixed(2)}`;
+            document.getElementById('calcBinance').innerText = `R$ ${rateBinance.toFixed(4)}`;
+            document.getElementById('calcOraculo').innerText = `R$ ${rateOraculo.toFixed(4)}`;
+            if (usd <= 750) {
+                document.getElementById('precoAtacado').innerText = `R$ ${(custo * 1.2).toFixed(2)}`;
+                document.getElementById('precoAtacarejo').innerText = `R$ ${(custo * 1.4).toFixed(2)}`;
+                document.getElementById('precoVarejo').innerText = `R$ ${(custo * 1.55).toFixed(2)}`;
+            } else {
+                document.getElementById('precoAtacado').innerText = `R$ ${(custo + 350).toFixed(2)}`;
+                document.getElementById('precoAtacarejo').innerText = `R$ ${(custo + 550).toFixed(2)}`;
+                document.getElementById('precoVarejo').innerText = `R$ ${(custo + 1000).toFixed(2)}`;
+            }
+        }
+
+        // Funções dos modais
+        function abrirCriarAlerta() { document.getElementById('criarAlertaModal').classList.remove('hidden'); }
+        function fecharCriarAlerta() { document.getElementById('criarAlertaModal').classList.add('hidden'); }
+        function criarAlerta() { alert('Alerta criado!'); fecharCriarAlerta(); }
+        function abrirNotificacoes() { document.getElementById('notificacoesModal').classList.remove('hidden'); }
+        function fecharNotificacoes() { document.getElementById('notificacoesModal').classList.add('hidden'); }
+        function abrirHistoricoGeral() { document.getElementById('historicoGeralModal').classList.remove('hidden'); }
+        function fecharHistoricoGeral() { document.getElementById('historicoGeralModal').classList.add('hidden'); }
+        function toggleUserMenu() { document.getElementById('userMenu').classList.toggle('hidden'); }
+        function abrirMeusAlertas() { alert('Meus alertas (mock)'); }
+        function abrirFavoritos() { alert('Favoritos (mock)'); }
+        function logout() {
+            localStorage.removeItem('iFipe_Token');
+            localStorage.removeItem('iFipe_Master_Auth');
+            window.location.replace('index.html');
+        }
+
+        // Gerar cards mock com todas as características
         function gerarCardsMock() {
             const grid = document.getElementById('produtosGrid');
             grid.innerHTML = '';
-            const produtos = [
-                { nome: 'iPhone 15 Pro Max', capacidade: '256GB', cor: 'Titânio Natural', preco: 7890, fornecedor: 'Loja Exemplo', verificado: true, cidade: 'São Paulo', condicao: 'Novo', qtd: 5 },
-                { nome: 'iPhone 15 Pro', capacidade: '128GB', cor: 'Preto', preco: 6450, fornecedor: 'TechCell', verificado: false, cidade: 'Rio de Janeiro', condicao: 'Novo', qtd: 2 },
-                { nome: 'iPhone 14', capacidade: '128GB', cor: 'Azul', preco: 4990, fornecedor: 'Mobile BR', verificado: true, cidade: 'Curitiba', condicao: 'Seminovo', qtd: 1 },
+
+            const cores = ['Preto', 'Branco', 'Azul', 'Vermelho', 'Titânio'];
+            const condicoes = ['Novo', 'Seminovo', 'CPO'];
+            const fornecedores = [
+                { nome: 'Loja Exemplo', verificado: true, insignias: ['MAGNATA'] },
+                { nome: 'TechCell', verificado: false, insignias: [] },
+                { nome: 'Mobile BR', verificado: true, insignias: ['REI', 'VERIFICADO'] }
             ];
-            produtos.forEach(p => {
+            const molduras = ['pix', 'usdt', 'coleta', 'envio', 'boy', 'negocia'];
+
+            for (let i = 0; i < 6; i++) {
+                const cor = cores[Math.floor(Math.random() * cores.length)];
+                const cond = condicoes[Math.floor(Math.random() * condicoes.length)];
+                const forn = fornecedores[Math.floor(Math.random() * fornecedores.length)];
+                const preco = Math.floor(5000 + Math.random() * 4000);
+                const qtd = Math.floor(Math.random() * 10) + 1;
+                const moeda = Math.random() > 0.7 ? 'USD' : 'BRL';
+                const precoFinal = moeda === 'USD' ? preco * rateOraculo : preco;
+
+                // Define cor da bolinha
+                const corHex = {
+                    'Preto': '#000', 'Branco': '#fff', 'Azul': '#215e7c', 'Vermelho': '#a50011', 'Titânio': '#8c8c88'
+                }[cor] || '#808080';
+
                 const card = document.createElement('div');
                 card.className = 'product-card';
+
+                // Molduras (ícones)
+                const moldurasHTML = molduras.map(m => {
+                    const icones = {
+                        pix: 'fa-pix',
+                        usdt: 'fa-coins',
+                        coleta: 'fa-box',
+                        envio: 'fa-truck',
+                        boy: 'fa-person-biking',
+                        negocia: 'fa-handshake'
+                    };
+                    return `<span class="moldura tooltip"><i class="fas ${icones[m]}"></i><span class="tooltiptext">${m}</span></span>`;
+                }).join('');
+
+                // Insígnias (apenas a mais elevada, se houver)
+                const insignia = forn.insignias.length ? `<span class="insignia">${forn.insignias[0]}</span>` : '';
+
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-3">
-                        <h3 class="font-bold text-lg">${p.nome}</h3>
-                        <span class="badge ${p.qtd <= 3 ? 'badge-red' : 'badge-blue'}">${p.qtd} UN</span>
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center">
+                            <span class="color-dot" style="background: ${corHex}; border: 1px solid ${corHex === '#fff' ? '#000' : 'transparent'};"></span>
+                            <h3 class="font-bold text-base">iPhone 15 Pro Max</h3>
+                        </div>
+                        <span class="badge ${qtd <= 3 ? 'badge-red' : 'badge-blue'}">${qtd} UN</span>
                     </div>
-                    <p class="text-sm text-gray-400 mb-1">${p.capacidade} | ${p.cor}</p>
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="badge ${p.condicao === 'Novo' ? 'badge-blue' : 'badge-yellow'}">${p.condicao}</span>
-                        ${p.verificado ? '<span class="verified-badge">✓</span>' : ''}
+                    <p class="text-xs text-gray-400 mb-1">256GB | ${cor}</p>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="badge ${cond === 'Novo' ? 'badge-blue' : cond === 'Seminovo' ? 'badge-yellow' : 'badge-purple'}">${cond}</span>
+                        <span class="badge badge-green">MENOR PREÇO</span>
                     </div>
-                    <p class="text-sm font-medium">🏢 ${p.fornecedor}</p>
-                    <p class="text-xs text-gray-400 mb-3">📍 ${p.cidade}</p>
+                    <div class="flex items-center gap-1 mb-2">
+                        <span class="text-sm font-medium">🏢 ${forn.nome}</span>
+                        ${forn.verificado ? '<span class="verified-badge">✓</span>' : ''}
+                        ${insignia}
+                    </div>
+                    <p class="text-xs text-gray-400 mb-3">📍 São Paulo - BR</p>
+                    <div class="flex flex-wrap gap-1 mb-3">
+                        ${moldurasHTML}
+                    </div>
                     <div class="flex justify-between items-end">
-                        <span class="price">R$ ${p.preco}</span>
-                        <span class="text-xs text-gray-400">há 2 min</span>
+                        <span class="price">R$ ${precoFinal.toFixed(2)}</span>
+                        <span class="text-xs text-gray-400">há 5 min</span>
                     </div>
                     <div class="flex justify-between mt-4 text-xs font-medium">
                         <button onclick="alert('Recomendar')" class="hover:text-blue-500">👍 Recomendar</button>
@@ -554,14 +680,16 @@
                     <a href="https://wa.me/5511999999999" target="_blank" class="btn-apple w-full text-center mt-4">Comprar no WhatsApp</a>
                 `;
                 grid.appendChild(card);
-            });
+            }
         }
 
         // Expor funções globalmente
-        window.toggleCalculadora = toggleCalculadora;
-        window.abrirPainelAlertas = abrirPainelAlertas;
-        window.fecharPainelAlertas = fecharPainelAlertas;
+        window.atualizarCalculadora = atualizarCalculadora;
+        window.abrirCriarAlerta = abrirCriarAlerta;
+        window.fecharCriarAlerta = fecharCriarAlerta;
         window.criarAlerta = criarAlerta;
+        window.abrirNotificacoes = abrirNotificacoes;
+        window.fecharNotificacoes = fecharNotificacoes;
         window.abrirHistoricoGeral = abrirHistoricoGeral;
         window.fecharHistoricoGeral = fecharHistoricoGeral;
         window.toggleUserMenu = toggleUserMenu;
