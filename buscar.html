@@ -4,491 +4,203 @@
 
 <head>
 
-  <meta charset="UTF-8" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>iFipe - Buscador</title>
 
 
+<script>
 
-  <script src="https://cdn.tailwindcss.com"></script>
+const status = localStorage.getItem('iFipe_Status');
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+const isMaster = localStorage.getItem('iFipe_Token') === 'admin_bypass';
 
 
 
-  <style>
+if (status === 'off' && !isMaster) {
 
-    :root { --bg:#000; --card:#1c1c1e; --text:#fff; --border:#38383a; --input:#2c2c2e; --blue:#0071e3; }
+  document.documentElement.innerHTML = `
 
-    body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; margin:0; }
+  <body style="background:#050505;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif;text-align:center;padding:20px;margin:0;">
 
-    .card { background:var(--card); border:1px solid var(--border); border-radius:16px; }
+    <div>
 
-    .inp { background:var(--input); border:1px solid var(--border); border-radius:12px; padding:12px 14px; width:100%; color:var(--text); outline:none; }
+      <h1 style="color:#ff3b30;font-style:italic;font-weight:900;">iFipe</h1>
 
-    .btn { border-radius:12px; padding:10px 14px; font-weight:900; text-transform:uppercase; font-size:12px; border:1px solid var(--border); }
+      <p style="color:#888;font-weight:bold;font-size:12px;text-transform:uppercase;">
 
-    .btn-blue { background:rgba(0,113,227,.15); color:var(--blue); }
+        Sistema em atualização
 
-    .btn-blue:hover { background:var(--blue); color:#fff; border-color:var(--blue); }
+      </p>
 
-    .btn-red { background:rgba(255,59,48,.15); color:#ff3b30; }
+      <button onclick="location.href='index.html'"
 
-    .btn-red:hover { background:#ff3b30; color:#fff; border-color:#ff3b30; }
+        style="margin-top:20px;background:#0071e3;color:#fff;border:none;padding:12px 24px;border-radius:50px;font-weight:900;">
 
-    .tag { font-size:10px; font-weight:900; text-transform:uppercase; padding:4px 8px; border-radius:999px; display:inline-block; }
+        Voltar
 
-    .tag-ok { background:rgba(50,215,75,.2); color:#32d74b; border:1px solid rgba(50,215,75,.35); }
-
-    .tag-warn { background:rgba(255,204,0,.2); color:#ffcc00; border:1px solid rgba(255,204,0,.35); }
-
-    .tag-bad { background:rgba(255,59,48,.2); color:#ff3b30; border:1px solid rgba(255,59,48,.35); }
-
-  </style>
-
-</head>
-
-
-
-<body>
-
-  <header class="sticky top-0 z-50 border-b" style="border-color:var(--border); background:rgba(28,28,30,.85); backdrop-filter:blur(14px);">
-
-    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-
-      <div class="flex items-center gap-3">
-
-        <div class="text-2xl font-black italic">iFipe</div>
-
-        <span id="statusBadge" class="tag tag-warn">carregando</span>
-
-      </div>
-
-      <div class="flex items-center gap-2">
-
-        <button class="btn btn-blue" onclick="abrirSuporte()">suporte</button>
-
-        <button class="btn btn-red" onclick="logout()">sair</button>
-
-      </div>
+      </button>
 
     </div>
 
-  </header>
+  </body>`;
 
+  window.stop();
 
+}
 
-  <main class="max-w-7xl mx-auto px-4 py-6">
+</script>
 
-    <section class="card p-4 mb-4">
 
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
 
-        <input id="q" class="inp font-black uppercase text-sm" placeholder="buscar produto / modelo" oninput="render()" />
+<meta charset="UTF-8">
 
-        <select id="f_cat" class="inp font-black uppercase text-sm" onchange="render()">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-          <option value="">todas categorias</option>
+<title>iFipe - Buscador VIP</title>
 
-          <option value="1">iphone</option>
 
-          <option value="2">apple watch</option>
 
-          <option value="3">ipad</option>
+<script src="https://cdn.tailwindcss.com"></script>
 
-          <option value="4">macbook</option>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-          <option value="5">imac</option>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
 
-          <option value="6">acessórios</option>
+<style>
 
-          <option value="7">xiaomi</option>
+:root { --bg:#000; --card:#1c1c1e; --text:#fff; --border:#38383a; --input:#2c2c2e; }
 
-          <option value="8">realme</option>
+body { background:var(--bg); color:var(--text); margin:0; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif; }
 
-        </select>
+.hidden { display:none!important; }
 
-        <select id="f_cond" class="inp font-black uppercase text-sm" onchange="render()">
+.product-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:12px; }
 
-          <option value="">todas condições</option>
+.buy-button { background:#0071e3;color:#fff;font-weight:900;border-radius:50px;padding:12px;text-align:center;display:block;margin-top:12px;text-transform:uppercase;font-size:11px; }
 
-          <option value="NOVO">novo</option>
+</style>
 
-          <option value="SEMINOVO">seminovo</option>
+</head>
 
-          <option value="CPO">cpo</option>
+<body>
 
-        </select>
 
-        <select id="f_ord" class="inp font-black uppercase text-sm" onchange="render()">
 
-          <option value="preco_asc">menor preço</option>
+<div id="manutencaoOverlay" class="hidden"></div>
 
-          <option value="preco_desc">maior preço</option>
 
-          <option value="estoque_desc">maior estoque</option>
 
-        </select>
+<div id="mainContent" class="hidden">
 
-      </div>
+<nav class="p-4 border-b border-[#38383a] flex justify-between">
 
-      <div class="mt-3 text-xs opacity-80">
+  <strong class="italic">iFipe</strong>
 
-        <span id="who"></span>
+  <button onclick="logout()" class="text-red-500 font-black text-xs">SAIR</button>
 
-      </div>
+</nav>
 
-    </section>
 
 
+<main class="p-4">
 
-    <section id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></section>
+  <input id="buscaTexto" class="w-full p-3 rounded bg-white text-black font-black uppercase" placeholder="Buscar produto">
 
-  </main>
+  <div id="gridGeral" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6"></div>
 
-  <script>
+</main>
 
-    // ===== CONFIG =====
+</div>
 
-    const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
+<script>
 
-    const SUPABASE_ANON_KEY = 'SUA_CHAVE_PUBLICA';
+const _s = supabase.createClient(
 
-    const _s = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  'https://zmgosywpwidypxyhxkry.supabase.co',
 
+  'SUA_CHAVE_ANON_AQUI'
 
+);
 
-    // ===== ESTADO =====
 
-    let clienteLogado = null;
 
-    let ofertasAtuais = [];
+let ofertasAtuais = [];
 
+let clienteLogado = null;
 
+window.onload = async () => {
 
-    // ===== DESBLOQUEIO GLOBAL (resolve "manutenção/bloqueio" vindo do index/localStorage) =====
+  const token = localStorage.getItem('iFipe_Token');
 
-    // Não depende de procurar código em lugar nenhum.
+  if (!token) return location.href = 'index.html';
 
-    localStorage.removeItem('iFipe_Status');
 
 
+  const { data } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
 
-    // ===== HELPERS =====
+  if (!data || data.ativo === false) return logout();
 
-    function setBadge(type, text){
 
-      const el = document.getElementById('statusBadge');
 
-      el.className = 'tag ' + (type === 'ok' ? 'tag-ok' : type === 'bad' ? 'tag-bad' : 'tag-warn');
+  clienteLogado = data;
 
-      el.textContent = text;
+  document.getElementById('mainContent').classList.remove('hidden');
 
-    }
+  carregarDados();
 
+};
 
 
-    function norm(s){
 
-      return (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+function logout() {
 
-    }
+  localStorage.removeItem('iFipe_Token');
 
+  location.href = 'index.html';
 
+}
 
-    function abrirSuporte(){
+async function carregarDados() {
 
-      window.open('https://wa.me/556896003049', '_blank');
+  const { data } = await _s.from('ofertas')
 
-    }
+    .select('*, variacoes(produtos_mestre(nome)), fornecedores(nome, whatsapp)')
 
+    .gt('quantidade', 0);
 
 
-    function logout(){
 
-      localStorage.removeItem('iFipe_Token');
+  ofertasAtuais = data || [];
 
-      window.location.replace('index.html');
+  renderizar();
 
-    }
+}
 
+function renderizar() {
 
+  const grid = document.getElementById('gridGeral');
 
-    // ===== LOGIN (buscador) =====
+  grid.innerHTML = ofertasAtuais.map(o => `
 
-    async function autenticar(){
+    <div class="product-card">
 
-      const token = localStorage.getItem('iFipe_Token');
+      <strong>${o.variacoes.produtos_mestre.nome}</strong>
 
-      if(!token){
+      <div class="text-xl font-black mt-2">R$ ${o.preco}</div>
 
-        window.location.replace('index.html');
+      <a class="buy-button" target="_blank"
 
-        return;
+        href="https://wa.me/${o.fornecedores.whatsapp}">
 
-      }
+        Comprar
 
+      </a>
 
+    </div>
 
-      // master bypass
+  `).join('');
 
-      if(token === 'admin_bypass'){
+}
 
-        clienteLogado = { id:'admin_bypass', nome:'MASTER', ativo:true };
-
-        document.getElementById('who').textContent = 'Logado: MASTER';
-
-        return;
-
-      }
-
-
-
-      // cliente buscador
-
-      const { data, error } = await _s
-
-        .from('clientes_buscador')
-
-        .select('*')
-
-        .eq('id', token)
-
-        .single();
-
-
-
-      if(error || !data || data.ativo === false){
-
-        logout();
-
-        return;
-
-      }
-
-
-
-      clienteLogado = data;
-
-      document.getElementById('who').textContent = `Logado: ${data.nome || data.email || data.id}`;
-
-    }
-
-
-
-    // ===== DADOS =====
-
-    async function carregarOfertas(){
-
-      setBadge('warn','carregando');
-
-
-
-      const { data, error } = await _s
-
-        .from('ofertas')
-
-        .select('id, preco, quantidade, condicao, variacoes(id, capacidade, cor, produtos_mestre(id, nome, grupo_id)), fornecedores(id, nome, whatsapp)')
-
-        .gt('quantidade', 0);
-
-
-
-      if(error){
-
-        setBadge('bad','erro');
-
-        console.error(error);
-
-        return;
-
-      }
-
-
-
-      ofertasAtuais = data || [];
-
-      setBadge('ok', `${ofertasAtuais.length} ofertas`);
-
-      render();
-
-    }
-
-    // ===== RENDER =====
-
-    function render(){
-
-      const q = norm(document.getElementById('q').value);
-
-      const fCat = document.getElementById('f_cat').value;
-
-      const fCond = document.getElementById('f_cond').value;
-
-      const fOrd = document.getElementById('f_ord').value;
-
-
-
-      let list = ofertasAtuais.slice();
-
-
-
-      if(fCat){
-
-        list = list.filter(o => String(o?.variacoes?.produtos_mestre?.grupo_id || '') === String(fCat));
-
-      }
-
-      if(fCond){
-
-        list = list.filter(o => String(o?.condicao || '').toUpperCase() === String(fCond).toUpperCase());
-
-      }
-
-      if(q){
-
-        list = list.filter(o => {
-
-          const nome = norm(o?.variacoes?.produtos_mestre?.nome);
-
-          const cap = norm(o?.variacoes?.capacidade);
-
-          const cor = norm(o?.variacoes?.cor);
-
-          const forn = norm(o?.fornecedores?.nome);
-
-          return (nome + ' ' + cap + ' ' + cor + ' ' + forn).includes(q);
-
-        });
-
-      }
-
-
-
-      if(fOrd === 'preco_asc') list.sort((a,b)=>(a.preco||0)-(b.preco||0));
-
-      if(fOrd === 'preco_desc') list.sort((a,b)=>(b.preco||0)-(a.preco||0));
-
-      if(fOrd === 'estoque_desc') list.sort((a,b)=>(b.quantidade||0)-(a.quantidade||0));
-
-
-
-      const grid = document.getElementById('grid');
-
-      if(!list.length){
-
-        grid.innerHTML = `<div class="card p-4 opacity-80">Nenhuma oferta encontrada.</div>`;
-
-        return;
-
-      }
-
-
-
-      grid.innerHTML = list.map(o => {
-
-        const nome = o?.variacoes?.produtos_mestre?.nome || 'Produto';
-
-        const cap = o?.variacoes?.capacidade || '';
-
-        const cor = o?.variacoes?.cor || '';
-
-        const cond = (o?.condicao || '').toUpperCase();
-
-        const qtd = o?.quantidade ?? 0;
-
-        const preco = Number(o?.preco || 0);
-
-
-
-        const forn = o?.fornecedores?.nome || 'Fornecedor';
-
-        const wpp = o?.fornecedores?.whatsapp || '';
-
-
-
-        const tag = qtd <= 2 ? 'tag-bad' : qtd <= 5 ? 'tag-warn' : 'tag-ok';
-
-        const tagTxt = qtd <= 2 ? 'poucas' : qtd <= 5 ? 'médio' : 'alto';
-
-
-
-        const wppLink = wpp ? `https://wa.me/${String(wpp).replace(/\D/g,'')}` : '';
-
-
-
-        return `
-
-          <div class="card p-4 relative">
-
-            <div class="flex items-start justify-between gap-2">
-
-              <div class="font-black uppercase text-sm">${nome}</div>
-
-              <span class="tag ${tag}">${tagTxt}</span>
-
-            </div>
-
-
-
-            <div class="mt-2 text-xs opacity-80 font-black uppercase">
-
-              ${[cap, cor, cond].filter(Boolean).join(' • ')}
-
-            </div>
-
-
-
-            <div class="mt-3 text-2xl font-black">R$ ${preco.toLocaleString('pt-BR')}</div>
-
-
-
-            <div class="mt-1 text-xs opacity-80 font-black uppercase">estoque: ${qtd}</div>
-
-
-
-            <div class="mt-3 flex items-center justify-between gap-2">
-
-              <div class="text-xs opacity-80 font-black uppercase">${forn}</div>
-
-              ${wppLink ? `<a class="btn btn-blue" href="${wppLink}" target="_blank" rel="noopener">whatsapp</a>` : `<span class="text-xs opacity-60">sem whatsapp</span>`}
-
-            </div>
-
-          </div>
-
-        `;
-
-      }).join('');
-
-    }
-
-
-
-    // ===== BOOT =====
-
-    (async function boot(){
-
-      try{
-
-        await autenticar();
-
-        await carregarOfertas();
-
-        setInterval(carregarOfertas, 5000);
-
-      }catch(e){
-
-        console.error(e);
-
-        setBadge('bad','erro');
-
-      }
-
-    })();
-
-  </script>
+</script>
 
 </body>
 
