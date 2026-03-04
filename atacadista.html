@@ -72,7 +72,72 @@
         .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: var(--blue-sober); border-radius: 10px; }
         .hidden { display: none !important; }
-    </style></head><body id="appBody">
+
+        /* Drawer */
+        .drawer {
+            position: fixed; top: 0; left: -300px; width: 280px; height: 100vh;
+            background: var(--card); border-right: 1px solid var(--border);
+            transition: left 0.3s ease; z-index: 2000; padding: 2rem 1rem; overflow-y: auto;
+        }
+        .drawer.open { left: 0; }
+        .drawer-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 1999; display: none;
+        }
+        .drawer-overlay.open { display: block; }
+        .drawer-item {
+            padding: 12px 16px; border-radius: 12px; margin-bottom: 4px;
+            cursor: pointer; transition: background 0.2s; font-weight: 500;
+        }
+        .drawer-item:hover { background: var(--input); color: var(--blue-sober); }
+    </style>
+</head><body id="appBody">
+
+    <!-- DRAWER (menu lateral) -->
+    <div id="drawerOverlay" class="drawer-overlay" onclick="fecharDrawer()"></div>
+    <div id="drawer" class="drawer">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold">Menu</h2>
+            <button onclick="fecharDrawer()" class="text-2xl text-gray-400 hover:text-white">&times;</button>
+        </div>
+        
+        <div class="drawer-item" onclick="fecharDrawer(); document.getElementById('dashboard').scrollIntoView({behavior:'smooth'})">
+            <i class="fas fa-chart-pie w-5"></i> Dashboard
+        </div>
+        <div class="drawer-item" onclick="fecharDrawer(); document.getElementById('publicar').scrollIntoView({behavior:'smooth'})">
+            <i class="fas fa-plus-circle w-5"></i> Publicar
+        </div>
+        <div class="drawer-item" onclick="fecharDrawer(); abrirCalcDrawer()">
+            <i class="fas fa-calculator w-5"></i> Calculadora
+        </div>
+        <div class="drawer-item" onclick="fecharDrawer(); abrirSino()">
+            <i class="fas fa-inbox w-5"></i> Propostas
+        </div>
+        <div class="drawer-item text-red-500 mt-4 border border-[#38383a]" onclick="logout()">
+            <i class="fas fa-sign-out-alt w-5"></i> Sair
+        </div>
+
+        <!-- Calculadora no drawer (mobile) -->
+        <div class="apple-card p-3 mt-6">
+            <h3 class="text-sm font-bold mb-2 text-center">Calculadora de iPhone</h3>
+            <div class="mb-2">
+                <input type="number" id="calcUsdMobile" class="apple-input text-xs py-1.5" placeholder="USD" min="0" step="0.01" oninput="calcularImportacaoMobile()" value="">
+            </div>
+            <div class="grid grid-cols-2 gap-1 text-xs mb-2">
+                <div><span class="text-gray-400">Binance</span><div id="calcBinanceMobile" class="font-bold text-yellow-500">R$ --</div></div>
+            </div>
+            <div class="bg-[#2c2c2e] p-2 rounded-lg mb-2">
+                <span class="text-xs text-gray-400">Custo Base</span>
+                <div id="custoFinalMobile" class="text-base font-bold text-blue-500">R$ 0,00</div>
+            </div>
+            <div class="text-xs space-y-0.5">
+                <div class="calc-result-item"><span class="font-medium">ALTO ATACADO</span><span id="resAltoMobile" class="font-bold">R$ 0,00</span></div>
+                <div class="calc-result-item"><span class="font-medium">ATACADO</span><span id="resAtaMobile" class="font-bold">R$ 0,00</span></div>
+                <div class="calc-result-item"><span class="font-medium">ATACAREJO</span><span id="resAtcrjMobile" class="font-bold">R$ 0,00</span></div>
+                <div class="calc-result-item"><span class="font-medium">VAREJO</span><span id="resVarMobile" class="font-bold">R$ 0,00</span></div>
+            </div>
+        </div>
+    </div>
 
     <button id="scrollTopBtn" class="btn-scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
@@ -80,14 +145,13 @@
 
     <nav class="nav-bar">
         <div class="flex items-center gap-4">
+            <button class="text-2xl mr-2 text-gray-400 hover:text-white transition lg:hidden" onclick="abrirDrawer()">☰</button>
             <h1 class="text-2xl font-black italic m-0">iFipe</h1>
             <span class="text-[10px] text-gray-400 font-bold border-l border-[#38383a] pl-3 ml-1 uppercase" id="dashNome">CARREGANDO...</span>
         </div>
 
         <div class="flex gap-2 sm:gap-4 items-center flex-wrap justify-end">
-            <button onclick="abrirCalc()" class="btn-header" style="color: #60a5fa; border-color: #60a5fa; background: rgba(59, 130, 246, 0.1);">
-                <span>Calculadora de iPhone</span>
-            </button>
+            <!-- Calculadora removida da navbar -->
             
             <a href="https://wa.me/556896003049?text=Ol%C3%A1%20venho%20do%20iFipe%20e%20preciso%20de%20suporte" target="_blank" class="btn-header" style="background: rgba(37, 211, 102, 0.1); color: #25d366; border-color: #25d366;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.886-.58-.45-.973-1.006-1.088-1.204-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
@@ -117,12 +181,38 @@
     <main class="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 pt-6 px-4 pb-20">
         
         <div class="lg:col-span-4 space-y-6">
-            <div class="apple-card">
+            <!-- Card de Status (Insígnias) -->
+            <div class="apple-card" id="dashboard">
                 <h3 class="text-[10px] font-black uppercase text-gray-400 mb-3">STATUS NO IFIPE 🏆</h3>
-                <div id="blocoInsignias" class="flex flex-wrap gap-2"></div>
+                <div id="userInsignias" class="flex flex-wrap gap-2"></div>
             </div>
 
-            <div class="apple-card">
+            <!-- Card da Calculadora (Desktop) -->
+            <div class="apple-card hidden lg:block">
+                <h2 class="text-sm font-bold mb-3 text-center">Calculadora de iPhone</h2>
+                <div class="mb-3">
+                    <input type="number" id="calcUsd" class="apple-input text-xs py-2" placeholder="Preço em USD" min="0" step="0.01" oninput="calcularImportacao()" value="">
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs mb-3">
+                    <div>
+                        <span class="text-gray-400">Binance</span>
+                        <div id="calcBinance" class="font-bold text-yellow-500">R$ --</div>
+                    </div>
+                </div>
+                <div class="bg-[#2c2c2e] p-2 rounded-xl mb-3">
+                    <span class="text-xs text-gray-400">Custo Base no Brasil</span>
+                    <div id="custoFinal" class="text-lg font-bold text-blue-500">R$ 0,00</div>
+                </div>
+                <div class="text-xs space-y-1">
+                    <div class="calc-result-item"><span class="font-medium">ALTO ATACADO</span><span id="resAlto" class="font-bold">R$ 0,00</span></div>
+                    <div class="calc-result-item"><span class="font-medium">ATACADO</span><span id="resAta" class="font-bold">R$ 0,00</span></div>
+                    <div class="calc-result-item"><span class="font-medium">ATACAREJO</span><span id="resAtcrj" class="font-bold">R$ 0,00</span></div>
+                    <div class="calc-result-item"><span class="font-medium">VAREJO</span><span id="resVar" class="font-bold">R$ 0,00</span></div>
+                </div>
+            </div>
+
+            <!-- Card de Publicar Oferta -->
+            <div class="apple-card" id="publicar">
                 <h2 class="text-xs font-black text-white mb-4">PUBLICAR OFERTA</h2>
                 <div class="grid grid-cols-2 gap-2 mb-4">
                     <button type="button" id="btN" class="btn-tipo" onclick="selTipo('Novo')">📦 NOVO</button>
@@ -229,30 +319,33 @@
         </div>
     </main>
 
-    <div id="calcModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[2000] px-4">
-        <div class="w-full max-w-[380px] bg-[#1c1c1e] border border-[#38383a] rounded-3xl p-6 shadow-2xl relative">
-            <button onclick="fecharCalc()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
-            <div class="text-center mb-5 mt-2">
-                <h2 class="text-lg font-black text-white">Calculadora de iPhone</h2>
-                <p class="text-[9px] text-gray-400 font-bold uppercase mt-2 tracking-widest leading-relaxed">Coloque o preço em Dólar do iPhone e saiba o preço entregue no Brasil</p>
-            </div>
-            <div class="relative mb-4">
-                <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
-                <input type="number" id="calcUsd" class="w-full bg-[#151516] border border-[#38383a] rounded-xl py-4 pl-12 pr-4 font-mono text-xl font-black text-white outline-none focus:border-[#3b82f6] text-center" placeholder="USD" oninput="calcularImportacao()">
-            </div>
-            <div class="bg-[#0a0a0a] border border-[#2c2c2e] rounded-2xl p-4 text-right mb-4 relative">
-                <span class="absolute top-3 left-4 text-[9px] text-gray-500 font-black uppercase tracking-widest">Custo Final</span>
-                <div id="calcResult" class="font-mono text-3xl font-black text-[#fff] mt-4 tracking-tighter">R$ 0,00</div>
-            </div>
-            <div class="bg-[#2c2c2e] border border-[#38383a] rounded-xl p-4 text-[10px] font-black uppercase tracking-wide space-y-2">
-                <div class="flex justify-between text-white"><span>ALTO ATACADO</span><span id="res_alto">R$ 0,00</span></div>
-                <div class="flex justify-between text-gray-300"><span>ATACADO</span><span id="res_ata">R$ 0,00</span></div>
-                <div class="flex justify-between text-gray-400"><span>ATACAREJO</span><span id="res_atcrj">R$ 0,00</span></div>
-                <div class="flex justify-between text-gray-500"><span>VAREJO</span><span id="res_var">R$ 0,00</span></div>
+    <!-- MODAL DE PROPOSTAS (ANTIGO SINO) -->
+    <div id="propostasModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
+        <div class="apple-card max-w-[600px] w-full border-yellow-500 max-h-[80vh] overflow-y-auto">
+            <button onclick="fecharPropostas()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
+            <h3 class="text-xs font-black uppercase text-yellow-500 mb-4 text-center">📬 PROPOSTAS RECEBIDAS</h3>
+            
+            <div class="mb-4">
+                <div class="flex border-b border-[#38383a] mb-2">
+                    <button id="tabPendentes" class="flex-1 py-2 text-center text-[10px] font-black text-yellow-500 border-b-2 border-yellow-500" onclick="mostrarAba('pendentes')">PENDENTES</button>
+                    <button id="tabRespondidas" class="flex-1 py-2 text-center text-[10px] font-black text-gray-500" onclick="mostrarAba('respondidas')">RESPONDIDAS</button>
+                </div>
+                <div id="listaPendentes" class="space-y-4"></div>
+                <div id="listaRespondidas" class="space-y-4 hidden"></div>
             </div>
         </div>
     </div>
 
+    <!-- Modal de confirmação de resposta (pode ser usado para feedback) -->
+    <div id="respostaModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
+        <div class="apple-card max-w-[400px] w-full border-green-500">
+            <h3 class="text-xs font-black uppercase text-green-500 mb-4 text-center">✅ RESPOSTA ENVIADA</h3>
+            <p class="text-center text-[10px] text-gray-400 mb-4">Sua resposta foi registrada e o cliente será notificado.</p>
+            <button onclick="fecharRespostaModal()" class="btn-lancar">OK</button>
+        </div>
+    </div>
+
+    <!-- Modal de Conta (existente) -->
     <div id="contaModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
         <div class="apple-card max-w-[400px] w-full border-[#38383a]">
             <h3 class="text-xs font-black uppercase text-white mb-4 text-center">⚙️ MINHA CONTA</h3>
@@ -278,16 +371,7 @@
         </div>
     </div>
 
-    <div id="sinoAtaModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
-        <div class="apple-card max-w-[400px] w-full border-yellow-500">
-            <button onclick="fecharSino()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
-            <h3 class="text-xs font-black uppercase text-yellow-500 mb-4 text-center">🔔 NOTIFICAÇÕES</h3>
-            <div class="max-h-60 overflow-y-auto custom-scroll text-center text-[10px] text-gray-500 py-6 font-bold tracking-widest border border-[#38383a] rounded-lg bg-[#0a0a0a]">
-                EM BREVE: PERGUNTAS E RESPOSTAS AQUI
-            </div>
-        </div>
-    </div>
-
+    <!-- Modal Bulk (existente) -->
     <div id="bulkModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
         <div class="apple-card max-w-[500px] w-full border-[#3b82f6]">
             <h3 class="text-xs font-black uppercase text-[#fff] mb-4 text-center">EDIÇÃO EM MASSA</h3>
@@ -331,7 +415,7 @@
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let loja = null, produtos = [], vars = [], ofertas = [], rate = 0;
+        let loja = null, produtos = [], vars = [], ofertas = [], ofertasGlobais = [], rate = 0;
 
         const rndUp = v => Math.ceil(v / 10) * 10;
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
@@ -339,18 +423,76 @@
         
         const getAppleColorHex = c => { let s=(c||'').toUpperCase(); if(s.includes('PRETO')||s.includes('BLACK')||s.includes('MEIA-NOITE')||s.includes('GRAFITE')) return '#191919'; if(s.includes('BRANCO')||s.includes('WHITE')||s.includes('ESTELAR')||s.includes('PRATEADO')) return '#f5f5f7'; if(s.includes('AZUL')||s.includes('SIERRA')) return '#215e7c'; if(s.includes('VERDE')||s.includes('ALPINO')) return '#505c4c'; if(s.includes('NATURAL')) return '#8c8c88'; if(s.includes('DESERTO')||s.includes('DOURADO')) return '#ccb390'; if(s.includes('ROSA')) return '#e6c7c2'; if(s.includes('ROXO')) return '#5c5b57'; return '#808080'; };
 
+        // Mapeamento de insígnias (similar ao buscador)
+        const insigniasAnunciante = [
+            { nome: "👑 CALIFA", emoji: "👑" },
+            { nome: "🛡️ REI", emoji: "🛡️" },
+            { nome: "💰 MAGNATA", emoji: "💰" }
+        ];
+        const ordemInsigniasAnunciante = [
+            "1.000 APARELHOS EM ESTOQUE - KHALIFA DO IPHONE",
+            "700 APARELHOS EM ESTOQUE - SULTÃO DO IPHONE",
+            "500 APARELHOS EM ESTOQUE - SHEIKH DO IPHONE",
+            "200 APARELHOS EM ESTOQUE - EMIR DO IPHONE",
+            "100 APARELHOS EM ESTOQUE - REI DO IPHONE",
+            "50 APARELHOS EM ESTOQUE - MAGNATA IPHONE",
+            "RESPONDER 10 PERGUNTAS - RESPOSTA RAPIDA",
+            "10 RECOMENDACAO - ATACADISTA FAMOSIN 😎",
+            "10 COMPARTILHAMENTOS NO MESMO ANUNCIO - CELEBRIDADE"
+        ];
+        const emojiInsignia = {
+            "1.000 APARELHOS EM ESTOQUE - KHALIFA DO IPHONE": "🥇",
+            "700 APARELHOS EM ESTOQUE - SULTÃO DO IPHONE": "🏆",
+            "500 APARELHOS EM ESTOQUE - SHEIKH DO IPHONE": "🤴🏽",
+            "200 APARELHOS EM ESTOQUE - EMIR DO IPHONE": "🫅🏽",
+            "100 APARELHOS EM ESTOQUE - REI DO IPHONE": "👑",
+            "50 APARELHOS EM ESTOQUE - MAGNATA IPHONE": "💰",
+            "RESPONDER 10 PERGUNTAS - RESPOSTA RAPIDA": "⚡",
+            "10 RECOMENDACAO - ATACADISTA FAMOSIN 😎": "😎",
+            "10 COMPARTILHAMENTOS NO MESMO ANUNCIO - CELEBRIDADE": "💁🏽‍♂️"
+        };
+
+        // Função para renderizar insígnias do lojista (manuais + automáticas)
+        function renderizarInsignias(usuario) {
+            if (!usuario) return '';
+            let html = '';
+            let manuais = [];
+            
+            try {
+                if (typeof usuario.insignia_manual === 'string') {
+                    manuais = JSON.parse(usuario.insignia_manual);
+                } else if (Array.isArray(usuario.insignia_manual)) {
+                    manuais = usuario.insignia_manual;
+                }
+            } catch(e) { 
+                console.error('Erro de parse nas insígnias manuais'); 
+            }
+
+            // Insígnias manuais
+            manuais.forEach(nome => {
+                const emoji = emojiInsignia[nome] || '🔰';
+                html += `<span class="insignia-badge" style="color:#60a5fa; border-color:#3b82f6;">${emoji} ${nome}</span>`;
+            });
+
+            // Insígnias automáticas por volume (já existentes)
+            let t = ofertas.reduce((a, b) => a + (b.quantidade || 0), 0);
+            if (t >= 1000) html += '<span class="insignia-badge califa">👑 CALIFA</span>';
+            else if (t >= 200) html += '<span class="insignia-badge rei">🛡️ REI</span>';
+            else if (t >= 50) html += '<span class="insignia-badge magnata">💰 MAGNATA</span>';
+
+            return html;
+        }
+
         window.onload = async () => {
             const tokenAta = localStorage.getItem('iFipe_Anunciante');
             const tokenMaster = localStorage.getItem('iFipe_Token') === 'admin_bypass' || localStorage.getItem('iFipe_Master_Auth') === 'gov_absoluto';
             const status = localStorage.getItem('iFipe_Status');
 
-            // 1. VERIFICAÇÃO DE MANUTENÇÃO (BLOQUEIO GERAL)
             if (status === 'off' && !tokenMaster) {
                 alert("SISTEMA EM MANUTENÇÃO.");
                 return window.location.replace('index.html');
             }
 
-            // 2. EXCEÇÃO MASTER SUPREMO (ENTRA SEMPRE)
             if (tokenMaster) {
                 loja = { id: 1, nome: "MODO MASTER (VISUALIZAÇÃO)" };
                 document.getElementById('dashNome').innerText = loja.nome;
@@ -376,14 +518,21 @@
                 rate = parseFloat(JSON.parse(e.data).c);
                 document.getElementById('tBin').innerText = `R$ ${rate.toFixed(4)}`;
                 document.getElementById('tOra').innerText = `R$ ${(rate+0.06).toFixed(4)}`;
+                document.getElementById('calcBinance').innerText = `R$ ${rate.toFixed(4)}`;
+                document.getElementById('calcBinanceMobile').innerText = `R$ ${rate.toFixed(4)}`;
+                calcularImportacao();
+                calcularImportacaoMobile();
             };
 
-            const [p, v, r] = await Promise.all([ 
+            const [p, v, r, oGlobal] = await Promise.all([ 
                 _s.from('produtos_mestre').select('*').order('id'), 
                 _s.from('variacoes').select('*'), 
-                _s.from('regioes').select('*') 
+                _s.from('regioes').select('*'),
+                _s.from('ofertas').select('*, fornecedores!inner(*), variacoes(*, produtos_mestre(*))').gt('quantidade', 0)
             ]);
-            produtos = p.data; vars = v.data;
+            produtos = p.data; 
+            vars = v.data;
+            ofertasGlobais = oGlobal.data || [];
             
             const origensPermitidas = [
                 { nome: 'BRASIL ANATEL', flag: '🇧🇷' }, { nome: 'EUA', flag: '🇺🇸' },
@@ -400,8 +549,64 @@
             document.getElementById('f_orig').innerHTML = htmlOrigem;
             
             upTab();
+            // Atualiza insígnias após carregar ofertas
+            document.getElementById('userInsignias').innerHTML = renderizarInsignias(loja);
         };
 
+        // Funções da calculadora (desktop e mobile)
+        function calcularImportacao() {
+            const v = parseFloat(document.getElementById('calcUsd').value);
+            if (isNaN(v) || rate === 0) { 
+                document.getElementById('custoFinal').innerText = "R$ 0,00";
+                document.getElementById('resAlto').innerText = "R$ 0,00";
+                document.getElementById('resAta').innerText = "R$ 0,00";
+                document.getElementById('resAtcrj').innerText = "R$ 0,00";
+                document.getElementById('resVar').innerText = "R$ 0,00";
+                return; 
+            }
+            const rOraculo = rate + 0.06;
+            const cFinal = (v * rOraculo) * 1.06;
+            document.getElementById('custoFinal').innerText = cFinal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('resAlto').innerText = rndUp(cFinal + 200).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('resAta').innerText = rndUp(cFinal + 350).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('resAtcrj').innerText = rndUp(cFinal + 500).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('resVar').innerText = rndUp(cFinal + 1000).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+        }
+
+        function calcularImportacaoMobile() {
+            const v = parseFloat(document.getElementById('calcUsdMobile').value);
+            if (isNaN(v) || rate === 0) { 
+                document.getElementById('custoFinalMobile').innerText = "R$ 0,00";
+                document.getElementById('resAltoMobile').innerText = "R$ 0,00";
+                document.getElementById('resAtaMobile').innerText = "R$ 0,00";
+                document.getElementById('resAtcrjMobile').innerText = "R$ 0,00";
+                document.getElementById('resVarMobile').innerText = "R$ 0,00";
+                return; 
+            }
+            const rOraculo = rate + 0.06;
+            const cFinal = (v * rOraculo) * 1.06;
+            document.getElementById('custoFinalMobile').innerText = cFinal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('resAltoMobile').innerText = rndUp(cFinal + 200).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('resAtaMobile').innerText = rndUp(cFinal + 350).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('resAtcrjMobile').innerText = rndUp(cFinal + 500).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('resVarMobile').innerText = rndUp(cFinal + 1000).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+        }
+
+        // Funções do drawer
+        function abrirDrawer() { 
+            document.getElementById('drawer').classList.add('open'); 
+            document.getElementById('drawerOverlay').classList.add('open'); 
+        }
+        function fecharDrawer() { 
+            document.getElementById('drawer').classList.remove('open'); 
+            document.getElementById('drawerOverlay').classList.remove('open'); 
+        }
+        function abrirCalcDrawer() {
+            fecharDrawer();
+            document.getElementById('calcUsdMobile').focus();
+        }
+
+        // Funções de conta (existentes)
         function abrirConta() {
             document.getElementById('c_nome').value = loja.nome || '';
             document.getElementById('c_whats').value = loja.whatsapp || '';
@@ -422,30 +627,136 @@
             window.location.reload();
         }
 
-        function abrirSino() { document.getElementById('sinoAtaModal').classList.remove('hidden'); }
-        function fecharSino() { document.getElementById('sinoAtaModal').classList.add('hidden'); }
+        // Funções de propostas
+        let propostasPendentes = [];
+        let propostasRespondidas = [];
 
-        function abrirCalc() { document.getElementById('calcModal').classList.remove('hidden'); calcularImportacao(); }
-        function fecharCalc() { document.getElementById('calcModal').classList.add('hidden'); }
-        function calcularImportacao() {
-            const v = parseFloat(document.getElementById('calcUsd').value.replace(',','.'));
-            let rOraculo = rate + 0.06;
-            if(isNaN(v) || rOraculo === 0) { 
-                document.getElementById('calcResult').innerText = "R$ 0,00"; 
-                document.getElementById('res_alto').innerText = "R$ 0,00";
-                document.getElementById('res_ata').innerText = "R$ 0,00";
-                document.getElementById('res_atcrj').innerText = "R$ 0,00";
-                document.getElementById('res_var').innerText = "R$ 0,00";
-                return; 
-            }
-            const cFinal = (v * rOraculo) * 1.06;
-            document.getElementById('calcResult').innerText = cFinal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('res_alto').innerText = rndUp(cFinal + 200).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('res_ata').innerText = rndUp(cFinal + 350).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('res_atcrj').innerText = rndUp(cFinal + 500).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('res_var').innerText = rndUp(cFinal + 1000).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+        async function abrirSino() {
+            await carregarPropostas();
+            document.getElementById('propostasModal').classList.remove('hidden');
+            mostrarAba('pendentes');
+        }
+        function fecharPropostas() {
+            document.getElementById('propostasModal').classList.add('hidden');
         }
 
+        async function carregarPropostas() {
+            if (!loja || !loja.id) return;
+            const { data, error } = await _s
+                .from('comentarios')
+                .select('*, ofertas!inner(variacao_id, variacoes!inner(produtos_mestre!inner(nome), capacidade, cor)), clientes_buscador(nome)')
+                .eq('fornecedor_id', loja.id)
+                .order('criado_em', { ascending: false });
+            
+            if (error) {
+                console.error('Erro ao carregar propostas:', error);
+                return;
+            }
+
+            propostasPendentes = data.filter(p => !p.resposta);
+            propostasRespondidas = data.filter(p => p.resposta);
+
+            // Atualizar badge do sino
+            const badge = document.getElementById('badgeSino');
+            if (propostasPendentes.length > 0) {
+                badge.innerText = propostasPendentes.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            renderizarPropostas();
+        }
+
+        function renderizarPropostas() {
+            const listaPend = document.getElementById('listaPendentes');
+            const listaResp = document.getElementById('listaRespondidas');
+
+            listaPend.innerHTML = propostasPendentes.map(p => {
+                const produto = p.ofertas?.variacoes?.produtos_mestre?.nome || 'Produto';
+                const capacidade = p.ofertas?.variacoes?.capacidade || '';
+                const cor = p.ofertas?.variacoes?.cor || '';
+                return `
+                <div class="border border-[#38383a] rounded-lg p-3 bg-[#1c1c1e]">
+                    <div class="flex justify-between text-[9px] text-gray-400 mb-1">
+                        <span>${p.clientes_buscador?.nome || 'Cliente'}</span>
+                        <span>${new Date(p.criado_em).toLocaleString()}</span>
+                    </div>
+                    <p class="text-[10px] font-bold mb-1">${produto} ${capacidade} ${cor}</p>
+                    <p class="text-[10px] mb-2">${p.pergunta}</p>
+                    <textarea id="resp_${p.id}" class="apple-input text-[9px] h-16 mb-2" placeholder="Digite sua resposta..."></textarea>
+                    <button onclick="responderProposta(${p.id})" class="btn-lancar text-[9px] py-2">RESPONDER</button>
+                </div>
+            `}).join('');
+
+            listaResp.innerHTML = propostasRespondidas.map(p => {
+                const produto = p.ofertas?.variacoes?.produtos_mestre?.nome || 'Produto';
+                const capacidade = p.ofertas?.variacoes?.capacidade || '';
+                const cor = p.ofertas?.variacoes?.cor || '';
+                return `
+                <div class="border border-[#38383a] rounded-lg p-3 bg-[#1c1c1e]">
+                    <div class="flex justify-between text-[9px] text-gray-400 mb-1">
+                        <span>${p.clientes_buscador?.nome || 'Cliente'}</span>
+                        <span>${new Date(p.criado_em).toLocaleString()}</span>
+                    </div>
+                    <p class="text-[10px] font-bold mb-1">${produto} ${capacidade} ${cor}</p>
+                    <p class="text-[10px] mb-1">📨 ${p.pergunta}</p>
+                    <p class="text-[10px] text-green-400">✅ ${p.resposta}</p>
+                </div>
+            `}).join('');
+        }
+
+        function mostrarAba(aba) {
+            if (aba === 'pendentes') {
+                document.getElementById('tabPendentes').classList.add('border-yellow-500', 'text-yellow-500');
+                document.getElementById('tabPendentes').classList.remove('text-gray-500');
+                document.getElementById('tabRespondidas').classList.remove('border-yellow-500', 'text-yellow-500');
+                document.getElementById('tabRespondidas').classList.add('text-gray-500');
+                document.getElementById('listaPendentes').classList.remove('hidden');
+                document.getElementById('listaRespondidas').classList.add('hidden');
+            } else {
+                document.getElementById('tabRespondidas').classList.add('border-yellow-500', 'text-yellow-500');
+                document.getElementById('tabRespondidas').classList.remove('text-gray-500');
+                document.getElementById('tabPendentes').classList.remove('border-yellow-500', 'text-yellow-500');
+                document.getElementById('tabPendentes').classList.add('text-gray-500');
+                document.getElementById('listaRespondidas').classList.remove('hidden');
+                document.getElementById('listaPendentes').classList.add('hidden');
+            }
+        }
+
+        async function responderProposta(comentarioId) {
+            const resposta = document.getElementById(`resp_${comentarioId}`).value.trim();
+            if (!resposta) {
+                alert('Digite uma resposta.');
+                return;
+            }
+            const { error } = await _s
+                .from('comentarios')
+                .update({ 
+                    resposta: resposta, 
+                    respondido_em: new Date(),
+                    lida_cliente: false 
+                })
+                .eq('id', comentarioId);
+            
+            if (error) {
+                alert('Erro ao responder: ' + error.message);
+            } else {
+                // Fecha o modal de propostas e mostra confirmação
+                fecharPropostas();
+                document.getElementById('respostaModal').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('respostaModal').classList.add('hidden');
+                }, 2000);
+                await carregarPropostas(); // recarrega para atualizar badge
+            }
+        }
+
+        function fecharRespostaModal() {
+            document.getElementById('respostaModal').classList.add('hidden');
+        }
+
+        // Funções de publicação (existentes)
         function selTipo(t) {
             document.getElementById('f_tipo').value = t;
             document.getElementById('btN').classList.toggle('active', t==='Novo'); 
@@ -502,12 +813,45 @@
             window.location.reload();
         }
 
+        // Função para encontrar concorrente mais barato
+        function encontrarConcorrente(oferta) {
+            if (!oferta.variacoes) return null;
+            const produtoId = oferta.variacoes.produto_id;
+            const capacidade = oferta.variacoes.capacidade;
+            const cor = oferta.variacoes.cor;
+            const condicao = oferta.condicao;
+            const moeda = oferta.moeda;
+
+            const concorrentes = ofertasGlobais.filter(o => 
+                o.id !== oferta.id && // não é a própria oferta
+                o.quantidade > 0 &&
+                o.variacoes?.produto_id === produtoId &&
+                o.variacoes?.capacidade === capacidade &&
+                o.variacoes?.cor === cor &&
+                o.condicao === condicao &&
+                o.moeda === moeda
+            );
+
+            if (concorrentes.length === 0) return null;
+
+            const menorPreco = Math.min(...concorrentes.map(o => o.preco));
+            if (menorPreco < oferta.preco) {
+                const concorrente = concorrentes.find(o => o.preco === menorPreco);
+                return {
+                    preco: menorPreco,
+                    diferenca: oferta.preco - menorPreco,
+                    nome: concorrente.fornecedores?.nome || 'Concorrente'
+                };
+            }
+            return null;
+        }
+
         async function upTab() {
             if (!loja || !loja.id) return; 
             
             let filtro = document.getElementById('filtroTipoLista') ? document.getElementById('filtroTipoLista').value : '';
             
-            let query = _s.from('ofertas').select('*, variacoes(capacidade, cor, produtos_mestre(nome)), regioes(nome, bandeira)').eq('fornecedor_id', loja.id).order('criado_em', {ascending:false});
+            let query = _s.from('ofertas').select('*, variacoes(capacidade, cor, produto_id, produtos_mestre(nome)), regioes(nome, bandeira), fornecedores!inner(nome)').eq('fornecedor_id', loja.id).order('criado_em', {ascending:false});
             
             const { data } = await query;
             ofertas = data || [];
@@ -524,6 +868,13 @@
                 
                 let precoDisplay = o.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
+                // Verificar concorrência
+                const concorrente = encontrarConcorrente(o);
+                let alertaConcorrencia = '';
+                if (concorrente) {
+                    alertaConcorrencia = `<div class="mt-2 ml-5 text-[8px] font-black text-red-500 bg-red-900/30 p-1 rounded border border-red-500">🚨 VOCÊ ESTÁ PERDENDO A VENDA! ${concorrente.nome} está R$ ${concorrente.diferenca.toFixed(2)} mais barato!</div>`;
+                }
+
                 return `
                 <tr class="hover:bg-white/5 transition border-b border-[#2c2c2e]">
                     <td><input type="checkbox" class="chk" value="${o.id}" onclick="upBulkCount()"></td>
@@ -535,6 +886,7 @@
                         <p class="text-[9px] text-gray-400 mb-2 font-bold ml-5">${o.variacoes.cor}</p>
                         <div class="mb-1 ml-5">${tagCond}</div>
                         <div class="ml-5">${m_orig} ${m_bat}</div>
+                        ${alertaConcorrencia}
                         <div class="mt-2 ml-5"><button onclick="del(${o.id})" class="text-red-500 font-bold text-[9px] hover:underline">Apagar Lançamento</button></div>
                     </td>
                     <td class="text-center">
@@ -547,13 +899,11 @@
                 </tr>`;
             }).join('');
             
-            let t = ofertas.reduce((a, b) => a + (b.quantidade || 0), 0), tg = [];
-            if(t>=1000) tg.push('<span class="insignia-badge califa">👑 CALIFA</span>');
-            else if(t>=200) tg.push('<span class="insignia-badge rei">🛡️ REI</span>');
-            else if(t>=50) tg.push('<span class="insignia-badge magnata">💰 MAGNATA</span>');
-            document.getElementById('blocoInsignias').innerHTML = tg.join('');
+            // Atualiza insígnias
+            document.getElementById('userInsignias').innerHTML = renderizarInsignias(loja);
         }
 
+        // Funções de edição e bulk (existentes)
         async function edit(id, c, v) { 
             let val;
             if (c === 'preco') {
@@ -696,5 +1046,11 @@
         }
 
         window.addEventListener('scroll', () => { const b = document.getElementById('scrollTopBtn'); if(window.scrollY > 300) b.classList.add('show'); else b.classList.remove('show'); });
-        function logout() { localStorage.removeItem('iFipe_Anunciante'); localStorage.removeItem('iFipe_Token'); window.location.replace('index.html'); }
-    </script></body></html>
+        function logout() { 
+            localStorage.removeItem('iFipe_Anunciante'); 
+            localStorage.removeItem('iFipe_Token');
+            localStorage.removeItem('iFipe_Master_Auth');
+            window.location.replace('index.html'); 
+        }
+    </script>
+</body></html>
