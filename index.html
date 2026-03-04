@@ -290,7 +290,6 @@
         function abrirModalCadastro(tipo) {
             if (tipo === 'buscador') {
                 document.getElementById('modalCadastroBuscador').classList.remove('hidden');
-                // Foco no primeiro campo
                 setTimeout(() => document.getElementById('buscadorNome').focus(), 100);
             } else {
                 document.getElementById('modalCadastroAnunciante').classList.remove('hidden');
@@ -364,6 +363,7 @@
             }
         }
 
+        // Cadastro de Buscador - agora com login automático
         async function cadastrarBuscador(e) {
             e.preventDefault();
 
@@ -385,27 +385,39 @@
                 return;
             }
 
-            const { error } = await _s.from('clientes_buscador').insert([{
-                nome: nome,
-                cpf: cpf,
-                whatsapp: whatsapp,
-                pais: pais,
-                estado: estado,
-                cidade: cidade,
-                email: email,
-                senha: senha,
-                ativo: true,
-                logins_count: 0
-            }]);
+            // Inserir no Supabase e retornar o ID criado
+            const { data, error } = await _s
+                .from('clientes_buscador')
+                .insert([{
+                    nome: nome,
+                    cpf: cpf,
+                    whatsapp: whatsapp,
+                    pais: pais,
+                    estado: estado,
+                    cidade: cidade,
+                    email: email,
+                    senha: senha,
+                    ativo: true,
+                    logins_count: 0
+                }])
+                .select(); // importante para obter o ID retornado
 
             if (error) {
                 alert('Erro ao cadastrar: ' + error.message);
+                return;
+            }
+
+            // Login automático: salva token e redireciona
+            if (data && data[0] && data[0].id) {
+                localStorage.setItem('iFipe_Token', data[0].id);
+                window.location.replace('buscar.html');
             } else {
-                alert('Cadastro realizado com sucesso! Faça login.');
+                alert('Cadastro realizado, mas houve um problema no login automático. Faça login manualmente.');
                 fecharModalCadastro('buscador');
             }
         }
 
+        // Cadastro de Anunciante - permanece inalterado (aguarda aprovação)
         async function cadastrarAnunciante(e) {
             e.preventDefault();
 
