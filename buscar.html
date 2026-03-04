@@ -416,7 +416,7 @@
             text-transform: uppercase;
         }
         .uppercase-input::placeholder {
-            text-transform: none; /* placeholders em minúsculas */
+            text-transform: none;
         }
     </style>
 </head>
@@ -1222,7 +1222,7 @@
                         <button class="action-button hover:text-blue-500" onclick="abrirPerguntas(${o.id}, '${p.nome}', ${o.fornecedor_id})">
                             <i class="far fa-question-circle"></i> <span>Enviar Proposta</span>
                         </button>
-                        <button class="action-button hover:text-blue-500" onclick="compartilhar('${p.nome}', '${v?.capacidade || ''}', '${v?.cor || ''}', ${preco}, '${simbolo}', ${o.quantidade})">
+                        <button class="action-button hover:text-blue-500" onclick="compartilhar('${p.nome}', '${v?.capacidade || ''}', '${v?.cor || ''}', ${preco}, '${simbolo}', ${o.quantidade}, '${f.whatsapp?.replace(/\D/g, '') || ''}')">
                             <i class="far fa-share-square"></i> <span>Compartilhar</span>
                         </button>
                     </div>
@@ -1306,18 +1306,25 @@
             }
         }
 
-        function compartilhar(nome, capacidade, cor, preco, simbolo, qtd) {
+        // Função compartilhar corrigida com 7 parâmetros
+        function compartilhar(nome, capacidade, cor, preco, simbolo, qtd, whatsapp) {
             const saudacao = (() => {
                 const h = new Date().getHours();
                 if (h < 12) return 'Bom dia';
                 if (h < 18) return 'Boa tarde';
                 return 'Boa noite';
             })();
-            const texto = `${saudacao}! Se liga nessa oferta especial 🔥 que encontrei:\n\n` +
+            
+            let texto = `${saudacao}! Se liga nessa oferta especial 🔥 que encontrei:\n\n` +
                 `${nome} ${capacidade} ${cor}\n` +
                 `Preço: ${simbolo} ${preco.toFixed(2)}\n` +
-                `Estoque disponível: ${qtd} UN\n\n` +
-                `Achei no www.iFipe.com.br | A Tabela Fipe do iPhone 📲`;
+                `Estoque disponível: ${qtd} UN\n\n`;
+            
+            if (whatsapp) {
+                texto += `Falar com Atacadista: https://wa.me/${whatsapp}\n\n`;
+            }
+            
+            texto += `Achei no www.iFipe.com.br | A Tabela Fipe do iPhone 📲`;
             
             if (navigator.share) {
                 navigator.share({ title: 'Oferta iFipe', text: texto });
