@@ -506,7 +506,7 @@
                 <i class="fas fa-chart-line mr-1"></i> Histórico
             </button>
             
-            <div class="notification-icon ml-2" onclick="abrirRespostasRecebidas()">
+            <div class="notification-icon ml-2" onclick="abrirNotificacoes()">
                 <i class="far fa-bell"></i>
                 <span id="notificacaoBadge" class="notification-badge hidden">0</span>
             </div>
@@ -706,31 +706,19 @@
         </div>
     </div>
 
-    <!-- Modal de Enviar Proposta (antes "Perguntas Diretas") -->
     <div id="perguntasModal" class="modal hidden">
         <div class="modal-content">
             <span class="close-modal" onclick="fecharPerguntas()">&times;</span>
-            <h2 class="text-2xl font-bold mb-4" id="perguntaTitulo">Enviar Proposta</h2>
+            <h2 class="text-2xl font-bold mb-4" id="perguntaTitulo">Perguntas Diretas</h2>
             <div id="listaPerguntas" class="space-y-3 max-h-60 overflow-y-auto mb-4"></div>
             <form onsubmit="enviarPergunta(event)">
                 <input type="hidden" id="perguntaOfertaId">
-                <input type="hidden" id="perguntaFornecedorId">
-                <textarea id="perguntaTexto" class="apple-input h-20" placeholder="Escreva sua mensagem ao lojista..." required></textarea>
+                <textarea id="perguntaTexto" class="apple-input h-20" placeholder="Escreva sua dúvida ao lojista..." required></textarea>
                 <div class="flex gap-3 mt-3">
-                    <button type="submit" class="btn-apple flex-1">Enviar Proposta</button>
+                    <button type="submit" class="btn-apple flex-1">Enviar Pergunta</button>
                     <button type="button" onclick="fecharPerguntas()" class="btn-apple-secondary flex-1">Fechar</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Modal de Respostas Recebidas (notificações) -->
-    <div id="respostasModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal" onclick="fecharRespostas()">&times;</span>
-            <h2 class="text-2xl font-bold mb-4">Respostas dos Lojistas</h2>
-            <div id="listaRespostas" class="space-y-3 max-h-96 overflow-y-auto"></div>
-            <button onclick="fecharRespostas()" class="btn-apple w-full mt-6">Fechar</button>
         </div>
     </div>
 
@@ -873,9 +861,6 @@
 
             await carregarDados();
             initTicker();
-            
-            // Checar notificações de respostas não lidas
-            await checarNotificacoes();
         };
 
         function initTicker() {
@@ -1182,7 +1167,7 @@
                     </div>
                     <div class="flex justify-between items-center py-2 border-t border-[#38383a] mb-2 mt-1">
                         ${btnRecomendar}
-                        <button class="action-button hover:text-blue-500" onclick="abrirPerguntas(${o.id}, '${p.nome}', ${o.fornecedor_id})">
+                        <button class="action-button hover:text-blue-500" onclick="abrirPerguntas(${o.id}, '${p.nome}')">
                             <i class="far fa-question-circle"></i> <span>Perguntar</span>
                         </button>
                         <button class="action-button hover:text-blue-500" onclick="compartilhar('${p.nome}', '${v?.capacidade || ''}', '${v?.cor || ''}', ${preco}, '${simbolo}', ${o.quantidade})">
@@ -1268,29 +1253,18 @@
             }
         }
 
-        // ========== SISTEMA DE PERGUNTAS E RESPOSTAS ==========
-        async function abrirPerguntas(ofertaId, titulo, fornecedorId) {
+        async function abrirPerguntas(ofertaId, titulo) {
             document.getElementById('perguntaOfertaId').value = ofertaId;
-            document.getElementById('perguntaFornecedorId').value = fornecedorId;
-            document.getElementById('perguntaTitulo').innerText = `Enviar Proposta - ${titulo}`;
+            document.getElementById('perguntaTitulo').innerText = `Perguntas: ${titulo}`;
             await carregarPerguntas(ofertaId);
             document.getElementById('perguntasModal').classList.remove('hidden');
         }
-
-        function fecharPerguntas() { 
-            document.getElementById('perguntasModal').classList.add('hidden'); 
-        }
-
+        function fecharPerguntas() { document.getElementById('perguntasModal').classList.add('hidden'); }
         async function carregarPerguntas(ofertaId) {
-            const { data } = await _s
-                .from('comentarios')
-                .select('*')
-                .eq('oferta_id', ofertaId)
-                .order('criado_em', { ascending: false });
-            
+            const { data } = await _s.from('comentarios').select('*').eq('oferta_id', ofertaId).order('criado_em', { ascending: false });
             const lista = document.getElementById('listaPerguntas');
             if (!data || data.length === 0) {
-                lista.innerHTML = '<p class="text-gray-400 text-center">Nenhuma conversa ainda. Seja o primeiro a enviar uma proposta!</p>';
+                lista.innerHTML = '<p class="text-gray-400 text-center">Nenhuma dúvida ainda.</p>';
                 return;
             }
             lista.innerHTML = data.map(p => `
@@ -1299,105 +1273,24 @@
                         <span class="font-bold text-xs">${p.autor_nome}</span>
                         <span class="text-[8px] text-gray-500">${new Date(p.criado_em).toLocaleString()}</span>
                     </div>
-                    <p class="text-sm mt-1">${p.pergunta}</p>
-                    ${p.resposta ? `<p class="text-xs text-green-400 mt-1 flex items-center gap-1"><i class="fas fa-reply"></i> Lojista: ${p.resposta}</p>` : ''}
+                    <p class="text-sm mt-1">${p.texto}</p>
+                    ${p.resposta ? `<p class="text-xs text-green-400 mt-1">📢 Lojista: ${p.resposta}</p>` : ''}
                 </div>
             `).join('');
         }
-
         async function enviarPergunta(e) {
             e.preventDefault();
-            if (!currentUser || currentUser.id === 0) {
-                alert('Você precisa estar logado para enviar uma proposta.');
-                return;
-            }
             const ofertaId = document.getElementById('perguntaOfertaId').value;
-            const fornecedorId = document.getElementById('perguntaFornecedorId').value;
-            const pergunta = document.getElementById('perguntaTexto').value.trim();
-            if (!pergunta) return;
-
-            const { error } = await _s.from('comentarios').insert({
+            const texto = document.getElementById('perguntaTexto').value.trim();
+            if (!texto || !currentUser) return alert('Faça login para perguntar.');
+            await _s.from('comentarios').insert({
                 oferta_id: ofertaId,
-                cliente_id: currentUser.id,
-                fornecedor_id: fornecedorId,
                 autor_nome: currentUser.nome || 'Buscador',
-                pergunta: pergunta,
-                lida_cliente: false
+                autor_id: currentUser.id,
+                texto: texto
             });
-
-            if (error) {
-                alert('Erro ao enviar proposta: ' + error.message);
-                return;
-            }
-
             document.getElementById('perguntaTexto').value = '';
-            alert('Proposta enviada!');
             await carregarPerguntas(ofertaId);
-        }
-
-        // ========== NOTIFICAÇÕES DE RESPOSTAS ==========
-        async function checarNotificacoes() {
-            if (!currentUser || currentUser.id === 0) return;
-            const { data, error } = await _s
-                .from('comentarios')
-                .select('id, pergunta, resposta, autor_nome, criado_em, oferta_id')
-                .eq('cliente_id', currentUser.id)
-                .not('resposta', 'is', null)
-                .eq('lida_cliente', false);
-
-            if (error) {
-                console.error('Erro ao checar notificações:', error);
-                return;
-            }
-            const count = data?.length || 0;
-            const badge = document.getElementById('notificacaoBadge');
-            if (count > 0) {
-                badge.innerText = count;
-                badge.classList.remove('hidden');
-                // Armazenar respostas não lidas para exibir ao clicar
-                window.respostasNaoLidas = data;
-            } else {
-                badge.classList.add('hidden');
-                window.respostasNaoLidas = [];
-            }
-        }
-
-        async function abrirRespostasRecebidas() {
-            if (!window.respostasNaoLidas || window.respostasNaoLidas.length === 0) {
-                alert('Nenhuma resposta nova.');
-                return;
-            }
-
-            // Marcar todas como lidas no banco
-            const ids = window.respostasNaoLidas.map(r => r.id);
-            await _s.from('comentarios')
-                .update({ lida_cliente: true })
-                .in('id', ids)
-                .eq('cliente_id', currentUser.id);
-
-            // Esconder badge
-            document.getElementById('notificacaoBadge').classList.add('hidden');
-
-            // Exibir modal com as respostas
-            const lista = document.getElementById('listaRespostas');
-            lista.innerHTML = window.respostasNaoLidas.map(r => `
-                <div class="border-b border-[#38383a] pb-2 mb-2">
-                    <div class="flex justify-between items-start">
-                        <span class="font-bold text-xs">${r.autor_nome}</span>
-                        <span class="text-[8px] text-gray-500">${new Date(r.criado_em).toLocaleString()}</span>
-                    </div>
-                    <p class="text-sm mt-1">${r.pergunta}</p>
-                    <p class="text-xs text-green-400 mt-1 flex items-center gap-1"><i class="fas fa-reply"></i> Lojista: ${r.resposta}</p>
-                </div>
-            `).join('');
-            document.getElementById('respostasModal').classList.remove('hidden');
-
-            // Limpar cache
-            window.respostasNaoLidas = [];
-        }
-
-        function fecharRespostas() {
-            document.getElementById('respostasModal').classList.add('hidden');
         }
 
         // FUNÇÕES DA MINHA CONTA
@@ -1646,6 +1539,10 @@
         function abrirDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('open'); }
         function fecharDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); }
         function logout() { localStorage.clear(); window.location.replace('index.html'); }
+        function abrirNotificacoes() { 
+            // Redireciona para Meus Alertas (ou abre o modal)
+            abrirMeusAlertas();
+        }
         function resetSenha() { alert("Reset de senha indisponível no momento."); }
         function abrirFavoritos() { alert("Favoritos em breve."); }
 
@@ -1666,56 +1563,16 @@
         window.abrirConta = abrirConta;
         window.fecharConta = fecharConta;
         window.salvarConta = salvarConta;
-        window.abrirNotificacoes = abrirRespostasRecebidas; // redireciona para o novo sistema
+        window.abrirNotificacoes = abrirNotificacoes;
         window.resetSenha = resetSenha;
         window.abrirFavoritos = abrirFavoritos;
         window.abrirMeusAlertas = abrirMeusAlertas;
-        window.fecharMeusAlertas = fecharMecharMeusAlertas;
-usAlertas;
-        window        window.abrir.abrirLegendaLegendaInsignInsignias =ias = abrir abrirLegendaLegendaInsignInsignias;
-ias;
-        window        window.fecharLegendaInsignias.fecharLegendaInsignias = fecharLeg = feendaInscharLegendaInsigniasignias;
-        window.abrirCriarAlerta = ab;
-        window.abrirCriarAlerta = abrirCrirCriarriarAlertaAlerta;
-       ;
-        window.f window.fecharecharCriCriarAlarAlerta =erta = fechar fecharCriCriarAlerta;
-        window.criarAlarAlerta;
-        window.criarAlerta = criarAlerta = criarAlerta;
-erta;
-        window        window.che.checarNotcarNotificacoificacoes =es = checar checarNotificNotificacoesacoes;
-       ;
-        window.ab window.abrirResrirRespostaspostasRecebRecebidas =idas = abrir abrirRespostRespostasReceasRecebidasbidas;
-       ;
-        window.f window.fecharecharRespostRespostas =as = fechar fecharRespostRespostas;
-as;
+        window.fecharMeusAlertas = fecharMeusAlertas;
+        window.abrirLegendaInsignias = abrirLegendaInsignias;
+        window.fecharLegendaInsignias = fecharLegendaInsignias;
+        window.abrirCriarAlerta = abrirCriarAlerta;
+        window.fecharCriarAlerta = fecharCriarAlerta;
+        window.criarAlerta = criarAlerta;
     </script>
 </body>
 </html>
-    </script>
-</body>
-</```
-
-**Resumohtml>
- das alter```
-
-**Resumoações:**
-
- das alter1. **ações:**
-
-1Modal de. ** perguntas** renModal de perguntasomeado** ren para "Enviomeado para "ar ProEnviposta"ar Proposta" e título din e títuloâmico din inclui o nomeâmico inclui do produto o nome.
-2. ** do produto.
-2Função. ** `abrirPFunção `abrirPerguntaserguntas`**`** agora rece agora recebe também `forbe também `fornecednecedorIdorId` e` e o o armaz armazena emena em um input um input hidden.
- hidden.
-3.3. **Fun **Função `ção `envienviarParPerguntaergunta`** insere`** insere na tabel na tabela `a `comentcomentarios`arios` os os campos: campos: `ofer `oferta_idta_id`, ``, `cliente_id`, `fornecedor_idcliente_id`, `fornecedor`, `_id`, `autor_nome`,autor_n `perome`, `pergunta`, `lgunta`, `lida_clida_cliente`.
-iente`.
-4. **Not4. **Notificaçõesificações:**
-   - `checarNot:**
-   - `checarNotificacoes()` consultaificacoes()` consulta respostas não l respostas nãoidas e atualiza o badge.
-   lidas e atualiza o badge.
-   - Ao clicar no sino - Ao clicar no sino, `, `abrirRespostabrirRespostasReceasRecebidasbidas()` exibe as()` exibe as respostas respostas em um em um novo modal novo modal e marca e marca como l como lidas (`idas (`lidalida_cliente_cliente = true = true`).
-`).
-5.5. **Modal **Modal de resp de respostas**ostas** (`res (`respostaspostasModal`)Modal`) adicion adicionado aoado ao HTML.
-
- HTML.
-
-Nenhuma outra funcionalidade foi alterNenhuma outra funcionalidadeada. foi alter Oada. O sistema agora está pronto para integração com sistema agora está pronto para integração com o pain o painel doel do atac atacadistaadista..
