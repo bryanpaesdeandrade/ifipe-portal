@@ -141,9 +141,13 @@
             <div class="apple-card">
                 <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">GESTÃO DE PATENTES FIPE 1.0</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Card de Atribuição Manual (existente) -->
                     <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
                         <h3 class="text-[10px] font-black text-purple-400 mb-4">ATRIBUIÇÃO POR NOME</h3>
-                        <select id="seloTableSel" class="apple-input mb-3" onchange="loadUsersForSelo()"><option value="fornecedores">🏢 ATACADISTAS</option><option value="clientes_buscador">👥 BUSCADORES</option></select>
+                        <select id="seloTableSel" class="apple-input mb-3" onchange="loadUsersForSelo()">
+                            <option value="fornecedores">🏢 ATACADISTAS</option>
+                            <option value="clientes_buscador">👥 BUSCADORES</option>
+                        </select>
                         <select id="seloUser" class="apple-input mb-3"></select>
                         
                         <select id="seloNovaInsigniaAta" class="apple-input mb-3 border-purple-500">
@@ -177,6 +181,17 @@
                         </select>
 
                         <div class="flex gap-2"><button onclick="addInsignia()" class="btn-master w-1/2 !bg-purple-600">+ ATRIBUIR</button><button onclick="clearInsignias()" class="btn-master w-1/2 bg-zinc-800">LIMPAR</button></div>
+                    </div>
+
+                    <!-- Card de Varredura Global (novo) -->
+                    <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+                        <h3 class="text-[10px] font-black text-green-400 mb-4">VARREDURA GLOBAL (ESTOQUE E LOGINS)</h3>
+                        <p class="text-[9px] text-gray-400 mb-4 leading-relaxed">
+                            Atualiza automaticamente as insígnias de todos os usuários com base no estoque total (anunciantes) e número de logins (buscadores). Os selos manuais não são removidos.
+                        </p>
+                        <button onclick="runVarreduraSelos()" class="btn-master w-full bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-lg text-[10px] transition">
+                            🔄 EXECUTAR VARREDURA GERAL
+                        </button>
                     </div>
                 </div>
             </div>
@@ -764,6 +779,119 @@
             if(error) { alert("ERRO AO ATRIBUIR: " + error.message); } else { s.value = ''; loadAll(); }
         }
         async function clearInsignias() { const t = document.getElementById('seloTableSel').value; const id = document.getElementById('seloUser').value; if(confirm("Limpar?")) { await _s.from(t).update({insignia_manual: []}).eq('id', id); loadAll(); } }
+
+        // ========== NOVA FUNÇÃO DE VARREDURA GLOBAL ==========
+        async function runVarreduraSelos() {
+            alert('Iniciando varredura global de insígnias...');
+
+            // Buscar dados atualizados
+            const [fornecedores, buscadores, ofertas] = await Promise.all([
+                _s.from('fornecedores').select('*'),
+                _s.from('clientes_buscador').select('*'),
+                _s.from('ofertas').select('fornecedor_id, quantidade')
+            ]);
+
+            const fData = fornecedores.data || [];
+            const bData = buscadores.data || [];
+            const oData = ofertas.data || [];
+
+            // Mapear estoque por fornecedor
+            const estoqueMap = {};
+            oData.forEach(o => {
+                const fid = o.fornecedor_id;
+                if (!estoqueMap[fid]) estoqueMap[fid] = 0;
+                estoqueMap[fid] += (o.quantidade || 0);
+            });
+
+            // Listas de selos para remoção
+            const selosEstoque = [
+                "1.000 APARELHOS EM ESTOQUE - KHALIFA DO IPHONE",
+                "700 APARELHOS EM ESTOQUE - SULTÃO DO IPHONE",
+                "500 APARELHOS EM ESTOQUE - SHEIKH DO IPHONE",
+                "200 APARELHOS EM ESTOQUE - EMIR DO IPHONE",
+                "100 APARELHOS EM ESTOQUE - REI DO IPHONE",
+                "50 APARELHOS EM ESTOQUE - MAGNATA IPHONE"
+            ];
+
+            const selosLogin = [
+                "500 LOGINS: PREÇO DE MIAMI NO BRASIL 🤡",
+                "400 LOGINS: PASSANDO FOME",
+                "350 LOGINS: DURO IGUAL UM COCO",
+                "300 LOGINS: CÃINHA",
+                "250 LOGINS: LISEIRA",
+                "200 LOGINS: MUQUIRANA",
+                "150 LOGINS: SÓ DÁ PREJUÍZO",
+                "100 LOGINS: OPORTUNISTA",
+                "50 LOGINS: SÓ COMPRA MATANDO",
+                "30 LOGINS: TUBARÃO",
+                "20 LOGINS: ÁGUIA",
+                "10 LOGINS: PEGOU A SENHA",
+                "1 LOGIN: LOJISTA EXPERTO"
+            ];
+
+            // Função auxiliar para parse de insignia_manual
+            const parseInsignias = (campo) => {
+                if (!campo) return [];
+                if (Array.isArray(campo)) return campo;
+                try {
+                    return JSON.parse(campo) || [];
+                } catch {
+                    return [];
+                }
+            };
+
+            // Processar fornecedores
+            for (const f of fData) {
+                const total = estoqueMap[f.id] || 0;
+                let novoSelo = null;
+                if (total >= 1000) novoSelo = selosEstoque[0];
+                else if (total >= 700) novoSelo = selosEstoque[1];
+                else if (total >= 500) novoSelo = selosEstoque[2];
+                else if (total >= 200) novoSelo = selosEstoque[3];
+                else if (total >= 100) novoSelo = selosEstoque[4];
+                else if (total >= 50) novoSelo = selosEstoque[5];
+
+                const atuais = parseInsignias(f.insignia_manual);
+                // Remove selos de estoque antigos
+                const novos = atuais.filter(ins => !selosEstoque.includes(ins));
+                if (novoSelo) novos.push(novoSelo);
+
+                // Atualiza apenas se houver mudança
+                if (JSON.stringify(atuais) !== JSON.stringify(novos)) {
+                    await _s.from('fornecedores').update({ insignia_manual: novos }).eq('id', f.id);
+                }
+            }
+
+            // Processar buscadores
+            for (const b of bData) {
+                const logins = b.logins_count || 0;
+                let novoSelo = null;
+                if (logins >= 500) novoSelo = selosLogin[0];
+                else if (logins >= 400) novoSelo = selosLogin[1];
+                else if (logins >= 350) novoSelo = selosLogin[2];
+                else if (logins >= 300) novoSelo = selosLogin[3];
+                else if (logins >= 250) novoSelo = selosLogin[4];
+                else if (logins >= 200) novoSelo = selosLogin[5];
+                else if (logins >= 150) novoSelo = selosLogin[6];
+                else if (logins >= 100) novoSelo = selosLogin[7];
+                else if (logins >= 50) novoSelo = selosLogin[8];
+                else if (logins >= 30) novoSelo = selosLogin[9];
+                else if (logins >= 20) novoSelo = selosLogin[10];
+                else if (logins >= 10) novoSelo = selosLogin[11];
+                else if (logins >= 1) novoSelo = selosLogin[12];
+
+                const atuais = parseInsignias(b.insignia_manual);
+                const novos = atuais.filter(ins => !selosLogin.includes(ins));
+                if (novoSelo) novos.push(novoSelo);
+
+                if (JSON.stringify(atuais) !== JSON.stringify(novos)) {
+                    await _s.from('clientes_buscador').update({ insignia_manual: novos }).eq('id', b.id);
+                }
+            }
+
+            alert('Varredura concluída com sucesso!');
+            loadAll(); // atualiza as listas na tela
+        }
 
         checkAuth();
     </script>
