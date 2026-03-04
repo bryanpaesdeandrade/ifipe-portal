@@ -441,6 +441,10 @@
         <div class="drawer-item" onclick="abrirMeusAlertas(); fecharDrawer()">
             <i class="fas fa-bell w-5"></i> Meus Alertas
         </div>
+        <!-- Histórico de Mercado no drawer (mobile) -->
+        <div class="drawer-item" onclick="abrirHistoricoGeral(); fecharDrawer()">
+            <i class="fas fa-chart-line w-5"></i> Histórico de Mercado
+        </div>
         <div class="drawer-item" onclick="resetSenha(); fecharDrawer()">
             <i class="fas fa-sync-alt w-5"></i> Reset de Senha
         </div>
@@ -1151,7 +1155,7 @@
                 );
 
                 const curtido = minhasCurtidas.has(o.id);
-                const btnRecomendar = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="toggleRecomendar(${o.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-fire text-orange-500 text-sm"></i> <span>${curtido ? 'Recomendado' : 'Recomendar'}</span></button>`;
+                const btnCurtir = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="toggleCurtir(${o.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-heart text-red-500 text-sm"></i> <span>${curtido ? 'Curtido' : 'Curtir'}</span></button>`;
 
                 const card = document.createElement('div');
                 card.className = 'product-card';
@@ -1181,9 +1185,9 @@
                         <span class="text-[9px] text-gray-500">${new Date(o.criado_em).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</span>
                     </div>
                     <div class="flex justify-between items-center py-2 border-t border-[#38383a] mb-2 mt-1">
-                        ${btnRecomendar}
+                        ${btnCurtir}
                         <button class="action-button hover:text-blue-500" onclick="abrirPerguntas(${o.id}, '${p.nome}', ${o.fornecedor_id})">
-                            <i class="far fa-question-circle"></i> <span>Perguntar</span>
+                            <i class="far fa-question-circle"></i> <span>Enviar Proposta</span>
                         </button>
                         <button class="action-button hover:text-blue-500" onclick="compartilhar('${p.nome}', '${v?.capacidade || ''}', '${v?.cor || ''}', ${preco}, '${simbolo}', ${o.quantidade})">
                             <i class="far fa-share-square"></i> <span>Compartilhar</span>
@@ -1232,19 +1236,19 @@
         }
 
         // Funções de Interação
-        async function toggleRecomendar(ofertaId, btn) {
-            if (!currentUser || currentUser.id === 0) return alert('Faça login para recomendar.');
+        async function toggleCurtir(ofertaId, btn) {
+            if (!currentUser || currentUser.id === 0) return alert('Faça login para curtir.');
             const temCurtida = minhasCurtidas.has(ofertaId);
             if (temCurtida) {
                 await _s.from('curtidas').delete().eq('cliente_id', currentUser.id).eq('oferta_id', ofertaId);
                 minhasCurtidas.delete(ofertaId);
                 btn.classList.remove('text-blue-500');
-                btn.innerHTML = '<i class="far fa-fire text-orange-500 text-sm"></i> <span>Recomendar</span>';
+                btn.innerHTML = '<i class="far fa-heart text-red-500 text-sm"></i> <span>Curtir</span>';
             } else {
                 await _s.from('curtidas').insert({ cliente_id: currentUser.id, oferta_id: ofertaId });
                 minhasCurtidas.add(ofertaId);
                 btn.classList.add('text-blue-500');
-                btn.innerHTML = '<i class="fas fa-fire text-orange-500 text-sm"></i> <span>Recomendado</span>';
+                btn.innerHTML = '<i class="fas fa-heart text-red-500 text-sm"></i> <span>Curtido</span>';
             }
         }
 
@@ -1661,7 +1665,7 @@
         window.abrirPerguntas = abrirPerguntas;
         window.fecharPerguntas = fecharPerguntas;
         window.enviarPergunta = enviarPergunta;
-        window.toggleRecomendar = toggleRecomendar;
+        window.toggleCurtir = toggleCurtir;
         window.compartilhar = compartilhar;
         window.abrirConta = abrirConta;
         window.fecharConta = fecharConta;
@@ -1669,7 +1673,7 @@
         window.abrirNotificacoes = abrirRespostasRecebidas; // redireciona para o novo sistema
         window.resetSenha = resetSenha;
         window.abrirFavoritos = abrirFavoritos;
-        window.abrirMeusAlertas = abrirMeusAlertas;window.abrirMeusAlertas = abrirMeusAlertas;
+        window.abrirMeusAlertas = abrirMeusAlertas;
         window.fecharMeusAlertas = fecharMeusAlertas;
         window.abrirLegendaInsignias = abrirLegendaInsignias;
         window.fecharLegendaInsignias = fecharLegendaInsignias;
@@ -1679,7 +1683,6 @@
         window.checarNotificacoes = checarNotificacoes;
         window.abrirRespostasRecebidas = abrirRespostasRecebidas;
         window.fecharRespostas = fecharRespostas;
-        window.marcarNotificacoesComoLidas = marcarNotificacoesComoLidas;
     </script>
 </body>
 </html>
