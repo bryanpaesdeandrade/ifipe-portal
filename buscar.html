@@ -300,12 +300,12 @@
 
         /* Card de status centralizado */
         .status-card {
-            min-height: 120px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 1rem;
+            margin-top: -10px;
         }
         .status-card h3 {
             text-align: center;
@@ -400,6 +400,16 @@
                 display: flex;
             }
         }
+
+        /* Desktop-only para botões que só aparecem em desktop */
+        .desktop-only {
+            display: none;
+        }
+        @media (min-width: 1024px) {
+            .desktop-only {
+                display: inline-flex;
+            }
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -446,6 +456,7 @@
             </div>
             <div class="grid grid-cols-2 gap-1 text-xs mb-2">
                 <div><span class="text-gray-400">Binance</span><div id="calcBinanceMobile" class="font-bold text-yellow-500">R$ 5,29</div></div>
+                <!-- Oráculo removido -->
             </div>
             <div class="bg-[#2c2c2e] p-2 rounded-lg mb-2">
                 <span class="text-xs text-gray-400">Custo Base</span>
@@ -600,6 +611,7 @@
                         <span class="text-gray-400">Binance</span>
                         <div id="calcBinance" class="font-bold text-yellow-500">R$ 5,2907</div>
                     </div>
+                    <!-- Oráculo removido -->
                 </div>
                 <div class="bg-[#2c2c2e] p-2 rounded-xl mb-3">
                     <span class="text-xs text-gray-400">Custo Base no Brasil</span>
@@ -729,7 +741,7 @@
         let meusAlertas = [];
 
         let DADOS_PROCESSADOS = { 
-            menorPrecoPorProdutoGrupo: {} // chave: produtoId_grupo (grupo = 'BRL' ou 'USD')
+            menorPrecoPorProdutoGrupo: {} // chave: produtoId_moeda (ex: "1_BRL")
         };
 
         // Ordem de poder das insígnias de anunciantes (da mais poderosa para a menos)
@@ -936,8 +948,7 @@
                 const pId = o.variacoes?.produto_id;
                 if (!pId) return;
                 const moeda = o.moeda || 'BRL';
-                const grupo = moeda; // 'BRL' ou 'USD'
-                const key = `${pId}_${grupo}`;
+                const key = `${pId}_${moeda}`;
                 const preco = o.preco;
                 if (!DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[key] || preco < DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[key]) {
                     DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[key] = preco;
@@ -1009,6 +1020,11 @@
                 html += `<span class="status-badge" title="${insigniaLogin.nome}">${insigniaLogin.emoji} ${insigniaLogin.nome}</span>`;
             }
 
+            // Se for master e não houver insígnias, coloca um mock
+            if (usuario.id === 0 && html === '') {
+                html = '<span class="status-badge" title="ADMIN">⚡ ADMIN</span>';
+            }
+
             return html;
         }
 
@@ -1021,9 +1037,6 @@
             const container = document.getElementById('drawerUserInsignias');
             if (container) container.innerHTML = renderizarInsignias(currentUser);
         }
-
-        // Função para obter a insígnia do buscador (não usada mais, mantida por compatibilidade)
-        // function getInsigniaBuscador(usuario) { ... } // removida
 
         function renderizarCards() {
             const container = document.getElementById('container-produtos');
@@ -1038,7 +1051,9 @@
             const fLoj = document.getElementById('filtroLojista').value;
 
             let filtradas = ofertas.filter(o => {
-                const pNome = (o.variacoes?.produtos_mestre?.nome || '').toLowerCase();
+                // Prefixa "iPhone " ao nome do produto para busca inteligente
+                const nomeBase = o.variacoes?.produtos_mestre?.nome || '';
+                const pNome = ("iPhone " + nomeBase).toLowerCase();
                 if (busca && !pNome.includes(busca)) return false;
                 if (fCat && o.variacoes?.produto_id != fCat) return false;
                 if (fCond && o.condicao !== fCond) return false;
@@ -1049,13 +1064,16 @@
                 return true;
             });
 
+            // Ordena antes de separar por moeda? Melhor ordenar após separar
+            // Mas a ordenação por produto_id já está na função ordenarOfertas
+
             // Separar por moeda
             const ofertasBRL = filtradas.filter(o => (o.moeda || 'BRL') === 'BRL');
             const ofertasUSD = filtradas.filter(o => (o.moeda || 'BRL') === 'USD');
 
             // Ordenar cada grupo
-            ofertasBRL.sort((a, b) => a.preco - b.preco);
-            ofertasUSD.sort((a, b) => a.preco - b.preco);
+            ofertasBRL.sort((a, b) => ordenarOfertas([a, b])[0] === a ? -1 : 1);
+            ofertasUSD.sort((a, b) => ordenarOfertas([a, b])[0] === a ? -1 : 1);
 
             // Função para criar card
             const criarCard = (o) => {
