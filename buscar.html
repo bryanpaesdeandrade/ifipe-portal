@@ -66,6 +66,11 @@
             border-color: var(--blue);
             box-shadow: 0 0 0 3px rgba(0,113,227,0.2);
         }
+        .apple-input[type="number"]::-webkit-inner-spin-button,
+        .apple-input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
         .btn-apple {
             background: var(--blue);
             color: white;
@@ -152,7 +157,7 @@
         }
         .action-button:hover { color: var(--blue); }
         
-        /* Grid responsivo de 4 colunas perfeito */
+        /* Layout dos cards - 4 Colunas */
         .grid-cards { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem; }
         @media (min-width: 640px) { .grid-cards { grid-template-columns: repeat(2, 1fr); } }
         @media (min-width: 1024px) { .grid-cards { grid-template-columns: repeat(3, 1fr); } }
@@ -176,7 +181,7 @@
         }
         .drawer-item:hover { background: var(--input); color: var(--blue); }
         
-        /* Filtros Harmoniosos */
+        /* Filtros Harmoniosos (Sem barra de rolagem) */
         .filters-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -214,6 +219,19 @@
             position: absolute; top: -8px; right: -8px; background: #ff3b30;
             color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 20px;
         }
+
+        /* Modal Histórico */
+        .modal {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 3000;
+        }
+        .modal-content {
+            background: var(--card); border-radius: 24px; padding: 2rem;
+            max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;
+        }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="dark-mode">
@@ -333,16 +351,16 @@
                 </div>
             </div>
             
-            <div class="apple-card p-4">
-                <h3 class="text-sm font-bold mb-2">Seu status no iFipe 🏆</h3>
-                <div id="userInsignias" class="flex flex-wrap gap-1"></div>
+            <div class="apple-card p-4 flex flex-col items-center justify-center min-h-[150px]">
+                <h3 class="text-sm font-bold mb-3 text-center">Seu status no iFipe 🏆</h3>
+                <div id="userInsignias" class="flex flex-wrap gap-2 justify-center text-center w-full"></div>
             </div>
         </div>
 
         <div class="lg:col-span-4">
             
             <div class="mb-3 relative">
-                <input type="text" id="searchInput" placeholder="(ENCONTRO O MELHOR PREÇO)" class="apple-input pl-4 pr-4 py-3 text-base font-medium border-2">
+                <input type="text" id="searchInput" placeholder="(ENCONTRO O MELHOR PREÇO)" class="apple-input pl-4 pr-4 py-3 text-base font-medium border-2" oninput="renderizarCards()">
             </div>
 
             <div class="filters-grid mb-4">
@@ -376,12 +394,22 @@
         </div>
     </div>
 
+    <div id="historicoGeralModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Histórico de Mercado</h2>
+            <p class="text-sm text-gray-400 mb-4">Custo médio calculado dos últimos 10 dias</p>
+            <div id="listaHistorico" class="space-y-3 max-h-96 overflow-y-auto">
+                </div>
+            <button onclick="fecharHistoricoGeral()" class="btn-apple-secondary w-full mt-6">Fechar</button>
+        </div>
+    </div>
+
     <button id="backToTop" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-500 text-white w-12 h-12 rounded-full shadow-[0_0_15px_rgba(0,113,227,0.5)] transition-all hidden z-50 flex items-center justify-center">
         <i class="fas fa-arrow-up text-lg"></i>
     </button>
 
     <script>
-        // 1. CONFIGURAÇÃO
+        // 1. CONFIGURAÇÃO SUPABASE
         const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
         const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -437,15 +465,6 @@
                 currentUser = data;
             }
 
-            const buscaInput = document.getElementById('searchInput');
-            let timeoutBusca;
-            buscaInput.addEventListener('input', (e) => {
-                clearTimeout(timeoutBusca);
-                timeoutBusca = setTimeout(() => {
-                    renderizarCards();
-                }, 300);
-            });
-
             await carregarDados();
             initTicker();
         };
@@ -496,16 +515,18 @@
             });
         }
 
+        // REGRA DE OURO (JOGO DE CADEIRAS)
         function ordenarOfertas(lista) {
             return lista.sort((a, b) => {
                 const idA = a.variacoes?.produto_id || 0;
                 const idB = b.variacoes?.produto_id || 0;
-                if (idA !== idB) return idB - idA;
+                if (idA !== idB) return idB - idA; // 1. Modelos mais novos no topo
 
                 const pA = a.moeda === 'USD' ? a.preco * rateOraculo : a.preco;
                 const pB = b.moeda === 'USD' ? b.preco * rateOraculo : b.preco;
-                if (pA !== pB) return pA - pB;
+                if (pA !== pB) return pA - pB; // 2. Menor Preço
 
+                // 3. Desempate: Quem atualizou por último
                 const tA = a.atualizado_em ? new Date(a.atualizado_em).getTime() : new Date(a.criado_em).getTime();
                 const tB = b.atualizado_em ? new Date(b.atualizado_em).getTime() : new Date(b.criado_em).getTime();
                 return tB - tA;
@@ -516,7 +537,7 @@
             const grid = document.getElementById('produtosGrid');
             grid.innerHTML = '';
 
-            const busca = document.getElementById('searchInput').value.toLowerCase();
+            const busca = document.getElementById('searchInput').value.toLowerCase().trim();
             const fCat = document.getElementById('filtroCategoria').value;
             const fCond = document.getElementById('filtroCondicao').value;
             const fCap = document.getElementById('filtroCapacidade').value;
@@ -525,7 +546,9 @@
             const fLoj = document.getElementById('filtroLojista').value;
 
             let filtradas = ofertas.filter(o => {
-                if (busca && !o.variacoes?.produtos_mestre?.nome.toLowerCase().includes(busca)) return false;
+                // Correção do erro da busca quebrando o JS
+                const pNome = (o.variacoes?.produtos_mestre?.nome || '').toLowerCase();
+                if (busca && !pNome.includes(busca)) return false;
                 if (fCat && o.variacoes?.produto_id != fCat) return false;
                 if (fCond && o.condicao !== fCond) return false;
                 if (fCap && o.variacoes?.capacidade !== fCap) return false;
@@ -553,17 +576,22 @@
 
                 const isMenor = precoF === DADOS_PROCESSADOS.menorPrecoPorProduto[p.id];
 
+                // Regra de Tags (Oportunidade e Em Alta) Baseadas no Banco Real
                 let tagTrend = '';
                 if (o.preco_anterior && o.atualizado_em) {
                     const minPassados = (Date.now() - new Date(o.atualizado_em).getTime()) / 60000;
                     if (minPassados <= 30 && o.preco < o.preco_anterior) tagTrend = '<span class="badge badge-green">💰 OPORTUNIDADE</span>';
-                    if (minPassados <= 15 && o.preco > o.preco_anterior) tagTrend = '<span class="badge badge-orange">📈 EM ALTA</span>';
+                    if (minPassados <= 15 && o.preco > o.preco_anterior) tagTrend = '<span class="badge badge-orange">📈 PREÇO EM ALTA</span>';
                 }
 
+                // Molduras Corrigidas (Negocia Qtd)
                 let comerciais = '';
                 if (f.aceita_pix || o.aceita_pix) comerciais += '<span class="commercial-badge"><i class="fa-brands fa-pix"></i> PIX</span>';
                 if (f.aceita_usdt || o.aceita_usdt) comerciais += '<span class="commercial-badge"><i class="fas fa-coins text-green-500"></i> USDT</span>';
-                if (f.aceita_proposta || o.aceita_proposta) comerciais += '<span class="commercial-badge"><i class="fas fa-handshake"></i> Atacado</span>';
+                if (f.aceita_proposta || o.aceita_proposta) comerciais += '<span class="commercial-badge"><i class="fas fa-handshake"></i> Negocia Qtd</span>';
+
+                // Texto inteligente pro WhatsApp
+                const msgZap = encodeURIComponent(`Olá, vi a oferta do ${p.nome} ${v?.capacidade||''} ${v?.cor||''} por R$ ${precoF.toFixed(2)} no iFipe e tenho interesse!`);
 
                 const card = document.createElement('div');
                 card.className = 'product-card';
@@ -591,14 +619,26 @@
                         <span class="price text-blue-500">R$ ${precoF.toFixed(2)}</span>
                         <span class="text-[9px] text-gray-500">${new Date(o.criado_em).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</span>
                     </div>
-                    <a href="https://wa.me/${f.whatsapp?.replace(/\D/g,'')}" target="_blank" class="btn-apple w-full text-center text-xs py-2 flex items-center justify-center gap-2 mt-2">
-                        <i class="fab fa-whatsapp"></i> Negociar
+                    <div class="flex justify-between items-center py-2 border-t border-[#38383a] mb-2 mt-1">
+                        <button class="action-button hover:text-blue-500" onclick="alert('Função recomendar em desenvolvimento')">
+                            <i class="far fa-thumbs-up"></i> <span>Recomendar</span>
+                        </button>
+                        <button class="action-button hover:text-blue-500" onclick="alert('Dúvidas diretas no Zap do lojista!')">
+                            <i class="far fa-question-circle"></i> <span>Perguntar</span>
+                        </button>
+                        <button class="action-button hover:text-blue-500" onclick="compartilhar(${o.id})">
+                            <i class="far fa-share-square"></i> <span>Compartilhar</span>
+                        </button>
+                    </div>
+                    <a href="https://wa.me/${f.whatsapp?.replace(/\D/g,'')}?text=${msgZap}" target="_blank" class="btn-apple w-full text-center text-xs py-2 flex items-center justify-center gap-2">
+                        <i class="fab fa-whatsapp"></i> Comprar no WhatsApp
                     </a>
                 `;
                 grid.appendChild(card);
             });
         }
 
+        // 5. CALCULADORA
         function atualizarCalculadora() {
             const usd = parseFloat(document.getElementById('calcUsd').value) || 0;
             const custoBase = (usd * rateOraculo) * 1.06;
@@ -659,20 +699,82 @@
             }
         }
 
+        // FUNÇÕES DO HISTÓRICO DE PREÇOS
+        function abrirHistoricoGeral() {
+            document.getElementById('historicoGeralModal').classList.remove('hidden');
+            const lista = document.getElementById('listaHistorico');
+            lista.innerHTML = '<p class="text-center text-gray-400">Carregando...</p>';
+
+            const dezDiasAtras = new Date();
+            dezDiasAtras.setDate(dezDiasAtras.getDate() - 10);
+            const historicoPorProdutoECidade = {};
+
+            ofertas.forEach(o => {
+                const produtoId = o.variacoes?.produto_id;
+                if (!produtoId) return;
+                const cidade = o.fornecedores?.cidade || 'GERAL';
+                const key = `${produtoId}_${cidade}`;
+                
+                if (new Date(o.criado_em) < dezDiasAtras) return;
+
+                if (!historicoPorProdutoECidade[key]) {
+                    historicoPorProdutoECidade[key] = {
+                        nome: o.variacoes?.produtos_mestre?.nome || 'Produto',
+                        capacidade: o.variacoes?.capacidade || '',
+                        cidade: cidade,
+                        precos: []
+                    };
+                }
+                const preco = o.moeda === 'USD' ? o.preco * rateOraculo : o.preco;
+                historicoPorProdutoECidade[key].precos.push(preco);
+            });
+
+            if (Object.keys(historicoPorProdutoECidade).length === 0) {
+                lista.innerHTML = '<p class="text-center text-gray-400">Sem dados recentes.</p>';
+            } else {
+                let html = '';
+                for (const key in historicoPorProdutoECidade) {
+                    const item = historicoPorProdutoECidade[key];
+                    if (item.precos.length === 0) continue;
+                    const media = item.precos.reduce((a, b) => a + b, 0) / item.precos.length;
+                    html += `
+                        <div class="historico-item border-b border-[#38383a] pb-2 mb-2">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium">${item.nome} ${item.capacidade}</span>
+                                <span class="font-bold text-blue-500">R$ ${media.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-400 mt-1">
+                                <span>📍 ${item.cidade}</span>
+                                <span>📊 ${item.precos.length} ofertas avaliadas</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                lista.innerHTML = html;
+            }
+        }
+        function fecharHistoricoGeral() { document.getElementById('historicoGeralModal').classList.add('hidden'); }
+
+        function compartilhar(id) {
+            navigator.clipboard.writeText(window.location.href + '?oferta=' + id);
+            alert('Link da oferta copiado com sucesso!');
+        }
+
         function abrirDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('open'); }
         function fecharDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); }
         function logout() { localStorage.clear(); window.location.replace('index.html'); }
-        function abrirHistoricoGeral() { alert("Histórico em desenvolvimento."); }
         function abrirNotificacoes() { alert("Sem notificações."); }
-        function abrirConta() { alert("Minha conta"); }
-        function resetSenha() { alert("Reset de senha"); }
-        function abrirFavoritos() { alert("Favoritos"); }
-        function abrirMeusAlertas() { alert("Alertas"); }
+        function abrirConta() { alert("Minha conta em desenvolvimento."); }
+        function resetSenha() { alert("Reset de senha indisponível no momento."); }
+        function abrirFavoritos() { alert("Favoritos em breve."); }
+        function abrirMeusAlertas() { alert("Alertas em breve."); }
         
         window.abrirDrawer = abrirDrawer;
         window.fecharDrawer = fecharDrawer;
         window.logout = logout;
         window.renderizarCards = renderizarCards;
+        window.abrirHistoricoGeral = abrirHistoricoGeral;
+        window.fecharHistoricoGeral = fecharHistoricoGeral;
     </script>
 </body>
 </html>
