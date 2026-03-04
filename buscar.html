@@ -465,6 +465,10 @@
             <button class="text-2xl mr-2 text-gray-400 hover:text-white transition" onclick="abrirDrawer()">☰</button>
             <h1 class="text-xl lg:text-2xl font-black tracking-tight">iFipe</h1>
             <span class="text-xs lg:text-sm text-gray-400 hidden sm:inline">A TABELA FIPE DO IPHONE</span>
+            <!-- Botão Criar Alerta (agora à esquerda, ao lado do botão Insígnias) -->
+            <button class="btn-criar-alerta ml-2" onclick="abrirCriarAlerta()">
+                <i class="fas fa-bell"></i> Criar Alerta
+            </button>
             <!-- Botão Insígnias de Poder com destaque -->
             <button class="header-btn btn-insignia ml-2" onclick="abrirLegendaInsignias()">
                 <i class="fas fa-crown"></i> Insígnias de Poder
@@ -479,11 +483,6 @@
                     <span id="binanceRate" class="font-mono font-bold text-yellow-500 ml-1">R$ 5,2907</span>
                 </div>
             </div>
-            
-            <!-- Botão Criar Alerta (desktop) - ao lado direito das insígnias -->
-            <button class="btn-criar-alerta desktop-only" onclick="abrirCriarAlerta()">
-                <i class="fas fa-bell"></i> Criar Alerta
-            </button>
             
             <a id="btnComprarUsdt" href="https://wa.me/15616760652?text=VENHO%20PELO%20iFipe%20DESEJO%20COMPRAR%20USDT" target="_blank" class="bg-green-600 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-green-700 transition flex items-center gap-1">
                 <i class="fab fa-whatsapp"></i> USDT ORÁCULO <span id="taxaVip" class="ml-1">R$ 5,3507</span>
@@ -844,6 +843,10 @@
                 }
             }
 
+            // Atualiza status imediatamente após definir o usuário
+            atualizarStatusUsuario();
+            atualizarStatusUsuarioMobile();
+
             await carregarDados();
             initTicker();
         };
@@ -882,7 +885,7 @@
                 processarMenorPrecoGlobal();
                 renderizarCards();
                 
-                // Atualiza status após carregar dados
+                // Atualiza status novamente após carregar dados (por segurança)
                 atualizarStatusUsuario();
                 atualizarStatusUsuarioMobile();
 
@@ -975,13 +978,13 @@
         function getInsigniaBuscador(usuario) {
             // Primeiro, verifica se há insígnias manuais
             if (usuario.insignia_manual && usuario.insignia_manual.length > 0) {
-                // Pega a primeira (ou a mais relevante). Como são poucas, usamos a primeira.
+                // Pega a primeira (a mais relevante, pois o Master pode atribuir qualquer ordem)
                 const nomeInsignia = usuario.insignia_manual[0];
                 // Tenta encontrar o emoji correspondente
                 const emoji = nomeParaEmojiBuscador[nomeInsignia] || '🔰'; // fallback
                 return { nome: nomeInsignia, emoji: emoji };
             }
-            // Se não tem manual, usa logins
+            // Se não tem manual, usa logins (a lista já está ordenada do maior para o menor)
             for (let ins of insigniasBuscador) {
                 if (usuario.logins_count >= ins.min) {
                     return ins;
