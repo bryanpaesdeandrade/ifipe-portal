@@ -381,6 +381,10 @@
         <div class="drawer-item" onclick="abrirFavoritos(); fecharDrawer()">
             <i class="fas fa-star w-5"></i> Meus Favoritos
         </div>
+        <!-- Botão Criar Alerta (funcional) -->
+        <div class="drawer-item" onclick="abrirCriarAlerta(); fecharDrawer()">
+            <i class="fas fa-bell w-5"></i> Criar Alerta
+        </div>
         <div class="drawer-item" onclick="abrirMeusAlertas(); fecharDrawer()">
             <i class="fas fa-bell w-5"></i> Meus Alertas
         </div>
@@ -488,6 +492,37 @@
             </ul>
             
             <button onclick="fecharLegendaInsignias()" class="btn-apple w-full mt-6">Fechar</button>
+        </div>
+    </div>
+
+    <!-- Modal Criar Alerta -->
+    <div id="criarAlertaModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="fecharCriarAlerta()">&times;</span>
+            <h2 class="text-2xl font-bold mb-4">Criar Alerta de Preço</h2>
+            <p class="text-sm text-gray-400 mb-4">Receba uma notificação quando o preço cair</p>
+            <form id="criarAlertaForm" onsubmit="criarAlerta(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Produto</label>
+                    <select id="alertaProduto" class="apple-input" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-2">Capacidade</label>
+                    <select id="alertaCapacidade" class="apple-input">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-medium mb-2">Preço máximo (R$)</label>
+                    <input type="number" id="alertaPreco" class="apple-input" placeholder="Ex: 5000" min="0" step="0.01" required>
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit" class="btn-apple flex-1">Criar Alerta</button>
+                    <button type="button" onclick="fecharCriarAlerta()" class="btn-apple-secondary flex-1">Cancelar</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -631,6 +666,7 @@
         let currentUser = null;
         let produtos = [], variacoes = [], fornecedores = [], ofertas = [];
         let minhasCurtidas = new Set(); 
+        let meusAlertas = [];
 
         let DADOS_PROCESSADOS = { 
             menorPrecoPorProdutoGrupo: {} // chave: produtoId_grupo (grupo = 'BRL' ou 'USD')
@@ -749,6 +785,7 @@
 
             await carregarDados();
             initTicker();
+            // Atualiza status após carregar dados (já é chamado dentro de carregarDados)
         };
 
         function initTicker() {
@@ -782,10 +819,16 @@
                 console.log('Ofertas carregadas:', ofertas.length);
 
                 popularFiltros();
-                atualizarStatusUsuario(); // Atualiza insígnias do buscador (desktop)
-                atualizarStatusUsuarioMobile(); // Atualiza insígnias do buscador (drawer)
                 processarMenorPrecoGlobal();
                 renderizarCards();
+                
+                // Atualiza status após carregar dados
+                atualizarStatusUsuario();
+                atualizarStatusUsuarioMobile();
+
+                // Popula selects do modal de alerta
+                popularFiltrosAlerta();
+
             } catch (err) {
                 console.error('Erro ao carregar dados:', err);
             }
@@ -1255,6 +1298,43 @@
             pop('filtroLojista', fornecedores, f => f);
         }
 
+        // Popular selects do modal de alerta
+        function popularFiltrosAlerta() {
+            const alertaProd = document.getElementById('alertaProduto');
+            produtos.forEach(p => {
+                alertaProd.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+            });
+
+            const caps = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
+            const alertaCap = document.getElementById('alertaCapacidade');
+            caps.forEach(c => {
+                alertaCap.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+        }
+
+        // Funções para criar alerta
+        function abrirCriarAlerta() {
+            document.getElementById('criarAlertaModal').classList.remove('hidden');
+        }
+        function fecharCriarAlerta() {
+            document.getElementById('criarAlertaModal').classList.add('hidden');
+        }
+        async function criarAlerta(e) {
+            e.preventDefault();
+            const produto = document.getElementById('alertaProduto').value;
+            const capacidade = document.getElementById('alertaCapacidade').value;
+            const preco = parseFloat(document.getElementById('alertaPreco').value);
+            if (!produto || !preco) return alert('Preencha todos os campos');
+            await _s.from('alertas_preco').insert({
+                cliente_id: currentUser.id,
+                produto_id: produto,
+                capacidade: capacidade || null,
+                preco_desejado: preco
+            });
+            alert('Alerta criado!');
+            fecharCriarAlerta();
+        }
+
         // Atualiza status no desktop
         function atualizarStatusUsuario() {
             const container = document.getElementById('userInsignias');
@@ -1319,6 +1399,9 @@
         window.abrirMeusAlertas = abrirMeusAlertas;
         window.abrirLegendaInsignias = abrirLegendaInsignias;
         window.fecharLegendaInsignias = fecharLegendaInsignias;
+        window.abrirCriarAlerta = abrirCriarAlerta;
+        window.fecharCriarAlerta = fecharCriarAlerta;
+        window.criarAlerta = criarAlerta;
     </script>
 </body>
 </html>
