@@ -616,6 +616,7 @@
                     _s.from('produtos_mestre').select('*'),
                     _s.from('variacoes').select('*'),
                     _s.from('fornecedores').select('*').eq('ativo', true),
+                    // Incluímos explicitamente os campos preco_anterior e atualizado_em
                     _s.from('ofertas').select('*, fornecedores!inner(*), variacoes(*, produtos_mestre(*))').gt('quantidade', 0)
                 ]);
 
@@ -624,6 +625,12 @@
                 fornecedores = f.data || [];
                 ofertas = o.data || [];
                 console.log('Ofertas carregadas:', ofertas.length);
+                // Log para verificar se os campos existem
+                ofertas.forEach((o, index) => {
+                    if (index < 5) { // só os primeiros 5 para não poluir
+                        console.log(`Oferta ${o.id}: preco=${o.preco}, preco_anterior=${o.preco_anterior}, atualizado_em=${o.atualizado_em}`);
+                    }
+                });
 
                 popularFiltros();
                 atualizarStatusUsuario();
@@ -720,6 +727,24 @@
                 const menorPreco = DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[keyMenor] || Infinity;
                 const isMenor = preco === menorPreco;
 
+                // Tags temporárias (oportunidade e preço em alta)
+                let tagTrend = '';
+                if (o.preco_anterior && o.atualizado_em) {
+                    const agora = Date.now();
+                    const atualizado = new Date(o.atualizado_em).getTime();
+                    const minutos = (agora - atualizado) / 60000;
+                    console.log(`Oferta ${o.id}: preco=${o.preco}, anterior=${o.preco_anterior}, minutos=${minutos.toFixed(2)}`);
+                    if (minutos <= 30 && o.preco < o.preco_anterior) {
+                        tagTrend = '<span class="badge badge-green">💰 OPORTUNIDADE (30min)</span>';
+                        console.log('Tag OPORTUNIDADE aplicada');
+                    } else if (minutos <= 15 && o.preco > o.preco_anterior) {
+                        tagTrend = '<span class="badge badge-orange">📈 PREÇO EM ALTA (15min)</span>';
+                        console.log('Tag PREÇO EM ALTA aplicada');
+                    }
+                } else {
+                    console.log(`Oferta ${o.id} não tem preco_anterior ou atualizado_em`);
+                }
+
                 // Molduras comerciais
                 let comerciais = '';
                 if (f.aceita_pix || o.aceita_pix) comerciais += '<span class="commercial-badge"><i class="fa-brands fa-pix"></i> PIX</span>';
@@ -765,7 +790,7 @@
                     <div class="flex items-center gap-1 mb-1 flex-wrap">
                         <span class="badge badge-purple">${o.condicao}</span>
                         ${isMenor ? '<span class="badge badge-green">🔥 MENOR PREÇO</span>' : ''}
-                        ${insigniasAnunciante}
+                        ${tagTrend}
                     </div>
                     <div class="flex flex-wrap gap-1 mb-2 mt-1">${comerciais}</div>
                     <div class="flex items-center gap-1 mb-1">
