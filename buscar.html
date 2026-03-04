@@ -591,11 +591,15 @@
                 }
             }
 
-            // Debounce na pesquisa
+            // Debounce na pesquisa com logs
             let timeoutBusca;
-            document.getElementById('searchInput').addEventListener('input', () => {
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                console.log('Input detectado, valor:', e.target.value);
                 clearTimeout(timeoutBusca);
-                timeoutBusca = setTimeout(() => { renderizarCards(); }, 300);
+                timeoutBusca = setTimeout(() => {
+                    console.log('Chamando renderizarCards após debounce');
+                    renderizarCards();
+                }, 300);
             });
 
             await carregarDados();
@@ -630,6 +634,7 @@
                 variacoes = v.data || [];
                 fornecedores = f.data || [];
                 ofertas = o.data || [];
+                console.log('Ofertas carregadas:', ofertas.length);
 
                 popularFiltros();
                 atualizarStatusUsuario();
@@ -672,6 +677,9 @@
         }
 
         function renderizarCards() {
+            console.log('renderizarCards chamado. Busca =', document.getElementById('searchInput').value);
+            console.log('Total de ofertas:', ofertas.length);
+
             const container = document.getElementById('container-produtos');
             container.innerHTML = '';
 
@@ -685,6 +693,7 @@
 
             let filtradas = ofertas.filter(o => {
                 const pNome = (o.variacoes?.produtos_mestre?.nome || '').toLowerCase();
+                console.log('Produto:', pNome, 'Busca:', busca, 'Match:', pNome.includes(busca));
                 if (busca && !pNome.includes(busca)) return false;
                 if (fCat && o.variacoes?.produto_id != fCat) return false;
                 if (fCond && o.condicao !== fCond) return false;
@@ -694,6 +703,8 @@
                 if (fLoj && o.fornecedor_id != fLoj) return false;
                 return true;
             });
+
+            console.log('Ofertas após filtro:', filtradas.length);
 
             // Separar por moeda
             const ofertasBRL = filtradas.filter(o => (o.moeda || 'BRL') === 'BRL');
