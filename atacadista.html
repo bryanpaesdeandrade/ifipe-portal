@@ -957,6 +957,7 @@
             fecharBulk(); upTab();
         }
 
+        // ========== FUNÇÃO CORRIGIDA DO WHATSAPP ==========
         async function copiarListaWhatsApp() {
             let ofertasAtivas = ofertas.filter(o => o.quantidade > 0);
             
@@ -967,17 +968,25 @@
             let seminovos = ofertasAtivas.filter(o => o.condicao !== 'Novo');
 
             const formatarMoeda = (val) => val.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            let cidadeText = loja.cidade ? ` ${loja.cidade.toUpperCase()}` : '';
-
+            
             let hora = new Date().getHours();
             let saudacao = "BOM DIA";
-            if(hora >= 12 && hora < 18) saudacao = "BOA TARDE";
-            else if(hora >= 18) saudacao = "BOA NOITE";
+            if (hora >= 12 && hora < 18) saudacao = "BOA TARDE";
+            else if (hora >= 18) saudacao = "BOA NOITE";
 
             text += `*${saudacao} 🚀🔥*\n\n`;
 
+            // Variável para controlar se a cidade já foi exibida
+            let cidadeExibida = false;
+
+            // Bloco NOVOS
             if (novos.length > 0) {
-                text += `*PRONTA ENTREGA NOVOS${cidadeText}* 📍\n\n`;
+                let cabecalhoNovos = `*PRONTA ENTREGA NOVOS*`;
+                if (loja.cidade && !cidadeExibida) {
+                    cabecalhoNovos += ` ${loja.cidade.toUpperCase()}`;
+                    cidadeExibida = true;
+                }
+                text += `${cabecalhoNovos} 📍\n\n`;
                 
                 let groupedNovos = {};
                 novos.forEach(o => {
@@ -1001,8 +1010,14 @@
                 }
             }
 
+            // Bloco SEMINOVOS
             if (seminovos.length > 0) {
-                text += `*PRONTA ENTREGA SEMINOVOS*\n\n`;
+                let cabecalhoSemi = `*PRONTA ENTREGA SEMINOVOS*`;
+                if (loja.cidade && !cidadeExibida) {
+                    cabecalhoSemi += ` ${loja.cidade.toUpperCase()}`;
+                    cidadeExibida = true;
+                }
+                text += `${cabecalhoSemi} 📍\n\n`;
                 
                 let groupedSemis = {};
                 seminovos.forEach(o => {
@@ -1032,10 +1047,11 @@
                 text += `\n`;
             }
 
+            // Rodapé
             let linkZap = loja.whatsapp ? `https://wa.me/${loja.whatsapp.replace(/\D/g, '')}` : 'Nosso WhatsApp';
             text += `Fale com a gente agora mesmo: ${linkZap}\n\n`;
-            text += `Lista Gerada pelo iFipe - *A Fipe do iPhone 📲*\n\n`;
-            text += `https://ifipe.com.br/`;
+            text += `Lista Gerada pelo iFipe - *A Tabela Fipe do iPhone 📲*\n\n`;
+            text += `Acesse Nosso site https://ifipe.com.br/\n\n`;
 
             try {
                 await navigator.clipboard.writeText(text);
