@@ -321,7 +321,7 @@
             color: #000;
         }
 
-        /* Badge de insígnia de anunciante (apenas emoji) - agora com fundo escuro e ícone dourado */
+        /* Badge de insígnia de anunciante (apenas emoji) - fundo escuro com ícone dourado */
         .insignia-emoji {
             display: inline-flex;
             align-items: center;
@@ -336,6 +336,27 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             border: 1px solid #444;
         }
+
+        /* Estilo para o status do usuário no drawer (mobile) */
+        .drawer-status {
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border: 1px solid var(--gold);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .drawer-status h3 {
+            color: var(--gold);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        .drawer-status .status-badge {
+            background: rgba(255, 215, 0, 0.2);
+            color: var(--gold);
+            border-color: var(--gold);
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -346,6 +367,12 @@
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold">Menu</h2>
             <button onclick="fecharDrawer()" class="text-2xl text-gray-400 hover:text-white">&times;</button>
+        </div>
+        
+        <!-- Status do usuário no drawer (mobile) -->
+        <div class="drawer-status">
+            <h3 class="text-xs font-bold">Seu status no iFipe 🏆</h3>
+            <div id="drawerUserInsignias" class="flex flex-wrap gap-2 justify-center"></div>
         </div>
         
         <div class="drawer-item" onclick="abrirConta(); fecharDrawer()">
@@ -391,13 +418,14 @@
             <button class="text-2xl mr-2 text-gray-400 hover:text-white transition" onclick="abrirDrawer()">☰</button>
             <h1 class="text-xl lg:text-2xl font-black tracking-tight">iFipe</h1>
             <span class="text-xs lg:text-sm text-gray-400 hidden sm:inline">A TABELA FIPE DO IPHONE</span>
-            <!-- Botão Insígnias de Poder com destaque (lado esquerdo) -->
+            <!-- Botão Insígnias de Poder com destaque (lado esquerdo, visível em mobile e desktop) -->
             <button class="header-btn btn-insignia ml-2" onclick="abrirLegendaInsignias()">
                 <i class="fas fa-crown"></i> Insígnias de Poder
             </button>
         </div>
         
         <div class="flex items-center gap-2 lg:gap-4">
+            <!-- Binance visível apenas em desktop -->
             <div class="desktop-only items-center gap-3 text-xs">
                 <div>
                     <span class="text-gray-400">Binance</span>
@@ -489,7 +517,7 @@
                 </div>
             </div>
             
-            <!-- Card de status centralizado (insígnias do buscador) -->
+            <!-- Card de status centralizado (insígnias do buscador) - desktop -->
             <div class="apple-card status-card">
                 <h3 class="text-xs font-bold">Seu status no iFipe 🏆</h3>
                 <div id="userInsignias" class="flex flex-wrap gap-2"></div>
@@ -754,7 +782,8 @@
                 console.log('Ofertas carregadas:', ofertas.length);
 
                 popularFiltros();
-                atualizarStatusUsuario(); // Atualiza insígnias do buscador
+                atualizarStatusUsuario(); // Atualiza insígnias do buscador (desktop)
+                atualizarStatusUsuarioMobile(); // Atualiza insígnias do buscador (drawer)
                 processarMenorPrecoGlobal();
                 renderizarCards();
             } catch (err) {
@@ -1226,8 +1255,21 @@
             pop('filtroLojista', fornecedores, f => f);
         }
 
+        // Atualiza status no desktop
         function atualizarStatusUsuario() {
             const container = document.getElementById('userInsignias');
+            if (!currentUser) return;
+            const insignia = getInsigniaBuscador(currentUser);
+            if (insignia) {
+                container.innerHTML = `<span class="status-badge" title="${insignia.nome}">${insignia.emoji} ${insignia.nome}</span>`;
+            } else {
+                container.innerHTML = ''; 
+            }
+        }
+
+        // Atualiza status no drawer (mobile)
+        function atualizarStatusUsuarioMobile() {
+            const container = document.getElementById('drawerUserInsignias');
             if (!currentUser) return;
             const insignia = getInsigniaBuscador(currentUser);
             if (insignia) {
