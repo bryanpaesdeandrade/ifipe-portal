@@ -410,6 +410,14 @@
                 display: inline-flex;
             }
         }
+
+        /* Classe para forçar maiúsculas visualmente */
+        .uppercase-input {
+            text-transform: uppercase;
+        }
+        .uppercase-input::placeholder {
+            text-transform: none; /* placeholders em minúsculas */
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -452,15 +460,11 @@
             <i class="fas fa-sign-out-alt w-5"></i> Sair do Sistema
         </div>
 
-        <!-- Calculadora no drawer (mobile) -->
+        <!-- Calculadora no drawer (mobile) - versão limpa sem Binance -->
         <div class="apple-card p-3 mt-6">
             <h3 class="text-sm font-bold mb-2 text-center">Calculadora para importar iPhone</h3>
             <div class="mb-2">
                 <input type="number" id="calcUsdMobile" class="apple-input text-xs py-1.5" placeholder="Preço em USD" min="0" step="0.01" oninput="atualizarCalculadoraMobile()" value="">
-            </div>
-            <div class="grid grid-cols-2 gap-1 text-xs mb-2">
-                <div><span class="text-gray-400">Binance</span><div id="calcBinanceMobile" class="font-bold text-yellow-500">R$ 5,29</div></div>
-                <!-- Oráculo removido -->
             </div>
             <div class="bg-[#2c2c2e] p-2 rounded-lg mb-2">
                 <span class="text-xs text-gray-400">Custo Base</span>
@@ -491,7 +495,7 @@
         </div>
         
         <div class="flex items-center gap-2 lg:gap-4">
-            <!-- Binance - visível apenas em desktop -->
+            <!-- Binance - visível apenas em desktop (apenas o ticker geral, não na calculadora) -->
             <div class="mobile-hidden items-center gap-3 text-xs">
                 <div>
                     <span class="text-gray-400">Binance</span>
@@ -605,17 +609,11 @@
         
         <!-- Sidebar desktop (calculadora + status) - só aparece em telas grandes -->
         <div class="lg:col-span-1 sidebar flex-col gap-4">
+            <!-- Calculadora desktop sem Binance -->
             <div class="apple-card p-4">
                 <h2 class="text-sm font-bold mb-3 text-center">Calculadora para importar iPhone</h2>
                 <div class="mb-3">
                     <input type="number" id="calcUsd" class="apple-input text-xs py-2" placeholder="Preço em USD" min="0" step="0.01" oninput="atualizarCalculadora()" value="">
-                </div>
-                <div class="grid grid-cols-2 gap-2 text-xs mb-3">
-                    <div>
-                        <span class="text-gray-400">Binance</span>
-                        <div id="calcBinance" class="font-bold text-yellow-500">R$ 5,2907</div>
-                    </div>
-                    <!-- Oráculo removido -->
                 </div>
                 <div class="bg-[#2c2c2e] p-2 rounded-xl mb-3">
                     <span class="text-xs text-gray-400">Custo Base no Brasil</span>
@@ -638,9 +636,9 @@
         <!-- Conteúdo principal -->
         <div class="lg:col-span-4">
             
-            <!-- Barra de pesquisa -->
+            <!-- Barra de pesquisa - agora com uppercase -->
             <div class="mb-3 relative">
-                <input type="text" id="searchInput" placeholder="ENCONTRE O MELHOR PREÇO" class="apple-input pl-4 pr-4 py-3 text-base font-medium border-2" oninput="renderizarCards()">
+                <input type="text" id="searchInput" placeholder="ENCONTRE O MELHOR PREÇO" class="apple-input pl-4 pr-4 py-3 text-base font-medium border-2 uppercase-input" oninput="renderizarCards()">
             </div>
 
             <!-- Container do botão de oportunidades -->
@@ -695,11 +693,11 @@
             <form id="contaForm" onsubmit="salvarConta(event)">
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-2">Nome</label>
-                    <input type="text" id="contaNome" class="apple-input" required>
+                    <input type="text" id="contaNome" class="apple-input uppercase-input" required>
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-2">WhatsApp</label>
-                    <input type="text" id="contaWhats" class="apple-input" required>
+                    <input type="text" id="contaWhats" class="apple-input uppercase-input" required>
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-2">Nova Senha (opcional)</label>
@@ -722,7 +720,7 @@
             <form onsubmit="enviarPergunta(event)">
                 <input type="hidden" id="perguntaOfertaId">
                 <input type="hidden" id="perguntaFornecedorId">
-                <textarea id="perguntaTexto" class="apple-input h-20" placeholder="Escreva sua mensagem ao lojista..." required></textarea>
+                <textarea id="perguntaTexto" class="apple-input h-20 uppercase-input" placeholder="Escreva sua mensagem ao lojista..." required></textarea>
                 <div class="flex gap-3 mt-3">
                     <button type="submit" class="btn-apple flex-1">Enviar Proposta</button>
                     <button type="button" onclick="fecharPerguntas()" class="btn-apple-secondary flex-1">Fechar</button>
@@ -870,6 +868,7 @@
                     rateOraculo = rateBinance + 0.06;
                     document.getElementById('binanceRate').innerText = `R$ ${rateBinance.toFixed(4)}`;
                     document.getElementById('taxaVip').innerText = `R$ ${rateOraculo.toFixed(4)}`;
+                    // Atualiza calculadoras (não precisa mais buscar calcBinance/calcBinanceMobile)
                     atualizarCalculadora();
                     atualizarCalculadoraMobile();
                 };
@@ -919,7 +918,6 @@
         }
 
         function atualizarBadgeAlertas() {
-            // Verifica quais alertas foram atingidos com base nas ofertas atuais
             const badge = document.getElementById('notificacaoBadge');
             let count = 0;
             meusAlertas.forEach(alerta => {
@@ -954,40 +952,32 @@
             });
         }
 
-        // Função de ordenação robusta
         function ordenarOfertas(lista) {
             return lista.sort((a, b) => {
-                // 1. Modelo mais novo primeiro (ID maior = mais novo)
                 const idA = a.variacoes?.produto_id || 0;
                 const idB = b.variacoes?.produto_id || 0;
                 if (idA !== idB) return idB - idA;
 
-                // 2. Menor preço
                 const pA = a.preco;
                 const pB = b.preco;
                 if (pA !== pB) return pA - pB;
 
-                // 3. Atualização mais recente
                 const tA = a.atualizado_em ? new Date(a.atualizado_em).getTime() : new Date(a.criado_em).getTime();
                 const tB = b.atualizado_em ? new Date(b.atualizado_em).getTime() : new Date(b.criado_em).getTime();
                 return tB - tA;
             });
         }
 
-        // Função para obter a insígnia mais poderosa do anunciante
         function getInsigniaAnunciante(fornecedor) {
             if (!fornecedor.insignia_manual || fornecedor.insignia_manual.length === 0) return null;
-            // Percorre a ordem de poder e retorna a primeira que encontrar
             for (let poder of ordemInsigniasAnunciante) {
                 if (fornecedor.insignia_manual.includes(poder)) {
                     return poder;
                 }
             }
-            // Se não encontrar nenhuma na ordem, retorna a primeira (qualquer)
             return fornecedor.insignia_manual[0];
         }
 
-        // Função para renderizar insígnias do buscador
         function renderizarInsignias(usuario) {
             if (!usuario) return '';
             let html = '';
@@ -1042,6 +1032,7 @@
             renderizarCards();
         }
 
+        // ================== RENDERIZAR CARDS COM FRAGMENT ==================
         function renderizarCards() {
             const container = document.getElementById('container-produtos');
             container.innerHTML = '';
@@ -1089,7 +1080,6 @@
                 }
             }
 
-            // Aplicar filtro de oportunidade se ativo
             if (filtroOportunidadeAtivo) {
                 filtradas = filtradas.filter(o => {
                     if (!o.preco_anterior || !o.atualizado_em) return false;
@@ -1099,15 +1089,13 @@
                 });
             }
 
-            // Separar por moeda
             const ofertasBRL = filtradas.filter(o => (o.moeda || 'BRL') === 'BRL');
             const ofertasUSD = filtradas.filter(o => (o.moeda || 'BRL') === 'USD');
 
-            // Ordenar cada grupo
             ordenarOfertas(ofertasBRL);
             ordenarOfertas(ofertasUSD);
 
-            // Função para criar card
+            // Função que cria um card (retorna elemento)
             const criarCard = (o) => {
                 const p = o.variacoes?.produtos_mestre;
                 const f = o.fornecedores;
@@ -1118,10 +1106,9 @@
                 const preco = o.preco;
                 const simbolo = moeda === 'USD' ? 'US$' : 'R$';
 
-                // Determinar cor por aproximação
+                // Cor por aproximação
                 const nomeCor = (v?.cor || '').toUpperCase();
-                let corHexValue = '#808080'; // padrão
-
+                let corHexValue = '#808080';
                 if (nomeCor.includes('PRETO') || nomeCor.includes('BLACK') || nomeCor.includes('MEIA-NOITE') || nomeCor.includes('GRAFITE') || nomeCor.includes('MIDNIGHT')) {
                     corHexValue = '#2d2d2d';
                 } else if (nomeCor.includes('BRANCO') || nomeCor.includes('WHITE') || nomeCor.includes('ESTELAR') || nomeCor.includes('PRATEADO') || nomeCor.includes('STARLIGHT') || nomeCor.includes('SILVER')) {
@@ -1149,7 +1136,6 @@
                 const menorPreco = DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[keyMenor] || Infinity;
                 const isMenor = preco === menorPreco;
 
-                // Tags temporárias (oportunidade e preço em alta)
                 let tagTrend = '';
                 if (o.preco_anterior && o.atualizado_em) {
                     const atualizado = new Date(o.atualizado_em).getTime();
@@ -1161,7 +1147,6 @@
                     }
                 }
 
-                // Molduras comerciais
                 let comerciais = '';
                 if (f.aceita_pix || o.aceita_pix) comerciais += '<span class="commercial-badge"><i class="fa-brands fa-pix"></i> PIX</span>';
                 if (f.aceita_usdt || o.aceita_usdt) comerciais += '<span class="commercial-badge"><i class="fas fa-coins text-green-500"></i> USDT</span>';
@@ -1170,7 +1155,6 @@
                 if (f.motoboy || o.motoboy) comerciais += '<span class="commercial-badge"><i class="fas fa-motorcycle"></i> Motoboy</span>';
                 if (f.aceita_proposta || o.aceita_proposta) comerciais += '<span class="commercial-badge"><i class="fas fa-handshake"></i> Negocia Qtd</span>';
 
-                // Insígnias do anunciante (apenas a mais poderosa, em formato de emoji)
                 const insigniaAnunciante = getInsigniaAnunciante(f);
                 let insigniaHTML = '';
                 if (insigniaAnunciante && emojiInsignia[insigniaAnunciante]) {
@@ -1184,7 +1168,6 @@
                     return 'Boa noite';
                 })();
 
-                // Mensagem do WhatsApp padronizada
                 const msgZap = encodeURIComponent(
                     `${saudacao}! Se liga nessa oferta especial 🔥 que encontrei:\n\n` +
                     `${p.nome} ${v?.capacidade || ''} ${v?.cor || ''}\n` +
@@ -1250,7 +1233,7 @@
                 return card;
             };
 
-            // Decidir layout
+            // Construir usando fragment para melhor performance
             if (ofertasUSD.length > 0) {
                 container.innerHTML = `
                     <div class="grid-moedas">
@@ -1260,28 +1243,35 @@
                 `;
                 const colunaBRL = document.getElementById('coluna-brl');
                 const colunaUSD = document.getElementById('coluna-usd');
+
+                const fragmentBRL = document.createDocumentFragment();
                 ofertasBRL.forEach(o => {
                     const card = criarCard(o);
-                    if (card) colunaBRL.appendChild(card);
+                    if (card) fragmentBRL.appendChild(card);
                 });
+                colunaBRL.appendChild(fragmentBRL);
+
+                const fragmentUSD = document.createDocumentFragment();
                 ofertasUSD.forEach(o => {
                     const card = criarCard(o);
-                    if (card) colunaUSD.appendChild(card);
+                    if (card) fragmentUSD.appendChild(card);
                 });
+                colunaUSD.appendChild(fragmentUSD);
             } else {
                 container.innerHTML = `<div id="grid-unico" class="grid-cards"></div>`;
                 const grid = document.getElementById('grid-unico');
+                const fragment = document.createDocumentFragment();
                 ofertasBRL.forEach(o => {
                     const card = criarCard(o);
-                    if (card) grid.appendChild(card);
+                    if (card) fragment.appendChild(card);
                 });
+                grid.appendChild(fragment);
             }
 
             if (filtradas.length === 0) {
                 container.innerHTML = '<p class="text-center text-gray-400 col-span-full py-10">Nenhum aparelho encontrado com estes filtros.</p>';
             }
 
-            // Atualiza badge de alertas sempre que os cards são renderizados (preços podem ter mudado)
             atualizarBadgeAlertas();
         }
 
@@ -1291,8 +1281,6 @@
                 alert('Faça login para curtir.');
                 return;
             }
-
-            // Master (id 0) - apenas simula visualmente
             if (currentUser.id === 0) {
                 const curtido = btn.classList.contains('text-blue-500');
                 if (curtido) {
@@ -1304,7 +1292,6 @@
                 }
                 return;
             }
-
             const temCurtida = minhasCurtidas.has(ofertaId);
             if (temCurtida) {
                 await _s.from('curtidas').delete().eq('cliente_id', currentUser.id).eq('oferta_id', ofertaId);
@@ -1344,7 +1331,7 @@
         async function abrirPerguntas(ofertaId, titulo, fornecedorId) {
             document.getElementById('perguntaOfertaId').value = ofertaId;
             document.getElementById('perguntaFornecedorId').value = fornecedorId;
-            document.getElementById('perguntaTitulo').innerText = titulo; // apenas o nome do aparelho
+            document.getElementById('perguntaTitulo').innerText = titulo;
             await carregarPerguntas(ofertaId);
             document.getElementById('perguntasModal').classList.remove('hidden');
         }
@@ -1362,7 +1349,7 @@
             
             const lista = document.getElementById('listaPerguntas');
             if (!data || data.length === 0) {
-                lista.innerHTML = ''; // sem mensagem
+                lista.innerHTML = '';
                 return;
             }
             lista.innerHTML = data.map(p => `
@@ -1379,10 +1366,20 @@
 
         async function enviarPergunta(e) {
             e.preventDefault();
-            if (!currentUser || currentUser.id === 0) {
+            
+            // Caso master (id 0) - simula envio sem banco
+            if (currentUser && currentUser.id === 0) {
+                alert('Proposta simulada com sucesso! (Modo Master não salva no banco).');
+                document.getElementById('perguntaTexto').value = '';
+                fecharPerguntas();
+                return;
+            }
+
+            if (!currentUser) {
                 alert('Você precisa estar logado para enviar uma proposta.');
                 return;
             }
+
             const ofertaId = document.getElementById('perguntaOfertaId').value;
             const fornecedorId = document.getElementById('perguntaFornecedorId').value;
             const pergunta = document.getElementById('perguntaTexto').value.trim();
@@ -1495,8 +1492,9 @@
                 alert('Você não tem permissão para alterar dados.');
                 return;
             }
-            const nome = document.getElementById('contaNome').value.trim();
-            const whats = document.getElementById('contaWhats').value.trim();
+            // Forçar maiúsculas no nome e WhatsApp antes de enviar
+            const nome = document.getElementById('contaNome').value.trim().toUpperCase();
+            const whats = document.getElementById('contaWhats').value.trim().toUpperCase();
             const senha = document.getElementById('contaSenha').value.trim();
             const updates = { nome, whatsapp: whats };
             if (senha) updates.senha = senha;
@@ -1527,7 +1525,7 @@
                 const cidade = o.fornecedores?.cidade || 'GERAL';
                 const key = `${pId}_${cidade}`;
                 if (new Date(o.criado_em) < dezDiasAtras) return;
-                const preco = o.moeda === 'USD' ? o.preco : o.preco; // mantém original
+                const preco = o.moeda === 'USD' ? o.preco : o.preco;
                 if (!historico[key]) {
                     historico[key] = {
                         nome: o.variacoes?.produtos_mestre?.nome || 'Produto',
