@@ -5,12 +5,10 @@
         const masterAuth = localStorage.getItem('iFipe_Master_Auth');
         const status = localStorage.getItem('iFipe_Status');
 
-        // Se não tem token de anunciante nem é master, volta para o login
         if (!a_tok && masterAuth !== 'gov_absoluto') {
             window.location.replace('index.html');
         }
 
-        // Se o sistema estiver em manutenção e não for master, mostra mensagem de bloqueio
         if (status === 'off' && masterAuth !== 'gov_absoluto') {
             document.documentElement.innerHTML = '<body style="background:#050505;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif;text-align:center;padding:20px;margin:0;"><div><h1 style="color:#0071e3;margin-bottom:15px;font-style:italic;font-weight:900;font-size:2.5rem;text-transform:uppercase;letter-spacing:-2px;">iFipe</h1><p style="color:#888;font-weight:bold;letter-spacing:1px;font-size:12px;line-height:1.6;text-transform:uppercase;">Estamos em atualização para trazer melhorias para você.<br><br>Até logo, time iFipe.</p><button onclick="window.location.replace(\'index.html\')" style="margin-top:30px;background:#1a1a1a;color:#fff;border:1px solid #333;padding:12px 24px;border-radius:50px;font-weight:900;cursor:pointer;font-size:10px;text-transform:uppercase;">Voltar ao Início</button></div></body>';
             window.stop();
@@ -29,6 +27,7 @@
         .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
         .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; }
         .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 11px; text-transform: uppercase; }
+        .apple-input:focus { border-color: var(--blue-sober); }
         
         .btn-header { display: flex; align-items: center; justify-content: center; border-radius: 12px; height: 38px; padding: 0 12px; transition: 0.3s; border: 1px solid var(--border); text-decoration: none; gap: 6px; cursor: pointer; position: relative; }
         .btn-header span { font-size: 10px; font-weight: 900; text-transform: uppercase; }
@@ -90,6 +89,10 @@
             cursor: pointer; transition: background 0.2s; font-weight: 500;
         }
         .drawer-item:hover { background: var(--input); color: var(--blue-sober); }
+
+        /* Classe para maiúsculas visual */
+        .uppercase-input { text-transform: uppercase; }
+        .uppercase-input::placeholder { text-transform: none; }
     </style>
 </head><body id="appBody">
 
@@ -107,7 +110,7 @@
         <div class="drawer-item" onclick="fecharDrawer(); document.getElementById('publicar').scrollIntoView({behavior:'smooth'})">
             <i class="fas fa-plus-circle w-5"></i> Publicar
         </div>
-        <div class="drawer-item" onclick="fecharDrawer(); abrirCalcDrawer()">
+        <div class="drawer-item" onclick="fecharDrawer(); document.getElementById('calcDrawer').scrollIntoView({behavior:'smooth'})">
             <i class="fas fa-calculator w-5"></i> Calculadora
         </div>
         <div class="drawer-item" onclick="fecharDrawer(); abrirSino()">
@@ -117,14 +120,11 @@
             <i class="fas fa-sign-out-alt w-5"></i> Sair
         </div>
 
-        <!-- Calculadora no drawer (mobile) -->
-        <div class="apple-card p-3 mt-6">
+        <!-- Calculadora no drawer (mobile) - modelo limpo -->
+        <div id="calcDrawer" class="apple-card p-3 mt-6">
             <h3 class="text-sm font-bold mb-2 text-center">Calculadora de iPhone</h3>
             <div class="mb-2">
-                <input type="number" id="calcUsdMobile" class="apple-input text-xs py-1.5" placeholder="USD" min="0" step="0.01" oninput="calcularImportacaoMobile()" value="">
-            </div>
-            <div class="grid grid-cols-2 gap-1 text-xs mb-2">
-                <div><span class="text-gray-400">Binance</span><div id="calcBinanceMobile" class="font-bold text-yellow-500">R$ --</div></div>
+                <input type="number" id="calcUsdMobile" class="apple-input text-xs py-1.5 uppercase-input" placeholder="USD" min="0" step="0.01" oninput="calcularImportacaoMobile()" value="">
             </div>
             <div class="bg-[#2c2c2e] p-2 rounded-lg mb-2">
                 <span class="text-xs text-gray-400">Custo Base</span>
@@ -180,6 +180,7 @@
 
     <main class="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 pt-6 px-4 pb-20">
         
+        <!-- Coluna esquerda (Status + Calculadora Desktop + Publicar) -->
         <div class="lg:col-span-4 space-y-6">
             <!-- Card de Status (Insígnias) -->
             <div class="apple-card" id="dashboard">
@@ -187,17 +188,11 @@
                 <div id="userInsignias" class="flex flex-wrap gap-2"></div>
             </div>
 
-            <!-- Card da Calculadora (Desktop) -->
+            <!-- Calculadora Desktop (limpa, sem Binance) -->
             <div class="apple-card hidden lg:block">
                 <h2 class="text-sm font-bold mb-3 text-center">Calculadora de iPhone</h2>
                 <div class="mb-3">
-                    <input type="number" id="calcUsd" class="apple-input text-xs py-2" placeholder="Preço em USD" min="0" step="0.01" oninput="calcularImportacao()" value="">
-                </div>
-                <div class="grid grid-cols-2 gap-2 text-xs mb-3">
-                    <div>
-                        <span class="text-gray-400">Binance</span>
-                        <div id="calcBinance" class="font-bold text-yellow-500">R$ --</div>
-                    </div>
+                    <input type="number" id="calcUsd" class="apple-input text-xs py-2 uppercase-input" placeholder="Preço em USD" min="0" step="0.01" oninput="calcularImportacao()" value="">
                 </div>
                 <div class="bg-[#2c2c2e] p-2 rounded-xl mb-3">
                     <span class="text-xs text-gray-400">Custo Base no Brasil</span>
@@ -257,13 +252,13 @@
                         </div>
 
                         <div class="grid grid-cols-2 gap-2 mb-2">
-                            <input type="number" id="f_qtd" class="apple-input" placeholder="QTD" min="0" required>
+                            <input type="number" id="f_qtd" class="apple-input uppercase-input" placeholder="QTD" min="0" required>
                             <select id="f_orig" class="apple-input" required></select>
                         </div>
                         
                         <div class="grid grid-cols-2 gap-2 mb-2">
-                            <input type="text" id="f_usd" class="apple-input" placeholder="$ USD" oninput="mascara(this); document.getElementById('f_brl').value=''">
-                            <input type="text" id="f_brl" class="apple-input" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('f_usd').value=''">
+                            <input type="text" id="f_usd" class="apple-input uppercase-input" placeholder="$ USD" oninput="mascara(this); document.getElementById('f_brl').value=''">
+                            <input type="text" id="f_brl" class="apple-input uppercase-input" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('f_usd').value=''">
                         </div>
 
                         <div class="grid grid-cols-2 gap-2 mt-3 bg-[#1c1c1e] p-3 rounded-lg border border-[#38383a]">
@@ -281,6 +276,7 @@
             </div>
         </div>
 
+        <!-- Coluna direita (Tabela de Ofertas) -->
         <div class="lg:col-span-8">
             <div class="apple-card min-h-[600px] flex flex-col">
                 <div class="flex justify-between items-center mb-4 bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a]">
@@ -336,7 +332,7 @@
         </div>
     </div>
 
-    <!-- Modal de confirmação de resposta (pode ser usado para feedback) -->
+    <!-- Modal de confirmação de resposta -->
     <div id="respostaModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
         <div class="apple-card max-w-[400px] w-full border-green-500">
             <h3 class="text-xs font-black uppercase text-green-500 mb-4 text-center">✅ RESPOSTA ENVIADA</h3>
@@ -345,7 +341,7 @@
         </div>
     </div>
 
-    <!-- Modal de Conta (existente) -->
+    <!-- Modal de Conta -->
     <div id="contaModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
         <div class="apple-card max-w-[400px] w-full border-[#38383a]">
             <h3 class="text-xs font-black uppercase text-white mb-4 text-center">⚙️ MINHA CONTA</h3>
@@ -353,11 +349,11 @@
             <form onsubmit="salvarConta(event)" class="space-y-4">
                 <div>
                     <label class="text-[8px] text-gray-400 font-bold uppercase mb-1 block">NOME DA LOJA</label>
-                    <input type="text" id="c_nome" class="apple-input w-full text-left" required>
+                    <input type="text" id="c_nome" class="apple-input w-full text-left uppercase-input" required>
                 </div>
                 <div>
                     <label class="text-[8px] text-gray-400 font-bold uppercase mb-1 block">WHATSAPP (SOMENTE NÚMEROS)</label>
-                    <input type="text" id="c_whats" class="apple-input w-full text-left" required>
+                    <input type="text" id="c_whats" class="apple-input w-full text-left uppercase-input" required>
                 </div>
                 <div>
                     <label class="text-[8px] text-gray-400 font-bold uppercase mb-1 block">NOVA SENHA (DEIXE EM BRANCO PARA MANTER)</label>
@@ -371,14 +367,14 @@
         </div>
     </div>
 
-    <!-- Modal Bulk (existente) -->
+    <!-- Modal Bulk -->
     <div id="bulkModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
         <div class="apple-card max-w-[500px] w-full border-[#3b82f6]">
             <h3 class="text-xs font-black uppercase text-[#fff] mb-4 text-center">EDIÇÃO EM MASSA</h3>
             <form onsubmit="doBulk(event)" class="space-y-4">
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="b_preco" class="apple-input" placeholder="NOVO PREÇO" oninput="mascara(this)">
-                    <input type="number" id="b_qtd" class="apple-input" placeholder="NOVA QTD" min="0">
+                    <input type="text" id="b_preco" class="apple-input uppercase-input" placeholder="NOVO PREÇO" oninput="mascara(this)">
+                    <input type="number" id="b_qtd" class="apple-input uppercase-input" placeholder="NOVA QTD" min="0">
                     <select id="b_cond" class="apple-input">
                         <option value="">MANTER CONDIÇÃO...</option>
                         <option value="Novo">NOVO</option>
@@ -468,13 +464,11 @@
                 console.error('Erro de parse nas insígnias manuais'); 
             }
 
-            // Insígnias manuais
             manuais.forEach(nome => {
                 const emoji = emojiInsignia[nome] || '🔰';
                 html += `<span class="insignia-badge" style="color:#60a5fa; border-color:#3b82f6;">${emoji} ${nome}</span>`;
             });
 
-            // Insígnias automáticas por volume (já existentes)
             let t = ofertas.reduce((a, b) => a + (b.quantidade || 0), 0);
             if (t >= 1000) html += '<span class="insignia-badge califa">👑 CALIFA</span>';
             else if (t >= 200) html += '<span class="insignia-badge rei">🛡️ REI</span>';
@@ -518,8 +512,6 @@
                 rate = parseFloat(JSON.parse(e.data).c);
                 document.getElementById('tBin').innerText = `R$ ${rate.toFixed(4)}`;
                 document.getElementById('tOra').innerText = `R$ ${(rate+0.06).toFixed(4)}`;
-                document.getElementById('calcBinance').innerText = `R$ ${rate.toFixed(4)}`;
-                document.getElementById('calcBinanceMobile').innerText = `R$ ${rate.toFixed(4)}`;
                 calcularImportacao();
                 calcularImportacaoMobile();
             };
@@ -549,7 +541,6 @@
             document.getElementById('f_orig').innerHTML = htmlOrigem;
             
             upTab();
-            // Atualiza insígnias após carregar ofertas
             document.getElementById('userInsignias').innerHTML = renderizarInsignias(loja);
         };
 
@@ -601,12 +592,8 @@
             document.getElementById('drawer').classList.remove('open'); 
             document.getElementById('drawerOverlay').classList.remove('open'); 
         }
-        function abrirCalcDrawer() {
-            fecharDrawer();
-            document.getElementById('calcUsdMobile').focus();
-        }
 
-        // Funções de conta (existentes)
+        // Funções de conta
         function abrirConta() {
             document.getElementById('c_nome').value = loja.nome || '';
             document.getElementById('c_whats').value = loja.whatsapp || '';
@@ -616,8 +603,8 @@
         function fecharConta() { document.getElementById('contaModal').classList.add('hidden'); }
         async function salvarConta(e) {
             e.preventDefault();
-            let n = document.getElementById('c_nome').value;
-            let w = document.getElementById('c_whats').value;
+            let n = document.getElementById('c_nome').value.toUpperCase().trim();
+            let w = document.getElementById('c_whats').value.toUpperCase().trim();
             let s = document.getElementById('c_senha').value;
             let updates = { nome: n, whatsapp: w };
             if(s.trim() !== '') updates.senha = s;
@@ -627,7 +614,7 @@
             window.location.reload();
         }
 
-        // Funções de propostas
+        // Funções de propostas (mantidas intactas)
         let propostasPendentes = [];
         let propostasRespondidas = [];
 
@@ -656,7 +643,6 @@
             propostasPendentes = data.filter(p => !p.resposta);
             propostasRespondidas = data.filter(p => p.resposta);
 
-            // Atualizar badge do sino
             const badge = document.getElementById('badgeSino');
             if (propostasPendentes.length > 0) {
                 badge.innerText = propostasPendentes.length;
@@ -684,7 +670,7 @@
                     </div>
                     <p class="text-[10px] font-bold mb-1">${produto} ${capacidade} ${cor}</p>
                     <p class="text-[10px] mb-2">${p.pergunta}</p>
-                    <textarea id="resp_${p.id}" class="apple-input text-[9px] h-16 mb-2" placeholder="Digite sua resposta..."></textarea>
+                    <textarea id="resp_${p.id}" class="apple-input text-[9px] h-16 mb-2 uppercase-input" placeholder="Digite sua resposta..."></textarea>
                     <button onclick="responderProposta(${p.id})" class="btn-lancar text-[9px] py-2">RESPONDER</button>
                 </div>
             `}).join('');
@@ -742,13 +728,12 @@
             if (error) {
                 alert('Erro ao responder: ' + error.message);
             } else {
-                // Fecha o modal de propostas e mostra confirmação
                 fecharPropostas();
                 document.getElementById('respostaModal').classList.remove('hidden');
                 setTimeout(() => {
                     document.getElementById('respostaModal').classList.add('hidden');
                 }, 2000);
-                await carregarPropostas(); // recarrega para atualizar badge
+                await carregarPropostas();
             }
         }
 
@@ -756,7 +741,7 @@
             document.getElementById('respostaModal').classList.add('hidden');
         }
 
-        // Funções de publicação (existentes)
+        // Funções de publicação
         function selTipo(t) {
             document.getElementById('f_tipo').value = t;
             document.getElementById('btN').classList.toggle('active', t==='Novo'); 
@@ -803,12 +788,22 @@
             if (isNaN(q) || q < 0) q = 0;
 
             await _s.from('ofertas').insert([{
-                fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('f_orig').value,
-                preco: precoFinal, moeda: isBrl ? 'BRL' : 'USD', quantidade: q,
+                fornecedor_id: loja.id, 
+                variacao_id: v.id, 
+                regiao_id: document.getElementById('f_orig').value,
+                preco: precoFinal, 
+                moeda: isBrl ? 'BRL' : 'USD', 
+                quantidade: q,
                 condicao: tipo==='Novo'?'Novo':document.getElementById('f_cond').value,
                 saude_bateria: b,
                 garantia: g,
-                aceita_pix: document.getElementById('m_pix').checked, aceita_usdt: document.getElementById('m_usdt').checked, emite_nota: document.getElementById('m_nota').checked, faz_envio: document.getElementById('m_envi').checked, aceita_coleta: document.getElementById('m_cole').checked, aceita_proposta: document.getElementById('m_neg').checked, status_aprovacao: 'aprovado'
+                aceita_pix: document.getElementById('m_pix').checked, 
+                aceita_usdt: document.getElementById('m_usdt').checked, 
+                emite_nota: document.getElementById('m_nota').checked, 
+                faz_envio: document.getElementById('m_envi').checked, 
+                aceita_coleta: document.getElementById('m_cole').checked, 
+                aceita_proposta: document.getElementById('m_neg').checked, 
+                status_aprovacao: 'aprovado'
             }]);
             window.location.reload();
         }
@@ -823,7 +818,7 @@
             const moeda = oferta.moeda;
 
             const concorrentes = ofertasGlobais.filter(o => 
-                o.id !== oferta.id && // não é a própria oferta
+                o.id !== oferta.id && 
                 o.quantidade > 0 &&
                 o.variacoes?.produto_id === produtoId &&
                 o.variacoes?.capacidade === capacidade &&
@@ -868,7 +863,6 @@
                 
                 let precoDisplay = o.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-                // Verificar concorrência
                 const concorrente = encontrarConcorrente(o);
                 let alertaConcorrencia = '';
                 if (concorrente) {
@@ -899,11 +893,9 @@
                 </tr>`;
             }).join('');
             
-            // Atualiza insígnias
             document.getElementById('userInsignias').innerHTML = renderizarInsignias(loja);
         }
 
-        // Funções de edição e bulk (existentes)
         async function edit(id, c, v) { 
             let val;
             if (c === 'preco') {
@@ -957,7 +949,7 @@
             fecharBulk(); upTab();
         }
 
-        // ========== FUNÇÃO CORRIGIDA DO WHATSAPP ==========
+        // Função copiarListaWhatsApp corrigida
         async function copiarListaWhatsApp() {
             let ofertasAtivas = ofertas.filter(o => o.quantidade > 0);
             
@@ -976,7 +968,6 @@
 
             text += `*${saudacao} 🚀🔥*\n\n`;
 
-            // Variável para controlar se a cidade já foi exibida
             let cidadeExibida = false;
 
             // Bloco NOVOS
