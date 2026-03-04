@@ -411,7 +411,7 @@
                 </div>
             </div>
             
-            <!-- Card de status centralizado -->
+            <!-- Card de status centralizado (insígnias do buscador) -->
             <div class="apple-card status-card">
                 <h3 class="text-xs font-bold">Seu status no iFipe 🏆</h3>
                 <div id="userInsignias" class="flex flex-wrap gap-2"></div>
@@ -530,6 +530,36 @@
             menorPrecoPorProdutoGrupo: {} // chave: produtoId_grupo (grupo = 'BRL' ou 'USD')
         };
 
+        // Ordem de poder das insígnias de anunciantes (da mais poderosa para a menos)
+        const ordemInsigniasAnunciante = [
+            "1.000 APARELHOS EM ESTOQUE - KHALIFA DO IPHONE",
+            "700 APARELHOS EM ESTOQUE - SULTÃO DO IPHONE",
+            "500 APARELHOS EM ESTOQUE - SHEIKH DO IPHONE",
+            "200 APARELHOS EM ESTOQUE - EMIR DO IPHONE",
+            "100 APARELHOS EM ESTOQUE - REI DO IPHONE",
+            "50 APARELHOS EM ESTOQUE - MAGNATA IPHONE",
+            "RESPONDER 10 PERGUNTAS - RESPOSTA RAPIDA",
+            "10 RECOMENDACAO - ATACADISTA FAMOSIN 😎",
+            "10 COMPARTILHAMENTOS NO MESMO ANUNCIO - CELEBRIDADE"
+        ];
+
+        // Mapeamento de insígnias de buscadores por número de logins
+        const insigniasBuscador = [
+            { min: 500, nome: "PREÇO DE MIAMI NO BRASIL 🤡" },
+            { min: 400, nome: "PASSANDO FOME" },
+            { min: 350, nome: "DURO IGUAL UM COCO" },
+            { min: 300, nome: "CÃINHA" },
+            { min: 250, nome: "LISEIRA" },
+            { min: 200, nome: "MUQUIRANA" },
+            { min: 150, nome: "SÓ DÁ PREJUÍZO" },
+            { min: 100, nome: "OPORTUNISTA" },
+            { min: 50, nome: "SÓ COMPRA MATANDO" },
+            { min: 30, nome: "TUBARÃO" },
+            { min: 20, nome: "ÁGUIA" },
+            { min: 10, nome: "PEGOU A SENHA" },
+            { min: 1, nome: "LOJISTA EXPERTO" }
+        ];
+
         const corHex = {
             'PRETO': '#2d2d2d', 'BLACK': '#2d2d2d',
             'BRANCO': '#f4f4f4', 'WHITE': '#f4f4f4',
@@ -570,7 +600,7 @@
             }
             
             if (masterAuth === 'gov_absoluto') {
-                currentUser = { id: 0, nome: 'MASTER', whatsapp: '', insignia_manual: [] };
+                currentUser = { id: 0, nome: 'MASTER', whatsapp: '', insignia_manual: [], logins_count: 0 };
                 console.log('Usuário master carregado');
             } else {
                 try {
@@ -625,15 +655,9 @@
                 fornecedores = f.data || [];
                 ofertas = o.data || [];
                 console.log('Ofertas carregadas:', ofertas.length);
-                // Log para verificar se os campos existem
-                ofertas.forEach((o, index) => {
-                    if (index < 5) { // só os primeiros 5 para não poluir
-                        console.log(`Oferta ${o.id}: preco=${o.preco}, preco_anterior=${o.preco_anterior}, atualizado_em=${o.atualizado_em}`);
-                    }
-                });
 
                 popularFiltros();
-                atualizarStatusUsuario();
+                atualizarStatusUsuario(); // Atualiza insígnias do buscador
                 processarMenorPrecoGlobal();
                 renderizarCards();
             } catch (err) {
@@ -672,10 +696,30 @@
             });
         }
 
-        function renderizarCards() {
-            console.log('renderizarCards chamado. Busca =', document.getElementById('searchInput').value);
-            console.log('Total de ofertas:', ofertas.length);
+        // Função para obter a insígnia mais poderosa do anunciante
+        function getInsigniaAnunciante(fornecedor) {
+            if (!fornecedor.insignia_manual || fornecedor.insignia_manual.length === 0) return null;
+            // Percorre a ordem de poder e retorna a primeira que encontrar
+            for (let poder of ordemInsigniasAnunciante) {
+                if (fornecedor.insignia_manual.includes(poder)) {
+                    return poder;
+                }
+            }
+            // Se não encontrar nenhuma na ordem, retorna a primeira (qualquer)
+            return fornecedor.insignia_manual[0];
+        }
 
+        // Função para obter a insígnia do buscador baseada em logins
+        function getInsigniaBuscador(logins) {
+            for (let ins of insigniasBuscador) {
+                if (logins >= ins.min) {
+                    return ins.nome;
+                }
+            }
+            return null;
+        }
+
+        function renderizarCards() {
             const container = document.getElementById('container-produtos');
             container.innerHTML = '';
 
@@ -698,8 +742,6 @@
                 if (fLoj && o.fornecedor_id != fLoj) return false;
                 return true;
             });
-
-            console.log('Ofertas após filtro:', filtradas.length);
 
             // Separar por moeda
             const ofertasBRL = filtradas.filter(o => (o.moeda || 'BRL') === 'BRL');
@@ -733,16 +775,11 @@
                     const agora = Date.now();
                     const atualizado = new Date(o.atualizado_em).getTime();
                     const minutos = (agora - atualizado) / 60000;
-                    console.log(`Oferta ${o.id}: preco=${o.preco}, anterior=${o.preco_anterior}, minutos=${minutos.toFixed(2)}`);
                     if (minutos <= 30 && o.preco < o.preco_anterior) {
                         tagTrend = '<span class="badge badge-green">🤑 Oportunidade Baixou Preço🔻</span>';
-                        console.log('Tag OPORTUNIDADE aplicada');
                     } else if (minutos <= 15 && o.preco > o.preco_anterior) {
                         tagTrend = '<span class="badge badge-orange">📈 Preço em Alta 🥹</span>';
-                        console.log('Tag PREÇO EM ALTA aplicada');
                     }
-                } else {
-                    console.log(`Oferta ${o.id} não tem preco_anterior ou atualizado_em`);
                 }
 
                 // Molduras comerciais
@@ -754,10 +791,11 @@
                 if (f.motoboy || o.motoboy) comerciais += '<span class="commercial-badge"><i class="fas fa-motorcycle"></i> Motoboy</span>';
                 if (f.aceita_proposta || o.aceita_proposta) comerciais += '<span class="commercial-badge"><i class="fas fa-handshake"></i> Negocia Qtd</span>';
 
-                // Insígnias do anunciante
-                let insigniasAnunciante = '';
-                if (f.insignia_manual && f.insignia_manual.length > 0) {
-                    insigniasAnunciante = f.insignia_manual.map(ins => `<span class="badge badge-purple">${ins}</span>`).join(' ');
+                // Insígnias do anunciante (apenas a mais poderosa)
+                const insigniaAnunciante = getInsigniaAnunciante(f);
+                let insigniaHTML = '';
+                if (insigniaAnunciante) {
+                    insigniaHTML = `<span class="badge badge-purple">${insigniaAnunciante}</span>`;
                 }
 
                 const saudacao = (() => {
@@ -796,6 +834,7 @@
                     <div class="flex items-center gap-1 mb-1">
                         <span class="text-xs font-medium">🏢 ${f.nome}</span>
                         ${f.verificado ? '<span class="verified-badge">✓</span>' : ''}
+                        ${insigniaHTML}
                     </div>
                     <p class="text-xs text-gray-400 mb-1">📍 ${f.cidade || ''} - ${f.pais || 'BR'}</p>
                     <div class="flex justify-between items-center mb-2">
@@ -927,7 +966,7 @@
             await carregarPerguntas(ofertaId);
         }
 
-        // FUNÇÕES DA MINHA CONTA (CORRIGIDAS)
+        // FUNÇÕES DA MINHA CONTA
         function abrirConta() {
             console.log('Abrindo conta... currentUser =', currentUser);
             if (!currentUser) {
@@ -953,8 +992,7 @@
         }
 
         function fecharConta() {
-            const modal = document.getElementById('contaModal');
-            if (modal) modal.classList.add('hidden');
+            document.getElementById('contaModal').classList.add('hidden');
         }
 
         async function salvarConta(e) {
@@ -1084,9 +1122,11 @@
 
         function atualizarStatusUsuario() {
             const container = document.getElementById('userInsignias');
-            let insignias = currentUser.insignia_manual || [];
-            if (insignias.length > 0) {
-                container.innerHTML = insignias.map(i => `<span class="status-badge">${i}</span>`).join('');
+            if (!currentUser) return;
+            // Insígnia do buscador baseada em logins
+            const insignia = getInsigniaBuscador(currentUser.logins_count || 0);
+            if (insignia) {
+                container.innerHTML = `<span class="status-badge">${insignia}</span>`;
             } else {
                 container.innerHTML = ''; 
             }
