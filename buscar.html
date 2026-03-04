@@ -158,6 +158,16 @@
         }
         .action-button:hover { color: var(--blue); }
         
+        /* Grid de 4 colunas padrão */
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 0.85rem;
+        }
+        @media (min-width: 640px) { .grid-cards { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .grid-cards { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1280px) { .grid-cards { grid-template-columns: repeat(4, 1fr); } }
+        
         /* Grid de 2 colunas para separar moedas */
         .grid-moedas {
             display: grid;
@@ -188,7 +198,7 @@
         }
         .drawer-item:hover { background: var(--input); color: var(--blue); }
         
-        /* Filtros em grid para mobile sem rolagem */
+        /* Filtros em grid */
         .filters-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -228,7 +238,7 @@
             color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 20px;
         }
 
-        /* Modal Base */
+        /* Modal */
         .modal {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
@@ -246,7 +256,7 @@
             border-radius: 50px; padding: 4px 10px; font-size: 10px; font-weight: 600; display: inline-block;
         }
 
-        /* Ajustes para o card de status */
+        /* Card de status centralizado */
         .status-card {
             min-height: 120px;
             display: flex;
@@ -299,7 +309,7 @@
             </div>
             <div class="grid grid-cols-2 gap-1 text-xs mb-2">
                 <div><span class="text-gray-400">Binance</span><div id="calcBinanceMobile" class="font-bold text-yellow-500">R$ 5,29</div></div>
-                <div><span class="text-gray-400">Oráculo</span><div id="calcOraculoMobile" class="font-bold text-green-400">R$ 5,35</div></div>
+                <!-- Oráculo removido da calculadora -->
             </div>
             <div class="bg-[#2c2c2e] p-2 rounded-lg mb-2">
                 <span class="text-xs text-gray-400">Custo Base</span>
@@ -361,10 +371,7 @@
                         <span class="text-gray-400">Binance</span>
                         <div id="calcBinance" class="font-bold text-yellow-500">R$ 5,2907</div>
                     </div>
-                    <div>
-                        <span class="text-gray-400">Oráculo</span>
-                        <div id="calcOraculo" class="font-bold text-green-400">R$ 5,3507</div>
-                    </div>
+                    <!-- Oráculo removido da calculadora -->
                 </div>
                 <div class="bg-[#2c2c2e] p-2 rounded-xl mb-3">
                     <span class="text-xs text-gray-400">Custo Base no Brasil</span>
@@ -377,7 +384,7 @@
                 </div>
             </div>
             
-            <!-- Card de status -->
+            <!-- Card de status centralizado -->
             <div class="apple-card status-card">
                 <h3 class="text-xs font-bold">Seu status no iFipe 🏆</h3>
                 <div id="userInsignias" class="flex flex-wrap gap-2"></div>
@@ -392,7 +399,7 @@
                 <input type="text" id="searchInput" placeholder="ENCONTRE O MELHOR PREÇO" class="apple-input pl-4 pr-4 py-3 text-base font-medium border-2">
             </div>
 
-            <!-- Filtros em grid (sem rolagem horizontal) -->
+            <!-- Filtros -->
             <div class="filters-grid mb-4">
                 <select id="filtroCategoria" class="apple-input text-xs py-2" onchange="renderizarCards()">
                     <option value="">Modelos</option>
@@ -417,13 +424,8 @@
                 </select>
             </div>
 
-            <!-- Grid de duas colunas para separar moedas -->
-            <div class="grid-moedas">
-                <!-- Coluna BRL (esquerda) -->
-                <div id="coluna-brl" class="coluna-moeda"></div>
-                <!-- Coluna USD (direita) -->
-                <div id="coluna-usd" class="coluna-moeda"></div>
-            </div>
+            <!-- Container dinâmico: ou duas colunas ou grid normal -->
+            <div id="container-produtos"></div>
             
         </div>
     </div>
@@ -483,7 +485,7 @@
     </button>
 
     <script>
-        // 1. CONFIGURAÇÃO SUPABASE
+        // Configuração Supabase
         const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
         const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -596,9 +598,9 @@
                 const pId = o.variacoes?.produto_id;
                 if (!pId) return;
                 const moeda = o.moeda || 'BRL';
-                const grupo = moeda; // 'BRL' ou 'USD' (consideramos que USD é dólar)
+                const grupo = moeda; // 'BRL' ou 'USD'
                 const key = `${pId}_${grupo}`;
-                const preco = o.preco; // sem converter
+                const preco = o.preco;
                 if (!DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[key] || preco < DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[key]) {
                     DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[key] = preco;
                 }
@@ -622,10 +624,8 @@
         }
 
         function renderizarCards() {
-            const colunaBRL = document.getElementById('coluna-brl');
-            const colunaUSD = document.getElementById('coluna-usd');
-            colunaBRL.innerHTML = '';
-            colunaUSD.innerHTML = '';
+            const container = document.getElementById('container-produtos');
+            container.innerHTML = '';
 
             const busca = document.getElementById('searchInput').value.toLowerCase().trim();
             const fCat = document.getElementById('filtroCategoria').value;
@@ -651,11 +651,11 @@
             const ofertasBRL = filtradas.filter(o => (o.moeda || 'BRL') === 'BRL');
             const ofertasUSD = filtradas.filter(o => (o.moeda || 'BRL') === 'USD');
 
-            // Ordenar cada grupo por preço (menor primeiro)
+            // Ordenar cada grupo
             ofertasBRL.sort((a, b) => a.preco - b.preco);
             ofertasUSD.sort((a, b) => a.preco - b.preco);
 
-            // Função para criar card
+            // Função para criar card (igual ao anterior, mas com ícone de fogo e sem contador)
             const criarCard = (o) => {
                 const p = o.variacoes?.produtos_mestre;
                 const f = o.fornecedores;
@@ -668,11 +668,12 @@
                 const corNome = (v?.cor || '').trim().toUpperCase();
                 const corHexValue = corHex[corNome] || corHex[corNome.replace(/\s+/g, ' ')] || '#808080';
 
-                const grupo = moeda; // 'BRL' ou 'USD'
+                const grupo = moeda;
                 const keyMenor = `${p.id}_${grupo}`;
                 const menorPreco = DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[keyMenor] || Infinity;
                 const isMenor = preco === menorPreco;
 
+                // Tags temporárias (só se houver dados)
                 let tagTrend = '';
                 if (o.preco_anterior && o.atualizado_em) {
                     const minutos = (Date.now() - new Date(o.atualizado_em).getTime()) / 60000;
@@ -683,6 +684,7 @@
                     }
                 }
 
+                // Molduras comerciais
                 let comerciais = '';
                 if (f.aceita_pix || o.aceita_pix) comerciais += '<span class="commercial-badge"><i class="fa-brands fa-pix"></i> PIX</span>';
                 if (f.aceita_usdt || o.aceita_usdt) comerciais += '<span class="commercial-badge"><i class="fas fa-coins text-green-500"></i> USDT</span>';
@@ -750,19 +752,37 @@
                 return card;
             };
 
-            // Preencher colunas
-            ofertasBRL.forEach(o => {
-                const card = criarCard(o);
-                if (card) colunaBRL.appendChild(card);
-            });
-            ofertasUSD.forEach(o => {
-                const card = criarCard(o);
-                if (card) colunaUSD.appendChild(card);
-            });
+            // Decidir layout
+            if (ofertasUSD.length > 0) {
+                // Duas colunas
+                container.innerHTML = `
+                    <div class="grid-moedas">
+                        <div id="coluna-brl" class="coluna-moeda"></div>
+                        <div id="coluna-usd" class="coluna-moeda"></div>
+                    </div>
+                `;
+                const colunaBRL = document.getElementById('coluna-brl');
+                const colunaUSD = document.getElementById('coluna-usd');
+                ofertasBRL.forEach(o => {
+                    const card = criarCard(o);
+                    if (card) colunaBRL.appendChild(card);
+                });
+                ofertasUSD.forEach(o => {
+                    const card = criarCard(o);
+                    if (card) colunaUSD.appendChild(card);
+                });
+            } else {
+                // Uma grade com 4 colunas (todos BRL)
+                container.innerHTML = `<div id="grid-unico" class="grid-cards"></div>`;
+                const grid = document.getElementById('grid-unico');
+                ofertasBRL.forEach(o => {
+                    const card = criarCard(o);
+                    if (card) grid.appendChild(card);
+                });
+            }
 
-            // Se não houver ofertas em BRL, mostrar mensagem
-            if (ofertasBRL.length === 0 && ofertasUSD.length === 0) {
-                colunaBRL.innerHTML = '<p class="text-center text-gray-400 col-span-full py-10">Nenhum aparelho encontrado com estes filtros.</p>';
+            if (filtradas.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 col-span-full py-10">Nenhum aparelho encontrado com estes filtros.</p>';
             }
         }
 
@@ -883,7 +903,7 @@
                 const cidade = o.fornecedores?.cidade || 'GERAL';
                 const key = `${pId}_${cidade}`;
                 if (new Date(o.criado_em) < dezDiasAtras) return;
-                const preco = o.moeda === 'USD' ? o.preco : o.preco; // mantém moeda original? Para histórico, talvez converter? Vamos manter como está
+                const preco = o.moeda === 'USD' ? o.preco : o.preco; // mantém original
                 if (!historico[key]) {
                     historico[key] = {
                         nome: o.variacoes?.produtos_mestre?.nome || 'Produto',
