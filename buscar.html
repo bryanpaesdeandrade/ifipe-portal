@@ -424,12 +424,14 @@
     </style>
 </head>
 <body class="dark-mode">
+    <!-- DRAWER (menu hambúrguer mobile) com calculadora reinserida -->
     <div id="drawerOverlay" class="drawer-overlay" onclick="fecharDrawer()"></div>
     <div id="drawer" class="drawer">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold">Menu</h2>
             <button onclick="fecharDrawer()" class="text-2xl">&times;</button>
         </div>
+        <!-- Calculadora no drawer (reinserida) -->
         <div class="apple-card p-4 mb-4">
             <h3 class="text-base font-bold mb-2">Calculadora iPhone</h3>
             <div class="mb-2">
@@ -479,6 +481,7 @@
         </div>
     </div>
 
+    <!-- NAVBAR -->
     <nav class="nav-blur fixed top-0 w-full z-50 px-4 lg:px-5 py-2 flex items-center justify-between">
         <div class="flex items-center gap-2 lg:gap-3">
             <button class="mobile-only text-2xl" onclick="abrirDrawer()">☰</button>
@@ -515,6 +518,7 @@
     </nav>
 
     <div class="pt-16 lg:pt-20 px-4 lg:px-5 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <!-- Sidebar (desktop) -->
         <div class="desktop-only lg:col-span-1 sidebar">
             <div class="apple-card p-4 mb-4 calc-card">
                 <h2 class="text-base font-bold mb-2">Calculadora iPhone</h2>
@@ -559,12 +563,14 @@
             </div>
         </div>
 
+        <!-- Conteúdo principal -->
         <div class="lg:col-span-4">
             <div class="mb-3 relative">
                 <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-4 pr-4 py-2 text-base lg:text-lg">
                 <div id="sugestoes" class="absolute bg-[#1c1c1e] border border-[#38383a] rounded-lg mt-1 w-full max-h-60 overflow-y-auto hidden z-10"></div>
             </div>
 
+            <!-- FILTROS COM ONCHANGE PARA ATUALIZAÇÃO IMEDIATA -->
             <div class="filter-bar mb-3 pb-1">
                 <select id="filtroCategoria" class="apple-input text-xs py-1.5" onchange="renderizarCards()">
                     <option value="">Todos modelos</option>
@@ -593,6 +599,7 @@
         </div>
     </div>
 
+    <!-- MODAIS -->
     <div id="criarAlertaModal" class="modal hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Criar Alerta de Preço</h2>
@@ -624,7 +631,8 @@
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Notificações</h2>
             <div id="listaNotificacoes" class="space-y-3 max-h-96 overflow-y-auto">
-                </div>
+                <!-- Será preenchido via JS -->
+            </div>
             <button onclick="fecharNotificacoes()" class="btn-apple-secondary w-full mt-6">Fechar</button>
         </div>
     </div>
@@ -634,7 +642,8 @@
             <h2 class="text-2xl font-bold mb-4">Histórico de Preços</h2>
             <p class="text-sm text-gray-400 mb-4">Média dos últimos 10 dias por produto (por cidade)</p>
             <div id="listaHistorico" class="space-y-3 max-h-96 overflow-y-auto">
-                </div>
+                <!-- Será preenchido via JS -->
+            </div>
             <button onclick="fecharHistoricoGeral()" class="btn-apple-secondary w-full mt-6">Fechar</button>
         </div>
     </div>
@@ -661,7 +670,7 @@
         let DADOS_PROCESSADOS = {
             menorPrecoPorProduto: {},    // { produtoId: menorPreco }
             mediaPorProdutoECidade: {},  // { "produtoId_cidade": media }
-            ultimaAlteracao: {}          // { ofertaId: { timestamp, precoAnterior } } - agora sem mock
+            ultimaAlteracao: {}           // { ofertaId: { timestamp, precoAnterior } } - agora sem mock
         };
 
         // Timers
@@ -983,58 +992,42 @@
         // Funções auxiliares
         function popularFiltros() {
             const catSelect = document.getElementById('filtroCategoria');
-            // Só popula se estiver vazio para evitar duplicatas em re-renderizações
-            if(catSelect.options.length <= 1) {
-                produtos.forEach(p => {
-                    catSelect.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
-                });
-            }
+            produtos.forEach(p => {
+                catSelect.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+            });
 
+            const caps = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
             const capSelect = document.getElementById('filtroCapacidade');
-            if(capSelect.options.length <= 1) {
-                const caps = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
-                caps.forEach(c => {
-                    capSelect.innerHTML += `<option value="${c}">${c}</option>`;
-                });
-            }
+            caps.forEach(c => {
+                capSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
 
+            const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
             const corSelect = document.getElementById('filtroCor');
-            if(corSelect.options.length <= 1) {
-                const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
-                cores.forEach(c => {
-                    corSelect.innerHTML += `<option value="${c}">${c}</option>`;
-                });
-            }
+            cores.forEach(c => {
+                corSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
 
+            const cidades = [...new Set(fornecedores.map(f => f.cidade).filter(Boolean))];
             const cidadeSelect = document.getElementById('filtroCidade');
-            if(cidadeSelect.options.length <= 1) {
-                const cidades = [...new Set(fornecedores.map(f => f.cidade).filter(Boolean))];
-                cidades.forEach(c => {
-                    cidadeSelect.innerHTML += `<option value="${c}">${c}</option>`;
-                });
-            }
+            cidades.forEach(c => {
+                cidadeSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
 
             const lojistaSelect = document.getElementById('filtroLojista');
-            if(lojistaSelect.options.length <= 1) {
-                fornecedores.forEach(f => {
-                    lojistaSelect.innerHTML += `<option value="${f.id}">${f.nome}</option>`;
-                });
-            }
+            fornecedores.forEach(f => {
+                lojistaSelect.innerHTML += `<option value="${f.id}">${f.nome}</option>`;
+            });
 
             const alertaProd = document.getElementById('alertaProduto');
-            if(alertaProd.options.length <= 1) {
-                produtos.forEach(p => {
-                    alertaProd.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
-                });
-            }
+            produtos.forEach(p => {
+                alertaProd.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+            });
 
             const alertaCap = document.getElementById('alertaCapacidade');
-            if(alertaCap.options.length <= 1) {
-                const caps = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
-                caps.forEach(c => {
-                    alertaCap.innerHTML += `<option value="${c}">${c}</option>`;
-                });
-            }
+            caps.forEach(c => {
+                alertaCap.innerHTML += `<option value="${c}">${c}</option>`;
+            });
         }
 
         function atualizarStatusUsuario() {
@@ -1061,11 +1054,7 @@
                     document.getElementById('taxaVip').innerText = `R$ ${rateOraculo.toFixed(4)}`;
                     atualizarCalculadora();
                     atualizarCalculadoraMobile();
-                    // Apenas atualiza os cards se não houver interação na busca, igual ao setInterval
-                    const searchValue = document.getElementById('searchInput').value.trim();
-                    if(searchValue === '') {
-                        renderizarCards();
-                    }
+                    renderizarCards(); // atualiza preços em USD
                 };
             } catch (e) {
                 console.warn('WebSocket falhou');
@@ -1081,17 +1070,15 @@
             document.getElementById('calcBinance').innerText = `R$ ${rateBinance.toFixed(4)}`;
             document.getElementById('calcOraculo').innerText = `R$ ${taxa.toFixed(4)}`;
 
-            let atacado = 0, atacarejo = 0, varejo = 0;
-            if(usd > 0) {
-                if (usd <= 750) {
-                    atacado = custoBase * 1.20;
-                    atacarejo = custoBase * 1.40;
-                    varejo = custoBase * 1.55;
-                } else {
-                    atacado = custoBase + 350;
-                    atacarejo = custoBase + 550;
-                    varejo = custoBase + 1000;
-                }
+            let atacado, atacarejo, varejo;
+            if (usd <= 750) {
+                atacado = custoBase * 1.20;
+                atacarejo = custoBase * 1.40;
+                varejo = custoBase * 1.55;
+            } else {
+                atacado = custoBase + 350;
+                atacarejo = custoBase + 550;
+                varejo = custoBase + 1000;
             }
             document.getElementById('precoAtacado').innerText = `R$ ${atacado.toFixed(2)}`;
             document.getElementById('precoAtacarejo').innerText = `R$ ${atacarejo.toFixed(2)}`;
@@ -1099,27 +1086,23 @@
         }
 
         function atualizarCalculadoraMobile() {
-            const usdInput = document.getElementById('calcUsdMobile');
-            if(!usdInput) return;
-            const usd = parseFloat(usdInput.value) || 0;
-            if (usd < 0) usdInput.value = 0;
+            const usd = parseFloat(document.getElementById('calcUsdMobile').value) || 0;
+            if (usd < 0) document.getElementById('calcUsdMobile').value = 0;
             const taxa = rateBinance + 0.06;
             const custoBase = (usd * taxa) * 1.06;
             document.getElementById('custoFinalMobile').innerText = `R$ ${custoBase.toFixed(2)}`;
             document.getElementById('calcBinanceMobile').innerText = `R$ ${rateBinance.toFixed(4)}`;
             document.getElementById('calcOraculoMobile').innerText = `R$ ${taxa.toFixed(4)}`;
 
-            let atacado = 0, atacarejo = 0, varejo = 0;
-            if(usd > 0) {
-                if (usd <= 750) {
-                    atacado = custoBase * 1.20;
-                    atacarejo = custoBase * 1.40;
-                    varejo = custoBase * 1.55;
-                } else {
-                    atacado = custoBase + 350;
-                    atacarejo = custoBase + 550;
-                    varejo = custoBase + 1000;
-                }
+            let atacado, atacarejo, varejo;
+            if (usd <= 750) {
+                atacado = custoBase * 1.20;
+                atacarejo = custoBase * 1.40;
+                varejo = custoBase * 1.55;
+            } else {
+                atacado = custoBase + 350;
+                atacarejo = custoBase + 550;
+                varejo = custoBase + 1000;
             }
             document.getElementById('precoAtacadoMobile').innerText = `R$ ${atacado.toFixed(2)}`;
             document.getElementById('precoAtacarejoMobile').innerText = `R$ ${atacarejo.toFixed(2)}`;
@@ -1309,7 +1292,6 @@
         window.resetSenha = resetSenha;
         window.meusDados = meusDados;
         window.abrirConta = abrirConta;
-        window.renderizarCards = renderizarCards;
     </script>
 </body>
 </html>
