@@ -1147,11 +1147,15 @@
                     if (h < 18) return 'Boa tarde';
                     return 'Boa noite';
                 })();
+
+                // 🔥 NOVO TEMPLATE DO WHATSAPP (exatamente como solicitado)
                 const msgZap = encodeURIComponent(
-                    `${saudacao}! Encontrei seu anúncio no www.ifipe.com.br\n` +
+                    `${saudacao}! Se liga nessa oferta especial 🔥 que encontrei:\n\n` +
                     `${p.nome} ${v?.capacidade || ''} ${v?.cor || ''}\n` +
                     `Preço: ${simbolo} ${preco.toFixed(2)}\n` +
-                    `Está disponível?`
+                    `Estoque disponível: ${o.quantidade} UN\n\n` +
+                    `Falar com Atacadista: https://wa.me/${f.whatsapp?.replace(/\D/g,'')}\n\n` +
+                    `Achei no www.iFipe.com.br | *A Tabela Fipe do iPhone* 📲`
                 );
 
                 const curtido = minhasCurtidas.has(o.id);
@@ -1237,7 +1241,26 @@
 
         // Funções de Interação
         async function toggleCurtir(ofertaId, btn) {
-            if (!currentUser || currentUser.id === 0) return alert('Faça login para curtir.');
+            // Se não estiver logado (usuário nulo)
+            if (!currentUser) {
+                alert('Faça login para curtir.');
+                return;
+            }
+
+            // Se for master (id 0) - apenas simula visualmente
+            if (currentUser.id === 0) {
+                const curtido = btn.classList.contains('text-blue-500');
+                if (curtido) {
+                    btn.classList.remove('text-blue-500');
+                    btn.innerHTML = '<i class="far fa-heart text-red-500 text-sm"></i> <span>Curtir</span>';
+                } else {
+                    btn.classList.add('text-blue-500');
+                    btn.innerHTML = '<i class="fas fa-heart text-red-500 text-sm"></i> <span>Curtido</span>';
+                }
+                return;
+            }
+
+            // Usuário normal: interage com o banco
             const temCurtida = minhasCurtidas.has(ofertaId);
             if (temCurtida) {
                 await _s.from('curtidas').delete().eq('cliente_id', currentUser.id).eq('oferta_id', ofertaId);
@@ -1259,10 +1282,11 @@
                 if (h < 18) return 'Boa tarde';
                 return 'Boa noite';
             })();
-            const texto = `${saudacao}! Se liga nessa oferta especial 🔥📲 que encontrei no iFipe:\n` +
+            const texto = `${saudacao}! Se liga nessa oferta especial 🔥 que encontrei:\n\n` +
                 `${nome} ${capacidade} ${cor}\n` +
                 `Preço: ${simbolo} ${preco.toFixed(2)}\n` +
-                `Quantidade disponível: ${qtd}`;
+                `Estoque disponível: ${qtd} UN\n\n` +
+                `Achei no www.iFipe.com.br | A Tabela Fipe do iPhone 📲`;
             
             if (navigator.share) {
                 navigator.share({ title: 'Oferta iFipe', text: texto });
@@ -1276,7 +1300,8 @@
         async function abrirPerguntas(ofertaId, titulo, fornecedorId) {
             document.getElementById('perguntaOfertaId').value = ofertaId;
             document.getElementById('perguntaFornecedorId').value = fornecedorId;
-            document.getElementById('perguntaTitulo').innerText = `Enviar Proposta - ${titulo}`;
+            // Agora o título é apenas o nome do aparelho (sem prefixo)
+            document.getElementById('perguntaTitulo').innerText = titulo;
             await carregarPerguntas(ofertaId);
             document.getElementById('perguntasModal').classList.remove('hidden');
         }
@@ -1294,7 +1319,8 @@
             
             const lista = document.getElementById('listaPerguntas');
             if (!data || data.length === 0) {
-                lista.innerHTML = '<p class="text-gray-400 text-center">Nenhuma conversa ainda. Seja o primeiro a enviar uma proposta!</p>';
+                // Não exibe nenhuma mensagem, apenas limpa a div
+                lista.innerHTML = '';
                 return;
             }
             lista.innerHTML = data.map(p => `
