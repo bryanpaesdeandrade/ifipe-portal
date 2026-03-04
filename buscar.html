@@ -643,6 +643,9 @@
                 <input type="text" id="searchInput" placeholder="ENCONTRE O MELHOR PREÇO" class="apple-input pl-4 pr-4 py-3 text-base font-medium border-2" oninput="renderizarCards()">
             </div>
 
+            <!-- Container do botão de oportunidades -->
+            <div id="btn-oportunidade-container" class="w-full"></div>
+
             <!-- Filtros em grid (2 colunas no mobile, 6 no desktop) -->
             <div class="filters-grid mb-4">
                 <select id="filtroCategoria" class="apple-input text-xs py-2" onchange="renderizarCards()">
@@ -755,6 +758,7 @@
         let produtos = [], variacoes = [], fornecedores = [], ofertas = [];
         let minhasCurtidas = new Set(); 
         let meusAlertas = [];
+        let filtroOportunidadeAtivo = false;
 
         let DADOS_PROCESSADOS = { 
             menorPrecoPorProdutoGrupo: {} // chave: produtoId_moeda (ex: "1_BRL")
@@ -808,31 +812,6 @@
         insigniasBuscador.forEach(item => {
             nomeParaEmojiBuscador[item.nome] = item.emoji;
         });
-
-        const corHex = {
-            'PRETO': '#2d2d2d', 'BLACK': '#2d2d2d',
-            'BRANCO': '#f4f4f4', 'WHITE': '#f4f4f4',
-            'AZUL': '#215e7c', 'BLUE': '#215e7c',
-            'VERMELHO': '#a50011', 'RED': '#a50011',
-            'ROXO': '#6b21a8', 'PURPLE': '#6b21a8',
-            'VERDE': '#16a34a', 'GREEN': '#16a34a',
-            'AMARELO': '#eab308', 'YELLOW': '#eab308',
-            'CINZA': '#4b5563', 'GRAY': '#4b5563',
-            'DOURADO': '#b8860b', 'GOLD': '#b8860b',
-            'PRATA': '#e3e4e5', 'SILVER': '#e3e4e5',
-            'ESTELAR': '#fef08a', 'STARLIGHT': '#fef08a',
-            'MEIA-NOITE': '#1e293b', 'MIDNIGHT': '#1e293b',
-            'ROSA': '#fecdd3', 'PINK': '#fecdd3',
-            'TITÂNIO NATURAL': '#a6a5a1', 'NATURAL TITANIUM': '#a6a5a1',
-            'TITÂNIO PRETO': '#2d2d2d', 'BLACK TITANIUM': '#2d2d2d',
-            'TITÂNIO BRANCO': '#f4f4f4', 'WHITE TITANIUM': '#f4f4f4',
-            'TITÂNIO AZUL': '#4a545c', 'BLUE TITANIUM': '#4a545c',
-            'TITÂNIO DESERTO': '#d4c4b7', 'DESERT TITANIUM': '#d4c4b7',
-            'LARANJA-CÓSMICO': '#ff6b35', 'COSMIC ORANGE': '#ff6b35',
-            'VERDE MEIA-NOITE': '#1e4d3e',
-            'MIX COLORS': '#a0a0a0',
-            'VERMELHO (PRODUCT RED)': '#a50011'
-        };
 
         // Scroll top
         window.addEventListener('scroll', () => {
@@ -975,19 +954,23 @@
             });
         }
 
+        // Função de ordenação robusta
         function ordenarOfertas(lista) {
             return lista.sort((a, b) => {
+                // 1. Modelo mais novo primeiro (ID maior = mais novo)
                 const idA = a.variacoes?.produto_id || 0;
                 const idB = b.variacoes?.produto_id || 0;
-                if (idA !== idB) return idB - idA; // modelos mais novos primeiro
+                if (idA !== idB) return idB - idA;
 
+                // 2. Menor preço
                 const pA = a.preco;
                 const pB = b.preco;
-                if (pA !== pB) return pA - pB; // menor preço
+                if (pA !== pB) return pA - pB;
 
+                // 3. Atualização mais recente
                 const tA = a.atualizado_em ? new Date(a.atualizado_em).getTime() : new Date(a.criado_em).getTime();
                 const tB = b.atualizado_em ? new Date(b.atualizado_em).getTime() : new Date(b.criado_em).getTime();
-                return tB - tA; // mais recente primeiro
+                return tB - tA;
             });
         }
 
@@ -1004,13 +987,12 @@
             return fornecedor.insignia_manual[0];
         }
 
-        // NOVA FUNÇÃO PARA RENDERIZAR INSÍGNIAS DO BUSCADOR (CORRIGIDA)
+        // Função para renderizar insígnias do buscador
         function renderizarInsignias(usuario) {
             if (!usuario) return '';
             let html = '';
             let manuais = [];
             
-            // 1. Parse seguro do Supabase (String JSON vs Array Nativo)
             try {
                 if (typeof usuario.insignia_manual === 'string') {
                     manuais = JSON.parse(usuario.insignia_manual);
@@ -1021,13 +1003,11 @@
                 console.error('Erro de parse nas insígnias manuais'); 
             }
 
-            // 2. Renderiza TODAS as insígnias manuais no plural
             manuais.forEach(nome => {
                 const emoji = nomeParaEmojiBuscador[nome] || '🔰';
                 html += `<span class="status-badge" title="${nome}">${emoji} ${nome}</span>`;
             });
 
-            // 3. Renderiza a insígnia automática por Logins (sem sobrepor)
             let insigniaLogin = null;
             for (let ins of insigniasBuscador) {
                 if ((usuario.logins_count || 0) >= ins.min) {
@@ -1039,7 +1019,6 @@
                 html += `<span class="status-badge" title="${insigniaLogin.nome}">${insigniaLogin.emoji} ${insigniaLogin.nome}</span>`;
             }
 
-            // Se for master e não houver insígnias, coloca um mock
             if (usuario.id === 0 && html === '') {
                 html = '<span class="status-badge" title="ADMIN">⚡ ADMIN</span>';
             }
@@ -1057,6 +1036,12 @@
             if (container) container.innerHTML = renderizarInsignias(currentUser);
         }
 
+        // Função de toggle do filtro de oportunidade
+        function toggleFiltroOportunidade() {
+            filtroOportunidadeAtivo = !filtroOportunidadeAtivo;
+            renderizarCards();
+        }
+
         function renderizarCards() {
             const container = document.getElementById('container-produtos');
             container.innerHTML = '';
@@ -1070,7 +1055,6 @@
             const fLoj = document.getElementById('filtroLojista').value;
 
             let filtradas = ofertas.filter(o => {
-                // Prefixa "iPhone " ao nome do produto para busca inteligente
                 const nomeBase = o.variacoes?.produtos_mestre?.nome || '';
                 const pNome = ("iPhone " + nomeBase).toLowerCase();
                 if (busca && !pNome.includes(busca)) return false;
@@ -1083,16 +1067,45 @@
                 return true;
             });
 
-            // Ordena antes de separar por moeda? Melhor ordenar após separar
-            // Mas a ordenação por produto_id já está na função ordenarOfertas
+            // Verificar se há oportunidades ativas para exibir o botão
+            const agora = Date.now();
+            const temOportunidade = ofertas.some(o => {
+                if (!o.preco_anterior || !o.atualizado_em) return false;
+                const atualizado = new Date(o.atualizado_em).getTime();
+                const minutos = (agora - atualizado) / 60000;
+                return minutos <= 30 && o.preco < o.preco_anterior;
+            });
+
+            const btnContainer = document.getElementById('btn-oportunidade-container');
+            if (btnContainer) {
+                if (temOportunidade) {
+                    btnContainer.innerHTML = `
+                        <button onclick="toggleFiltroOportunidade()" class="w-full mb-3 bg-gradient-to-r from-red-600 to-orange-500 animate-pulse text-white font-bold p-3 rounded-xl shadow-lg hover:from-red-700 hover:to-orange-600 transition">
+                            🔥 IPHONES EM OFERTA ${filtroOportunidadeAtivo ? '✓' : ''} 🔥
+                        </button>
+                    `;
+                } else {
+                    btnContainer.innerHTML = '';
+                }
+            }
+
+            // Aplicar filtro de oportunidade se ativo
+            if (filtroOportunidadeAtivo) {
+                filtradas = filtradas.filter(o => {
+                    if (!o.preco_anterior || !o.atualizado_em) return false;
+                    const atualizado = new Date(o.atualizado_em).getTime();
+                    const minutos = (agora - atualizado) / 60000;
+                    return minutos <= 30 && o.preco < o.preco_anterior;
+                });
+            }
 
             // Separar por moeda
             const ofertasBRL = filtradas.filter(o => (o.moeda || 'BRL') === 'BRL');
             const ofertasUSD = filtradas.filter(o => (o.moeda || 'BRL') === 'USD');
 
             // Ordenar cada grupo
-            ofertasBRL.sort((a, b) => ordenarOfertas([a, b])[0] === a ? -1 : 1);
-            ofertasUSD.sort((a, b) => ordenarOfertas([a, b])[0] === a ? -1 : 1);
+            ordenarOfertas(ofertasBRL);
+            ordenarOfertas(ofertasUSD);
 
             // Função para criar card
             const criarCard = (o) => {
@@ -1104,8 +1117,32 @@
                 const moeda = o.moeda || 'BRL';
                 const preco = o.preco;
                 const simbolo = moeda === 'USD' ? 'US$' : 'R$';
-                const corNome = (v?.cor || '').trim().toUpperCase();
-                const corHexValue = corHex[corNome] || corHex[corNome.replace(/\s+/g, ' ')] || '#808080';
+
+                // Determinar cor por aproximação
+                const nomeCor = (v?.cor || '').toUpperCase();
+                let corHexValue = '#808080'; // padrão
+
+                if (nomeCor.includes('PRETO') || nomeCor.includes('BLACK') || nomeCor.includes('MEIA-NOITE') || nomeCor.includes('GRAFITE') || nomeCor.includes('MIDNIGHT')) {
+                    corHexValue = '#2d2d2d';
+                } else if (nomeCor.includes('BRANCO') || nomeCor.includes('WHITE') || nomeCor.includes('ESTELAR') || nomeCor.includes('PRATEADO') || nomeCor.includes('STARLIGHT') || nomeCor.includes('SILVER')) {
+                    corHexValue = '#f5f5f7';
+                } else if (nomeCor.includes('AZUL') || nomeCor.includes('BLUE') || nomeCor.includes('SIERRA')) {
+                    corHexValue = '#215e7c';
+                } else if (nomeCor.includes('VERMELHO') || nomeCor.includes('RED')) {
+                    corHexValue = '#a50011';
+                } else if (nomeCor.includes('ROXO') || nomeCor.includes('PURPLE')) {
+                    corHexValue = '#6b21a8';
+                } else if (nomeCor.includes('VERDE') || nomeCor.includes('GREEN') || nomeCor.includes('ALPINO')) {
+                    corHexValue = '#16a34a';
+                } else if (nomeCor.includes('AMARELO') || nomeCor.includes('YELLOW') || nomeCor.includes('DOURADO') || nomeCor.includes('GOLD') || nomeCor.includes('DESERTO')) {
+                    corHexValue = '#b8860b';
+                } else if (nomeCor.includes('ROSA') || nomeCor.includes('PINK')) {
+                    corHexValue = '#fecdd3';
+                } else if (nomeCor.includes('CINZA') || nomeCor.includes('GRAY') || nomeCor.includes('TITÂNIO') || nomeCor.includes('TITANIUM')) {
+                    corHexValue = '#4a5568';
+                } else if (nomeCor.includes('LARANJA') || nomeCor.includes('ORANGE') || nomeCor.includes('CÓSMICO')) {
+                    corHexValue = '#ff6b35';
+                }
 
                 const grupo = moeda;
                 const keyMenor = `${p.id}_${grupo}`;
@@ -1115,7 +1152,6 @@
                 // Tags temporárias (oportunidade e preço em alta)
                 let tagTrend = '';
                 if (o.preco_anterior && o.atualizado_em) {
-                    const agora = Date.now();
                     const atualizado = new Date(o.atualizado_em).getTime();
                     const minutos = (agora - atualizado) / 60000;
                     if (minutos <= 30 && o.preco < o.preco_anterior) {
@@ -1148,18 +1184,28 @@
                     return 'Boa noite';
                 })();
 
-                // 🔥 NOVO TEMPLATE DO WHATSAPP (exatamente como solicitado)
+                // Mensagem do WhatsApp padronizada
                 const msgZap = encodeURIComponent(
                     `${saudacao}! Se liga nessa oferta especial 🔥 que encontrei:\n\n` +
                     `${p.nome} ${v?.capacidade || ''} ${v?.cor || ''}\n` +
                     `Preço: ${simbolo} ${preco.toFixed(2)}\n` +
                     `Estoque disponível: ${o.quantidade} UN\n\n` +
-                    `Falar com Atacadista: https://wa.me/${f.whatsapp?.replace(/\D/g,'')}\n\n` +
+                    `Falar com Atacadista: https://wa.me/${f.whatsapp?.replace(/\D/g, '')}\n\n` +
                     `Achei no www.iFipe.com.br | *A Tabela Fipe do iPhone* 📲`
                 );
 
                 const curtido = minhasCurtidas.has(o.id);
                 const btnCurtir = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="toggleCurtir(${o.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-heart text-red-500 text-sm"></i> <span>${curtido ? 'Curtido' : 'Curtir'}</span></button>`;
+
+                // Badge de estoque por faixa
+                let badgeEstoque;
+                if (o.quantidade <= 5) {
+                    badgeEstoque = `<span class="badge badge-red">🚨 POUCAS: ${o.quantidade} UN</span>`;
+                } else if (o.quantidade <= 10) {
+                    badgeEstoque = `<span class="badge badge-blue">📲 EM ESTOQUE: ${o.quantidade} UN</span>`;
+                } else {
+                    badgeEstoque = `<span class="badge badge-green">🆙 ALTO ESTOQUE: ${o.quantidade} UN</span>`;
+                }
 
                 const card = document.createElement('div');
                 card.className = 'product-card';
@@ -1169,7 +1215,7 @@
                             <span class="color-dot" style="background: ${corHexValue};"></span>
                             <h3 class="font-bold text-sm">${p.nome}</h3>
                         </div>
-                        <span class="badge ${o.quantidade <= 3 ? 'badge-red' : 'badge-blue'}">${o.quantidade} UN</span>
+                        ${badgeEstoque}
                     </div>
                     <p class="text-xs text-gray-400 mb-1">${v?.capacidade || ''} | ${v?.cor || ''}</p>
                     <div class="flex items-center gap-1 mb-1 flex-wrap">
@@ -1197,7 +1243,7 @@
                             <i class="far fa-share-square"></i> <span>Compartilhar</span>
                         </button>
                     </div>
-                    <a href="https://wa.me/${f.whatsapp?.replace(/\D/g,'')}?text=${msgZap}" target="_blank" class="btn-apple w-full text-center text-xs py-2 flex items-center justify-center gap-2">
+                    <a href="https://wa.me/${f.whatsapp?.replace(/\D/g, '')}?text=${msgZap}" target="_blank" class="btn-apple w-full text-center text-xs py-2 flex items-center justify-center gap-2">
                         <i class="fab fa-whatsapp"></i> Comprar no WhatsApp
                     </a>
                 `;
@@ -1241,13 +1287,12 @@
 
         // Funções de Interação
         async function toggleCurtir(ofertaId, btn) {
-            // Se não estiver logado (usuário nulo)
             if (!currentUser) {
                 alert('Faça login para curtir.');
                 return;
             }
 
-            // Se for master (id 0) - apenas simula visualmente
+            // Master (id 0) - apenas simula visualmente
             if (currentUser.id === 0) {
                 const curtido = btn.classList.contains('text-blue-500');
                 if (curtido) {
@@ -1260,7 +1305,6 @@
                 return;
             }
 
-            // Usuário normal: interage com o banco
             const temCurtida = minhasCurtidas.has(ofertaId);
             if (temCurtida) {
                 await _s.from('curtidas').delete().eq('cliente_id', currentUser.id).eq('oferta_id', ofertaId);
@@ -1300,8 +1344,7 @@
         async function abrirPerguntas(ofertaId, titulo, fornecedorId) {
             document.getElementById('perguntaOfertaId').value = ofertaId;
             document.getElementById('perguntaFornecedorId').value = fornecedorId;
-            // Agora o título é apenas o nome do aparelho (sem prefixo)
-            document.getElementById('perguntaTitulo').innerText = titulo;
+            document.getElementById('perguntaTitulo').innerText = titulo; // apenas o nome do aparelho
             await carregarPerguntas(ofertaId);
             document.getElementById('perguntasModal').classList.remove('hidden');
         }
@@ -1319,8 +1362,7 @@
             
             const lista = document.getElementById('listaPerguntas');
             if (!data || data.length === 0) {
-                // Não exibe nenhuma mensagem, apenas limpa a div
-                lista.innerHTML = '';
+                lista.innerHTML = ''; // sem mensagem
                 return;
             }
             lista.innerHTML = data.map(p => `
@@ -1384,7 +1426,6 @@
             if (count > 0) {
                 badge.innerText = count;
                 badge.classList.remove('hidden');
-                // Armazenar respostas não lidas para exibir ao clicar
                 window.respostasNaoLidas = data;
             } else {
                 badge.classList.add('hidden');
@@ -1398,17 +1439,14 @@
                 return;
             }
 
-            // Marcar todas como lidas no banco
             const ids = window.respostasNaoLidas.map(r => r.id);
             await _s.from('comentarios')
                 .update({ lida_cliente: true })
                 .in('id', ids)
                 .eq('cliente_id', currentUser.id);
 
-            // Esconder badge
             document.getElementById('notificacaoBadge').classList.add('hidden');
 
-            // Exibir modal com as respostas
             const lista = document.getElementById('listaRespostas');
             lista.innerHTML = window.respostasNaoLidas.map(r => `
                 <div class="border-b border-[#38383a] pb-2 mb-2">
@@ -1422,7 +1460,6 @@
             `).join('');
             document.getElementById('respostasModal').classList.remove('hidden');
 
-            // Limpar cache
             window.respostasNaoLidas = [];
         }
 
@@ -1432,13 +1469,11 @@
 
         // FUNÇÕES DA MINHA CONTA
         function abrirConta() {
-            console.log('Abrindo conta... currentUser =', currentUser);
             if (!currentUser) {
                 alert('Usuário não carregado. Tente recarregar a página.');
                 return;
             }
             if (currentUser.id === 0) {
-                // Master pode abrir, mas com campos em branco
                 document.getElementById('contaNome').value = '';
                 document.getElementById('contaWhats').value = '';
                 document.getElementById('contaSenha').value = '';
@@ -1447,12 +1482,7 @@
                 document.getElementById('contaWhats').value = currentUser.whatsapp || '';
                 document.getElementById('contaSenha').value = '';
             }
-            const modal = document.getElementById('contaModal');
-            if (modal) {
-                modal.classList.remove('hidden');
-            } else {
-                console.error('Modal de conta não encontrado!');
-            }
+            document.getElementById('contaModal').classList.remove('hidden');
         }
 
         function fecharConta() {
@@ -1584,7 +1614,6 @@
             pop('filtroLojista', fornecedores, f => f);
         }
 
-        // Popular selects do modal de alerta
         function popularFiltrosAlerta() {
             const alertaProd = document.getElementById('alertaProduto');
             produtos.forEach(p => {
@@ -1619,10 +1648,9 @@
             });
             alert('Alerta criado!');
             fecharCriarAlerta();
-            await carregarAlertas(); // recarrega a lista e atualiza badge
+            await carregarAlertas();
         }
 
-        // Funções para Meus Alertas
         function abrirMeusAlertas() {
             carregarListaAlertas();
             document.getElementById('meusAlertasModal').classList.remove('hidden');
@@ -1664,7 +1692,6 @@
             lista.innerHTML = html;
         }
 
-        // Funções para legenda de insígnias
         function abrirLegendaInsignias() {
             document.getElementById('legendaInsigniasModal').classList.remove('hidden');
         }
@@ -1696,7 +1723,7 @@
         window.abrirConta = abrirConta;
         window.fecharConta = fecharConta;
         window.salvarConta = salvarConta;
-        window.abrirNotificacoes = abrirRespostasRecebidas; // redireciona para o novo sistema
+        window.abrirNotificacoes = abrirRespostasRecebidas;
         window.resetSenha = resetSenha;
         window.abrirFavoritos = abrirFavoritos;
         window.abrirMeusAlertas = abrirMeusAlertas;
@@ -1709,6 +1736,7 @@
         window.checarNotificacoes = checarNotificacoes;
         window.abrirRespostasRecebidas = abrirRespostasRecebidas;
         window.fecharRespostas = fecharRespostas;
+        window.toggleFiltroOportunidade = toggleFiltroOportunidade;
     </script>
 </body>
 </html>
