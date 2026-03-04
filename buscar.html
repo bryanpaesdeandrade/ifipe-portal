@@ -233,7 +233,6 @@
         .action-button:hover {
             color: var(--blue);
         }
-        /* Grid responsivo: 4 cards por linha no desktop */
         .grid-cards {
             display: grid;
             grid-template-columns: repeat(1, 1fr);
@@ -329,7 +328,6 @@
             height: calc(100vh - 120px);
             overflow-y: auto;
         }
-        /* Ajuste para tela 13" */
         @media (min-width: 1024px) and (max-width: 1279px) {
             .sidebar {
                 width: 240px;
@@ -426,12 +424,48 @@
     </style>
 </head>
 <body class="dark-mode">
-    <!-- DRAWER (menu hambúrguer mobile) -->
+    <!-- DRAWER (menu hambúrguer mobile) com calculadora reinserida -->
     <div id="drawerOverlay" class="drawer-overlay" onclick="fecharDrawer()"></div>
     <div id="drawer" class="drawer">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold">Menu</h2>
             <button onclick="fecharDrawer()" class="text-2xl">&times;</button>
+        </div>
+        <!-- Calculadora no drawer (reinserida) -->
+        <div class="apple-card p-4 mb-4">
+            <h3 class="text-base font-bold mb-2">Calculadora iPhone</h3>
+            <div class="mb-2">
+                <label class="text-xs text-gray-400">Preço USD</label>
+                <input type="number" id="calcUsdMobile" class="apple-input text-sm py-2" placeholder="0.00" min="0" step="0.01" oninput="atualizarCalculadoraMobile()" value="">
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-2 text-xs">
+                <div>
+                    <span class="text-gray-400">Binance</span>
+                    <div id="calcBinanceMobile" class="font-bold text-yellow-500">R$ 5,2907</div>
+                </div>
+                <div>
+                    <span class="text-gray-400">Oráculo</span>
+                    <div id="calcOraculoMobile" class="font-bold text-green-400">R$ 5,3507</div>
+                </div>
+            </div>
+            <div class="bg-[#2c2c2e] p-2 rounded-xl mb-2">
+                <span class="text-xs text-gray-400">Custo final no Brasil</span>
+                <div id="custoFinalMobile" class="text-lg font-bold text-blue-500">R$ 0,00</div>
+            </div>
+            <div class="text-xs space-y-1">
+                <div class="calc-result-item">
+                    <span class="font-medium">ATACADO</span>
+                    <span id="precoAtacadoMobile" class="font-bold">R$ 0,00</span>
+                </div>
+                <div class="calc-result-item">
+                    <span class="font-medium">ATACAREJO</span>
+                    <span id="precoAtacarejoMobile" class="font-bold">R$ 0,00</span>
+                </div>
+                <div class="calc-result-item">
+                    <span class="font-medium">VAREJO</span>
+                    <span id="precoVarejoMobile" class="font-bold">R$ 0,00</span>
+                </div>
+            </div>
         </div>
         <div class="drawer-item" onclick="resetSenha()">
             <i class="fas fa-sync-alt mr-2"></i> Reset de Senha
@@ -484,7 +518,7 @@
     </nav>
 
     <div class="pt-16 lg:pt-20 px-4 lg:px-5 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <!-- Sidebar -->
+        <!-- Sidebar (desktop) -->
         <div class="desktop-only lg:col-span-1 sidebar">
             <div class="apple-card p-4 mb-4 calc-card">
                 <h2 class="text-base font-bold mb-2">Calculadora iPhone</h2>
@@ -532,7 +566,7 @@
         <!-- Conteúdo principal -->
         <div class="lg:col-span-4">
             <div class="mb-3 relative">
-                <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-4 pr-4 py-2 text-base lg:text-lg" onkeyup="debounce(mostrarSugestoes, 300)(this.value)">
+                <input type="text" id="searchInput" placeholder="Buscar iPhone, iPad, Mac..." class="apple-input pl-4 pr-4 py-2 text-base lg:text-lg">
                 <div id="sugestoes" class="absolute bg-[#1c1c1e] border border-[#38383a] rounded-lg mt-1 w-full max-h-60 overflow-y-auto hidden z-10"></div>
             </div>
 
@@ -564,10 +598,54 @@
         </div>
     </div>
 
-    <!-- MODAIS (idênticos) -->
-    <div id="criarAlertaModal" class="modal hidden">...</div>
-    <div id="notificacoesModal" class="modal hidden">...</div>
-    <div id="historicoGeralModal" class="modal hidden">...</div>
+    <!-- MODAIS -->
+    <div id="criarAlertaModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Criar Alerta de Preço</h2>
+            <p class="text-sm text-gray-400 mb-6">Receba uma notificação quando o preço cair</p>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Produto</label>
+                <select id="alertaProduto" class="apple-input">
+                    <option value="">Selecione...</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-2">Capacidade</label>
+                <select id="alertaCapacidade" class="apple-input">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2">Preço máximo (R$)</label>
+                <input type="number" id="alertaPreco" class="apple-input" placeholder="Ex: 5000" min="0" step="0.01">
+            </div>
+            <div class="flex gap-3">
+                <button onclick="criarAlerta()" class="btn-apple flex-1">Criar Alerta</button>
+                <button onclick="fecharCriarAlerta()" class="btn-apple-secondary flex-1">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notificacoesModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Notificações</h2>
+            <div id="listaNotificacoes" class="space-y-3 max-h-96 overflow-y-auto">
+                <!-- Será preenchido via JS -->
+            </div>
+            <button onclick="fecharNotificacoes()" class="btn-apple-secondary w-full mt-6">Fechar</button>
+        </div>
+    </div>
+
+    <div id="historicoGeralModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 class="text-2xl font-bold mb-4">Histórico de Preços</h2>
+            <p class="text-sm text-gray-400 mb-4">Média dos últimos 10 dias por produto (por cidade)</p>
+            <div id="listaHistorico" class="space-y-3 max-h-96 overflow-y-auto">
+                <!-- Será preenchido via JS -->
+            </div>
+            <button onclick="fecharHistoricoGeral()" class="btn-apple-secondary w-full mt-6">Fechar</button>
+        </div>
+    </div>
 
     <script>
         // Configuração do Supabase
@@ -591,7 +669,7 @@
         let DADOS_PROCESSADOS = {
             menorPrecoPorProduto: {},    // { produtoId: menorPreco }
             mediaPorProdutoECidade: {},  // { "produtoId_cidade": media }
-            ultimaAlteracao: {}           // { ofertaId: timestamp } para tags temporárias
+            ultimaAlteracao: {}           // { ofertaId: { timestamp, precoAnterior } } - agora sem mock
         };
 
         // Timers
@@ -611,7 +689,7 @@
             'TITÂNIO': '#8c8c88', 'TITANIUM': '#8c8c88'
         };
 
-        // Debounce para busca
+        // Debounce function
         function debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -623,6 +701,12 @@
                 timeout = setTimeout(later, wait);
             };
         }
+
+        // Instância do debounce para busca
+        const buscaDebounced = debounce((val) => {
+            mostrarSugestoes(val);
+            renderizarCards();
+        }, 300);
 
         window.onload = async () => {
             const token = localStorage.getItem('iFipe_Token');
@@ -644,25 +728,43 @@
                 currentUser = data;
             }
 
+            // Associa o evento de input ao debounce
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                buscaDebounced(e.target.value);
+            });
+
             await carregarDados();
 
             // Inicia atualizações periódicas
             iniciarAtualizacoes();
 
-            // Inicia WebSocket da Binance (atualiza a cada 5s via setInterval também)
+            // Inicia WebSocket da Binance
             initTicker();
         };
 
         function iniciarAtualizacoes() {
-            // Atualiza dados do Supabase a cada 15 segundos
+            // Atualiza dados do Supabase a cada 15 segundos, mas respeita interação do usuário
             updateInterval = setInterval(async () => {
+                // Se o usuário estiver com busca ou filtros ativos, não atualiza automaticamente
+                const searchValue = document.getElementById('searchInput').value.trim();
+                const filtrosAtivos = 
+                    document.getElementById('filtroCategoria').value ||
+                    document.getElementById('filtroCondicao').value ||
+                    document.getElementById('filtroCapacidade').value ||
+                    document.getElementById('filtroCor').value ||
+                    document.getElementById('filtroCidade').value ||
+                    document.getElementById('filtroLojista').value;
+
+                if (searchValue !== '' || filtrosAtivos) {
+                    // Se estiver interagindo, não força a atualização
+                    return;
+                }
+
                 await carregarDados(); // recarrega e reprocessa
             }, 15000);
 
-            // Atualiza a taxa Binance a cada 5 segundos (fallback caso WebSocket falhe)
             binanceInterval = setInterval(() => {
-                // Se o WebSocket estiver funcionando, não precisa, mas mantemos como fallback
-                // Aqui poderia ser uma chamada HTTP para a API da Binance, mas vamos confiar no WebSocket
+                // Não faz nada, o WebSocket já atualiza; mantido para consistência
             }, 5000);
         }
 
@@ -695,7 +797,6 @@
 
         // Processa uma única vez os dados para otimizar renderização
         function processarDados() {
-            const agora = Date.now();
             const dezDiasAtras = new Date();
             dezDiasAtras.setDate(dezDiasAtras.getDate() - 10);
 
@@ -711,8 +812,9 @@
                 const produtoId = o.variacoes?.produto_id;
                 if (!produtoId) return;
 
-                // Menor preço por produto (global, sem considerar cidade para tag de menor preço)
                 const precoFinal = o.moeda === 'USD' ? o.preco * (rateBinance + 0.06) : o.preco;
+
+                // Menor preço por produto
                 if (!DADOS_PROCESSADOS.menorPrecoPorProduto[produtoId] || precoFinal < DADOS_PROCESSADOS.menorPrecoPorProduto[produtoId]) {
                     DADOS_PROCESSADOS.menorPrecoPorProduto[produtoId] = precoFinal;
                 }
@@ -726,10 +828,14 @@
                     gruposMedia[key].push(precoFinal);
                 }
 
-                // Última alteração de preço (simulado via histórico - precisaríamos de uma tabela de histórico)
-                // Por enquanto, vamos simular com um timestamp aleatório para demonstração
-                // Idealmente, buscaríamos do banco a última alteração
-                DADOS_PROCESSADOS.ultimaAlteracao[o.id] = agora - Math.random() * 1000000; // mock
+                // Dados de alteração de preço (se existirem no banco)
+                if (o.preco_anterior !== undefined && o.atualizado_em) {
+                    DADOS_PROCESSADOS.ultimaAlteracao[o.id] = {
+                        timestamp: new Date(o.atualizado_em).getTime(),
+                        precoAnterior: o.preco_anterior
+                    };
+                }
+                // Caso contrário, não guardamos nada, e a tag não será exibida
             });
 
             // Calcula médias
@@ -742,12 +848,16 @@
             }
         }
 
-        // Função de ordenação por preço (Jogo de Cadeiras)
+        // Função de ordenação por preço com desempate por timestamp
         function ordenarOfertas(ofertasList) {
             return ofertasList.sort((a, b) => {
                 const precoA = a.moeda === 'USD' ? a.preco * (rateBinance + 0.06) : a.preco;
                 const precoB = b.moeda === 'USD' ? b.preco * (rateBinance + 0.06) : b.preco;
-                return precoA - precoB;
+                if (precoA !== precoB) return precoA - precoB;
+                // Desempate: mais recente primeiro
+                const timeA = a.atualizado_em ? new Date(a.atualizado_em).getTime() : new Date(a.criado_em).getTime();
+                const timeB = b.atualizado_em ? new Date(b.atualizado_em).getTime() : new Date(b.criado_em).getTime();
+                return timeB - timeA;
             });
         }
 
@@ -781,7 +891,7 @@
                 return true;
             });
 
-            // Ordena por preço (Jogo de Cadeiras)
+            // Ordena por preço (Jogo de Cadeiras) com desempate
             ofertasFiltradas = ordenarOfertas(ofertasFiltradas);
 
             const agora = Date.now();
@@ -807,30 +917,28 @@
                 const mediaKey = `${produtoId}_${cidade}`;
                 const media = DADOS_PROCESSADOS.mediaPorProdutoECidade[mediaKey] || null;
 
-                // Tags temporizadas
+                // Tags temporizadas baseadas em dados reais (se existirem)
                 let tagTrend = '';
-                const ultimaAlt = DADOS_PROCESSADOS.ultimaAlteracao[o.id];
-                if (ultimaAlt) {
-                    const diffMinutos = (agora - ultimaAlt) / (1000 * 60);
-                    // Simulação: se houve alteração (precisaríamos comparar com preço anterior real)
-                    // Aqui vamos usar um placeholder – na prática, precisaríamos do preço anterior do histórico
-                    // Vamos simular que houve queda se o preço for menor que a média (apenas exemplo)
-                    if (media && precoFinal < media * 0.95) {
-                        if (diffMinutos < 30) {
-                            tagTrend = '<span class="badge badge-green">💰 Oportunidade</span>';
-                        }
-                    } else if (media && precoFinal > media * 1.05) {
-                        if (diffMinutos < 15) {
-                            tagTrend = '<span class="badge badge-orange">📈 Preço em Alta</span>';
-                        }
+                const alteracao = DADOS_PROCESSADOS.ultimaAlteracao[o.id];
+                if (alteracao) {
+                    const precoAnterior = alteracao.precoAnterior;
+                    const diffMinutos = (agora - alteracao.timestamp) / (1000 * 60);
+                    if (precoFinal < precoAnterior && diffMinutos <= 30) {
+                        tagTrend = '<span class="badge badge-green">💰 Oportunidade</span>';
+                    } else if (precoFinal > precoAnterior && diffMinutos <= 15) {
+                        tagTrend = '<span class="badge badge-orange">📈 Preço em Alta</span>';
                     }
                 }
 
                 // Molduras comerciais
+                const aceitaPix = o.aceita_pix !== undefined ? o.aceita_pix : (fornecedor.aceita_pix || false);
+                const aceitaUsdt = o.aceita_usdt !== undefined ? o.aceita_usdt : (fornecedor.aceita_usdt || false);
+                const aceitaProposta = o.aceita_proposta !== undefined ? o.aceita_proposta : (fornecedor.aceita_proposta || false);
+
                 let comerciais = '';
-                if (o.aceita_pix) comerciais += '<span class="commercial-badge"><i class="fa-brands fa-pix"></i> PIX</span>';
-                if (o.aceita_usdt) comerciais += '<span class="commercial-badge"><i class="fas fa-coins"></i> USDT</span>';
-                if (o.aceita_proposta) comerciais += '<span class="commercial-badge"><i class="fas fa-handshake"></i> Negocia</span>';
+                if (aceitaPix) comerciais += '<span class="commercial-badge"><i class="fa-brands fa-pix"></i> PIX</span>';
+                if (aceitaUsdt) comerciais += '<span class="commercial-badge"><i class="fas fa-coins"></i> USDT</span>';
+                if (aceitaProposta) comerciais += '<span class="commercial-badge"><i class="fas fa-handshake"></i> Negocia</span>';
 
                 const card = document.createElement('div');
                 card.className = 'product-card';
@@ -880,54 +988,298 @@
             });
         }
 
-        // Demais funções (popularFiltros, atualizarStatusUsuario, etc.) mantidas como antes, apenas com pequenos ajustes
+        // Funções auxiliares
         function popularFiltros() {
-            // ... (igual ao anterior, mantido)
+            const catSelect = document.getElementById('filtroCategoria');
+            produtos.forEach(p => {
+                catSelect.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+            });
+
+            const caps = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
+            const capSelect = document.getElementById('filtroCapacidade');
+            caps.forEach(c => {
+                capSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+
+            const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
+            const corSelect = document.getElementById('filtroCor');
+            cores.forEach(c => {
+                corSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+
+            const cidades = [...new Set(fornecedores.map(f => f.cidade).filter(Boolean))];
+            const cidadeSelect = document.getElementById('filtroCidade');
+            cidades.forEach(c => {
+                cidadeSelect.innerHTML += `<option value="${c}">${c}</option>`;
+            });
+
+            const lojistaSelect = document.getElementById('filtroLojista');
+            fornecedores.forEach(f => {
+                lojistaSelect.innerHTML += `<option value="${f.id}">${f.nome}</option>`;
+            });
+
+            const alertaProd = document.getElementById('alertaProduto');
+            produtos.forEach(p => {
+                alertaProd.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+            });
+
+            const alertaCap = document.getElementById('alertaCapacidade');
+            caps.forEach(c => {
+                alertaCap.innerHTML += `<option value="${c}">${c}</option>`;
+            });
         }
 
         function atualizarStatusUsuario() {
-            // ... (igual)
+            let insignias = currentUser.insignia_manual || [];
+            if (currentUser.logins_count >= 10) insignias.push('10+ LOGINS');
+            if (currentUser.logins_count >= 50) insignias.push('50+ LOGINS');
+
+            const container = document.getElementById('userInsignias');
+            if (insignias.length) {
+                container.innerHTML = insignias.map(i => `<span class="status-badge">${i}</span>`).join('');
+            } else {
+                container.innerHTML = '<p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Nenhuma insígnia manual</p>';
+            }
         }
 
         function initTicker() {
-            // ... (igual, mas ajustado para não travar)
+            try {
+                const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+                ws.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    rateBinance = parseFloat(data.c);
+                    rateOraculo = rateBinance + 0.06;
+                    document.getElementById('binanceRate').innerText = `R$ ${rateBinance.toFixed(4)}`;
+                    document.getElementById('taxaVip').innerText = `R$ ${rateOraculo.toFixed(4)}`;
+                    atualizarCalculadora();
+                    atualizarCalculadoraMobile();
+                    renderizarCards(); // atualiza preços em USD
+                };
+            } catch (e) {
+                console.warn('WebSocket falhou');
+            }
         }
 
-        function atualizarCalculadora() { /* ... */ }
-        function atualizarCalculadoraMobile() { /* ... */ }
+        function atualizarCalculadora() {
+            const usd = parseFloat(document.getElementById('calcUsd').value) || 0;
+            if (usd < 0) document.getElementById('calcUsd').value = 0;
+            const taxa = rateBinance + 0.06;
+            const custoBase = (usd * taxa) * 1.06;
+            document.getElementById('custoFinal').innerText = `R$ ${custoBase.toFixed(2)}`;
+            document.getElementById('calcBinance').innerText = `R$ ${rateBinance.toFixed(4)}`;
+            document.getElementById('calcOraculo').innerText = `R$ ${taxa.toFixed(4)}`;
 
-        function mostrarSugestoes(termo) { /* ... */ }
-        function selecionarSugestao(nome) { /* ... */ }
+            let atacado, atacarejo, varejo;
+            if (usd <= 750) {
+                atacado = custoBase * 1.20;
+                atacarejo = custoBase * 1.40;
+                varejo = custoBase * 1.55;
+            } else {
+                atacado = custoBase + 350;
+                atacarejo = custoBase + 550;
+                varejo = custoBase + 1000;
+            }
+            document.getElementById('precoAtacado').innerText = `R$ ${atacado.toFixed(2)}`;
+            document.getElementById('precoAtacarejo').innerText = `R$ ${atacarejo.toFixed(2)}`;
+            document.getElementById('precoVarejo').innerText = `R$ ${varejo.toFixed(2)}`;
+        }
 
-        // Funções de interação mantidas
-        async function toggleRecomendar(ofertaId, btn) { /* ... */ }
-        async function abrirPerguntas(ofertaId) { /* ... */ }
-        function compartilhar(ofertaId) { /* ... */ }
+        function atualizarCalculadoraMobile() {
+            const usd = parseFloat(document.getElementById('calcUsdMobile').value) || 0;
+            if (usd < 0) document.getElementById('calcUsdMobile').value = 0;
+            const taxa = rateBinance + 0.06;
+            const custoBase = (usd * taxa) * 1.06;
+            document.getElementById('custoFinalMobile').innerText = `R$ ${custoBase.toFixed(2)}`;
+            document.getElementById('calcBinanceMobile').innerText = `R$ ${rateBinance.toFixed(4)}`;
+            document.getElementById('calcOraculoMobile').innerText = `R$ ${taxa.toFixed(4)}`;
 
-        // Alertas, histórico, drawer etc. mantidos
-        // ...
+            let atacado, atacarejo, varejo;
+            if (usd <= 750) {
+                atacado = custoBase * 1.20;
+                atacarejo = custoBase * 1.40;
+                varejo = custoBase * 1.55;
+            } else {
+                atacado = custoBase + 350;
+                atacarejo = custoBase + 550;
+                varejo = custoBase + 1000;
+            }
+            document.getElementById('precoAtacadoMobile').innerText = `R$ ${atacado.toFixed(2)}`;
+            document.getElementById('precoAtacarejoMobile').innerText = `R$ ${atacarejo.toFixed(2)}`;
+            document.getElementById('precoVarejoMobile').innerText = `R$ ${varejo.toFixed(2)}`;
+        }
 
+        function mostrarSugestoes(termo) {
+            const sugestoesDiv = document.getElementById('sugestoes');
+            if (!termo || termo.length < 2) {
+                sugestoesDiv.classList.add('hidden');
+                return;
+            }
+            const termoLower = termo.toLowerCase();
+            const matches = produtos.filter(p => p.nome.toLowerCase().includes(termoLower)).slice(0, 10);
+            if (matches.length === 0) {
+                sugestoesDiv.classList.add('hidden');
+                return;
+            }
+            sugestoesDiv.innerHTML = matches.map(p => `<div class="p-2 hover:bg-[#2c2c2e] cursor-pointer" onclick="selecionarSugestao('${p.nome}')">${p.nome}</div>`).join('');
+            sugestoesDiv.classList.remove('hidden');
+        }
+
+        function selecionarSugestao(nome) {
+            document.getElementById('searchInput').value = nome;
+            document.getElementById('sugestoes').classList.add('hidden');
+            renderizarCards();
+        }
+
+        // Funções de interação
+        async function toggleRecomendar(ofertaId, btn) {
+            if (!currentUser || currentUser.id === 0) return;
+            const temCurtida = minhasCurtidas.includes(ofertaId);
+            if (temCurtida) {
+                await _s.from('curtidas').delete().eq('cliente_id', currentUser.id).eq('oferta_id', ofertaId);
+                minhasCurtidas = minhasCurtidas.filter(id => id !== ofertaId);
+                btn.classList.remove('text-blue-500');
+                btn.querySelector('span').innerText = 'Recomendar';
+            } else {
+                await _s.from('curtidas').insert({ cliente_id: currentUser.id, oferta_id: ofertaId });
+                minhasCurtidas.push(ofertaId);
+                btn.classList.add('text-blue-500');
+                btn.querySelector('span').innerText = 'Recomendado';
+            }
+        }
+
+        async function abrirPerguntas(ofertaId) {
+            alert('Abrir perguntas para oferta ' + ofertaId);
+        }
+
+        function compartilhar(ofertaId) {
+            navigator.clipboard.writeText(window.location.href + '?oferta=' + ofertaId);
+            alert('Link copiado!');
+        }
+
+        // Alertas
+        async function carregarAlertas() {
+            const { data } = await _s.from('alertas_preco').select('*').eq('cliente_id', currentUser.id);
+            meusAlertas = data || [];
+        }
+
+        function abrirCriarAlerta() {
+            document.getElementById('criarAlertaModal').classList.remove('hidden');
+        }
+        function fecharCriarAlerta() { document.getElementById('criarAlertaModal').classList.add('hidden'); }
+        async function criarAlerta() {
+            const produto = document.getElementById('alertaProduto').value;
+            const capacidade = document.getElementById('alertaCapacidade').value;
+            const preco = parseFloat(document.getElementById('alertaPreco').value);
+            if (!produto || !preco) return alert('Preencha todos os campos');
+            await _s.from('alertas_preco').insert({
+                cliente_id: currentUser.id,
+                produto_id: produto,
+                capacidade: capacidade || null,
+                preco_desejado: preco
+            });
+            alert('Alerta criado!');
+            fecharCriarAlerta();
+        }
+
+        function abrirNotificacoes() {
+            document.getElementById('notificacoesModal').classList.remove('hidden');
+        }
+        function fecharNotificacoes() { document.getElementById('notificacoesModal').classList.add('hidden'); }
+
+        // Histórico
+        async function abrirHistoricoGeral() {
+            document.getElementById('historicoGeralModal').classList.remove('hidden');
+            const lista = document.getElementById('listaHistorico');
+            lista.innerHTML = '<p class="text-center text-gray-400">Carregando...</p>';
+
+            const dezDiasAtras = new Date();
+            dezDiasAtras.setDate(dezDiasAtras.getDate() - 10);
+            const historicoPorProdutoECidade = {};
+
+            ofertas.forEach(o => {
+                const produtoId = o.variacoes?.produto_id;
+                if (!produtoId) return;
+                const cidade = o.fornecedores?.cidade || 'outra';
+                const key = `${produtoId}_${cidade}`;
+                const data = new Date(o.criado_em);
+                if (data < dezDiasAtras) return;
+
+                if (!historicoPorProdutoECidade[key]) {
+                    historicoPorProdutoECidade[key] = {
+                        nome: o.variacoes?.produtos_mestre?.nome || 'Desconhecido',
+                        capacidade: o.variacoes?.capacidade || '',
+                        cidade: cidade,
+                        precos: []
+                    };
+                }
+                const preco = o.moeda === 'USD' ? o.preco * (rateBinance + 0.06) : o.preco;
+                historicoPorProdutoECidade[key].precos.push(preco);
+            });
+
+            if (Object.keys(historicoPorProdutoECidade).length === 0) {
+                lista.innerHTML = '<p class="text-center text-gray-400">Nenhum dado nos últimos 10 dias.</p>';
+            } else {
+                let html = '';
+                for (const key in historicoPorProdutoECidade) {
+                    const item = historicoPorProdutoECidade[key];
+                    if (item.precos.length === 0) continue;
+                    const media = item.precos.reduce((a, b) => a + b, 0) / item.precos.length;
+                    html += `
+                        <div class="historico-item" onclick="selecionarProdutoHistorico('${key}')">
+                            <div class="flex justify-between items-center">
+                                <span class="font-medium">${item.nome} ${item.capacidade}</span>
+                                <span class="font-bold text-blue-500">R$ ${media.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-400 mt-1">
+                                <span>📍 ${item.cidade}</span>
+                                <span>📊 ${item.precos.length} ofertas</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                lista.innerHTML = html;
+            }
+        }
+
+        function fecharHistoricoGeral() { document.getElementById('historicoGeralModal').classList.add('hidden'); }
+        function selecionarProdutoHistorico(key) {
+            alert('Detalhes do produto (cidade: ' + key.split('_')[1] + ')');
+            fecharHistoricoGeral();
+        }
+
+        // Drawer
+        function abrirDrawer() {
+            document.getElementById('drawer').classList.add('open');
+            document.getElementById('drawerOverlay').classList.add('open');
+        }
+        function fecharDrawer() {
+            document.getElementById('drawer').classList.remove('open');
+            document.getElementById('drawerOverlay').classList.remove('open');
+        }
+
+        // Placeholders
+        function resetSenha() { alert('Redefinir senha (em breve)'); }
+        function meusDados() { alert('Meus dados (em breve)'); }
+        function abrirFavoritos() { alert('Meus favoritos (em breve)'); }
+        function abrirConta() { alert('Abrir configurações da conta'); }
         function logout() {
             localStorage.removeItem('iFipe_Token');
             localStorage.removeItem('iFipe_Master_Auth');
             window.location.replace('index.html');
         }
 
-        // Expor funções
-        window.abrirDrawer = () => document.getElementById('drawer').classList.add('open');
-        window.fecharDrawer = () => document.getElementById('drawer').classList.remove('open');
-        window.abrirCriarAlerta = () => document.getElementById('criarAlertaModal').classList.remove('hidden');
-        window.fecharCriarAlerta = () => document.getElementById('criarAlertaModal').classList.add('hidden');
-        window.criarAlerta = async () => { /* ... */ };
-        window.abrirNotificacoes = () => document.getElementById('notificacoesModal').classList.remove('hidden');
-        window.fecharNotificacoes = () => document.getElementById('notificacoesModal').classList.add('hidden');
-        window.abrirHistoricoGeral = async () => { /* ... */ };
-        window.fecharHistoricoGeral = () => document.getElementById('historicoGeralModal').classList.add('hidden');
-        window.abrirMeusAlertas = () => alert('Meus alertas');
-        window.abrirFavoritos = () => alert('Favoritos');
-        window.resetSenha = () => alert('Reset de senha');
-        window.meusDados = () => alert('Meus dados');
-        window.abrirConta = () => alert('Conta');
+        // Expor funções globalmente
+        window.abrirDrawer = abrirDrawer;
+        window.fecharDrawer = fecharDrawer;
+        window.abrirCriarAlerta = abrirCriarAlerta;
+        window.fecharCriarAlerta = fecharCriarAlerta;
+        window.criarAlerta = criarAlerta;
+        window.abrirNotificacoes = abrirNotificacoes;
+        window.fecharNotificacoes = fecharNotificacoes;
+        window.abrirHistoricoGeral = abrirHistoricoGeral;
+        window.fecharHistoricoGeral = fecharHistoricoGeral;
+        window.abrirMeusAlertas = function() { alert('Meus alertas (em breve)'); };
+        window.abrirFavoritos = abrirFavoritos;
         window.logout = logout;
         window.toggleRecomendar = toggleRecomendar;
         window.abrirPerguntas = abrirPerguntas;
@@ -936,6 +1288,9 @@
         window.atualizarCalculadoraMobile = atualizarCalculadoraMobile;
         window.mostrarSugestoes = mostrarSugestoes;
         window.selecionarSugestao = selecionarSugestao;
+        window.resetSenha = resetSenha;
+        window.meusDados = meusDados;
+        window.abrirConta = abrirConta;
     </script>
 </body>
 </html>
