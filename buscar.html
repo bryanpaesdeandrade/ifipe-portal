@@ -236,10 +236,22 @@
             border-radius: 12px; padding: 3px 6px; font-size: 8px; font-weight: 600;
         }
         
-        .notification-icon { position: relative; cursor: pointer; color: var(--text); font-size: 20px; }
+        .notification-icon {
+            position: relative;
+            cursor: pointer;
+            color: var(--text);
+            font-size: 20px;
+        }
         .notification-badge {
-            position: absolute; top: -8px; right: -8px; background: #ff3b30;
-            color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 20px;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff3b30;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 20px;
         }
 
         /* Modal */
@@ -357,6 +369,27 @@
             border-color: var(--gold);
             font-size: 0.8rem;
         }
+
+        /* Botão Criar Alerta (desktop) */
+        .btn-criar-alerta {
+            background: var(--blue);
+            color: white;
+            font-weight: 600;
+            padding: 0.375rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            border: none;
+        }
+        .btn-criar-alerta:hover {
+            background: #005bb5;
+            transform: scale(1.02);
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -381,7 +414,7 @@
         <div class="drawer-item" onclick="abrirFavoritos(); fecharDrawer()">
             <i class="fas fa-star w-5"></i> Meus Favoritos
         </div>
-        <!-- Botão Criar Alerta (funcional) -->
+        <!-- Botão Criar Alerta (também no drawer) -->
         <div class="drawer-item" onclick="abrirCriarAlerta(); fecharDrawer()">
             <i class="fas fa-bell w-5"></i> Criar Alerta
         </div>
@@ -422,7 +455,11 @@
             <button class="text-2xl mr-2 text-gray-400 hover:text-white transition" onclick="abrirDrawer()">☰</button>
             <h1 class="text-xl lg:text-2xl font-black tracking-tight">iFipe</h1>
             <span class="text-xs lg:text-sm text-gray-400 hidden sm:inline">A TABELA FIPE DO IPHONE</span>
-            <!-- Botão Insígnias de Poder com destaque (lado esquerdo, visível em mobile e desktop) -->
+            <!-- Botão Criar Alerta (desktop) ao lado das insígnias -->
+            <button class="btn-criar-alerta ml-2" onclick="abrirCriarAlerta()">
+                <i class="fas fa-bell"></i> Criar Alerta
+            </button>
+            <!-- Botão Insígnias de Poder com destaque -->
             <button class="header-btn btn-insignia ml-2" onclick="abrirLegendaInsignias()">
                 <i class="fas fa-crown"></i> Insígnias de Poder
             </button>
@@ -455,7 +492,7 @@
         </div>
     </nav>
 
-    <!-- Modal de legenda de insígnias (apenas listagem com emojis) -->
+    <!-- Modal de legenda de insígnias -->
     <div id="legendaInsigniasModal" class="modal hidden">
         <div class="modal-content">
             <span class="close-modal" onclick="fecharLegendaInsignias()">&times;</span>
@@ -523,6 +560,19 @@
                     <button type="button" onclick="fecharCriarAlerta()" class="btn-apple-secondary flex-1">Cancelar</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Meus Alertas -->
+    <div id="meusAlertasModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="fecharMeusAlertas()">&times;</span>
+            <h2 class="text-2xl font-bold mb-4">Meus Alertas</h2>
+            <p class="text-sm text-gray-400 mb-4">Acompanhe os preços que você definiu</p>
+            <div id="listaAlertas" class="space-y-3 max-h-96 overflow-y-auto">
+                <!-- Será preenchido via JS -->
+            </div>
+            <button onclick="fecharMeusAlertas()" class="btn-apple w-full mt-6">Fechar</button>
         </div>
     </div>
 
@@ -785,7 +835,6 @@
 
             await carregarDados();
             initTicker();
-            // Atualiza status após carregar dados (já é chamado dentro de carregarDados)
         };
 
         function initTicker() {
@@ -829,8 +878,41 @@
                 // Popula selects do modal de alerta
                 popularFiltrosAlerta();
 
+                // Carrega alertas do usuário
+                if (currentUser && currentUser.id !== 0) {
+                    await carregarAlertas();
+                }
+
             } catch (err) {
                 console.error('Erro ao carregar dados:', err);
+            }
+        }
+
+        async function carregarAlertas() {
+            const { data } = await _s.from('alertas_preco').select('*').eq('cliente_id', currentUser.id);
+            meusAlertas = data || [];
+            atualizarBadgeAlertas();
+        }
+
+        function atualizarBadgeAlertas() {
+            // Verifica quais alertas foram atingidos com base nas ofertas atuais
+            const badge = document.getElementById('notificacaoBadge');
+            let count = 0;
+            meusAlertas.forEach(alerta => {
+                const oferta = ofertas.find(o => 
+                    o.variacoes?.produto_id == alerta.produto_id && 
+                    (alerta.capacidade === '' || o.variacoes?.capacidade === alerta.capacidade) &&
+                    o.preco <= alerta.preco_desejado &&
+                    o.moeda === 'BRL' &&
+                    o.quantidade > 0
+                );
+                if (oferta) count++;
+            });
+            if (count > 0) {
+                badge.innerText = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
             }
         }
 
@@ -1065,6 +1147,9 @@
             if (filtradas.length === 0) {
                 container.innerHTML = '<p class="text-center text-gray-400 col-span-full py-10">Nenhum aparelho encontrado com estes filtros.</p>';
             }
+
+            // Atualiza badge de alertas sempre que os cards são renderizados (preços podem ter mudado)
+            atualizarBadgeAlertas();
         }
 
         // Funções de Interação
@@ -1333,6 +1418,49 @@
             });
             alert('Alerta criado!');
             fecharCriarAlerta();
+            await carregarAlertas(); // recarrega a lista e atualiza badge
+        }
+
+        // Funções para Meus Alertas
+        function abrirMeusAlertas() {
+            carregarListaAlertas();
+            document.getElementById('meusAlertasModal').classList.remove('hidden');
+        }
+        function fecharMeusAlertas() {
+            document.getElementById('meusAlertasModal').classList.add('hidden');
+        }
+        function carregarListaAlertas() {
+            const lista = document.getElementById('listaAlertas');
+            if (!meusAlertas || meusAlertas.length === 0) {
+                lista.innerHTML = '<p class="text-center text-gray-400">Você não tem alertas.</p>';
+                return;
+            }
+            let html = '';
+            meusAlertas.forEach(alerta => {
+                const produto = produtos.find(p => p.id == alerta.produto_id);
+                const nomeProduto = produto ? produto.nome : 'Produto';
+                const oferta = ofertas.find(o => 
+                    o.variacoes?.produto_id == alerta.produto_id && 
+                    (alerta.capacidade === '' || o.variacoes?.capacidade === alerta.capacidade) &&
+                    o.preco <= alerta.preco_desejado &&
+                    o.moeda === 'BRL' &&
+                    o.quantidade > 0
+                );
+                const atingido = oferta ? true : false;
+                html += `
+                    <div class="border-b border-[#38383a] pb-2 mb-2">
+                        <div class="flex justify-between items-center">
+                            <span class="font-medium">${nomeProduto} ${alerta.capacidade || ''}</span>
+                            <span class="font-bold text-blue-500">R$ ${alerta.preco_desejado.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>${atingido ? '✅ Atingido!' : '⏳ Aguardando'}</span>
+                            ${atingido ? `<span class="text-green-400">Menor preço: R$ ${oferta.preco.toFixed(2)}</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            lista.innerHTML = html;
         }
 
         // Atualiza status no desktop
@@ -1371,10 +1499,12 @@
         function abrirDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('open'); }
         function fecharDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); }
         function logout() { localStorage.clear(); window.location.replace('index.html'); }
-        function abrirNotificacoes() { alert("Sem notificações no momento."); }
+        function abrirNotificacoes() { 
+            // Redireciona para Meus Alertas (ou abre o modal)
+            abrirMeusAlertas();
+        }
         function resetSenha() { alert("Reset de senha indisponível no momento."); }
         function abrirFavoritos() { alert("Favoritos em breve."); }
-        function abrirMeusAlertas() { alert("Alertas em breve."); }
 
         // Expor funções globais
         window.abrirDrawer = abrirDrawer;
@@ -1397,6 +1527,7 @@
         window.resetSenha = resetSenha;
         window.abrirFavoritos = abrirFavoritos;
         window.abrirMeusAlertas = abrirMeusAlertas;
+        window.fecharMeusAlertas = fecharMeusAlertas;
         window.abrirLegendaInsignias = abrirLegendaInsignias;
         window.fecharLegendaInsignias = fecharLegendaInsignias;
         window.abrirCriarAlerta = abrirCriarAlerta;
