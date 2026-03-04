@@ -111,13 +111,13 @@
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 16px;
-            padding: 0.85rem;
+            padding: 0.75rem;
             transition: all 0.2s;
             position: relative;
             display: flex;
             flex-direction: column;
             height: 100%;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
         .product-card:hover {
             transform: translateY(-4px);
@@ -158,11 +158,17 @@
         }
         .action-button:hover { color: var(--blue); }
         
-        /* Grid 4 Colunas */
-        .grid-cards { display: grid; grid-template-columns: repeat(1, 1fr); gap: 0.85rem; }
-        @media (min-width: 640px) { .grid-cards { grid-template-columns: repeat(2, 1fr); } }
-        @media (min-width: 1024px) { .grid-cards { grid-template-columns: repeat(3, 1fr); } }
-        @media (min-width: 1280px) { .grid-cards { grid-template-columns: repeat(4, 1fr); } }
+        /* Grid de 2 colunas para separar moedas */
+        .grid-moedas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .coluna-moeda {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
         
         /* Drawer Lateral */
         .drawer {
@@ -182,7 +188,7 @@
         }
         .drawer-item:hover { background: var(--input); color: var(--blue); }
         
-        /* Filtros Grid Harmônicos */
+        /* Filtros em grid para mobile sem rolagem */
         .filters-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -242,15 +248,18 @@
 
         /* Ajustes para o card de status */
         .status-card {
-            min-height: 120px; /* Dobrado para caber insígnias */
+            min-height: 120px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding: 1rem;
         }
         .status-card h3 {
             text-align: center;
             width: 100%;
+            margin-bottom: 0.75rem;
+            font-size: 0.8rem;
         }
         .status-card #userInsignias {
             justify-content: center;
@@ -368,9 +377,9 @@
                 </div>
             </div>
             
-            <!-- Card de status com centralização e altura dobrada -->
-            <div class="apple-card p-4 status-card">
-                <h3 class="text-xs font-bold mb-3">Seu status no iFipe 🏆</h3>
+            <!-- Card de status -->
+            <div class="apple-card status-card">
+                <h3 class="text-xs font-bold">Seu status no iFipe 🏆</h3>
                 <div id="userInsignias" class="flex flex-wrap gap-2"></div>
             </div>
         </div>
@@ -380,10 +389,10 @@
             
             <!-- Barra de pesquisa -->
             <div class="mb-3 relative">
-                <input type="text" id="searchInput" placeholder="(ENCONTRE O MELHOR PREÇO)" class="apple-input pl-4 pr-4 py-3 text-base font-medium border-2">
+                <input type="text" id="searchInput" placeholder="ENCONTRE O MELHOR PREÇO" class="apple-input pl-4 pr-4 py-3 text-base font-medium border-2">
             </div>
 
-            <!-- Filtros -->
+            <!-- Filtros em grid (sem rolagem horizontal) -->
             <div class="filters-grid mb-4">
                 <select id="filtroCategoria" class="apple-input text-xs py-2" onchange="renderizarCards()">
                     <option value="">Modelos</option>
@@ -408,9 +417,12 @@
                 </select>
             </div>
 
-            <!-- Grid de produtos -->
-            <div id="produtosGrid" class="grid-cards">
-                <p class="text-center text-gray-500 col-span-full py-10">Carregando o mercado...</p>
+            <!-- Grid de duas colunas para separar moedas -->
+            <div class="grid-moedas">
+                <!-- Coluna BRL (esquerda) -->
+                <div id="coluna-brl" class="coluna-moeda"></div>
+                <!-- Coluna USD (direita) -->
+                <div id="coluna-usd" class="coluna-moeda"></div>
             </div>
             
         </div>
@@ -482,7 +494,9 @@
         let produtos = [], variacoes = [], fornecedores = [], ofertas = [];
         let minhasCurtidas = new Set(); 
 
-        let DADOS_PROCESSADOS = { menorPrecoPorProdutoPaisMoeda: {} };
+        let DADOS_PROCESSADOS = { 
+            menorPrecoPorProdutoGrupo: {} // chave: produtoId_grupo (grupo = 'BRL' ou 'USD')
+        };
 
         const corHex = {
             'PRETO': '#2d2d2d', 'BLACK': '#2d2d2d',
@@ -531,7 +545,7 @@
                 minhasCurtidas = new Set(curtidas?.map(c => c.oferta_id) || []);
             }
 
-            // Debounce na pesquisa (único listener)
+            // Debounce na pesquisa
             let timeoutBusca;
             document.getElementById('searchInput').addEventListener('input', () => {
                 clearTimeout(timeoutBusca);
@@ -577,16 +591,16 @@
         }
 
         function processarMenorPrecoGlobal() {
-            DADOS_PROCESSADOS.menorPrecoPorProdutoPaisMoeda = {};
+            DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo = {};
             ofertas.forEach(o => {
                 const pId = o.variacoes?.produto_id;
                 if (!pId) return;
-                const pais = o.fornecedores?.pais || 'BR';
                 const moeda = o.moeda || 'BRL';
-                const key = `${pId}_${pais}_${moeda}`;
-                const pFinal = moeda === 'USD' ? o.preco * rateOraculo : o.preco;
-                if (!DADOS_PROCESSADOS.menorPrecoPorProdutoPaisMoeda[key] || pFinal < DADOS_PROCESSADOS.menorPrecoPorProdutoPaisMoeda[key]) {
-                    DADOS_PROCESSADOS.menorPrecoPorProdutoPaisMoeda[key] = pFinal;
+                const grupo = moeda; // 'BRL' ou 'USD' (consideramos que USD é dólar)
+                const key = `${pId}_${grupo}`;
+                const preco = o.preco; // sem converter
+                if (!DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[key] || preco < DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[key]) {
+                    DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[key] = preco;
                 }
             });
         }
@@ -597,8 +611,8 @@
                 const idB = b.variacoes?.produto_id || 0;
                 if (idA !== idB) return idB - idA;
 
-                const pA = a.moeda === 'USD' ? a.preco * rateOraculo : a.preco;
-                const pB = b.moeda === 'USD' ? b.preco * rateOraculo : b.preco;
+                const pA = a.preco;
+                const pB = b.preco;
                 if (pA !== pB) return pA - pB;
 
                 const tA = a.atualizado_em ? new Date(a.atualizado_em).getTime() : new Date(a.criado_em).getTime();
@@ -608,8 +622,10 @@
         }
 
         function renderizarCards() {
-            const grid = document.getElementById('produtosGrid');
-            grid.innerHTML = '';
+            const colunaBRL = document.getElementById('coluna-brl');
+            const colunaUSD = document.getElementById('coluna-usd');
+            colunaBRL.innerHTML = '';
+            colunaUSD.innerHTML = '';
 
             const busca = document.getElementById('searchInput').value.toLowerCase().trim();
             const fCat = document.getElementById('filtroCategoria').value;
@@ -631,28 +647,31 @@
                 return true;
             });
 
-            filtradas = ordenarOfertas(filtradas);
+            // Separar por moeda
+            const ofertasBRL = filtradas.filter(o => (o.moeda || 'BRL') === 'BRL');
+            const ofertasUSD = filtradas.filter(o => (o.moeda || 'BRL') === 'USD');
 
-            if (filtradas.length === 0) {
-                grid.innerHTML = '<p class="text-center text-gray-400 col-span-full py-10">Nenhum aparelho encontrado com estes filtros.</p>';
-                return;
-            }
+            // Ordenar cada grupo por preço (menor primeiro)
+            ofertasBRL.sort((a, b) => a.preco - b.preco);
+            ofertasUSD.sort((a, b) => a.preco - b.preco);
 
-            filtradas.slice(0, 50).forEach(o => {
+            // Função para criar card
+            const criarCard = (o) => {
                 const p = o.variacoes?.produtos_mestre;
                 const f = o.fornecedores;
                 const v = o.variacoes;
-                if (!p || !f) return;
+                if (!p || !f) return null;
 
                 const moeda = o.moeda || 'BRL';
-                const precoFinal = moeda === 'USD' ? o.preco * rateOraculo : o.preco;
+                const preco = o.preco;
+                const simbolo = moeda === 'USD' ? 'US$' : 'R$';
                 const corNome = (v?.cor || '').trim().toUpperCase();
                 const corHexValue = corHex[corNome] || corHex[corNome.replace(/\s+/g, ' ')] || '#808080';
 
-                const pais = f.pais || 'BR';
-                const keyMenor = `${p.id}_${pais}_${moeda}`;
-                const menorPreco = DADOS_PROCESSADOS.menorPrecoPorProdutoPaisMoeda[keyMenor] || Infinity;
-                const isMenor = precoFinal === menorPreco;
+                const grupo = moeda; // 'BRL' ou 'USD'
+                const keyMenor = `${p.id}_${grupo}`;
+                const menorPreco = DADOS_PROCESSADOS.menorPrecoPorProdutoGrupo[keyMenor] || Infinity;
+                const isMenor = preco === menorPreco;
 
                 let tagTrend = '';
                 if (o.preco_anterior && o.atualizado_em) {
@@ -679,16 +698,15 @@
                     return 'Boa noite';
                 })();
                 const msgZap = encodeURIComponent(
-                    `${saudacao}! Encontrei seu anúncio no www.ifipe.com.br\n` +
+                    `${saudacao}! Se liga nessa oferta especial 🔥📲 que encontrei no www.ifipe.com.br\n` +
                     `${p.nome} ${v?.capacidade || ''} ${v?.cor || ''}\n` +
-                    `Preço: R$ ${precoFinal.toFixed(2)}\n` +
-                    `Está disponível?`
+                    `Preço: ${simbolo} ${preco.toFixed(2)}\n` +
+                    `Quantidade disponível: ${o.quantidade}\n` +
+                    `Fale direto com o lojista: https://wa.me/${f.whatsapp?.replace(/\D/g,'')}`
                 );
 
                 const curtido = minhasCurtidas.has(o.id);
-                // Botão recomendar com 🔥 e contador (simulado)
-                const contador = Math.floor(Math.random() * 15) + 1; // placeholder
-                const btnRecomendar = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="toggleRecomendar(${o.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-fire text-orange-500 text-sm"></i> <span>${curtido ? 'Recomendado' : '🔥 Recomendar'}</span> <span class="ml-1 text-[8px] text-gray-500 font-normal">(${contador})</span></button>`;
+                const btnRecomendar = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="toggleRecomendar(${o.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-fire text-orange-500 text-sm"></i> <span>${curtido ? 'Recomendado' : '🔥 Recomendar'}</span></button>`;
 
                 const card = document.createElement('div');
                 card.className = 'product-card';
@@ -713,7 +731,7 @@
                     </div>
                     <p class="text-xs text-gray-400 mb-1">📍 ${f.cidade || ''} - ${f.pais || 'BR'}</p>
                     <div class="flex justify-between items-center mb-2">
-                        <span class="price text-blue-500">R$ ${precoFinal.toFixed(2)}</span>
+                        <span class="price text-blue-500">${simbolo} ${preco.toFixed(2)}</span>
                         <span class="text-[9px] text-gray-500">${new Date(o.criado_em).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</span>
                     </div>
                     <div class="flex justify-between items-center py-2 border-t border-[#38383a] mb-2 mt-1">
@@ -721,7 +739,7 @@
                         <button class="action-button hover:text-blue-500" onclick="abrirPerguntas(${o.id}, '${p.nome}')">
                             <i class="far fa-question-circle"></i> <span>Perguntar</span>
                         </button>
-                        <button class="action-button hover:text-blue-500" onclick="compartilhar('${p.nome}', '${v?.capacidade || ''}', '${v?.cor || ''}', ${precoFinal}, ${o.quantidade}, '${f.whatsapp?.replace(/\D/g,'')}')">
+                        <button class="action-button hover:text-blue-500" onclick="compartilhar('${p.nome}', '${v?.capacidade || ''}', '${v?.cor || ''}', ${preco}, '${simbolo}', ${o.quantidade}, '${f.whatsapp?.replace(/\D/g,'')}')">
                             <i class="far fa-share-square"></i> <span>Compartilhar</span>
                         </button>
                     </div>
@@ -729,8 +747,23 @@
                         <i class="fab fa-whatsapp"></i> Comprar no WhatsApp
                     </a>
                 `;
-                grid.appendChild(card);
+                return card;
+            };
+
+            // Preencher colunas
+            ofertasBRL.forEach(o => {
+                const card = criarCard(o);
+                if (card) colunaBRL.appendChild(card);
             });
+            ofertasUSD.forEach(o => {
+                const card = criarCard(o);
+                if (card) colunaUSD.appendChild(card);
+            });
+
+            // Se não houver ofertas em BRL, mostrar mensagem
+            if (ofertasBRL.length === 0 && ofertasUSD.length === 0) {
+                colunaBRL.innerHTML = '<p class="text-center text-gray-400 col-span-full py-10">Nenhum aparelho encontrado com estes filtros.</p>';
+            }
         }
 
         // Funções de Interação
@@ -741,16 +774,16 @@
                 await _s.from('curtidas').delete().eq('cliente_id', currentUser.id).eq('oferta_id', ofertaId);
                 minhasCurtidas.delete(ofertaId);
                 btn.classList.remove('text-blue-500');
-                btn.innerHTML = '<i class="far fa-fire text-orange-500 text-sm"></i> <span>🔥 Recomendar</span> <span class="ml-1 text-[8px] text-gray-500 font-normal">(0)</span>';
+                btn.innerHTML = '<i class="far fa-fire text-orange-500 text-sm"></i> <span>🔥 Recomendar</span>';
             } else {
                 await _s.from('curtidas').insert({ cliente_id: currentUser.id, oferta_id: ofertaId });
                 minhasCurtidas.add(ofertaId);
                 btn.classList.add('text-blue-500');
-                btn.innerHTML = '<i class="fas fa-fire text-orange-500 text-sm"></i> <span>Recomendado</span> <span class="ml-1 text-[8px] text-gray-500 font-normal">(1)</span>';
+                btn.innerHTML = '<i class="fas fa-fire text-orange-500 text-sm"></i> <span>Recomendado</span>';
             }
         }
 
-        function compartilhar(nome, capacidade, cor, preco, qtd, zap) {
+        function compartilhar(nome, capacidade, cor, preco, simbolo, qtd, zap) {
             const saudacao = (() => {
                 const h = new Date().getHours();
                 if (h < 12) return 'Bom dia';
@@ -759,7 +792,7 @@
             })();
             const texto = `${saudacao}! Se liga nessa oferta especial 🔥📲 que encontrei no iFipe:\n` +
                 `${nome} ${capacidade} ${cor}\n` +
-                `Preço: R$ ${preco.toFixed(2)}\n` +
+                `Preço: ${simbolo} ${preco.toFixed(2)}\n` +
                 `Quantidade disponível: ${qtd}\n` +
                 `Fale direto com o lojista: https://wa.me/${zap}`;
             
@@ -850,7 +883,7 @@
                 const cidade = o.fornecedores?.cidade || 'GERAL';
                 const key = `${pId}_${cidade}`;
                 if (new Date(o.criado_em) < dezDiasAtras) return;
-                const preco = o.moeda === 'USD' ? o.preco * rateOraculo : o.preco;
+                const preco = o.moeda === 'USD' ? o.preco : o.preco; // mantém moeda original? Para histórico, talvez converter? Vamos manter como está
                 if (!historico[key]) {
                     historico[key] = {
                         nome: o.variacoes?.produtos_mestre?.nome || 'Produto',
