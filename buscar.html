@@ -569,20 +569,27 @@
             }
             
             if (masterAuth === 'gov_absoluto') {
-                currentUser = { id: 0, nome: 'MASTER', insignia_manual: [] };
+                currentUser = { id: 0, nome: 'MASTER', whatsapp: '', insignia_manual: [] };
+                console.log('Usuário master carregado');
             } else {
-                const { data, error } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
-                if (error || !data) {
-                    console.error('Erro ao carregar usuário:', error);
+                try {
+                    const { data, error } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
+                    if (error || !data) {
+                        console.error('Erro ao carregar usuário:', error);
+                        logout();
+                        return;
+                    }
+                    currentUser = data;
+                    
+                    const { data: curtidas } = await _s.from('curtidas').select('oferta_id').eq('cliente_id', currentUser.id);
+                    minhasCurtidas = new Set(curtidas?.map(c => c.oferta_id) || []);
+                    console.log('Usuário carregado:', currentUser);
+                } catch (err) {
+                    console.error('Erro na consulta:', err);
                     logout();
                     return;
                 }
-                currentUser = data;
-                
-                const { data: curtidas } = await _s.from('curtidas').select('oferta_id').eq('cliente_id', currentUser.id);
-                minhasCurtidas = new Set(curtidas?.map(c => c.oferta_id) || []);
             }
-            console.log('Usuário carregado:', currentUser);
 
             // Debounce na pesquisa
             let timeoutBusca;
@@ -898,30 +905,38 @@
 
         // FUNÇÕES DA MINHA CONTA (CORRIGIDAS)
         function abrirConta() {
-            console.log('Abrindo conta...', currentUser);
-            if (!currentUser || currentUser.id === 0) {
-                alert('Acesso restrito para clientes. Faça login primeiro.');
+            console.log('Abrindo conta... currentUser =', currentUser);
+            if (!currentUser) {
+                alert('Usuário não carregado. Tente recarregar a página.');
                 return;
+            }
+            if (currentUser.id === 0) {
+                // Master pode abrir, mas com campos em branco
+                document.getElementById('contaNome').value = '';
+                document.getElementById('contaWhats').value = '';
+                document.getElementById('contaSenha').value = '';
+            } else {
+                document.getElementById('contaNome').value = currentUser.nome || '';
+                document.getElementById('contaWhats').value = currentUser.whatsapp || '';
+                document.getElementById('contaSenha').value = '';
             }
             const modal = document.getElementById('contaModal');
-            if (!modal) {
+            if (modal) {
+                modal.classList.remove('hidden');
+            } else {
                 console.error('Modal de conta não encontrado!');
-                return;
             }
-            document.getElementById('contaNome').value = currentUser.nome || '';
-            document.getElementById('contaWhats').value = currentUser.whatsapp || '';
-            document.getElementById('contaSenha').value = '';
-            modal.classList.remove('hidden');
         }
 
         function fecharConta() {
-            document.getElementById('contaModal').classList.add('hidden');
+            const modal = document.getElementById('contaModal');
+            if (modal) modal.classList.add('hidden');
         }
 
         async function salvarConta(e) {
             e.preventDefault();
             if (!currentUser || currentUser.id === 0) {
-                alert('Faça login para salvar alterações.');
+                alert('Você não tem permissão para alterar dados.');
                 return;
             }
             const nome = document.getElementById('contaNome').value.trim();
