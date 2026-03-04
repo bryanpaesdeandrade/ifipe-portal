@@ -321,19 +321,20 @@
             color: #000;
         }
 
-        /* Badge de insígnia de anunciante (apenas emoji) */
+        /* Badge de insígnia de anunciante (apenas emoji) - agora com fundo escuro e ícone dourado */
         .insignia-emoji {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #fbbf24, #f59e0b);
-            color: #000;
+            background: #1f1f1f;
+            color: #ffd700;
             border-radius: 50%;
             width: 22px;
             height: 22px;
             font-size: 14px;
             margin-left: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            border: 1px solid #444;
         }
     </style>
 </head>
@@ -650,6 +651,12 @@
             { min: 1, nome: "LOJISTA EXPERTO", emoji: "👶🏻" }
         ];
 
+        // Mapa reverso para encontrar emoji a partir do nome (para insígnias manuais)
+        const nomeParaEmojiBuscador = {};
+        insigniasBuscador.forEach(item => {
+            nomeParaEmojiBuscador[item.nome] = item.emoji;
+        });
+
         const corHex = {
             'PRETO': '#2d2d2d', 'BLACK': '#2d2d2d',
             'BRANCO': '#f4f4f4', 'WHITE': '#f4f4f4',
@@ -786,7 +793,7 @@
             });
         }
 
-        // Função para obter a insígnia mais poderosa do anunciante e seu emoji
+        // Função para obter a insígnia mais poderosa do anunciante
         function getInsigniaAnunciante(fornecedor) {
             if (!fornecedor.insignia_manual || fornecedor.insignia_manual.length === 0) return null;
             // Percorre a ordem de poder e retorna a primeira que encontrar
@@ -799,10 +806,19 @@
             return fornecedor.insignia_manual[0];
         }
 
-        // Função para obter a insígnia do buscador baseada em logins (retorna objeto com nome e emoji)
-        function getInsigniaBuscador(logins) {
+        // Função para obter a insígnia do buscador baseada em logins OU insígnias manuais
+        function getInsigniaBuscador(usuario) {
+            // Primeiro, verifica se há insígnias manuais
+            if (usuario.insignia_manual && usuario.insignia_manual.length > 0) {
+                // Pega a primeira (ou a mais relevante). Como são poucas, usamos a primeira.
+                const nomeInsignia = usuario.insignia_manual[0];
+                // Tenta encontrar o emoji correspondente
+                const emoji = nomeParaEmojiBuscador[nomeInsignia] || '🔰'; // fallback
+                return { nome: nomeInsignia, emoji: emoji };
+            }
+            // Se não tem manual, usa logins
             for (let ins of insigniasBuscador) {
-                if (logins >= ins.min) {
+                if (usuario.logins_count >= ins.min) {
                     return ins;
                 }
             }
@@ -1213,8 +1229,7 @@
         function atualizarStatusUsuario() {
             const container = document.getElementById('userInsignias');
             if (!currentUser) return;
-            // Insígnia do buscador baseada em logins
-            const insignia = getInsigniaBuscador(currentUser.logins_count || 0);
+            const insignia = getInsigniaBuscador(currentUser);
             if (insignia) {
                 container.innerHTML = `<span class="status-badge" title="${insignia.nome}">${insignia.emoji} ${insignia.nome}</span>`;
             } else {
