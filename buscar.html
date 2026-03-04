@@ -138,7 +138,6 @@
         .badge-red { background: rgba(255,59,48,0.1); color: #ff3b30; border: 1px solid rgba(255,59,48,0.3); }
         .badge-yellow { background: rgba(255,204,0,0.1); color: #b8860b; border: 1px solid rgba(255,204,0,0.3); }
         .badge-purple { background: rgba(147,51,234,0.1); color: #9333ea; border: 1px solid #9333ea; }
-        .badge-orange { background: rgba(255,159,10,0.1); color: #ff9f0a; border: 1px solid #ff9f0a; }
         
         .verified-badge {
             display: inline-flex; align-items: center; justify-content: center;
@@ -312,7 +311,6 @@
             </div>
             <div class="grid grid-cols-2 gap-1 text-xs mb-2">
                 <div><span class="text-gray-400">Binance</span><div id="calcBinanceMobile" class="font-bold text-yellow-500">R$ 5,29</div></div>
-                <!-- Oráculo removido da calculadora -->
             </div>
             <div class="bg-[#2c2c2e] p-2 rounded-lg mb-2">
                 <span class="text-xs text-gray-400">Custo Base</span>
@@ -342,7 +340,6 @@
                 </div>
             </div>
             
-            <!-- Botão USDT com texto "ORÁCULO" incluso -->
             <a id="btnComprarUsdt" href="https://wa.me/15616760652?text=VENHO%20PELO%20iFipe%20DESEJO%20COMPRAR%20USDT" target="_blank" class="bg-green-600 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-green-700 transition flex items-center gap-1">
                 <i class="fab fa-whatsapp"></i> USDT ORÁCULO <span id="taxaVip" class="ml-1">R$ 5,3507</span>
             </a>
@@ -375,7 +372,6 @@
                         <span class="text-gray-400">Binance</span>
                         <div id="calcBinance" class="font-bold text-yellow-500">R$ 5,2907</div>
                     </div>
-                    <!-- Oráculo removido da calculadora -->
                 </div>
                 <div class="bg-[#2c2c2e] p-2 rounded-xl mb-3">
                     <span class="text-xs text-gray-400">Custo Base no Brasil</span>
@@ -434,7 +430,7 @@
         </div>
     </div>
 
-    <!-- Modais -->
+    <!-- MODAIS -->
     <div id="historicoGeralModal" class="modal hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Histórico de Mercado</h2>
@@ -444,6 +440,7 @@
         </div>
     </div>
 
+    <!-- Modal Minha Conta (FUNCIONAL) -->
     <div id="contaModal" class="modal hidden">
         <div class="modal-content">
             <h2 class="text-2xl font-bold mb-4">Minha Conta</h2>
@@ -538,7 +535,10 @@
         window.onload = async () => {
             const token = localStorage.getItem('iFipe_Token');
             const masterAuth = localStorage.getItem('iFipe_Master_Auth');
-            if (!token && masterAuth !== 'gov_absoluto') return window.location.replace('index.html');
+            if (!token && masterAuth !== 'gov_absoluto') {
+                window.location.replace('index.html');
+                return;
+            }
             
             if (masterAuth === 'gov_absoluto') {
                 currentUser = { id: 0, nome: 'MASTER', insignia_manual: [] };
@@ -554,6 +554,7 @@
                 const { data: curtidas } = await _s.from('curtidas').select('oferta_id').eq('cliente_id', currentUser.id);
                 minhasCurtidas = new Set(curtidas?.map(c => c.oferta_id) || []);
             }
+            console.log('Usuário carregado:', currentUser);
 
             // Debounce na pesquisa
             let timeoutBusca;
@@ -714,7 +715,6 @@
                 );
 
                 const curtido = minhasCurtidas.has(o.id);
-                // Botão recomendar: sem ícone se não curtido, com fogo se curtido
                 const btnRecomendar = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="toggleRecomendar(${o.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-fire text-orange-500 text-sm"></i> <span>${curtido ? 'Recomendado' : 'Recomendar'}</span></button>`;
 
                 const card = document.createElement('div');
@@ -761,7 +761,6 @@
 
             // Decidir layout
             if (ofertasUSD.length > 0) {
-                // Duas colunas
                 container.innerHTML = `
                     <div class="grid-moedas">
                         <div id="coluna-brl" class="coluna-moeda"></div>
@@ -779,7 +778,6 @@
                     if (card) colunaUSD.appendChild(card);
                 });
             } else {
-                // Uma grade com 4 colunas (todos BRL)
                 container.innerHTML = `<div id="grid-unico" class="grid-cards"></div>`;
                 const grid = document.getElementById('grid-unico');
                 ofertasBRL.forEach(o => {
@@ -870,28 +868,48 @@
             await carregarPerguntas(ofertaId);
         }
 
+        // FUNÇÕES DA MINHA CONTA (CORRIGIDAS)
         function abrirConta() {
-            if (!currentUser || currentUser.id === 0) return alert('Acesso restrito para clientes.');
+            console.log('Abrindo conta...', currentUser);
+            if (!currentUser || currentUser.id === 0) {
+                alert('Acesso restrito para clientes. Faça login primeiro.');
+                return;
+            }
+            const modal = document.getElementById('contaModal');
+            if (!modal) {
+                console.error('Modal de conta não encontrado!');
+                return;
+            }
             document.getElementById('contaNome').value = currentUser.nome || '';
             document.getElementById('contaWhats').value = currentUser.whatsapp || '';
             document.getElementById('contaSenha').value = '';
-            document.getElementById('contaModal').classList.remove('hidden');
+            modal.classList.remove('hidden');
         }
-        function fecharConta() { document.getElementById('contaModal').classList.add('hidden'); }
+
+        function fecharConta() {
+            document.getElementById('contaModal').classList.add('hidden');
+        }
+
         async function salvarConta(e) {
             e.preventDefault();
+            if (!currentUser || currentUser.id === 0) {
+                alert('Faça login para salvar alterações.');
+                return;
+            }
             const nome = document.getElementById('contaNome').value.trim();
             const whats = document.getElementById('contaWhats').value.trim();
             const senha = document.getElementById('contaSenha').value.trim();
             const updates = { nome, whatsapp: whats };
             if (senha) updates.senha = senha;
-            const { error } = await _s.from('clientes_buscador').update(updates).eq('id', currentUser.id);
-            if (error) {
-                alert('Erro: ' + error.message);
-            } else {
+            
+            try {
+                const { error } = await _s.from('clientes_buscador').update(updates).eq('id', currentUser.id);
+                if (error) throw error;
                 currentUser = { ...currentUser, ...updates };
                 alert('Conta atualizada com sucesso!');
                 fecharConta();
+            } catch (err) {
+                alert('Erro ao atualizar: ' + err.message);
             }
         }
 
