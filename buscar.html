@@ -974,24 +974,56 @@
             return fornecedor.insignia_manual[0];
         }
 
-        // Função para obter a insígnia do buscador baseada em logins OU insígnias manuais
-        function getInsigniaBuscador(usuario) {
-            // Primeiro, verifica se há insígnias manuais
-            if (usuario.insignia_manual && usuario.insignia_manual.length > 0) {
-                // Pega a primeira (a mais relevante, pois o Master pode atribuir qualquer ordem)
-                const nomeInsignia = usuario.insignia_manual[0];
-                // Tenta encontrar o emoji correspondente
-                const emoji = nomeParaEmojiBuscador[nomeInsignia] || '🔰'; // fallback
-                return { nome: nomeInsignia, emoji: emoji };
+        // NOVA FUNÇÃO PARA RENDERIZAR INSÍGNIAS DO BUSCADOR (CORRIGIDA)
+        function renderizarInsignias(usuario) {
+            if (!usuario) return '';
+            let html = '';
+            let manuais = [];
+            
+            // 1. Parse seguro do Supabase (String JSON vs Array Nativo)
+            try {
+                if (typeof usuario.insignia_manual === 'string') {
+                    manuais = JSON.parse(usuario.insignia_manual);
+                } else if (Array.isArray(usuario.insignia_manual)) {
+                    manuais = usuario.insignia_manual;
+                }
+            } catch(e) { 
+                console.error('Erro de parse nas insígnias manuais'); 
             }
-            // Se não tem manual, usa logins (a lista já está ordenada do maior para o menor)
+
+            // 2. Renderiza TODAS as insígnias manuais no plural
+            manuais.forEach(nome => {
+                const emoji = nomeParaEmojiBuscador[nome] || '🔰';
+                html += `<span class="status-badge" title="${nome}">${emoji} ${nome}</span>`;
+            });
+
+            // 3. Renderiza a insígnia automática por Logins (sem sobrepor)
+            let insigniaLogin = null;
             for (let ins of insigniasBuscador) {
-                if (usuario.logins_count >= ins.min) {
-                    return ins;
+                if ((usuario.logins_count || 0) >= ins.min) {
+                    insigniaLogin = ins;
+                    break;
                 }
             }
-            return null;
+            if (insigniaLogin && !manuais.includes(insigniaLogin.nome)) {
+                html += `<span class="status-badge" title="${insigniaLogin.nome}">${insigniaLogin.emoji} ${insigniaLogin.nome}</span>`;
+            }
+
+            return html;
         }
+
+        function atualizarStatusUsuario() {
+            const container = document.getElementById('userInsignias');
+            if (container) container.innerHTML = renderizarInsignias(currentUser);
+        }
+
+        function atualizarStatusUsuarioMobile() {
+            const container = document.getElementById('drawerUserInsignias');
+            if (container) container.innerHTML = renderizarInsignias(currentUser);
+        }
+
+        // Função para obter a insígnia do buscador (não usada mais, mantida por compatibilidade)
+        // function getInsigniaBuscador(usuario) { ... } // removida
 
         function renderizarCards() {
             const container = document.getElementById('container-produtos');
@@ -1475,34 +1507,6 @@
                 `;
             });
             lista.innerHTML = html;
-        }
-
-        // Atualiza status no desktop
-        function atualizarStatusUsuario() {
-            const container = document.getElementById('userInsignias');
-            if (!currentUser) return;
-            const insignia = getInsigniaBuscador(currentUser);
-            if (insignia) {
-                container.innerHTML = `<span class="status-badge" title="${insignia.nome}">${insignia.emoji} ${insignia.nome}</span>`;
-                console.log('Status atualizado (desktop):', insignia);
-            } else {
-                container.innerHTML = ''; 
-                console.log('Nenhuma insígnia para o usuário (desktop)');
-            }
-        }
-
-        // Atualiza status no drawer (mobile)
-        function atualizarStatusUsuarioMobile() {
-            const container = document.getElementById('drawerUserInsignias');
-            if (!currentUser) return;
-            const insignia = getInsigniaBuscador(currentUser);
-            if (insignia) {
-                container.innerHTML = `<span class="status-badge" title="${insignia.nome}">${insignia.emoji} ${insignia.nome}</span>`;
-                console.log('Status atualizado (mobile):', insignia);
-            } else {
-                container.innerHTML = ''; 
-                console.log('Nenhuma insígnia para o usuário (mobile)');
-            }
         }
 
         // Funções para legenda de insígnias
