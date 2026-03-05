@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - MASTER (O Olimpo)</title>
+    <title>iFipe - Olimpo (Painel Global)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -30,6 +30,10 @@
             border: 1px solid var(--border);
             border-radius: 24px;
             padding: 1.5rem;
+            transition: all 0.2s;
+        }
+        .glass-card:hover {
+            border-color: var(--blue);
         }
         .btn-primary {
             background: var(--blue);
@@ -59,6 +63,19 @@
             background: rgba(0,113,227,0.1);
             border-color: var(--blue);
         }
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
         .apple-input {
             background: var(--input);
             border: 1px solid var(--border);
@@ -87,7 +104,7 @@
             border: 1px solid var(--border);
             border-radius: 24px;
             padding: 2rem;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
             max-height: 90vh;
             overflow-y: auto;
@@ -109,12 +126,12 @@
             background: linear-gradient(135deg, #1c1c1e, #2c2c2e);
             border: 2px solid var(--gold);
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: 800;
             color: var(--gold);
             box-shadow: 0 0 15px rgba(251,191,36,0.3);
@@ -145,6 +162,11 @@
         #backToTop.visible {
             opacity: 1;
         }
+        .badge-origem {
+            display: inline-block;
+            font-size: 1.2rem;
+            margin-left: 4px;
+        }
     </style>
 </head>
 <body class="p-4 lg:p-8">
@@ -168,12 +190,12 @@
         </div>
     </div>
 
-    <!-- PAINEL MASTER (visível após login) -->
+    <!-- PAINEL MASTER -->
     <div id="masterPanel" class="hidden">
-        <!-- HEADER com navegação e ícone Horus -->
+        <!-- HEADER -->
         <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
             <div class="flex items-center gap-4">
-                <h1 class="text-2xl font-black italic">iFipe <span class="text-blue-500">MASTER</span></h1>
+                <h1 class="text-2xl font-black italic">iFipe <span class="text-blue-500">OLIMPO</span></h1>
                 <div class="h-6 w-px bg-[#38383a]"></div>
                 <span id="userNameDisplay" class="text-sm text-gray-400"></span>
             </div>
@@ -184,8 +206,8 @@
                 </div>
                 <!-- Botão de trocar painel -->
                 <button onclick="mostrarTrocaPainel()" class="btn-secondary text-xs px-3 py-2">🔀 TROCAR PAINEL</button>
-                <!-- Botões de manutenção -->
-                <div class="relative group">
+                <!-- Botões de manutenção (visíveis apenas para master) -->
+                <div class="relative group master-only">
                     <button class="btn-primary text-xs px-3 py-2">🔧 MANUTENÇÃO</button>
                     <div class="absolute right-0 mt-2 w-64 bg-[#2c2c2e] border border-[#38383a] rounded-xl p-3 hidden group-hover:block z-50">
                         <button onclick="setMaintenance('geral')" class="w-full text-left p-2 hover:bg-[#3a3a3c] rounded text-sm">🛑 ATUALIZAÇÃO GERAL</button>
@@ -197,9 +219,9 @@
             </div>
         </div>
 
-        <!-- MENU DE ABAS (visível para todos, mas ações restritas para funcionários) -->
+        <!-- MENU DE ABAS -->
         <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-            <button class="tab-btn active px-4 py-2 bg-[#2c2c2e] rounded-full text-xs font-bold" data-tab="fornecedores">🏢 ATACADISTAS</button>
+            <button class="tab-btn active px-4 py-2 bg-blue-600 rounded-full text-xs font-bold" data-tab="fornecedores">🏢 ATACADISTAS</button>
             <button class="tab-btn px-4 py-2 bg-[#2c2c2e] rounded-full text-xs font-bold" data-tab="buscadores">👥 BUSCADORES</button>
             <button class="tab-btn px-4 py-2 bg-[#2c2c2e] rounded-full text-xs font-bold" data-tab="anuncios">📢 ANÚNCIOS</button>
             <button class="tab-btn px-4 py-2 bg-[#2c2c2e] rounded-full text-xs font-bold" data-tab="selos">🛡️ SELOS</button>
@@ -208,9 +230,13 @@
         </div>
 
         <!-- CONTEÚDO DAS ABAS -->
+
+        <!-- ATACADISTAS -->
         <div id="fornecedores" class="tab-content">
             <div class="glass-card">
-                <h2 class="text-lg font-bold mb-4">Atacadistas</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold">Atacadistas</h2>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
@@ -219,6 +245,7 @@
                                 <th class="p-2 text-left">Loja</th>
                                 <th class="p-2 text-left">WhatsApp</th>
                                 <th class="p-2 text-left">Status</th>
+                                <th class="p-2 text-left">Verificado</th>
                                 <th class="p-2 text-left">Ações</th>
                             </tr>
                         </thead>
@@ -228,9 +255,12 @@
             </div>
         </div>
 
+        <!-- BUSCADORES -->
         <div id="buscadores" class="tab-content hidden">
             <div class="glass-card">
-                <h2 class="text-lg font-bold mb-4">Buscadores</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold">Buscadores</h2>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
@@ -238,6 +268,7 @@
                                 <th class="p-2 text-left">ID</th>
                                 <th class="p-2 text-left">Nome</th>
                                 <th class="p-2 text-left">WhatsApp</th>
+                                <th class="p-2 text-left">Logins</th>
                                 <th class="p-2 text-left">Status</th>
                                 <th class="p-2 text-left">Ações</th>
                             </tr>
@@ -248,9 +279,16 @@
             </div>
         </div>
 
+        <!-- ANÚNCIOS GLOBAIS -->
         <div id="anuncios" class="tab-content hidden">
             <div class="glass-card">
-                <h2 class="text-lg font-bold mb-4">Anúncios Globais</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold">Anúncios Globais</h2>
+                    <div class="flex gap-2">
+                        <button onclick="abrirBulkEdit()" class="btn-secondary text-xs px-3 py-2 master-only">✏️ EDITAR EM MASSA</button>
+                        <button onclick="zerarTodosAnuncios()" class="btn-danger text-xs px-3 py-2 master-only">🚫 ZERAR TODOS OS ANÚNCIOS</button>
+                    </div>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
@@ -269,30 +307,46 @@
             </div>
         </div>
 
+        <!-- SELOS (simplificado) -->
         <div id="selos" class="tab-content hidden">
             <div class="glass-card">
                 <h2 class="text-lg font-bold mb-4">Gestão de Selos</h2>
-                <!-- ... (conteúdo simplificado) -->
-                <p class="text-gray-400">Selecione um atacadista ou buscador para atribuir selos manuais.</p>
+                <p class="text-gray-400">Em breve: atribuição manual e varredura global de selos por estoque/logins.</p>
             </div>
         </div>
 
+        <!-- FUNCIONÁRIOS -->
         <div id="funcionarios" class="tab-content hidden">
             <div class="glass-card">
                 <h2 class="text-lg font-bold mb-4">Funcionários</h2>
-                <!-- ... -->
+                <p class="text-gray-400">Apenas master pode gerenciar.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-gray-400 border-b border-[#38383a]">
+                                <th class="p-2 text-left">ID</th>
+                                <th class="p-2 text-left">Nome</th>
+                                <th class="p-2 text-left">WhatsApp</th>
+                                <th class="p-2 text-left">Status</th>
+                                <th class="p-2 text-left">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="funcionariosList"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
+        <!-- CONTA (simplificado) -->
         <div id="conta" class="tab-content hidden">
             <div class="glass-card">
                 <h2 class="text-lg font-bold mb-4">Minha Conta</h2>
-                <!-- ... -->
+                <p class="text-gray-400">Dados do perfil master/funcionário.</p>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DE TROCA DE PAINEL (após login) -->
+    <!-- MODAL DE TROCA DE PAINEL -->
     <div id="trocaPainelModal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4">Acessar como</h2>
@@ -305,16 +359,14 @@
         </div>
     </div>
 
-    <!-- MODAL HORUS (Menores Preços Absolutos) -->
+    <!-- MODAL HORUS -->
     <div id="horusModal" class="modal-overlay hidden">
         <div class="modal-content max-w-3xl">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold flex items-center gap-2"><span class="horus-icon mr-2">👁️$</span> Menores Preços Absolutos</h2>
                 <button onclick="fecharHorus()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
             </div>
-            <div id="horusList" class="space-y-3 max-h-[70vh] overflow-y-auto scrollbar-thin pr-2">
-                <!-- preenchido via JS -->
-            </div>
+            <div id="horusList" class="space-y-3 max-h-[70vh] overflow-y-auto scrollbar-thin pr-2"></div>
         </div>
     </div>
 
@@ -322,8 +374,17 @@
     <div id="guruModal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2 class="text-xl font-bold mb-4">👁️ GURU</h2>
-            <p class="text-gray-400 mb-4">👁️ GURU - MONITORAMENTO INVISÍVEL. FUTURO SISTEMA DE INTELIGÊNCIA ARTIFICIAL DE PREÇOS E ANTI-HACK. AQUI SERÃO EXIBIDOS LOGS EM TEMPO REAL, ALERTAS DE ANOMALIAS E TENTATIVAS DE FRAUDE. EM DESENVOLVIMENTO.</p>
-            <button onclick="fecharGuru()" class="btn-primary w-full">Fechar</button>
+            <p class="text-gray-400">👁️ GURU - MONITORAMENTO INVISÍVEL. FUTURO SISTEMA DE INTELIGÊNCIA ARTIFICIAL DE PREÇOS E ANTI-HACK. AQUI SERÃO EXIBIDOS LOGS EM TEMPO REAL, ALERTAS DE ANOMALIAS E TENTATIVAS DE FRAUDE. EM DESENVOLVIMENTO.</p>
+            <button onclick="fecharGuru()" class="btn-primary w-full mt-4">Fechar</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDIÇÃO EM MASSA (simples) -->
+    <div id="bulkEditModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4">Editar em Massa</h2>
+            <p class="text-gray-400">Em breve: edição múltipla de anúncios.</p>
+            <button onclick="fecharBulkEdit()" class="btn-primary w-full mt-4">Fechar</button>
         </div>
     </div>
 
@@ -358,7 +419,7 @@
                 return;
             }
 
-            // Andressa hardcoded (ou pode estar na tabela funcionarios)
+            // Andressa hardcoded
             if (user === '6896003049' && pass === '96197577') {
                 currentUser = { tipo: 'funcionario', nome: 'Andressa' };
                 isMaster = false;
@@ -368,7 +429,7 @@
                 return;
             }
 
-            // Se não for hardcoded, tenta buscar na tabela funcionarios
+            // Busca na tabela funcionarios (caso haja outros)
             try {
                 const { data, error } = await _s
                     .from('funcionarios')
@@ -395,16 +456,16 @@
             document.getElementById('masterPanel').classList.remove('hidden');
             document.getElementById('userNameDisplay').innerText = currentUser.nome + (isMaster ? ' (Master)' : ' (Funcionário)');
 
-            // Se for funcionário, desabilitar botões perigosos
+            // Se for funcionário, esconder elementos exclusivos do master
             if (!isMaster) {
-                // remover ou desabilitar botões de manutenção, etc.
-                document.querySelectorAll('.maintenance-only').forEach(el => el.remove());
+                document.querySelectorAll('.master-only').forEach(el => el.classList.add('hidden'));
             }
 
             // Carregar dados iniciais
             carregarFornecedores();
             carregarBuscadores();
             carregarAnuncios();
+            carregarFuncionarios();
 
             // Mostrar modal de troca de painel
             mostrarTrocaPainel();
@@ -422,92 +483,15 @@
         function acessarPainel(tipo) {
             fecharTrocaPainel();
             if (tipo === 'master') {
-                // já está no master
+                // já está
                 return;
             }
             if (tipo === 'buscador') {
-                // precisa logar como buscador? Para facilitar, podemos abrir a página buscar.html com um token simulado?
-                // Melhor: abrir nova aba com buscar.html e um token de admin (se houver)
                 window.open('buscar.html', '_blank');
             }
             if (tipo === 'anunciante') {
                 window.open('atacadista.html', '_blank');
             }
-        }
-
-        // ========== HORUS ==========
-        async function abrirHorus() {
-            // Buscar ofertas distintas (menor preço por produto+capacidade+cor+origem)
-            const { data, error } = await _s
-                .from('ofertas')
-                .select('*, fornecedores!inner(whatsapp), variacoes!inner(produto_id, capacidade, cor, produtos_mestre!inner(nome)), regioes!inner(bandeira, nome)')
-                .gt('quantidade', 0);
-
-            if (error) {
-                alert('Erro ao carregar ofertas.');
-                return;
-            }
-
-            // Agrupar por chave única: produto_id+capacidade+cor+regiao_id
-            const map = new Map();
-            data.forEach(o => {
-                const key = `${o.variacoes.produto_id}_${o.variacoes.capacidade}_${o.variacoes.cor}_${o.regiao_id}`;
-                if (!map.has(key) || o.preco < map.get(key).preco) {
-                    map.set(key, o);
-                }
-            });
-
-            const melhores = Array.from(map.values()).sort((a,b) => a.preco - b.preco);
-
-            const lista = document.getElementById('horusList');
-            lista.innerHTML = melhores.map(o => {
-                const produto = o.variacoes.produtos_mestre.nome;
-                const cap = o.variacoes.capacidade;
-                const cor = o.variacoes.cor;
-                const origem = o.regioes?.bandeira || '';
-                const preco = o.preco.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-                const fornecedor = o.fornecedores;
-                const saudacao = new Date().getHours() < 12 ? 'Bom dia' : (new Date().getHours() < 18 ? 'Boa tarde' : 'Boa noite');
-                const mensagem = encodeURIComponent(`${saudacao}, vi no iFipe que você está com o melhor preço do ${produto} ${cap} ${cor} ${origem} no valor de ${preco}. Ainda está disponível?`);
-                const zapLink = `https://wa.me/${fornecedor.whatsapp?.replace(/\D/g,'')}?text=${mensagem}`;
-                return `
-                    <div class="border border-[#38383a] rounded-xl p-3 flex flex-wrap justify-between items-center">
-                        <div class="flex-1">
-                            <span class="font-bold">${produto} ${cap} ${cor}</span>
-                            <span class="ml-2 text-xl">${origem}</span>
-                            <div class="text-xs text-gray-400">${fornecedor.nome}</div>
-                        </div>
-                        <div class="text-right">
-                            <span class="text-blue-500 font-bold text-lg">${preco}</span>
-                            <a href="${zapLink}" target="_blank" class="block mt-1 text-green-400"><i class="fab fa-whatsapp"></i> Contato</a>
-                        </div>
-                    </div>
-                `;
-            }).join('') || '<p class="text-gray-400">Nenhuma oferta encontrada.</p>';
-
-            document.getElementById('horusModal').classList.remove('hidden');
-        }
-
-        function fecharHorus() {
-            document.getElementById('horusModal').classList.add('hidden');
-        }
-
-        // ========== MANUTENÇÃO ==========
-        async function setMaintenance(tipo) {
-            // Simulação: armazenar no localStorage ou numa tabela sistema_config
-            // Para demonstração, usaremos localStorage.
-            let msg = '';
-            if (tipo === 'geral') {
-                localStorage.setItem('iFipe_Status', 'off');
-                msg = 'iFipe EM ATUALIZAÇÃO PARA MELHORIAS PARA VOCÊ, VOLTAMOS EM BREVE - TIME iFipe';
-            } else if (tipo === 'atacadista') {
-                localStorage.setItem('iFipe_Status_Atacadista', 'off');
-                msg = 'O PAINEL DO ANUNCIANTE ESTÁ EM ATUALIZAÇÃO PARA MELHORIAS PARA VOCÊ, VOLTAMOS EM BREVE - TIME iFipe';
-            } else if (tipo === 'buscador') {
-                localStorage.setItem('iFipe_Status_Buscador', 'off');
-                msg = 'O PAINEL DO BUSCADOR ESTÁ EM ATUALIZAÇÃO PARA MELHORIAS PARA VOCÊ, VOLTAMOS EM BREVE - TIME iFipe';
-            }
-            alert('Status alterado: ' + msg);
         }
 
         // ========== CARREGAMENTO DE DADOS ==========
@@ -518,11 +502,12 @@
                 <tr class="border-b border-[#38383a]">
                     <td class="p-2">${f.id}</td>
                     <td class="p-2">${f.nome}</td>
-                    <td class="p-2">${f.whatsapp}</td>
+                    <td class="p-2">${f.whatsapp || ''}</td>
                     <td class="p-2"><span class="px-2 py-1 rounded-full text-xs ${f.ativo ? 'bg-green-600' : 'bg-red-600'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></td>
+                    <td class="p-2"><span class="px-2 py-1 rounded-full text-xs ${f.verificado ? 'bg-blue-600' : 'bg-gray-600'}">${f.verificado ? 'Verificado' : 'Não verificado'}</span></td>
                     <td class="p-2 flex gap-1">
-                        ${isMaster ? `<button onclick="toggleFornecedorStatus(${f.id}, ${!f.ativo})" class="bg-blue-600 text-white px-2 py-1 rounded text-xs">${f.ativo ? 'Bloquear' : 'Ativar'}</button>` : ''}
-                        ${isMaster ? `<button onclick="resetSenhaFornecedor(${f.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">Reset Senha</button>` : ''}
+                        <button onclick="toggleFornecedorStatus(${f.id}, ${!f.ativo})" class="bg-blue-600 text-white px-2 py-1 rounded text-xs">${f.ativo ? 'Bloquear' : 'Ativar'}</button>
+                        <button onclick="resetSenhaFornecedor(${f.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">Reset Senha</button>
                         <button onclick="window.open('atacadista.html?id=${f.id}','_blank')" class="bg-green-600 text-white px-2 py-1 rounded text-xs">Acessar Loja</button>
                     </td>
                 </tr>
@@ -536,11 +521,12 @@
                 <tr class="border-b border-[#38383a]">
                     <td class="p-2">${b.id}</td>
                     <td class="p-2">${b.nome}</td>
-                    <td class="p-2">${b.whatsapp}</td>
+                    <td class="p-2">${b.whatsapp || ''}</td>
+                    <td class="p-2">${b.logins_count || 0}</td>
                     <td class="p-2"><span class="px-2 py-1 rounded-full text-xs ${b.ativo ? 'bg-green-600' : 'bg-red-600'}">${b.ativo ? 'Ativo' : 'Inativo'}</span></td>
                     <td class="p-2 flex gap-1">
-                        ${isMaster ? `<button onclick="toggleBuscadorStatus(${b.id}, ${!b.ativo})" class="bg-blue-600 text-white px-2 py-1 rounded text-xs">${b.ativo ? 'Bloquear' : 'Ativar'}</button>` : ''}
-                        ${isMaster ? `<button onclick="resetSenhaBuscador(${b.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">Reset Senha</button>` : ''}
+                        <button onclick="toggleBuscadorStatus(${b.id}, ${!b.ativo})" class="bg-blue-600 text-white px-2 py-1 rounded text-xs">${b.ativo ? 'Bloquear' : 'Ativar'}</button>
+                        <button onclick="resetSenhaBuscador(${b.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">Reset Senha</button>
                     </td>
                 </tr>
             `).join('');
@@ -549,13 +535,16 @@
         async function carregarAnuncios() {
             const { data } = await _s
                 .from('ofertas')
-                .select('*, fornecedores(nome), variacoes(produtos_mestre(nome), capacidade, cor), regioes(bandeira)')
+                .select('*, fornecedores(nome), variacoes(produtos_mestre(nome), capacidade, cor), regioes(bandeira, nome)')
                 .order('criado_em', { ascending: false })
-                .limit(100);
+                .limit(200);
             const tbody = document.getElementById('anunciosList');
             tbody.innerHTML = (data || []).map(a => `
                 <tr class="border-b border-[#38383a]">
-                    <td class="p-2">${a.variacoes?.produtos_mestre?.nome || ''} ${a.variacoes?.capacidade || ''} ${a.variacoes?.cor || ''} <span class="text-xl">${a.regioes?.bandeira || ''}</span></td>
+                    <td class="p-2">
+                        ${a.variacoes?.produtos_mestre?.nome || ''} ${a.variacoes?.capacidade || ''} ${a.variacoes?.cor || ''}
+                        <span class="badge-origem">${a.regioes?.bandeira || ''}</span>
+                    </td>
                     <td class="p-2">${a.regioes?.bandeira || ''}</td>
                     <td class="p-2">${a.fornecedores?.nome || ''}</td>
                     <td class="p-2">${a.moeda === 'BRL' ? 'R$' : '$'} ${a.preco.toFixed(2)}</td>
@@ -567,7 +556,24 @@
             `).join('');
         }
 
-        // Funções auxiliares (apenas master pode executar)
+        async function carregarFuncionarios() {
+            const { data } = await _s.from('funcionarios').select('*').order('nome');
+            const tbody = document.getElementById('funcionariosList');
+            tbody.innerHTML = (data || []).map(f => `
+                <tr class="border-b border-[#38383a]">
+                    <td class="p-2">${f.id}</td>
+                    <td class="p-2">${f.nome}</td>
+                    <td class="p-2">${f.whatsapp}</td>
+                    <td class="p-2"><span class="px-2 py-1 rounded-full text-xs ${f.ativo ? 'bg-green-600' : 'bg-red-600'}">${f.ativo ? 'Ativo' : 'Inativo'}</span></td>
+                    <td class="p-2 flex gap-1">
+                        <button onclick="toggleFuncionarioStatus(${f.id}, ${!f.ativo})" class="bg-blue-600 text-white px-2 py-1 rounded text-xs">${f.ativo ? 'Bloquear' : 'Ativar'}</button>
+                        <button onclick="resetSenhaFuncionario(${f.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">Reset Senha</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ========== AÇÕES DE STATUS (APENAS MASTER) ==========
         async function toggleFornecedorStatus(id, novoStatus) {
             if (!isMaster) return alert('Acesso negado');
             await _s.from('fornecedores').update({ ativo: novoStatus }).eq('id', id);
@@ -598,16 +604,134 @@
             }
         }
 
-        // ========== ABAS ==========
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-blue-600'));
-                btn.classList.add('active', 'bg-blue-600');
-                const tabId = btn.dataset.tab;
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
-                document.getElementById(tabId).classList.remove('hidden');
+        async function toggleFuncionarioStatus(id, novoStatus) {
+            if (!isMaster) return alert('Acesso negado');
+            await _s.from('funcionarios').update({ ativo: novoStatus }).eq('id', id);
+            carregarFuncionarios();
+        }
+
+        async function resetSenhaFuncionario(id) {
+            if (!isMaster) return alert('Acesso negado');
+            const nova = prompt('Nova senha:');
+            if (nova) {
+                await _s.from('funcionarios').update({ senha: nova }).eq('id', id);
+                alert('Senha alterada');
+            }
+        }
+
+        // ========== FERRAMENTAS DE MASSA ==========
+        function abrirBulkEdit() {
+            if (!isMaster) return alert('Acesso negado');
+            document.getElementById('bulkEditModal').classList.remove('hidden');
+        }
+
+        function fecharBulkEdit() {
+            document.getElementById('bulkEditModal').classList.add('hidden');
+        }
+
+        async function zerarTodosAnuncios() {
+            if (!isMaster) return alert('Acesso negado');
+            if (!confirm('Tem certeza que deseja ZERAR TODOS os estoques? Essa ação não pode ser desfeita.')) return;
+            await _s.from('ofertas').update({ quantidade: 0 }).neq('id', 0); // atualiza todas as linhas
+            alert('Todos os estoques foram zerados.');
+            carregarAnuncios();
+        }
+
+        // ========== HORUS ==========
+        async function abrirHorus() {
+            const { data, error } = await _s
+                .from('ofertas')
+                .select('*, fornecedores!inner(whatsapp), variacoes!inner(produto_id, capacidade, cor, produtos_mestre!inner(nome)), regioes!inner(bandeira, nome)')
+                .gt('quantidade', 0);
+
+            if (error) {
+                alert('Erro ao carregar ofertas.');
+                return;
+            }
+
+            // Agrupar por produto_id+capacidade+cor+regiao_id
+            const map = new Map();
+            data.forEach(o => {
+                const key = `${o.variacoes.produto_id}_${o.variacoes.capacidade}_${o.variacoes.cor}_${o.regiao_id}`;
+                if (!map.has(key) || o.preco < map.get(key).preco) {
+                    map.set(key, o);
+                }
             });
-        });
+
+            const melhores = Array.from(map.values()).sort((a,b) => a.preco - b.preco);
+
+            const lista = document.getElementById('horusList');
+            lista.innerHTML = melhores.map(o => {
+                const produto = o.variacoes.produtos_mestre.nome;
+                const cap = o.variacoes.capacidade;
+                const cor = o.variacoes.cor;
+                const bandeira = o.regioes?.bandeira || '';
+                const nomeOrigem = o.regioes?.nome || '';
+                const preco = o.preco.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+                const fornecedor = o.fornecedores;
+                const saudacao = new Date().getHours() < 12 ? 'Bom dia' : (new Date().getHours() < 18 ? 'Boa tarde' : 'Boa noite');
+                const mensagem = encodeURIComponent(`${saudacao}, vi no www.ifipe.com.br que você está com o melhor preço do ${produto} ${cap} ${cor} ${bandeira}. Ainda está disponível?`);
+                const zapLink = `https://wa.me/${fornecedor.whatsapp?.replace(/\D/g,'')}?text=${mensagem}`;
+                return `
+                    <div class="border border-[#38383a] rounded-xl p-3 flex flex-wrap justify-between items-center">
+                        <div class="flex-1">
+                            <span class="font-bold">${produto} ${cap} ${cor}</span>
+                            <span class="ml-2 text-xl">${bandeira}</span>
+                            <div class="text-xs text-gray-400">${fornecedor.nome}</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-blue-500 font-bold text-lg">${preco}</span>
+                            <a href="${zapLink}" target="_blank" class="block mt-1 text-green-400"><i class="fab fa-whatsapp"></i> Contato</a>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<p class="text-gray-400">Nenhuma oferta encontrada.</p>';
+
+            document.getElementById('horusModal').classList.remove('hidden');
+        }
+
+        function fecharHorus() {
+            document.getElementById('horusModal').classList.add('hidden');
+        }
+
+        // ========== MANUTENÇÃO (SUPABASE) ==========
+        async function setMaintenance(tipo) {
+            if (!isMaster) return alert('Acesso negado');
+
+            let status = '';
+            let mensagem = '';
+            if (tipo === 'geral') {
+                status = 'off';
+                mensagem = 'iFipe EM ATUALIZAÇÃO PARA MELHORIAS PARA VOCÊ, VOLTAMOS EM BREVE - TIME iFipe';
+            } else if (tipo === 'atacadista') {
+                status = 'off_atacadista';
+                mensagem = 'O PAINEL DO ANUNCIANTE ESTÁ EM ATUALIZAÇÃO PARA MELHORIAS PARA VOCÊ, VOLTAMOS EM BREVE - TIME iFipe';
+            } else if (tipo === 'buscador') {
+                status = 'off_buscador';
+                mensagem = 'O PAINEL DO BUSCADOR ESTÁ EM ATUALIZAÇÃO PARA MELHORIAS PARA VOCÊ, VOLTAMOS EM BREVE - TIME iFipe';
+            }
+
+            // Supondo que a tabela sistema_config tenha uma única linha com chave 'status' e 'mensagem'
+            // Vamos fazer upsert: se não existir, insere; se existir, atualiza.
+            const { error } = await _s
+                .from('sistema_config')
+                .upsert({ id: 1, status: status, mensagem: mensagem }, { onConflict: 'id' });
+
+            if (error) {
+                alert('Erro ao alterar status: ' + error.message);
+            } else {
+                alert('Status de manutenção alterado: ' + mensagem);
+            }
+        }
+
+        // ========== GURU ==========
+        function abrirGuru() {
+            document.getElementById('guruModal').classList.remove('hidden');
+        }
+
+        function fecharGuru() {
+            document.getElementById('guruModal').classList.add('hidden');
+        }
 
         // ========== LOGOUT ==========
         function logout() {
@@ -623,13 +747,16 @@
             else btn.classList.remove('visible');
         });
 
-        // ========== GURU (placeholder) ==========
-        function abrirGuru() {
-            document.getElementById('guruModal').classList.remove('hidden');
-        }
-        function fecharGuru() {
-            document.getElementById('guruModal').classList.add('hidden');
-        }
+        // ========== ABAS ==========
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-blue-600'));
+                btn.classList.add('active', 'bg-blue-600');
+                const tabId = btn.dataset.tab;
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                document.getElementById(tabId).classList.remove('hidden');
+            });
+        });
 
         // Expor funções globais
         window.tryLogin = tryLogin;
@@ -644,6 +771,11 @@
         window.resetSenhaFornecedor = resetSenhaFornecedor;
         window.toggleBuscadorStatus = toggleBuscadorStatus;
         window.resetSenhaBuscador = resetSenhaBuscador;
+        window.toggleFuncionarioStatus = toggleFuncionarioStatus;
+        window.resetSenhaFuncionario = resetSenhaFuncionario;
+        window.abrirBulkEdit = abrirBulkEdit;
+        window.fecharBulkEdit = fecharBulkEdit;
+        window.zerarTodosAnuncios = zerarTodosAnuncios;
         window.abrirGuru = abrirGuru;
         window.fecharGuru = fecharGuru;
 
