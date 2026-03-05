@@ -71,6 +71,7 @@
                     <span>⚙️ MINHA CONTA</span>
                 </button>
                 <button onclick="masterLogout()" class="text-red-500 font-black text-[10px] hover:underline">SAIR</button>
+                <button onclick="abrirGuruModal()" class="btn-master !bg-purple-600 px-3 py-1 text-[9px]">👁️ GURU</button>
             </div>
         </nav>
 
@@ -128,12 +129,13 @@
                     <div class="flex gap-2 w-2/3 justify-end">
                         <input type="text" placeholder="🔍 BUSCAR PRODUTO, LOJA, COR..." class="apple-input !w-2/3 !py-2" onkeyup="filterTable('listAnu', this.value)">
                         <button onclick="abrirModalGestaoAnuncio()" class="btn-master !bg-blue-600">➕ LANÇAR ANÚNCIO</button>
+                        <button onclick="abrirModalEdicaoCompleta()" class="btn-master !bg-yellow-600">✏️ EDITAR COMPLETO</button>
                         <button onclick="bulkAnuModal()" class="btn-master bg-zinc-800 text-white">⚙️ EM MASSA</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table>
-                        <thead><tr><th width="30"><input type="checkbox" onclick="selAll(this, '.chk-anu')"></th><th>REGISTRO</th><th>PRODUTO / VARIAÇÃO</th><th>CONDIÇÃO</th><th class="text-center">PREÇO (EDITAR)</th><th class="text-center">ESTOQUE (EDITAR)</th><th class="text-right">X</th></tr></thead>
+                        <thead><tr><th width="30"><input type="checkbox" onclick="selAll(this, '.chk-anu')"></th><th>REGISTRO</th><th>PRODUTO / VARIAÇÃO</th><th>CONDIÇÃO</th><th class="text-center">PREÇO (EDITAR)</th><th class="text-center">ESTOQUE (EDITAR)</th><th class="text-right">AÇÕES</th></tr></thead>
                         <tbody id="listAnu"></tbody>
                     </table>
                 </div>
@@ -144,7 +146,7 @@
             <div class="apple-card">
                 <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">GESTÃO DE PATENTES FIPE 1.0</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Card de Atribuição Manual (existente) -->
+                    <!-- Card de Atribuição Manual -->
                     <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
                         <h3 class="text-[10px] font-black text-purple-400 mb-4">ATRIBUIÇÃO POR NOME</h3>
                         <select id="seloTableSel" class="apple-input mb-3" onchange="loadUsersForSelo()">
@@ -186,7 +188,7 @@
                         <div class="flex gap-2"><button onclick="addInsignia()" class="btn-master w-1/2 !bg-purple-600">+ ATRIBUIR</button><button onclick="clearInsignias()" class="btn-master w-1/2 bg-zinc-800">LIMPAR</button></div>
                     </div>
 
-                    <!-- Card de Varredura Global (novo) -->
+                    <!-- Card de Varredura Global -->
                     <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
                         <h3 class="text-[10px] font-black text-green-400 mb-4">VARREDURA GLOBAL (ESTOQUE E LOGINS)</h3>
                         <p class="text-[9px] text-gray-400 mb-4 leading-relaxed">
@@ -236,6 +238,159 @@
                     <button type="submit" class="btn-master w-full !bg-red-600 mt-2">SALVAR E APLICAR</button>
                 </form>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal Guru -->
+    <div id="modalGuru" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a]">
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 text-purple-400">👁️ GURU - MONITORAMENTO INVISÍVEL</h3>
+            <div class="space-y-4 text-[10px] text-gray-300">
+                <p>Futuro sistema de inteligência artificial de preços e anti-hack.</p>
+                <p>Aqui serão exibidos logs em tempo real, alertas de anomalias e tentativas de fraude.</p>
+                <p class="text-yellow-500">Em desenvolvimento.</p>
+            </div>
+            <div class="flex gap-2 pt-4">
+                <button onclick="fecharGuruModal()" class="btn-master w-full bg-zinc-800">FECHAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edição Completa (Individual) -->
+    <div id="modalEdicaoCompleta" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-xl bg-[#050505] border-[#38383a]">
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">✏️ EDITAR ANÚNCIO COMPLETO</h3>
+            <form onsubmit="salvarEdicaoCompleta(event)" class="space-y-4">
+                <input type="hidden" id="editOfertaId">
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="editModelo" class="apple-input" onchange="libMemMEdit(this.value)" required>
+                        <option value="">MODELO...</option>
+                    </select>
+                    <select id="editCapacidade" class="apple-input" onchange="libCorMEdit(document.getElementById('editModelo').value, this.value)" required disabled>
+                        <option value="">MEMÓRIA...</option>
+                    </select>
+                </div>
+                <select id="editCor" class="apple-input" required disabled>
+                    <option value="">COR...</option>
+                </select>
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="editCondicao" class="apple-input">
+                        <option value="Novo">NOVO</option>
+                        <option value="Seminovo">SEMINOVO</option>
+                        <option value="CPO">CPO</option>
+                        <option value="Grade A">GRADE A</option>
+                        <option value="Grade B">GRADE B</option>
+                        <option value="Grade C">GRADE C</option>
+                    </select>
+                    <select id="editBateria" class="apple-input">
+                        <option value="">BATERIA...</option>
+                        <option value="Abaixo de 85%">Abaixo de 85%</option>
+                        <option value="Acima de 85%">Acima de 85%</option>
+                        <option value="Acima de 90%">Acima de 90%</option>
+                        <option value="Acima de 95%">Acima de 95%</option>
+                        <option value="Bateria em 100%">Bateria em 100%</option>
+                    </select>
+                </div>
+                <select id="editGarantia" class="apple-input">
+                    <option value="">GARANTIA...</option>
+                    <option value="Sem garantia">Sem garantia</option>
+                    <option value="1 Mês">1 Mês</option>
+                    <option value="2 Meses">2 Meses</option>
+                    <option value="3 Meses">3 Meses</option>
+                    <option value="6 Meses">6 Meses</option>
+                    <option value="12 Meses">12 Meses</option>
+                </select>
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="editOrigem" class="apple-input" required></select>
+                    <input type="number" id="editQuantidade" class="apple-input" placeholder="QTD" min="0" required>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="editPrecoUsd" class="apple-input" placeholder="$ USD" oninput="mascara(this); document.getElementById('editPrecoBrl').value=''">
+                    <input type="text" id="editPrecoBrl" class="apple-input" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('editPrecoUsd').value=''">
+                </div>
+                <div class="grid grid-cols-3 gap-2 bg-[#1c1c1e] p-3 rounded-lg border border-[#38383a]">
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="editPix"> PIX</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="editUsdt"> USDT</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="editNegocia"> NEGOCIA QTD</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="editEnvio"> FAZ ENVIO</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="editColeta"> ACEITA COLETA</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="editNota"> EMITE NF</label>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="fecharModalEdicaoCompleta()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button>
+                    <button type="submit" class="btn-master w-2/3 !bg-blue-600">SALVAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Edição em Massa (Novo - completo) -->
+    <div id="modalBulkAnu" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-xl bg-[#050505] border-[#38383a]">
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">⚙️ EDIÇÃO EM MASSA (ANÚNCIOS)</h3>
+            <form onsubmit="runBulkAnu(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="bulkModelo" class="apple-input" onchange="libMemMBulk()">
+                        <option value="">MANTER MODELO...</option>
+                    </select>
+                    <select id="bulkCapacidade" class="apple-input" onchange="libCorMBulk()" disabled>
+                        <option value="">MANTER CAPACIDADE...</option>
+                    </select>
+                </div>
+                <select id="bulkCor" class="apple-input" disabled>
+                    <option value="">MANTER COR...</option>
+                </select>
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="bulkCondicao" class="apple-input">
+                        <option value="">MANTER CONDIÇÃO...</option>
+                        <option value="Novo">NOVO</option>
+                        <option value="Seminovo">SEMINOVO</option>
+                        <option value="CPO">CPO</option>
+                        <option value="Grade A">GRADE A</option>
+                        <option value="Grade B">GRADE B</option>
+                        <option value="Grade C">GRADE C</option>
+                    </select>
+                    <select id="bulkBateria" class="apple-input">
+                        <option value="">MANTER BATERIA...</option>
+                        <option value="Abaixo de 85%">Abaixo de 85%</option>
+                        <option value="Acima de 85%">Acima de 85%</option>
+                        <option value="Acima de 90%">Acima de 90%</option>
+                        <option value="Acima de 95%">Acima de 95%</option>
+                        <option value="Bateria em 100%">Bateria em 100%</option>
+                    </select>
+                </div>
+                <select id="bulkGarantia" class="apple-input">
+                    <option value="">MANTER GARANTIA...</option>
+                    <option value="Sem garantia">Sem garantia</option>
+                    <option value="1 Mês">1 Mês</option>
+                    <option value="2 Meses">2 Meses</option>
+                    <option value="3 Meses">3 Meses</option>
+                    <option value="6 Meses">6 Meses</option>
+                    <option value="12 Meses">12 Meses</option>
+                </select>
+                <div class="grid grid-cols-2 gap-2">
+                    <select id="bulkOrigem" class="apple-input">
+                        <option value="">MANTER ORIGEM...</option>
+                    </select>
+                    <input type="number" id="bulkQuantidade" class="apple-input" placeholder="NOVA QTD (opcional)" min="0">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="bulkPrecoUsd" class="apple-input" placeholder="NOVO $ USD (opcional)" oninput="mascara(this); document.getElementById('bulkPrecoBrl').value=''">
+                    <input type="text" id="bulkPrecoBrl" class="apple-input" placeholder="NOVO R$ BRL (opcional)" oninput="mascara(this); document.getElementById('bulkPrecoUsd').value=''">
+                </div>
+                <div class="grid grid-cols-3 gap-2 bg-[#1c1c1e] p-3 rounded-lg border border-[#38383a]">
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="bulkPix"> PIX</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="bulkUsdt"> USDT</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="bulkNegocia"> NEGOCIA</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="bulkEnvio"> ENVIO</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="bulkColeta"> COLETA</label>
+                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="bulkNota"> NF</label>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="fecharBulkAnu()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button>
+                    <button type="submit" class="btn-master w-2/3 !bg-blue-600">APLICAR EM MASSA</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -363,7 +518,6 @@
 
     <div id="modalBulkAta" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505]"><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (ATACADISTAS)</h3><input type="text" id="bulkAtaSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('fornecedores', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('fornecedores', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button><button onclick="runBulk('fornecedores', 'desativar')" class="btn-master w-full bg-zinc-700 mb-2">DESATIVAR SELECIONADOS</button><button onclick="runBulk('fornecedores', 'verificar')" class="btn-master w-full border border-blue-600 text-blue-500 bg-transparent mb-4">APLICAR SELO VERIFICADO</button><button onclick="runBulk('fornecedores', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button><button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button></div></div>
     <div id="modalBulkCli" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505]"><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (BUSCADORES)</h3><input type="text" id="bulkCliSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('clientes_buscador', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('clientes_buscador', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button><button onclick="runBulk('clientes_buscador', 'desativar')" class="btn-master w-full bg-zinc-700 mb-4">DESATIVAR SELECIONADOS</button><button onclick="runBulk('clientes_buscador', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button><button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button></div></div>
-    <div id="modalBulkAnu" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505]"><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (ANÚNCIOS)</h3><input type="text" id="bulkAnuPreco" class="apple-input mb-2" placeholder="NOVO PREÇO" oninput="mascara(this)"><input type="number" id="bulkAnuQtd" class="apple-input mb-4" placeholder="NOVA QUANTIDADE"><button onclick="runBulkAnu()" class="btn-master w-full !bg-blue-600 mb-4">APLICAR ALTERAÇÕES</button><button onclick="runBulk('ofertas', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button><button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button></div></div>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
@@ -412,7 +566,7 @@
                 if ('bloqueado' in dbCli[0]) return { name: 'bloqueado', valT: false, valF: true };
                 if ('is_active' in dbCli[0]) return { name: 'is_active', valT: true, valF: false };
             }
-            return { name: 'ativo', valT: true, valF: false }; // Fallback padrão
+            return { name: 'ativo', valT: true, valF: false };
         }
 
         async function toggleStatus(table, id, statusReq) {
@@ -469,12 +623,10 @@
             }
         }
 
-        // Função de login modificada para aceitar funcionários
         async function tryLogin() { 
             const senhaDigitada = document.getElementById('mPass').value;
             const passAtual = localStorage.getItem('Master_Custom_Pass') || '96197577';
             
-            // Tenta como master
             if (senhaDigitada === passAtual) { 
                 localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
                 currentUserType = 'master';
@@ -482,7 +634,6 @@
                 return;
             }
 
-            // Tenta como funcionário na tabela funcionarios
             const { data: funcData, error } = await _s
                 .from('funcionarios')
                 .select('*')
@@ -495,7 +646,6 @@
                 return;
             }
 
-            // Login de funcionário bem-sucedido
             localStorage.setItem('iFipe_Master_Auth', 'funcionario');
             localStorage.setItem('iFipe_Func_Nome', funcData.nome);
             currentUserType = 'funcionario';
@@ -512,7 +662,6 @@
         function checkAuth() { 
             const auth = localStorage.getItem('iFipe_Master_Auth');
             if (auth === 'gov_absoluto' || auth === 'funcionario') { 
-                // Define o tipo atual baseado no storage
                 currentUserType = auth;
                 document.getElementById('masterAuth').classList.add('hidden'); 
                 document.getElementById('masterApp').classList.remove('hidden'); 
@@ -528,6 +677,24 @@
         function toggleSysStatus() { const isAtivo = localStorage.getItem('iFipe_Status') !== 'off'; localStorage.setItem('iFipe_Status', isAtivo ? 'off' : 'on'); renderSystemStatus(); }
         function renderSystemStatus() { const btn = document.getElementById('sysOnOffBtn'); if(localStorage.getItem('iFipe_Status')!=='off') { btn.className="btn-master bg-green-600 px-3 py-1 text-[9px] ml-2"; btn.innerText="SISTEMA: ON"; } else { btn.className="btn-master btn-danger px-3 py-1 text-[9px] ml-2"; btn.innerText="SISTEMA: OFF (ATUALIZANDO)"; } }
         function selAll(el, selector) { document.querySelectorAll(selector).forEach(c => c.checked = el.checked); }
+
+        // Funções do GURU
+        function abrirGuruModal() {
+            document.getElementById('modalGuru').classList.remove('hidden');
+        }
+        function fecharGuruModal() {
+            document.getElementById('modalGuru').classList.add('hidden');
+        }
+
+        // Funções de Login As
+        function loginAsAta(id) {
+            localStorage.setItem('iFipe_Anunciante', id);
+            window.open('ATACADISTA.html', '_blank');
+        }
+        function loginAsCli(id) {
+            localStorage.setItem('iFipe_Token', id);
+            window.open('BUSCAR.html', '_blank');
+        }
 
         async function initMaster() {
             renderMasterInfo();
@@ -563,12 +730,32 @@
                 if(match) htmlOrigem += `<option value="${match.id}">${rm.flag} ${rm.nome}</option>`;
             });
             document.getElementById('f_orig_m').innerHTML = htmlOrigem;
+
+            // Popular selects do modal de edição individual
+            document.getElementById('editModelo').innerHTML = '<option value="">MODELO...</option>' + uM.sort((a,b)=>a.nome.localeCompare(b.nome)).map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
+            document.getElementById('editOrigem').innerHTML = htmlOrigem;
+
+            // Popular selects do modal de edição em massa
+            document.getElementById('bulkModelo').innerHTML = '<option value="">MANTER MODELO...</option>' + uM.sort((a,b)=>a.nome.localeCompare(b.nome)).map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
+            document.getElementById('bulkOrigem').innerHTML = '<option value="">MANTER ORIGEM...</option>' + htmlOrigem.slice(0, -14) + '</select>';
         }
 
+        // ================== FUNÇÕES RENDER COM PARSER DE INSÍGNIAS ==================
         function renderAta() { 
             document.getElementById('listAta').innerHTML = dbAta.map(a => { 
                 let l = a.pais === 'Brasil' ? `${a.cidade||'-'} / ${a.estado||'-'}` : (a.pais || '-'); 
-                let b = (a.insignia_manual || []).map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); 
+                
+                let insig = [];
+                try {
+                    if (Array.isArray(a.insignia_manual)) {
+                        insig = a.insignia_manual;
+                    } else if (typeof a.insignia_manual === 'string') {
+                        insig = JSON.parse(a.insignia_manual || '[]');
+                    }
+                } catch(e) { insig = []; }
+                
+                let b = insig.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); 
+                
                 return `<tr>
                     <td><input type="checkbox" class="chk-ata" value="${a.id}"></td>
                     <td><span class="font-black text-white text-xs">${a.nome}</span><br><span class="text-[8px] text-zinc-500">${l}</span></td>
@@ -582,22 +769,29 @@
                             <button onclick="toggleStatus('fornecedores', ${a.id}, false)" class="bg-yellow-900/30 text-yellow-500 px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500 hover:text-white">BLOQ</button>
                             <button onclick="delRecord('fornecedores', ${a.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white">EXCLUIR</button>
                             <button onclick="editAta(${a.id})" class="bg-zinc-800 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-500">EDITAR</button>
+                            <button onclick="loginAsAta(${a.id})" class="bg-blue-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-700">👁️ ACESSAR</button>
                         </div>
                     </td>
                 </tr>`; 
             }).join(''); 
         }
-        function abrirModalAta() { document.getElementById('mAtaTitle').innerText = "NOVO ATACADISTA"; document.getElementById('mAtaId').value=''; document.getElementById('mAtaNome').value=''; document.getElementById('mAtaWhats').value=''; document.getElementById('mAtaEmail').value=''; document.getElementById('mAtaPais').value='Brasil'; toggleLocationFields('Ata'); document.getElementById('mAtaSenha').value=''; document.getElementById('modalAta').classList.remove('hidden'); }
-        function editAta(id) { const a = dbAta.find(x => x.id == id); document.getElementById('mAtaTitle').innerText = `EDITANDO: ${a.nome}`; document.getElementById('mAtaId').value = a.id; document.getElementById('mAtaNome').value = a.nome; document.getElementById('mAtaWhats').value = a.whatsapp||''; document.getElementById('mAtaEmail').value = a.email||''; document.getElementById('mAtaPais').value = a.pais||'Brasil'; toggleLocationFields('Ata'); if(a.pais==='Brasil'){ document.getElementById('mAtaEst').value = a.estado||''; loadCidadesIBGE('Ata').then(()=> document.getElementById('mAtaCid').value = a.cidade||''); } document.getElementById('mAtaSenha').value = a.senha||''; document.getElementById('mAtaAtivo').checked = a.ativo; document.getElementById('mAtaVeri').checked = a.verificado; document.getElementById('modalAta').classList.remove('hidden'); }
-        async function saveAta(e) { e.preventDefault(); const d = { nome: document.getElementById('mAtaNome').value.toUpperCase(), whatsapp: document.getElementById('mAtaWhats').value, email: document.getElementById('mAtaEmail').value, pais: document.getElementById('mAtaPais').value, estado: document.getElementById('mAtaPais').value==='Brasil'?document.getElementById('mAtaEst').value:null, cidade: document.getElementById('mAtaPais').value==='Brasil'?document.getElementById('mAtaCid').value:null, ativo: document.getElementById('mAtaAtivo').checked, verificado: document.getElementById('mAtaVeri').checked, senha: document.getElementById('mAtaSenha').value }; const id = document.getElementById('mAtaId').value; if(id) await _s.from('fornecedores').update(d).eq('id', id); else await _s.from('fornecedores').insert([d]); fecharModais(); loadAll(); }
-        function bulkAtaModal() { document.getElementById('modalBulkAta').classList.remove('hidden'); }
 
         function renderCli() { 
             const colInfo = getStatusCol('clientes_buscador');
             document.getElementById('listCli').innerHTML = dbCli.map(c => { 
                 let n = c.nome || c.email || c.whatsapp || 'SEM NOME'; 
                 let local = c.pais === 'Brasil' ? `${c.cidade||'-'} / ${c.estado||'-'}` : (c.pais || 'Não definido'); 
-                let b = (c.insignia_manual || []).map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); 
+                
+                let insig = [];
+                try {
+                    if (Array.isArray(c.insignia_manual)) {
+                        insig = c.insignia_manual;
+                    } else if (typeof c.insignia_manual === 'string') {
+                        insig = JSON.parse(c.insignia_manual || '[]');
+                    }
+                } catch(e) { insig = []; }
+                
+                let b = insig.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); 
                 
                 let isAtivo = true;
                 if(colInfo.name === 'ativo' || colInfo.name === 'is_active') isAtivo = c[colInfo.name] !== false;
@@ -619,11 +813,280 @@
                             <button onclick="toggleStatus('clientes_buscador', ${c.id}, false)" class="bg-yellow-900/30 text-yellow-500 px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500 hover:text-white">BLOQ</button>
                             <button onclick="delRecord('clientes_buscador', ${c.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white">EXCLUIR</button>
                             <button onclick="editCli(${c.id})" class="bg-zinc-800 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-500">EDITAR</button>
+                            <button onclick="loginAsCli(${c.id})" class="bg-blue-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-700">👁️ ACESSAR</button>
                         </div>
                     </td>
                 </tr>`; 
             }).join(''); 
         }
+
+        function renderAnu() { 
+            const tbody = document.getElementById('listAnu'); 
+            if(!dbAnu.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Vazio.</td></tr>'; return; } 
+            
+            let grouped = {}; 
+            dbAnu.forEach(a => { 
+                let fNome = a.fornecedores ? a.fornecedores.nome : 'DESCONHECIDO'; 
+                if(!grouped[fNome]) grouped[fNome] = { ads: [], b: a.fornecedores?.insignia_manual || [] }; 
+                grouped[fNome].ads.push(a); 
+            }); 
+            
+            let lojasOrdenadas = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+            
+            let html = ''; 
+            for(let loja of lojasOrdenadas) { 
+                let b = grouped[loja].b.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 text-[7px]">${i}</span>`).join(''); 
+                html += `<tr class="group-header bg-[#141415] border-y border-zinc-800"><td colspan="7" class="font-black text-blue-500 py-3">🏢 ${loja} ${b}</td></tr>`; 
+                grouped[loja].ads.forEach(a => { 
+                    let d = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '--'; 
+                    let p = a.variacoes ? `${a.variacoes.produtos_mestre?.nome} ${a.variacoes.capacidade} <span class="text-zinc-500">${a.variacoes.cor}</span>` : 'Indisponível'; 
+                    let c = a.condicao || 'NOVO'; 
+                    let pDisp = a.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                    html += `<tr>
+                        <td><input type="checkbox" class="chk-anu" value="${a.id}"></td>
+                        <td class="text-[9px] text-zinc-400 font-mono">${d}</td>
+                        <td class="text-[10px] font-bold text-white">${p}</td>
+                        <td>${c}</td>
+                        <td class="text-center font-mono text-white">${a.moeda} <input type="text" class="mini-edit mini-edit-preco" value="${pDisp}" oninput="mascara(this)" onblur="editAnuncio(${a.id}, 'preco', this.value)"></td>
+                        <td class="text-center"><input type="number" class="mini-edit" value="${a.quantidade}" min="0" onblur="editAnuncio(${a.id}, 'quantidade', this.value)"></td>
+                        <td class="text-right">
+                            <button onclick="abrirModalEdicaoCompleta(${a.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-[8px] font-black mr-1">✏️</button>
+                            <button onclick="delRecord('ofertas', ${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black">X</button>
+                        </td>
+                    </tr>`; 
+                }); 
+            } 
+            tbody.innerHTML = html; 
+        }
+
+        // Modal Edição Completa (Individual)
+        function abrirModalEdicaoCompleta(ofertaId) {
+            if (!ofertaId) return;
+            const oferta = dbAnu.find(o => o.id == ofertaId);
+            if (!oferta) return;
+
+            document.getElementById('editOfertaId').value = oferta.id;
+            document.getElementById('editModelo').value = oferta.variacoes?.produto_id || '';
+            document.getElementById('editCapacidade').innerHTML = '<option value="">MEMÓRIA...</option>';
+            if (oferta.variacoes?.produto_id) {
+                libMemMEdit(oferta.variacoes.produto_id);
+            }
+            document.getElementById('editCapacidade').value = oferta.variacoes?.capacidade || '';
+            document.getElementById('editCor').innerHTML = '<option value="">COR...</option>';
+            if (oferta.variacoes?.produto_id && oferta.variacoes?.capacidade) {
+                libCorMEdit(oferta.variacoes.produto_id, oferta.variacoes.capacidade);
+            }
+            document.getElementById('editCor').value = oferta.variacoes?.cor || '';
+            document.getElementById('editCondicao').value = oferta.condicao || 'Novo';
+            document.getElementById('editBateria').value = oferta.saude_bateria || '';
+            document.getElementById('editGarantia').value = oferta.garantia || '';
+            document.getElementById('editOrigem').value = oferta.regiao_id || '';
+            document.getElementById('editQuantidade').value = oferta.quantidade;
+            if (oferta.moeda === 'USD') {
+                document.getElementById('editPrecoUsd').value = oferta.preco.toFixed(2).replace('.', ',');
+            } else {
+                document.getElementById('editPrecoBrl').value = oferta.preco.toFixed(2).replace('.', ',');
+            }
+            document.getElementById('editPix').checked = oferta.aceita_pix || false;
+            document.getElementById('editUsdt').checked = oferta.aceita_usdt || false;
+            document.getElementById('editNegocia').checked = oferta.aceita_proposta || false;
+            document.getElementById('editEnvio').checked = oferta.faz_envio || false;
+            document.getElementById('editColeta').checked = oferta.aceita_coleta || false;
+            document.getElementById('editNota').checked = oferta.emite_nota || false;
+
+            document.getElementById('modalEdicaoCompleta').classList.remove('hidden');
+        }
+
+        function fecharModalEdicaoCompleta() {
+            document.getElementById('modalEdicaoCompleta').classList.add('hidden');
+        }
+
+        async function salvarEdicaoCompleta(e) {
+            e.preventDefault();
+            const id = document.getElementById('editOfertaId').value;
+            const modelo = document.getElementById('editModelo').value;
+            const capacidade = document.getElementById('editCapacidade').value;
+            const cor = document.getElementById('editCor').value;
+            const condicao = document.getElementById('editCondicao').value;
+            const bateria = document.getElementById('editBateria').value;
+            const garantia = document.getElementById('editGarantia').value;
+            const origem = document.getElementById('editOrigem').value;
+            const qtd = parseInt(document.getElementById('editQuantidade').value);
+            const precoUsd = document.getElementById('editPrecoUsd').value;
+            const precoBrl = document.getElementById('editPrecoBrl').value;
+            const isBrl = precoBrl.length > 0;
+            const precoFinal = isBrl ? parseP(precoBrl) : parseP(precoUsd);
+            const moeda = isBrl ? 'BRL' : 'USD';
+
+            const variacao = dbVar.find(v => v.produtos_mestre?.id == modelo && v.capacidade == capacidade && v.cor == cor);
+            if (!variacao) {
+                alert('Variação não encontrada.');
+                return;
+            }
+
+            const updates = {
+                variacao_id: variacao.id,
+                regiao_id: origem,
+                preco: precoFinal,
+                moeda: moeda,
+                quantidade: qtd,
+                condicao: condicao,
+                saude_bateria: bateria || null,
+                garantia: garantia || null,
+                aceita_pix: document.getElementById('editPix').checked,
+                aceita_usdt: document.getElementById('editUsdt').checked,
+                aceita_proposta: document.getElementById('editNegocia').checked,
+                faz_envio: document.getElementById('editEnvio').checked,
+                aceita_coleta: document.getElementById('editColeta').checked,
+                emite_nota: document.getElementById('editNota').checked
+            };
+
+            const { error } = await _s.from('ofertas').update(updates).eq('id', id);
+            if (error) {
+                alert('Erro ao atualizar: ' + error.message);
+            } else {
+                alert('Atualizado com sucesso!');
+                fecharModalEdicaoCompleta();
+                loadAll();
+            }
+        }
+
+        // Funções auxiliares para edição INDIVIDUAL
+        function libMemMEdit(produtoId) {
+            let caps = [...new Set(dbVar.filter(v => v.produtos_mestre?.id == produtoId).map(v => v.capacidade))];
+            document.getElementById('editCapacidade').innerHTML = '<option value="">MEMÓRIA...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join('');
+            document.getElementById('editCapacidade').disabled = false;
+        }
+        function libCorMEdit(produtoId, capacidade) {
+            let cores = dbVar.filter(v => v.produtos_mestre?.id == produtoId && v.capacidade == capacidade).map(v => v.cor);
+            document.getElementById('editCor').innerHTML = '<option value="">COR...</option>' + cores.map(co=>`<option value="${co}">${co.toUpperCase()}</option>`).join('');
+            document.getElementById('editCor').disabled = false;
+        }
+
+        // Funções auxiliares para edição EM MASSA
+        function libMemMBulk() {
+            let p = parseInt(document.getElementById('bulkModelo').value);
+            if(!p) { 
+                document.getElementById('bulkCapacidade').disabled = true; 
+                document.getElementById('bulkCor').disabled = true; 
+                return; 
+            }
+            let caps = [...new Set(dbVar.filter(v => v.produtos_mestre?.id === p).map(v => v.capacidade))];
+            document.getElementById('bulkCapacidade').innerHTML = '<option value="">MANTER CAPACIDADE...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join('');
+            document.getElementById('bulkCapacidade').disabled = false; 
+        }
+        function libCorMBulk() {
+            let p = parseInt(document.getElementById('bulkModelo').value), c = document.getElementById('bulkCapacidade').value;
+            if(!c) { 
+                document.getElementById('bulkCor').disabled = true; 
+                return; 
+            }
+            let cores = dbVar.filter(v => v.produtos_mestre?.id === p && v.capacidade === c).map(v => v.cor);
+            document.getElementById('bulkCor').innerHTML = '<option value="">MANTER COR...</option>' + cores.map(co=>`<option value="${co}">${co.toUpperCase()}</option>`).join('');
+            document.getElementById('bulkCor').disabled = false; 
+        }
+
+        // Funções do Modal Bulk Anu (Edição em Massa)
+        function bulkAnuModal() {
+            if(!document.querySelectorAll('.chk-anu:checked').length) return alert("Selecione anúncios.");
+            document.getElementById('modalBulkAnu').classList.remove('hidden');
+        }
+        function fecharBulkAnu() {
+            document.getElementById('modalBulkAnu').classList.add('hidden');
+        }
+
+        async function runBulkAnu(e) {
+            e.preventDefault();
+            let ids = Array.from(document.querySelectorAll('.chk-anu:checked')).map(c => parseInt(c.value));
+            if (!ids.length) return alert("Selecione anúncios.");
+
+            let updates = {};
+
+            // Modelo, capacidade, cor (precisam ser tratados juntos pois alteram variacao_id)
+            const modelo = document.getElementById('bulkModelo').value;
+            const capacidade = document.getElementById('bulkCapacidade').value;
+            const cor = document.getElementById('bulkCor').value;
+
+            if (modelo && capacidade && cor) {
+                const variacao = dbVar.find(v => v.produtos_mestre?.id == modelo && v.capacidade == capacidade && v.cor == cor);
+                if (variacao) {
+                    updates.variacao_id = variacao.id;
+                } else {
+                    alert('Variação selecionada inválida.');
+                    return;
+                }
+            } else if (modelo || capacidade || cor) {
+                alert('Para alterar a variação, preencha Modelo, Capacidade e Cor simultaneamente.');
+                return;
+            }
+
+            // Condição
+            const condicao = document.getElementById('bulkCondicao').value;
+            if (condicao) updates.condicao = condicao;
+
+            // Bateria
+            const bateria = document.getElementById('bulkBateria').value;
+            if (bateria) updates.saude_bateria = bateria;
+
+            // Garantia
+            const garantia = document.getElementById('bulkGarantia').value;
+            if (garantia) updates.garantia = garantia;
+
+            // Origem
+            const origem = document.getElementById('bulkOrigem').value;
+            if (origem) updates.regiao_id = origem;
+
+            // Quantidade
+            const qtd = document.getElementById('bulkQuantidade').value;
+            if (qtd !== '') {
+                let qVal = parseInt(qtd);
+                updates.quantidade = isNaN(qVal) || qVal < 0 ? 0 : qVal;
+            }
+
+            // Preço (apenas um dos dois)
+            const precoUsd = document.getElementById('bulkPrecoUsd').value;
+            const precoBrl = document.getElementById('bulkPrecoBrl').value;
+            if (precoUsd && precoBrl) {
+                alert('Preencha apenas USD ou BRL, não ambos.');
+                return;
+            }
+            if (precoUsd) {
+                updates.preco = parseP(precoUsd);
+                updates.moeda = 'USD';
+            }
+            if (precoBrl) {
+                updates.preco = parseP(precoBrl);
+                updates.moeda = 'BRL';
+            }
+
+            // Checkboxes
+            if (document.getElementById('bulkPix').checked) updates.aceita_pix = true;
+            if (document.getElementById('bulkUsdt').checked) updates.aceita_usdt = true;
+            if (document.getElementById('bulkNegocia').checked) updates.aceita_proposta = true;
+            if (document.getElementById('bulkEnvio').checked) updates.faz_envio = true;
+            if (document.getElementById('bulkColeta').checked) updates.aceita_coleta = true;
+            if (document.getElementById('bulkNota').checked) updates.emite_nota = true;
+
+            if (Object.keys(updates).length === 0) {
+                alert('Nenhum campo preenchido para atualizar.');
+                return;
+            }
+
+            const { error } = await _s.from('ofertas').update(updates).in('id', ids);
+            if (error) {
+                alert('Erro ao atualizar: ' + error.message);
+            } else {
+                alert('Anúncios atualizados com sucesso!');
+                fecharBulkAnu();
+                loadAll();
+            }
+        }
+
+        function abrirModalAta() { document.getElementById('mAtaTitle').innerText = "NOVO ATACADISTA"; document.getElementById('mAtaId').value=''; document.getElementById('mAtaNome').value=''; document.getElementById('mAtaWhats').value=''; document.getElementById('mAtaEmail').value=''; document.getElementById('mAtaPais').value='Brasil'; toggleLocationFields('Ata'); document.getElementById('mAtaSenha').value=''; document.getElementById('modalAta').classList.remove('hidden'); }
+        function editAta(id) { const a = dbAta.find(x => x.id == id); document.getElementById('mAtaTitle').innerText = `EDITANDO: ${a.nome}`; document.getElementById('mAtaId').value = a.id; document.getElementById('mAtaNome').value = a.nome; document.getElementById('mAtaWhats').value = a.whatsapp||''; document.getElementById('mAtaEmail').value = a.email||''; document.getElementById('mAtaPais').value = a.pais||'Brasil'; toggleLocationFields('Ata'); if(a.pais==='Brasil'){ document.getElementById('mAtaEst').value = a.estado||''; loadCidadesIBGE('Ata').then(()=> document.getElementById('mAtaCid').value = a.cidade||''); } document.getElementById('mAtaSenha').value = a.senha||''; document.getElementById('mAtaAtivo').checked = a.ativo; document.getElementById('mAtaVeri').checked = a.verificado; document.getElementById('modalAta').classList.remove('hidden'); }
+        async function saveAta(e) { e.preventDefault(); const d = { nome: document.getElementById('mAtaNome').value.toUpperCase(), whatsapp: document.getElementById('mAtaWhats').value, email: document.getElementById('mAtaEmail').value, pais: document.getElementById('mAtaPais').value, estado: document.getElementById('mAtaPais').value==='Brasil'?document.getElementById('mAtaEst').value:null, cidade: document.getElementById('mAtaPais').value==='Brasil'?document.getElementById('mAtaCid').value:null, ativo: document.getElementById('mAtaAtivo').checked, verificado: document.getElementById('mAtaVeri').checked, senha: document.getElementById('mAtaSenha').value }; const id = document.getElementById('mAtaId').value; if(id) await _s.from('fornecedores').update(d).eq('id', id); else await _s.from('fornecedores').insert([d]); fecharModais(); loadAll(); }
+        function bulkAtaModal() { document.getElementById('modalBulkAta').classList.remove('hidden'); }
+
         function abrirModalCliNovo() { document.getElementById('mCliTitle').innerText="NOVO BUSCADOR"; document.getElementById('mCliId').value=''; document.getElementById('formCli').reset(); toggleLocationFields('Cli'); document.getElementById('modalCli').classList.remove('hidden'); }
         function editCli(id) { const c = dbCli.find(x=>x.id==id); document.getElementById('mCliTitle').innerText=`EDITANDO: ${c.nome}`; document.getElementById('mCliId').value=c.id; document.getElementById('mCliNome').value=c.nome||''; document.getElementById('mCliWhats').value=c.whatsapp||''; document.getElementById('mCliEmail').value=c.email||''; document.getElementById('mCliPais').value=c.pais||'Brasil'; toggleLocationFields('Cli'); if(c.pais==='Brasil'){ document.getElementById('mCliEst').value=c.estado||''; loadCidadesIBGE('Cli').then(()=> document.getElementById('mCliCid').value=c.cidade||''); } document.getElementById('mCliSenha').value=c.senha||''; document.getElementById('modalCli').classList.remove('hidden'); }
         
@@ -723,54 +1186,13 @@
             fecharModais(); loadAll(); 
         }
 
-        // ANUNCIOS GESTAO
-        function renderAnu() { 
-            const tbody = document.getElementById('listAnu'); 
-            if(!dbAnu.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Vazio.</td></tr>'; return; } 
-            let grouped = {}; 
-            dbAnu.forEach(a => { let fNome = a.fornecedores ? a.fornecedores.nome : 'DESCONHECIDO'; if(!grouped[fNome]) grouped[fNome] = { ads: [], b: a.fornecedores?.insignia_manual || [] }; grouped[fNome].ads.push(a); }); 
-            let html = ''; 
-            for(let loja in grouped) { 
-                let b = grouped[loja].b.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 text-[7px]">${i}</span>`).join(''); 
-                html += `<tr class="group-header bg-[#141415] border-y border-zinc-800"><td colspan="7" class="font-black text-blue-500 py-3">🏢 ${loja} ${b}</td></tr>`; 
-                grouped[loja].ads.forEach(a => { 
-                    let d = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '--'; 
-                    let p = a.variacoes ? `${a.variacoes.produtos_mestre?.nome} ${a.variacoes.capacidade} <span class="text-zinc-500">${a.variacoes.cor}</span>` : 'Indisponível'; 
-                    let c = a.condicao || 'NOVO'; 
-                    let pDisp = a.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                    html += `<tr>
-                        <td><input type="checkbox" class="chk-anu" value="${a.id}"></td>
-                        <td class="text-[9px] text-zinc-400 font-mono">${d}</td>
-                        <td class="text-[10px] font-bold text-white">${p}</td>
-                        <td>${c}</td>
-                        <td class="text-center font-mono text-white">${a.moeda} <input type="text" class="mini-edit mini-edit-preco" value="${pDisp}" oninput="mascara(this)" onblur="editAnuncio(${a.id}, 'preco', this.value)"></td>
-                        <td class="text-center"><input type="number" class="mini-edit" value="${a.quantidade}" min="0" onblur="editAnuncio(${a.id}, 'quantidade', this.value)"></td>
-                        <td class="text-right"><button onclick="delRecord('ofertas', ${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black">X</button></td>
-                    </tr>`; 
-                }); 
-            } 
-            tbody.innerHTML = html; 
-        }
-
+        // ANUNCIOS GESTAO - funções auxiliares
         async function editAnuncio(id, f, v) {
             let val;
             if(f === 'preco') { val = parseP(v); if(isNaN(val)||val<0) val=0; } 
             else { val = parseInt(v); if(isNaN(val)||val<0) val=0; }
             await _s.from('ofertas').update({[f]: val}).eq('id', id);
             loadAll();
-        }
-
-        function bulkAnuModal() { document.getElementById('modalBulkAnu').classList.remove('hidden'); }
-        async function runBulkAnu() {
-            let ids = Array.from(document.querySelectorAll('.chk-anu:checked')).map(c => parseInt(c.value));
-            if(!ids.length) return alert("Selecione anúncios.");
-            let u = {};
-            let p = document.getElementById('bulkAnuPreco').value;
-            let q = document.getElementById('bulkAnuQtd').value;
-            if(p) u.preco = parseP(p);
-            if(q !== '') { let qVal = parseInt(q); u.quantidade = isNaN(qVal) || qVal < 0 ? 0 : qVal; }
-            if(Object.keys(u).length > 0) await _s.from('ofertas').update(u).in('id', ids);
-            fecharModais(); loadAll();
         }
 
         // LANÇAR ANÚNCIO (Lógica Atacadista Adaptada)
@@ -850,7 +1272,7 @@
         }
         async function clearInsignias() { const t = document.getElementById('seloTableSel').value; const id = document.getElementById('seloUser').value; if(confirm("Limpar?")) { await _s.from(t).update({insignia_manual: []}).eq('id', id); loadAll(); } }
 
-        // ========== FUNÇÃO DE VARREDURA GLOBAL ==========
+        // VARREDURA GLOBAL
         async function runVarreduraSelos() {
             alert('Iniciando varredura global de insígnias...');
 
@@ -955,11 +1377,8 @@
             loadAll();
         }
 
-        // Função abrirConta (será chamada apenas para master, mas mantemos)
         function abrirConta() {
-            // Se for funcionário, não deve abrir. Mas o botão já está oculto.
             if (currentUserType !== 'master') return;
-            // Redireciona para a aba de conta
             switchView('v-conta', document.querySelector('.menu-btn[onclick*="v-conta"]'));
         }
 
