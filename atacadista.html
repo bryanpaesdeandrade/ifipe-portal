@@ -1,81 +1,21 @@
-<!DOCTYPE html><html lang="pt-br"><head>
-    <script>
-        // VERIFICAÇÃO DE ACESSO AO PAINEL DO ANUNCIANTE (CORRIGIDO)
-        const a_tok = localStorage.getItem('iFipe_Anunciante');
-        const masterAuth = localStorage.getItem('iFipe_Master_Auth');
-        const status = localStorage.getItem('iFipe_Status');
-
-        if (!a_tok && masterAuth !== 'gov_absoluto') {
-            window.location.replace('index.html');
-        }
-
-        if (status === 'off' && masterAuth !== 'gov_absoluto') {
-            document.documentElement.innerHTML = '<body style="background:#050505;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui,sans-serif;text-align:center;padding:20px;margin:0;"><div><h1 style="color:#0071e3;margin-bottom:15px;font-style:italic;font-weight:900;font-size:2.5rem;text-transform:uppercase;letter-spacing:-2px;">iFipe</h1><p style="color:#888;font-weight:bold;letter-spacing:1px;font-size:12px;line-height:1.6;text-transform:uppercase;">Estamos em atualização para trazer melhorias para você.<br><br>Até logo, time iFipe.</p><button onclick="window.location.replace(\'index.html\')" style="margin-top:30px;background:#1a1a1a;color:#fff;border:1px solid #333;padding:12px 24px;border-radius:50px;font-weight:900;cursor:pointer;font-size:10px;text-transform:uppercase;">Voltar ao Início</button></div></body>';
-            window.stop();
-        }
-    </script>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFipe - Painel do Anunciante</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>iFipe - Painel do Atacadista</title>
+    <!-- Tailwind + Font Awesome -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --text: #fff; --border: #38383a; --input: #2c2c2e; --blue-sober: #3b82f6; }
-        body { background: var(--bg); color: var(--text); font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; text-transform: uppercase; transition: 0.3s; }
-        
-        .nav-bar { background:rgba(28, 28, 30, 0.8); backdrop-filter:blur(15px); border-bottom:1px solid var(--border); padding:15px 30px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; flex-wrap: wrap; gap: 10px;}
-        .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; }
-        .apple-input { background: var(--input); border: 1px solid var(--border); border-radius: 10px; padding: 10px; width: 100%; color: var(--text); outline: none; font-size: 11px; text-transform: uppercase; }
-        .apple-input:focus { border-color: var(--blue-sober); }
-        
-        .btn-header { display: flex; align-items: center; justify-content: center; border-radius: 12px; height: 38px; padding: 0 12px; transition: 0.3s; border: 1px solid var(--border); text-decoration: none; gap: 6px; cursor: pointer; position: relative; }
-        .btn-header span { font-size: 10px; font-weight: 900; text-transform: uppercase; }
-        
-        .btn-lancar { background: #fff; color: #000; font-weight: 900; border-radius: 50px; padding: 14px; cursor: pointer; border: none; font-size: 11px; width: 100%; transition: 0.3s; text-transform: uppercase; margin-top: 16px; }
-        .btn-lancar:hover { background: var(--blue-sober); color: #fff; }
-
-        .tag-chapada { font-size: 9px; font-weight: 900; padding: 4px 8px; border-radius: 6px; display: inline-flex; align-items: center; color: #fff; margin-right: 4px; margin-bottom: 4px; border: none; }
-        .tag-novo { background: #16a34a; } 
-        .tag-semi { background: #ca8a04; } 
-        .tag-cinza { background: #4b5563; }
-        
-        .moldura-sobria { font-size: 9px; font-weight: 900; padding: 3px 6px; border-radius: 6px; display: inline-flex; align-items: center; border: 1px solid #3b82f6; color: #60a5fa; background: rgba(59, 130, 246, 0.1); margin-right: 4px; margin-bottom: 4px; }
-
-        .mini-edit { background: transparent; border: 1px solid transparent; color: #fff; font-weight: 800; width: 60px; text-align: center; font-family: 'JetBrains Mono'; border-radius: 6px; transition: 0.3s; border-bottom: 1px dashed rgba(255,255,255,0.3); }
-        .mini-edit:focus { border-color: var(--blue-sober); background: rgba(59, 130, 246, 0.1); outline: none; border-bottom: 1px solid var(--blue-sober); }
-        .mini-edit-preco { width: 80px; }
-        
-        .step-block { margin-bottom: 12px; border-left: 2px solid #38383a; padding-left: 15px; opacity: 0.3; pointer-events: none; transition: 0.3s; }
-        .step-block.active { border-left-color: var(--blue-sober); opacity: 1; pointer-events: auto; }
-        
-        .btn-tipo { background: var(--input); border: 2px solid var(--border); color: var(--text); padding: 12px; border-radius: 12px; font-weight: 900; font-size: 10px; cursor: pointer; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-        .btn-tipo.active { border-color: var(--blue-sober); color: var(--blue-sober); background: rgba(59, 130, 246, 0.1); }
-        
-        .insignia-badge { display: inline-flex; padding: 4px 8px; border-radius: 8px; font-size: 9px; font-weight: 900; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); margin-bottom: 4px; }
-        .califa { color: #f43f5e; border-color: #f43f5e; }
-        .rei { color: #3b82f6; border-color: #3b82f6; }
-        .magnata { color: #f59e0b; border-color: #f59e0b; }
-
-        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: middle; border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
-
-        table { width: 100%; border-collapse: collapse; }
-        td, th { padding: 12px 10px; border-bottom: 1px solid var(--input); font-size: 10px; text-align: center; vertical-align: middle; }
-        td:nth-child(2), th:nth-child(2) { text-align: left; }
-        
-        .btn-scroll-top { position: fixed; bottom: 30px; right: 30px; background-color: var(--card); border: 1px solid var(--border); color: var(--text); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 999; transition: 0.3s; opacity: 0; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-        .btn-scroll-top.show { opacity: 1; pointer-events: auto; }
-        .btn-scroll-top:hover { background-color: var(--blue-sober); border-color: var(--blue-sober); color: #fff; }
-
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: var(--input); border-radius: 10px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: var(--blue-sober); border-radius: 10px; }
-        .hidden { display: none !important; }
-
-        /* Drawer */
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #000; color: #fff; }
+        /* Drawer Hamburguer */
         .drawer {
             position: fixed; top: 0; left: -300px; width: 280px; height: 100vh;
-            background: var(--card); border-right: 1px solid var(--border);
+            background: #1c1c1e; border-right: 1px solid #38383a;
             transition: left 0.3s ease; z-index: 2000; padding: 2rem 1rem; overflow-y: auto;
         }
         .drawer.open { left: 0; }
@@ -86,151 +26,180 @@
         .drawer-overlay.open { display: block; }
         .drawer-item {
             padding: 12px 16px; border-radius: 12px; margin-bottom: 4px;
-            cursor: pointer; transition: background 0.2s; font-weight: 500;
+            cursor: pointer; transition: 0.2s; font-weight: 500; color: #eee;
         }
-        .drawer-item:hover { background: var(--input); color: var(--blue-sober); }
+        .drawer-item:hover { background: #2c2c2e; color: #3b82f6; }
 
-        /* Classe para maiúsculas visual */
+        /* Scroll suave */
+        .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #2c2c2e; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
+
+        /* Botões grandes no mobile */
+        .btn-large { padding: 14px; font-size: 14px; }
+
+        /* Guru modal */
+        .modal-overlay {
+            position: fixed; inset:0; background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
+            display: flex; align-items: center; justify-content: center; z-index: 3000;
+        }
+        .modal-content {
+            background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px;
+            padding: 2rem; max-width: 450px; width: 90%; max-height: 80vh; overflow-y: auto;
+        }
+        .hidden { display: none !important; }
         .uppercase-input { text-transform: uppercase; }
         .uppercase-input::placeholder { text-transform: none; }
-    </style>
-</head><body id="appBody">
 
-    <!-- DRAWER (menu lateral) -->
+        /* Tabela com rolagem horizontal */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px; /* força scroll se necessário */
+        }
+        th, td {
+            white-space: nowrap;
+            padding: 12px 10px;
+            font-size: 11px;
+            text-align: left;
+            border-bottom: 1px solid #2c2c2e;
+        }
+        th {
+            color: #aaa;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        td {
+            color: #fff;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- DRAWER MOBILE -->
     <div id="drawerOverlay" class="drawer-overlay" onclick="fecharDrawer()"></div>
     <div id="drawer" class="drawer">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold">Menu</h2>
             <button onclick="fecharDrawer()" class="text-2xl text-gray-400 hover:text-white">&times;</button>
         </div>
-        
         <div class="drawer-item" onclick="fecharDrawer(); document.getElementById('dashboard').scrollIntoView({behavior:'smooth'})">
-            <i class="fas fa-chart-pie w-5"></i> Dashboard
+            <i class="fas fa-chart-pie w-6"></i> Dashboard
         </div>
         <div class="drawer-item" onclick="fecharDrawer(); document.getElementById('publicar').scrollIntoView({behavior:'smooth'})">
-            <i class="fas fa-plus-circle w-5"></i> Publicar
+            <i class="fas fa-plus-circle w-6"></i> Publicar
         </div>
         <div class="drawer-item" onclick="fecharDrawer(); document.getElementById('calcDrawer').scrollIntoView({behavior:'smooth'})">
-            <i class="fas fa-calculator w-5"></i> Calculadora
+            <i class="fas fa-calculator w-6"></i> Calculadora
         </div>
         <div class="drawer-item" onclick="fecharDrawer(); abrirSino()">
-            <i class="fas fa-inbox w-5"></i> Propostas
+            <i class="fas fa-inbox w-6"></i> Propostas
+        </div>
+        <div class="drawer-item" onclick="fecharDrawer(); abrirSugestao()">
+            <i class="fas fa-lightbulb w-6"></i> Sugerir Melhoria
         </div>
         <div class="drawer-item text-red-500 mt-4 border border-[#38383a]" onclick="logout()">
-            <i class="fas fa-sign-out-alt w-5"></i> Sair
+            <i class="fas fa-sign-out-alt w-6"></i> Sair
         </div>
-
-        <!-- Calculadora no drawer (mobile) - modelo limpo -->
-        <div id="calcDrawer" class="apple-card p-3 mt-6">
-            <h3 class="text-sm font-bold mb-2 text-center">Calculadora de iPhone</h3>
-            <div class="mb-2">
-                <input type="number" id="calcUsdMobile" class="apple-input text-xs py-1.5 uppercase-input" placeholder="USD" min="0" step="0.01" oninput="calcularImportacaoMobile()" value="">
-            </div>
-            <div class="bg-[#2c2c2e] p-2 rounded-lg mb-2">
-                <span class="text-xs text-gray-400">Custo Base</span>
-                <div id="custoFinalMobile" class="text-base font-bold text-blue-500">R$ 0,00</div>
-            </div>
-            <div class="text-xs space-y-0.5">
-                <div class="calc-result-item"><span class="font-medium">ALTO ATACADO</span><span id="resAltoMobile" class="font-bold">R$ 0,00</span></div>
-                <div class="calc-result-item"><span class="font-medium">ATACADO</span><span id="resAtaMobile" class="font-bold">R$ 0,00</span></div>
-                <div class="calc-result-item"><span class="font-medium">ATACAREJO</span><span id="resAtcrjMobile" class="font-bold">R$ 0,00</span></div>
-                <div class="calc-result-item"><span class="font-medium">VAREJO</span><span id="resVarMobile" class="font-bold">R$ 0,00</span></div>
+        <!-- Calculadora compacta no drawer (mobile) -->
+        <div class="mt-6 p-4 bg-[#2c2c2e] rounded-xl" id="calcDrawer">
+            <h3 class="text-sm font-bold mb-2 text-center">Calculadora</h3>
+            <input type="number" id="calcUsdMobile" class="w-full bg-[#151516] border border-[#38383a] rounded-lg p-3 text-white mb-2" placeholder="USD" oninput="calcularImportacaoMobile()">
+            <div class="text-xs space-y-1">
+                <div class="flex justify-between"><span>Custo Base</span><span id="custoFinalMobile">R$ 0,00</span></div>
+                <div class="flex justify-between"><span>Atacado</span><span id="precoAtacadoMobile">R$ 0,00</span></div>
+                <div class="flex justify-between"><span>Atacarejo</span><span id="precoAtacarejoMobile">R$ 0,00</span></div>
+                <div class="flex justify-between"><span>Varejo</span><span id="precoVarejoMobile">R$ 0,00</span></div>
             </div>
         </div>
     </div>
 
-    <button id="scrollTopBtn" class="btn-scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg>
-    </button>
-
-    <nav class="nav-bar">
-        <div class="flex items-center gap-4">
-            <button class="text-2xl mr-2 text-gray-400 hover:text-white transition lg:hidden" onclick="abrirDrawer()">☰</button>
-            <h1 class="text-2xl font-black italic m-0">iFipe</h1>
-            <span class="text-[10px] text-gray-400 font-bold border-l border-[#38383a] pl-3 ml-1 uppercase" id="dashNome">CARREGANDO...</span>
+    <!-- NAVBAR -->
+    <nav class="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-[#38383a] px-4 py-3 flex justify-between items-center z-50">
+        <div class="flex items-center gap-3">
+            <button class="text-2xl text-gray-400 lg:hidden" onclick="abrirDrawer()">☰</button>
+            <h1 class="text-xl font-black italic">iFipe</h1>
+            <span class="text-[10px] text-gray-400 border-l border-[#38383a] pl-2 hidden sm:inline">PAINEL ATACADISTA</span>
         </div>
-
-        <div class="flex gap-2 sm:gap-4 items-center flex-wrap justify-end">
-            <!-- Calculadora removida da navbar -->
-            
-            <a href="https://wa.me/556896003049?text=Ol%C3%A1%20venho%20do%20iFipe%20e%20preciso%20de%20suporte" target="_blank" class="btn-header" style="background: rgba(37, 211, 102, 0.1); color: #25d366; border-color: #25d366;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.886-.58-.45-.973-1.006-1.088-1.204-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
-                <span>Suporte</span>
-            </a>
-            
-            <a href="https://wa.me/15616760652?text=QUERO%20COMPRAR%20USDT" target="_blank" class="btn-header" style="background: rgba(255, 204, 0, 0.1); color: #ffcc00; border-color: #ffcc00;">
-                <span>COMPRAR USDT C/ ORÁCULO <strong id="tOra" class="ml-1 text-white">R$ --</strong></span>
-            </a>
-            
-            <div class="bg-[#1c1c1e] border border-[#38383a] rounded-lg px-4 py-1 ml-2 text-center">
-                <span class="text-[8px] text-yellow-400 font-black block leading-tight">BINANCE USDT/BRL</span>
-                <span id="tBin" class="text-[13px] font-mono font-black text-white">R$ --</span>
+        <div class="flex items-center gap-2">
+            <!-- Botão Sugestão desktop -->
+            <button onclick="abrirSugestao()" class="hidden lg:flex items-center gap-1 bg-purple-600 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-purple-700">
+                <i class="fas fa-lightbulb"></i> Sugerir Melhoria
+            </button>
+            <a href="https://wa.me/556896003049" target="_blank" class="btn-header text-xs hidden lg:flex">Suporte</a>
+            <div class="relative">
+                <button onclick="abrirSino()" class="text-xl px-2">
+                    🔔<span id="badgeSino" class="hidden absolute top-0 right-0 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                </button>
             </div>
-
-            <button onclick="abrirSino()" class="btn-header border-none !bg-transparent text-xl px-2 ml-2 hover:text-yellow-500">
-                🔔<span id="badgeSino" class="hidden absolute top-0 right-1 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center shadow-lg font-black">0</span>
-            </button>
-            <button onclick="abrirConta()" class="btn-header" style="background: var(--input); color: #fff; border-color: #38383a;">
-                <span>⚙️ MINHA CONTA</span>
-            </button>
-
-            <button onclick="logout()" class="text-red-500 font-black text-[10px] uppercase ml-2 hover:underline">Sair</button>
+            <button onclick="abrirConta()" class="text-xs border border-[#38383a] px-3 py-1.5 rounded-full hidden lg:block">Minha Conta</button>
+            <button onclick="logout()" class="text-red-400 text-xs ml-2 hover:underline">Sair</button>
         </div>
     </nav>
 
-    <main class="max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 pt-6 px-4 pb-20">
-        
-        <!-- Coluna esquerda (Status + Calculadora Desktop + Publicar) -->
+    <!-- MAIN (com padding-top para navbar) -->
+    <main class="pt-20 px-4 pb-10 max-w-7xl mx-auto grid lg:grid-cols-12 gap-6">
+
+        <!-- COLUNA ESQUERDA (STATUS + CALC DESKTOP + PUBLICAR) -->
         <div class="lg:col-span-4 space-y-6">
-            <!-- Card de Status (Insígnias) -->
-            <div class="apple-card" id="dashboard">
-                <h3 class="text-[10px] font-black uppercase text-gray-400 mb-3">STATUS NO IFIPE 🏆</h3>
+            <!-- Status / Insígnias -->
+            <div class="bg-[#1c1c1e] border border-[#38383a] rounded-2xl p-5" id="dashboard">
+                <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-3">Seu status no iFipe 🏆</h3>
                 <div id="userInsignias" class="flex flex-wrap gap-2"></div>
             </div>
 
-            <!-- Calculadora Desktop (limpa, sem Binance) -->
-            <div class="apple-card hidden lg:block">
+            <!-- Calculadora desktop (limpa) -->
+            <div class="bg-[#1c1c1e] border border-[#38383a] rounded-2xl p-5 hidden lg:block">
                 <h2 class="text-sm font-bold mb-3 text-center">Calculadora de iPhone</h2>
-                <div class="mb-3">
-                    <input type="number" id="calcUsd" class="apple-input text-xs py-2 uppercase-input" placeholder="Preço em USD" min="0" step="0.01" oninput="calcularImportacao()" value="">
-                </div>
-                <div class="bg-[#2c2c2e] p-2 rounded-xl mb-3">
-                    <span class="text-xs text-gray-400">Custo Base no Brasil</span>
-                    <div id="custoFinal" class="text-lg font-bold text-blue-500">R$ 0,00</div>
+                <input type="number" id="calcUsd" class="w-full bg-[#151516] border border-[#38383a] rounded-lg p-3 text-white mb-3" placeholder="Preço em USD" oninput="calcularImportacao()">
+                <div class="bg-[#2c2c2e] p-3 rounded-xl mb-3">
+                    <span class="text-xs text-gray-400">Custo Base</span>
+                    <div id="custoFinal" class="text-xl font-bold text-blue-400">R$ 0,00</div>
                 </div>
                 <div class="text-xs space-y-1">
-                    <div class="calc-result-item"><span class="font-medium">ALTO ATACADO</span><span id="resAlto" class="font-bold">R$ 0,00</span></div>
-                    <div class="calc-result-item"><span class="font-medium">ATACADO</span><span id="resAta" class="font-bold">R$ 0,00</span></div>
-                    <div class="calc-result-item"><span class="font-medium">ATACAREJO</span><span id="resAtcrj" class="font-bold">R$ 0,00</span></div>
-                    <div class="calc-result-item"><span class="font-medium">VAREJO</span><span id="resVar" class="font-bold">R$ 0,00</span></div>
+                    <div class="flex justify-between"><span>Atacado</span><span id="precoAtacado">R$ 0,00</span></div>
+                    <div class="flex justify-between"><span>Atacarejo</span><span id="precoAtacarejo">R$ 0,00</span></div>
+                    <div class="flex justify-between"><span>Varejo</span><span id="precoVarejo">R$ 0,00</span></div>
                 </div>
             </div>
 
-            <!-- Card de Publicar Oferta -->
-            <div class="apple-card" id="publicar">
-                <h2 class="text-xs font-black text-white mb-4">PUBLICAR OFERTA</h2>
+            <!-- Card de Publicar Oferta (completo) -->
+            <div class="bg-[#1c1c1e] border border-[#38383a] rounded-2xl p-5" id="publicar">
+                <h2 class="text-sm font-bold mb-4">Publicar Oferta</h2>
                 <div class="grid grid-cols-2 gap-2 mb-4">
-                    <button type="button" id="btN" class="btn-tipo" onclick="selTipo('Novo')">📦 NOVO</button>
-                    <button type="button" id="btS" class="btn-tipo" onclick="selTipo('Seminovo')">♻️ SEMINOVO</button>
+                    <button type="button" id="btN" class="bg-[#2c2c2e] border-2 border-[#38383a] text-white font-bold p-3 rounded-xl text-xs" onclick="selTipo('Novo')">📦 NOVO</button>
+                    <button type="button" id="btS" class="bg-[#2c2c2e] border-2 border-[#38383a] text-white font-bold p-3 rounded-xl text-xs" onclick="selTipo('Seminovo')">♻️ SEMINOVO</button>
                 </div>
                 <form onsubmit="doPost(event)">
                     <input type="hidden" id="f_tipo">
-                    <div class="step-block" id="s1"><span class="text-[9px] font-bold text-gray-400">1. MODELO</span><select id="f_mod" class="apple-input mt-1" onchange="libMem()" required disabled></select></div>
-                    <div class="step-block" id="s2"><span class="text-[9px] font-bold text-gray-400">2. MEMÓRIA</span><select id="f_cap" class="apple-input mt-1" onchange="libCor()" required disabled></select></div>
-                    <div class="step-block" id="s3"><span class="text-[9px] font-bold text-gray-400">3. COR</span><select id="f_cor" class="apple-input mt-1" onchange="libDet()" required disabled></select></div>
-                    <div class="step-block" id="s4">
-                        <span class="text-[9px] font-bold text-gray-400">4. DETALHES</span>
-                        
-                        <div id="z_semi" class="hidden space-y-2 mt-2 mb-2">
-                            <select id="f_cond" class="apple-input">
+                    <div class="step-block mb-3" id="s1">
+                        <span class="text-[9px] text-gray-400">1. MODELO</span>
+                        <select id="f_mod" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs uppercase mt-1" onchange="libMem()" required disabled></select>
+                    </div>
+                    <div class="step-block mb-3" id="s2">
+                        <span class="text-[9px] text-gray-400">2. MEMÓRIA</span>
+                        <select id="f_cap" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs uppercase mt-1" onchange="libCor()" required disabled></select>
+                    </div>
+                    <div class="step-block mb-3" id="s3">
+                        <span class="text-[9px] text-gray-400">3. COR</span>
+                        <select id="f_cor" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs uppercase mt-1" onchange="libDet()" required disabled></select>
+                    </div>
+                    <div class="step-block mb-3" id="s4">
+                        <span class="text-[9px] text-gray-400">4. DETALHES</span>
+                        <div id="z_semi" class="hidden space-y-2 mt-2">
+                            <select id="f_cond" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
                                 <option value="Seminovo">SEMINOVO</option>
                                 <option value="CPO">CPO</option>
                                 <option value="Grade A">GRADE A</option>
                                 <option value="Grade B">GRADE B</option>
                                 <option value="Grade C">GRADE C</option>
                             </select>
-                            <select id="f_bat" class="apple-input">
-                                <option value="">SELECIONE A BATERIA...</option>
+                            <select id="f_bat" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                                <option value="">BATERIA...</option>
                                 <option value="Abaixo de 85%">Abaixo de 85%</option>
                                 <option value="Acima de 85%">Acima de 85%</option>
                                 <option value="Acima de 90%">Acima de 90%</option>
@@ -238,74 +207,68 @@
                                 <option value="Bateria em 100%">Bateria em 100%</option>
                             </select>
                         </div>
-                        
-                        <div class="mb-2 mt-2">
-                            <select id="f_gar" class="apple-input hidden">
-                                <option value="">GARANTIA...</option>
-                                <option value="Sem garantia">Sem garantia</option>
-                                <option value="1 Mês">1 Mês</option>
-                                <option value="2 Meses">2 Meses</option>
-                                <option value="3 Meses">3 Meses</option>
-                                <option value="6 Meses">6 Meses</option>
-                                <option value="12 Meses">12 Meses</option>
-                            </select>
+                        <select id="f_gar" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs hidden">
+                            <option value="">GARANTIA...</option>
+                            <option value="Sem garantia">Sem garantia</option>
+                            <option value="1 Mês">1 Mês</option>
+                            <option value="2 Meses">2 Meses</option>
+                            <option value="3 Meses">3 Meses</option>
+                            <option value="6 Meses">6 Meses</option>
+                            <option value="12 Meses">12 Meses</option>
+                        </select>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <input type="number" id="f_qtd" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="QTD" min="0" required>
+                            <select id="f_orig" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" required></select>
                         </div>
-
-                        <div class="grid grid-cols-2 gap-2 mb-2">
-                            <input type="number" id="f_qtd" class="apple-input uppercase-input" placeholder="QTD" min="0" required>
-                            <select id="f_orig" class="apple-input" required></select>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <input type="text" id="f_usd" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="$ USD" oninput="mascara(this); document.getElementById('f_brl').value=''">
+                            <input type="text" id="f_brl" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('f_usd').value=''">
                         </div>
-                        
-                        <div class="grid grid-cols-2 gap-2 mb-2">
-                            <input type="text" id="f_usd" class="apple-input uppercase-input" placeholder="$ USD" oninput="mascara(this); document.getElementById('f_brl').value=''">
-                            <input type="text" id="f_brl" class="apple-input uppercase-input" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('f_usd').value=''">
+                        <div class="grid grid-cols-2 gap-2 mt-3 bg-[#2c2c2e] p-3 rounded-lg">
+                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_pix"> PIX</label>
+                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_usdt"> USDT</label>
+                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_neg"> NEGOCIA QTD</label>
+                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_envi"> ENVIO</label>
+                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_cole"> COLETA</label>
+                            <label class="text-[9px] flex items-center gap-2"><input type="checkbox" id="m_nota"> NF</label>
                         </div>
-
-                        <div class="grid grid-cols-2 gap-2 mt-3 bg-[#1c1c1e] p-3 rounded-lg border border-[#38383a]">
-                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_pix"> PIX</label>
-                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_usdt"> USDT</label>
-                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_neg"> NEGOCIA QTD</label>
-                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_envi"> FAZ ENVIO</label>
-                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_cole"> ACEITA COLETA</label>
-                            <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_nota"> EMITE NF</label>
-                        </div>
-                        
-                        <button type="submit" id="btnS" class="btn-lancar hidden">LANÇAR PRODUTO</button>
+                        <button type="submit" id="btnS" class="w-full bg-white text-black font-bold p-4 rounded-full text-xs mt-4 hidden">LANÇAR PRODUTO</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- Coluna direita (Tabela de Ofertas) -->
+        <!-- COLUNA DIREITA (TABELA DE OFERTAS) -->
         <div class="lg:col-span-8">
-            <div class="apple-card min-h-[600px] flex flex-col">
-                <div class="flex justify-between items-center mb-4 bg-[#2c2c2e] p-3 rounded-xl border border-[#38383a]">
-                    <div class="flex items-center gap-3">
-                        <span class="text-[9px] font-black uppercase text-gray-300"><span id="bulkCount">0</span> Selecionados</span>
-                        <select id="filtroTipoLista" class="apple-input !w-auto !py-1 !text-[8px] !bg-[#1c1c1e] cursor-pointer" onchange="upTab()">
-                            <option value="">TODAS AS CONDIÇÕES</option>
-                            <option value="Novo">SOMENTE NOVOS</option>
-                            <option value="Seminovo">SOMENTE SEMINOVOS</option>
+            <div class="bg-[#1c1c1e] border border-[#38383a] rounded-2xl p-5">
+                <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[9px] font-bold text-gray-400"><span id="bulkCount">0</span> Selecionados</span>
+                        <select id="filtroTipoLista" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg px-2 py-1 text-[8px]" onchange="upTab()">
+                            <option value="">TODAS</option>
+                            <option value="Novo">NOVOS</option>
+                            <option value="Seminovo">SEMINOVOS</option>
                         </select>
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="copiarListaWhatsApp()" class="bg-[#25d366] text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase cursor-pointer flex items-center gap-1 transition hover:bg-[#1ebc59]">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 16 16"><path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.886-.58-.45-.973-1.006-1.088-1.204-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/></svg>
-                            Copiar Lista
-                        </button>
-                        <button onclick="abrirBulk()" class="bg-white text-black px-3 py-1.5 rounded-full text-[8px] font-black uppercase cursor-pointer">Editar Lote</button>
-                        <button onclick="bulkDup()" class="bg-[#3b82f6] text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase cursor-pointer">Duplicar</button>
-                        <button onclick="bulkDel()" class="bg-red-600 text-white px-3 py-1.5 rounded-full text-[8px] font-black uppercase cursor-pointer">Apagar</button>
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="copiarListaWhatsApp()" class="bg-[#25d366] text-white px-3 py-1.5 rounded-full text-[8px] font-bold flex items-center gap-1"><i class="fab fa-whatsapp"></i> Lista</button>
+                        <button onclick="abrirBulk()" class="bg-white text-black px-3 py-1.5 rounded-full text-[8px] font-bold">Editar Lote</button>
+                        <button onclick="bulkDel()" class="bg-red-600 text-white px-3 py-1.5 rounded-full text-[8px] font-bold">Apagar</button>
                     </div>
                 </div>
-                <div class="overflow-x-auto custom-scroll mt-2">
+
+                <!-- Tabela com rolagem horizontal -->
+                <div class="table-wrapper custom-scroll">
                     <table>
                         <thead>
                             <tr>
-                                <th width="30"><input type="checkbox" onclick="selAll(this)"></th>
-                                <th>MODELO / DETALHES</th>
-                                <th class="text-center">EDITAR QTD</th>
-                                <th class="text-center">EDITAR PREÇO</th>
+                                <th><input type="checkbox" onclick="selAll(this)"></th>
+                                <th>PRODUTO</th>
+                                <th>CONDIÇÃO</th>
+                                <th>ORIGEM</th>
+                                <th>QTD</th>
+                                <th>PREÇO</th>
+                                <th>AÇÕES</th>
                             </tr>
                         </thead>
                         <tbody id="lista"></tbody>
@@ -315,67 +278,200 @@
         </div>
     </main>
 
-    <!-- MODAL DE PROPOSTAS (ANTIGO SINO) -->
-    <div id="propostasModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
-        <div class="apple-card max-w-[600px] w-full border-yellow-500 max-h-[80vh] overflow-y-auto">
-            <button onclick="fecharPropostas()" class="absolute top-4 right-5 text-gray-500 hover:text-white font-bold text-2xl leading-none">×</button>
-            <h3 class="text-xs font-black uppercase text-yellow-500 mb-4 text-center">📬 PROPOSTAS RECEBIDAS</h3>
-            
-            <div class="mb-4">
-                <div class="flex border-b border-[#38383a] mb-2">
-                    <button id="tabPendentes" class="flex-1 py-2 text-center text-[10px] font-black text-yellow-500 border-b-2 border-yellow-500" onclick="mostrarAba('pendentes')">PENDENTES</button>
-                    <button id="tabRespondidas" class="flex-1 py-2 text-center text-[10px] font-black text-gray-500" onclick="mostrarAba('respondidas')">RESPONDIDAS</button>
-                </div>
-                <div id="listaPendentes" class="space-y-4"></div>
-                <div id="listaRespondidas" class="space-y-4 hidden"></div>
+    <!-- MODAL SUGESTÃO -->
+    <div id="modalSugestao" class="hidden modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-lg font-bold mb-4">💡 Sugerir Melhoria</h3>
+            <textarea id="sugestaoMensagem" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 h-32 text-sm" placeholder="Descreva sua sugestão..."></textarea>
+            <div class="flex gap-3 mt-4">
+                <button onclick="enviarSugestao()" class="btn-master bg-blue-600 flex-1 p-3 rounded-lg text-sm">Enviar</button>
+                <button onclick="fecharSugestao()" class="btn-master bg-zinc-700 flex-1 p-3 rounded-lg text-sm">Cancelar</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal de confirmação de resposta -->
-    <div id="respostaModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
-        <div class="apple-card max-w-[400px] w-full border-green-500">
-            <h3 class="text-xs font-black uppercase text-green-500 mb-4 text-center">✅ RESPOSTA ENVIADA</h3>
-            <p class="text-center text-[10px] text-gray-400 mb-4">Sua resposta foi registrada e o cliente será notificado.</p>
-            <button onclick="fecharRespostaModal()" class="btn-lancar">OK</button>
+    <!-- MODAL GURU (ALERTA DE PREÇO) -->
+    <div id="modalGuru" class="hidden modal-overlay">
+        <div class="modal-content border-yellow-500">
+            <h3 class="text-yellow-400 font-bold text-lg mb-2">👁️ GURU DETECTOU ANOMALIA</h3>
+            <p id="guruMensagem" class="text-sm text-gray-300 mb-4"></p>
+            <div class="flex gap-3">
+                <button onclick="confirmarGuru()" class="bg-yellow-600 text-white flex-1 p-3 rounded-lg text-sm font-bold">Continuar mesmo assim</button>
+                <button onclick="cancelarGuru()" class="bg-zinc-700 text-white flex-1 p-3 rounded-lg text-sm">Revisar preço</button>
+            </div>
         </div>
     </div>
 
-    <!-- Modal de Conta -->
-    <div id="contaModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
-        <div class="apple-card max-w-[400px] w-full border-[#38383a]">
-            <h3 class="text-xs font-black uppercase text-white mb-4 text-center">⚙️ MINHA CONTA</h3>
-            <p class="text-[9px] text-gray-500 text-center mb-4 font-bold">ATUALIZE SEUS DADOS DE CONTATO E ACESSO</p>
-            <form onsubmit="salvarConta(event)" class="space-y-4">
-                <div>
-                    <label class="text-[8px] text-gray-400 font-bold uppercase mb-1 block">NOME DA LOJA</label>
-                    <input type="text" id="c_nome" class="apple-input w-full text-left uppercase-input" required>
-                </div>
-                <div>
-                    <label class="text-[8px] text-gray-400 font-bold uppercase mb-1 block">WHATSAPP (SOMENTE NÚMEROS)</label>
-                    <input type="text" id="c_whats" class="apple-input w-full text-left uppercase-input" required>
-                </div>
-                <div>
-                    <label class="text-[8px] text-gray-400 font-bold uppercase mb-1 block">NOVA SENHA (DEIXE EM BRANCO PARA MANTER)</label>
-                    <input type="password" id="c_senha" class="apple-input w-full text-left">
-                </div>
-                <div class="flex gap-2 pt-2">
-                    <button type="button" onclick="fecharConta()" class="apple-button bg-gray-600 text-white w-1/3">CANCELAR</button>
-                    <button type="submit" class="apple-button bg-[#3b82f6] text-white w-2/3 border-[#3b82f6]">SALVAR DADOS</button>
+    <!-- MODAL CONTA -->
+    <div id="contaModal" class="hidden modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-lg font-bold mb-4">⚙️ Minha Conta</h3>
+            <form onsubmit="salvarConta(event)">
+                <input type="text" id="c_nome" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 mb-3 uppercase-input" placeholder="NOME DA LOJA" required>
+                <input type="text" id="c_whats" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 mb-3 uppercase-input" placeholder="WHATSAPP">
+                <input type="password" id="c_senha" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 mb-4" placeholder="NOVA SENHA (opcional)">
+                <div class="flex gap-3">
+                    <button type="submit" class="bg-blue-600 text-white flex-1 p-3 rounded-lg">Salvar</button>
+                    <button type="button" onclick="fecharConta()" class="bg-zinc-700 text-white flex-1 p-3 rounded-lg">Cancelar</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal Bulk -->
-    <div id="bulkModal" class="hidden fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[2000] p-4">
-        <div class="apple-card max-w-[500px] w-full border-[#3b82f6]">
-            <h3 class="text-xs font-black uppercase text-[#fff] mb-4 text-center">EDIÇÃO EM MASSA</h3>
-            <form onsubmit="doBulk(event)" class="space-y-4">
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="b_preco" class="apple-input uppercase-input" placeholder="NOVO PREÇO" oninput="mascara(this)">
-                    <input type="number" id="b_qtd" class="apple-input uppercase-input" placeholder="NOVA QTD" min="0">
-                    <select id="b_cond" class="apple-input">
+    <!-- MODAL EDIÇÃO COMPLETA (individual) -->
+    <div id="modalEditar" class="hidden modal-overlay">
+        <div class="modal-content max-w-xl">
+            <h3 class="text-lg font-bold mb-4">✏️ Editar Anúncio</h3>
+            <form onsubmit="salvarEdicao(event)" id="formEditar">
+                <input type="hidden" id="editId">
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="editModelo" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="editCarregarMemoria()" required>
+                        <option value="">MODELO</option>
+                    </select>
+                    <select id="editCapacidade" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="editCarregarCor()" required disabled>
+                        <option value="">MEMÓRIA</option>
+                    </select>
+                </div>
+                <select id="editCor" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-2" required disabled>
+                    <option value="">COR</option>
+                </select>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="editCondicao" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                        <option value="Novo">NOVO</option>
+                        <option value="Seminovo">SEMINOVO</option>
+                        <option value="CPO">CPO</option>
+                        <option value="Grade A">GRADE A</option>
+                        <option value="Grade B">GRADE B</option>
+                        <option value="Grade C">GRADE C</option>
+                    </select>
+                    <select id="editBateria" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                        <option value="">BATERIA</option>
+                        <option value="Abaixo de 85%">Abaixo de 85%</option>
+                        <option value="Acima de 85%">Acima de 85%</option>
+                        <option value="Acima de 90%">Acima de 90%</option>
+                        <option value="Acima de 95%">Acima de 95%</option>
+                        <option value="Bateria em 100%">Bateria em 100%</option>
+                    </select>
+                </div>
+                <select id="editGarantia" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-2">
+                    <option value="">GARANTIA</option>
+                    <option value="Sem garantia">Sem garantia</option>
+                    <option value="1 Mês">1 Mês</option>
+                    <option value="2 Meses">2 Meses</option>
+                    <option value="3 Meses">3 Meses</option>
+                    <option value="6 Meses">6 Meses</option>
+                    <option value="12 Meses">12 Meses</option>
+                </select>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="editOrigem" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" required></select>
+                    <input type="number" id="editQuantidade" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="QTD" min="0" required>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <input type="text" id="editUsd" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="$ USD" oninput="mascara(this); document.getElementById('editBrl').value=''">
+                    <input type="text" id="editBrl" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('editUsd').value=''">
+                </div>
+                <div class="grid grid-cols-3 gap-2 bg-[#2c2c2e] p-3 rounded-lg mb-3">
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="editPix"> PIX</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="editUsdt"> USDT</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="editNegocia"> NEGOCIA</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="editEnvio"> ENVIO</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="editColeta"> COLETA</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="editNota"> NF</label>
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit" class="bg-blue-600 text-white flex-1 p-3 rounded-lg">Salvar</button>
+                    <button type="button" onclick="fecharModalEditar()" class="bg-zinc-700 text-white flex-1 p-3 rounded-lg">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DUPLICAR (agora preenchido automaticamente) -->
+    <div id="modalDuplicar" class="hidden modal-overlay">
+        <div class="modal-content max-w-xl">
+            <h3 class="text-lg font-bold mb-4">📋 Duplicar Anúncio</h3>
+            <form onsubmit="duplicarOferta(event)" id="formDuplicar">
+                <input type="hidden" id="dupId">
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="dupModelo" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="dupCarregarMemoria()" required>
+                        <option value="">MODELO</option>
+                    </select>
+                    <select id="dupCapacidade" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="dupCarregarCor()" required disabled>
+                        <option value="">MEMÓRIA</option>
+                    </select>
+                </div>
+                <select id="dupCor" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-2" required disabled>
+                    <option value="">COR</option>
+                </select>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="dupCondicao" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                        <option value="Novo">NOVO</option>
+                        <option value="Seminovo">SEMINOVO</option>
+                        <option value="CPO">CPO</option>
+                        <option value="Grade A">GRADE A</option>
+                        <option value="Grade B">GRADE B</option>
+                        <option value="Grade C">GRADE C</option>
+                    </select>
+                    <select id="dupBateria" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                        <option value="">BATERIA</option>
+                        <option value="Abaixo de 85%">Abaixo de 85%</option>
+                        <option value="Acima de 85%">Acima de 85%</option>
+                        <option value="Acima de 90%">Acima de 90%</option>
+                        <option value="Acima de 95%">Acima de 95%</option>
+                        <option value="Bateria em 100%">Bateria em 100%</option>
+                    </select>
+                </div>
+                <select id="dupGarantia" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-2">
+                    <option value="">GARANTIA</option>
+                    <option value="Sem garantia">Sem garantia</option>
+                    <option value="1 Mês">1 Mês</option>
+                    <option value="2 Meses">2 Meses</option>
+                    <option value="3 Meses">3 Meses</option>
+                    <option value="6 Meses">6 Meses</option>
+                    <option value="12 Meses">12 Meses</option>
+                </select>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="dupOrigem" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" required></select>
+                    <input type="number" id="dupQuantidade" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="QTD" min="0" required>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <input type="text" id="dupUsd" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="$ USD" oninput="mascara(this); document.getElementById('dupBrl').value=''">
+                    <input type="text" id="dupBrl" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('dupUsd').value=''">
+                </div>
+                <div class="grid grid-cols-3 gap-2 bg-[#2c2c2e] p-3 rounded-lg mb-3">
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="dupPix"> PIX</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="dupUsdt"> USDT</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="dupNegocia"> NEGOCIA</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="dupEnvio"> ENVIO</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="dupColeta"> COLETA</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="dupNota"> NF</label>
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit" class="bg-blue-600 text-white flex-1 p-3 rounded-lg">Duplicar</button>
+                    <button type="button" onclick="fecharModalDuplicar()" class="bg-zinc-700 text-white flex-1 p-3 rounded-lg">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL BULK (edição em massa com cascata) -->
+    <div id="bulkModal" class="hidden modal-overlay">
+        <div class="modal-content max-w-xl">
+            <h3 class="text-lg font-bold mb-4">⚙️ Edição em Massa</h3>
+            <form onsubmit="doBulk(event)" id="formBulk">
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="bulkModelo" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="bulkCarregarMemoria()">
+                        <option value="">MANTER MODELO...</option>
+                    </select>
+                    <select id="bulkCapacidade" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="bulkCarregarCor()" disabled>
+                        <option value="">MANTER CAPACIDADE...</option>
+                    </select>
+                </div>
+                <select id="bulkCor" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-2" disabled>
+                    <option value="">MANTER COR...</option>
+                </select>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="bulkCondicao" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
                         <option value="">MANTER CONDIÇÃO...</option>
                         <option value="Novo">NOVO</option>
                         <option value="Seminovo">SEMINOVO</option>
@@ -384,7 +480,7 @@
                         <option value="Grade B">GRADE B</option>
                         <option value="Grade C">GRADE C</option>
                     </select>
-                    <select id="b_bat" class="apple-input">
+                    <select id="bulkBateria" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
                         <option value="">MANTER BATERIA...</option>
                         <option value="Abaixo de 85%">Abaixo de 85%</option>
                         <option value="Acima de 85%">Acima de 85%</option>
@@ -393,673 +489,759 @@
                         <option value="Bateria em 100%">Bateria em 100%</option>
                     </select>
                 </div>
-                <div class="grid grid-cols-3 gap-2 bg-[#1c1c1e] p-3 rounded-xl border border-[#38383a]">
-                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_pix"> PIX</label>
-                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_usdt"> USDT</label>
-                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_neg"> NEGOCIA</label>
-                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_envi"> ENVIOS</label>
-                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_cole"> COLETA</label>
-                    <label class="text-[8px] font-black flex items-center gap-1"><input type="checkbox" id="bk_nota"> NOTA</label>
+                <select id="bulkGarantia" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-2">
+                    <option value="">MANTER GARANTIA...</option>
+                    <option value="Sem garantia">Sem garantia</option>
+                    <option value="1 Mês">1 Mês</option>
+                    <option value="2 Meses">2 Meses</option>
+                    <option value="3 Meses">3 Meses</option>
+                    <option value="6 Meses">6 Meses</option>
+                    <option value="12 Meses">12 Meses</option>
+                </select>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="bulkOrigem" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                        <option value="">MANTER ORIGEM...</option>
+                    </select>
+                    <input type="number" id="bulkQtd" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="NOVA QTD (opcional)" min="0">
                 </div>
-                <div class="flex gap-2 pt-2">
-                    <button type="button" onclick="fecharBulk()" class="apple-button bg-gray-600 text-white w-1/3">CANCELAR</button>
-                    <button type="submit" class="apple-button bg-[#3b82f6] text-white w-2/3 border-[#3b82f6]">APLICAR</button>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <input type="text" id="bulkUsd" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="NOVO $ USD" oninput="mascara(this); document.getElementById('bulkBrl').value=''">
+                    <input type="text" id="bulkBrl" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="NOVO R$ BRL" oninput="mascara(this); document.getElementById('bulkUsd').value=''">
+                </div>
+                <div class="grid grid-cols-3 gap-2 bg-[#2c2c2e] p-3 rounded-lg mb-3">
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="bulkPix"> PIX</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="bulkUsdt"> USDT</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="bulkNegocia"> NEGOCIA</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="bulkEnvio"> ENVIO</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="bulkColeta"> COLETA</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="bulkNota"> NF</label>
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit" class="bg-blue-600 text-white flex-1 p-3 rounded-lg">Aplicar</button>
+                    <button type="button" onclick="fecharBulk()" class="bg-zinc-700 text-white flex-1 p-3 rounded-lg">Cancelar</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- MODAL PROPOSTAS -->
+    <div id="propostasModal" class="hidden modal-overlay">
+        <div class="modal-content max-w-2xl">
+            <h3 class="text-lg font-bold mb-2">📬 Propostas Recebidas</h3>
+            <div class="flex border-b border-[#38383a] mb-4">
+                <button id="tabPendentes" class="flex-1 py-2 text-center text-xs font-bold text-yellow-500 border-b-2 border-yellow-500" onclick="mostrarAba('pendentes')">PENDENTES</button>
+                <button id="tabRespondidas" class="flex-1 py-2 text-center text-xs font-bold text-gray-500" onclick="mostrarAba('respondidas')">RESPONDIDAS</button>
+            </div>
+            <div id="listaPendentes" class="space-y-3 max-h-96 overflow-y-auto"></div>
+            <div id="listaRespondidas" class="space-y-3 max-h-96 overflow-y-auto hidden"></div>
+        </div>
+    </div>
+
     <script>
+        // SUPABASE CLIENT
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        let loja = null, produtos = [], vars = [], ofertas = [], ofertasGlobais = [], rate = 0;
-        let propostasPendentes = [];
-        let propostasRespondidas = [];
 
-        const rndUp = v => Math.ceil(v / 10) * 10;
-        const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
+        let loja = null, produtos = [], variacoes = [], regioes = [], ofertas = [], todasOfertas = [];
+        let rate = 0;
+        let acoesCriacao = []; // para lockdown
+        let pendingGuruData = null; // para confirmar ação com preço anômalo
+
+        // Funções auxiliares
         const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
-        
-        const getAppleColorHex = c => { let s=(c||'').toUpperCase(); if(s.includes('PRETO')||s.includes('BLACK')||s.includes('MEIA-NOITE')||s.includes('GRAFITE')) return '#191919'; if(s.includes('BRANCO')||s.includes('WHITE')||s.includes('ESTELAR')||s.includes('PRATEADO')) return '#f5f5f7'; if(s.includes('AZUL')||s.includes('SIERRA')) return '#215e7c'; if(s.includes('VERDE')||s.includes('ALPINO')) return '#505c4c'; if(s.includes('NATURAL')) return '#8c8c88'; if(s.includes('DESERTO')||s.includes('DOURADO')) return '#ccb390'; if(s.includes('ROSA')) return '#e6c7c2'; if(s.includes('ROXO')) return '#5c5b57'; return '#808080'; };
-
-        // Mapeamento de insígnias (similar ao buscador)
-        const ordemInsigniasAnunciante = [
-            "1.000 APARELHOS EM ESTOQUE - KHALIFA DO IPHONE",
-            "700 APARELHOS EM ESTOQUE - SULTÃO DO IPHONE",
-            "500 APARELHOS EM ESTOQUE - SHEIKH DO IPHONE",
-            "200 APARELHOS EM ESTOQUE - EMIR DO IPHONE",
-            "100 APARELHOS EM ESTOQUE - REI DO IPHONE",
-            "50 APARELHOS EM ESTOQUE - MAGNATA IPHONE",
-            "RESPONDER 10 PERGUNTAS - RESPOSTA RAPIDA",
-            "10 RECOMENDACAO - ATACADISTA FAMOSIN 😎",
-            "10 COMPARTILHAMENTOS NO MESMO ANUNCIO - CELEBRIDADE"
-        ];
-        const emojiInsignia = {
-            "1.000 APARELHOS EM ESTOQUE - KHALIFA DO IPHONE": "🥇",
-            "700 APARELHOS EM ESTOQUE - SULTÃO DO IPHONE": "🏆",
-            "500 APARELHOS EM ESTOQUE - SHEIKH DO IPHONE": "🤴🏽",
-            "200 APARELHOS EM ESTOQUE - EMIR DO IPHONE": "🫅🏽",
-            "100 APARELHOS EM ESTOQUE - REI DO IPHONE": "👑",
-            "50 APARELHOS EM ESTOQUE - MAGNATA IPHONE": "💰",
-            "RESPONDER 10 PERGUNTAS - RESPOSTA RAPIDA": "⚡",
-            "10 RECOMENDACAO - ATACADISTA FAMOSIN 😎": "😎",
-            "10 COMPARTILHAMENTOS NO MESMO ANUNCIO - CELEBRIDADE": "💁🏽‍♂️"
+        const mascara = i => {
+            let v = i.value.replace(/\D/g, '');
+            if (!v) { i.value = ''; return; }
+            i.value = (parseFloat(v) / 100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         };
 
-        function renderizarInsignias(usuario) {
-            if (!usuario) return '';
-            let html = '';
-            let manuais = [];
-            
-            try {
-                if (typeof usuario.insignia_manual === 'string') {
-                    manuais = JSON.parse(usuario.insignia_manual);
-                } else if (Array.isArray(usuario.insignia_manual)) {
-                    manuais = usuario.insignia_manual;
-                }
-            } catch(e) { 
-                console.error('Erro de parse nas insígnias manuais'); 
+        // === LOCKDOWN SYSTEM ===
+        async function registrarAcao() {
+            const agora = Date.now();
+            acoesCriacao.push(agora);
+            // remove ações com mais de 60 segundos
+            acoesCriacao = acoesCriacao.filter(t => agora - t < 60000);
+            if (acoesCriacao.length > (loja?.verificado ? 60 : 30)) {
+                await lockdownSystem();
             }
-
-            manuais.forEach(nome => {
-                const emoji = emojiInsignia[nome] || '🔰';
-                html += `<span class="insignia-badge" style="color:#60a5fa; border-color:#3b82f6;">${emoji} ${nome}</span>`;
-            });
-
-            let t = ofertas.reduce((a, b) => a + (b.quantidade || 0), 0);
-            if (t >= 1000) html += '<span class="insignia-badge califa">👑 CALIFA</span>';
-            else if (t >= 200) html += '<span class="insignia-badge rei">🛡️ REI</span>';
-            else if (t >= 50) html += '<span class="insignia-badge magnata">💰 MAGNATA</span>';
-
-            return html;
         }
 
+        async function lockdownSystem() {
+            alert("ATIVIDADE REPETITIVA NÃO AUTORIZADA. Comunique o suporte.");
+            // Zerar todas as ofertas deste fornecedor
+            await _s.from('ofertas').update({ quantidade: 0 }).eq('fornecedor_id', loja.id);
+            // Marcar como suspeito
+            await _s.from('fornecedores').update({ hack_suspect: true }).eq('id', loja.id);
+            logout();
+        }
+
+        // === GURU PRICE CHECK ===
+        async function verificarPrecoGuru(produtoId, capacidade, preco, moeda) {
+            if (!loja) return false;
+            // Consultar todas as ofertas globais (exceto as próprias) do mesmo modelo/capacidade
+            const { data } = await _s
+                .from('ofertas')
+                .select('preco, moeda, fornecedor_id, variacoes!inner(produto_id, capacidade)')
+                .not('fornecedor_id', 'eq', loja.id)
+                .gt('quantidade', 0);
+            const ofertasSimilares = (data || []).filter(o => 
+                o.variacoes?.produto_id == produtoId && o.variacoes?.capacidade == capacidade
+            );
+            if (ofertasSimilares.length === 0) return false;
+            const media = ofertasSimilares.reduce((s, o) => s + o.preco, 0) / ofertasSimilares.length;
+            const diff = Math.abs(preco - media);
+            const limite = moeda === 'BRL' ? (loja.verificado ? 1400 : 700) : (loja.verificado ? 200 : 100);
+            if (diff > limite) {
+                return { media, diff };
+            }
+            return false;
+        }
+
+        // === SUGESTÕES ===
+        function abrirSugestao() {
+            document.getElementById('modalSugestao').classList.remove('hidden');
+        }
+        function fecharSugestao() {
+            document.getElementById('modalSugestao').classList.add('hidden');
+        }
+        async function enviarSugestao() {
+            const mensagem = document.getElementById('sugestaoMensagem').value.trim();
+            if (!mensagem) return alert('Escreva algo.');
+            await _s.from('feedbacks').insert({ usuario_tipo: 'ATACADISTA', usuario_nome: loja.nome, mensagem: mensagem });
+            alert('Obrigado pela sugestão!');
+            fecharSugestao();
+            document.getElementById('sugestaoMensagem').value = '';
+        }
+
+        // === DADOS INICIAIS ===
         window.onload = async () => {
             const tokenAta = localStorage.getItem('iFipe_Anunciante');
-            const tokenMaster = localStorage.getItem('iFipe_Token') === 'admin_bypass' || localStorage.getItem('iFipe_Master_Auth') === 'gov_absoluto';
-            const status = localStorage.getItem('iFipe_Status');
-
-            if (status === 'off' && !tokenMaster) {
-                alert("SISTEMA EM MANUTENÇÃO.");
-                return window.location.replace('index.html');
+            const masterAuth = localStorage.getItem('iFipe_Master_Auth');
+            if (!tokenAta && masterAuth !== 'gov_absoluto') {
+                window.location.replace('index.html');
+                return;
             }
-
-            if (tokenMaster) {
-                loja = { id: 1, nome: "MODO MASTER (VISUALIZAÇÃO)" };
+            if (masterAuth === 'gov_absoluto') {
+                loja = { id: 1, nome: 'MASTER', verificado: true };
                 document.getElementById('dashNome').innerText = loja.nome;
             } else {
-                if(!tokenAta) return window.location.replace('index.html');
-
-                const { data: l, error } = await _s
-                    .from('fornecedores')
-                    .select('*')
-                    .eq('id', tokenAta)
-                    .single();
-
-                if(error || !l) {
-                    localStorage.removeItem('iFipe_Anunciante');
-                    return window.location.replace('index.html');
-                }
-
-                loja = l; 
-                document.getElementById('dashNome').innerText = l.nome;
+                const { data, error } = await _s.from('fornecedores').select('*').eq('id', tokenAta).single();
+                if (error || !data) { logout(); return; }
+                loja = data;
             }
 
             new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
                 rate = parseFloat(JSON.parse(e.data).c);
-                document.getElementById('tBin').innerText = `R$ ${rate.toFixed(4)}`;
-                document.getElementById('tOra').innerText = `R$ ${(rate+0.06).toFixed(4)}`;
                 calcularImportacao();
                 calcularImportacaoMobile();
             };
 
-            const [p, v, r, oGlobal] = await Promise.all([ 
-                _s.from('produtos_mestre').select('*').order('id'), 
-                _s.from('variacoes').select('*'), 
+            const [p, v, r, o, oGlobal] = await Promise.all([
+                _s.from('produtos_mestre').select('*').order('id'),
+                _s.from('variacoes').select('*'),
                 _s.from('regioes').select('*'),
-                _s.from('ofertas').select('*, fornecedores!inner(*), variacoes(*, produtos_mestre(*))').gt('quantidade', 0)
+                _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), regioes(*)').eq('fornecedor_id', loja.id).order('criado_em', { ascending: false }),
+                _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), fornecedores(verificado)').gt('quantidade', 0)
             ]);
-            produtos = p.data; 
-            vars = v.data;
-            ofertasGlobais = oGlobal.data || [];
-            
-            const origensPermitidas = [
-                { nome: 'BRASIL ANATEL', flag: '🇧🇷' }, { nome: 'EUA', flag: '🇺🇸' },
-                { nome: 'JAPÃO', flag: '🇯🇵' }, { nome: 'ÍNDIA', flag: '🇮🇳' },
-                { nome: 'CANADÁ', flag: '🇨🇦' }, { nome: 'CHINA', flag: '🇨🇳' }
-            ];
-            
-            let htmlOrigem = '<option value="">SELECIONE A ORIGEM...</option>';
-            origensPermitidas.forEach(rm => {
-                let sStr = rm.nome.split(' ')[0].replace(/[ÁÀÃÂ]/g,'A').replace(/[Í]/g,'I');
-                let match = r.data.find(dbReg => dbReg.nome.toUpperCase().replace(/[ÁÀÃÂ]/g,'A').replace(/[Í]/g,'I').includes(sStr));
-                if(match) htmlOrigem += `<option value="${match.id}">${rm.flag} ${rm.nome}</option>`;
-            });
-            document.getElementById('f_orig').innerHTML = htmlOrigem;
-            
-            await carregarPropostas(); // carrega propostas antes de renderizar a tabela
+            produtos = p.data || [];
+            variacoes = v.data || [];
+            regioes = r.data || [];
+            ofertas = o.data || [];
+            todasOfertas = oGlobal.data || [];
+
+            popularOrigens();
+            popularModelos();
             upTab();
-            document.getElementById('userInsignias').innerHTML = renderizarInsignias(loja);
+            carregarPropostas();
+            atualizarInsignias();
+
+            // Preencher selects dos modais com as opções
+            preencherSelectsModais();
         };
 
-        // Funções da calculadora (desktop e mobile)
-        function calcularImportacao() {
-            const v = parseFloat(document.getElementById('calcUsd').value);
-            if (isNaN(v) || rate === 0) { 
-                document.getElementById('custoFinal').innerText = "R$ 0,00";
-                document.getElementById('resAlto').innerText = "R$ 0,00";
-                document.getElementById('resAta').innerText = "R$ 0,00";
-                document.getElementById('resAtcrj').innerText = "R$ 0,00";
-                document.getElementById('resVar').innerText = "R$ 0,00";
-                return; 
+        function preencherSelectsModais() {
+            // Modelos
+            let modelosHTML = '<option value="">MODELO</option>';
+            produtos.forEach(p => modelosHTML += `<option value="${p.id}">${p.nome}</option>`);
+            document.getElementById('editModelo').innerHTML = modelosHTML;
+            document.getElementById('dupModelo').innerHTML = modelosHTML;
+            document.getElementById('bulkModelo').innerHTML = '<option value="">MANTER MODELO</option>' + modelosHTML.slice(15); // remove primeiro option
+
+            // Origens
+            let origensHTML = '<option value="">ORIGEM</option>';
+            regioes.forEach(r => origensHTML += `<option value="${r.id}">${r.bandeira} ${r.nome}</option>`);
+            document.getElementById('editOrigem').innerHTML = origensHTML;
+            document.getElementById('dupOrigem').innerHTML = origensHTML;
+            document.getElementById('bulkOrigem').innerHTML = '<option value="">MANTER ORIGEM</option>' + origensHTML.slice(15);
+        }
+
+        function popularOrigens() {
+            let html = '<option value="">ORIGEM</option>';
+            regioes.forEach(r => html += `<option value="${r.id}">${r.bandeira} ${r.nome}</option>`);
+            document.getElementById('f_orig').innerHTML = html;
+        }
+
+        function popularModelos() {
+            let html = '<option value="">MODELO</option>';
+            produtos.forEach(p => html += `<option value="${p.id}">${p.nome}</option>`);
+            document.getElementById('f_mod').innerHTML = html;
+        }
+
+        // === FUNÇÕES DO STEP DE PUBLICAÇÃO ===
+        function selTipo(t) {
+            document.getElementById('f_tipo').value = t;
+            document.getElementById('btN').classList.toggle('active', t === 'Novo');
+            document.getElementById('btS').classList.toggle('active', t === 'Seminovo');
+            document.getElementById('z_semi').classList.toggle('hidden', t === 'Novo');
+            document.getElementById('f_mod').disabled = false;
+            document.getElementById('s1').classList.add('active');
+        }
+        function libMem() {
+            let p = document.getElementById('f_mod').value;
+            let caps = [...new Set(variacoes.filter(v => v.produto_id == p).map(v => v.capacidade))];
+            document.getElementById('f_cap').innerHTML = '<option value="">MEMÓRIA</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('f_cap').disabled = false;
+            document.getElementById('s2').classList.add('active');
+        }
+        function libCor() {
+            let p = document.getElementById('f_mod').value, c = document.getElementById('f_cap').value;
+            let cores = variacoes.filter(v => v.produto_id == p && v.capacidade == c).map(v => v.cor);
+            document.getElementById('f_cor').innerHTML = '<option value="">COR</option>' + cores.map(co => `<option value="${co}">${co.toUpperCase()}</option>`).join('');
+            document.getElementById('f_cor').disabled = false;
+            document.getElementById('s3').classList.add('active');
+        }
+        function libDet() {
+            document.getElementById('s4').classList.add('active');
+            document.getElementById('btnS').classList.remove('hidden');
+        }
+
+        // === CRIAÇÃO DE OFERTA COM GURU ===
+        async function doPost(e) {
+            e.preventDefault();
+            let tipo = document.getElementById('f_tipo').value;
+            let v = variacoes.find(x => x.produto_id == document.getElementById('f_mod').value && x.capacidade == document.getElementById('f_cap').value && x.cor == document.getElementById('f_cor').value);
+            let isBrl = document.getElementById('f_brl').value.length > 0;
+            let precoFinal = isBrl ? parseP(document.getElementById('f_brl').value) : parseP(document.getElementById('f_usd').value);
+            let moeda = isBrl ? 'BRL' : 'USD';
+            let q = parseInt(document.getElementById('f_qtd').value) || 0;
+
+            // Guru check
+            const guru = await verificarPrecoGuru(v.produto_id, v.capacidade, precoFinal, moeda);
+            if (guru) {
+                pendingGuruData = {
+                    acao: 'criar',
+                    dados: {
+                        fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('f_orig').value,
+                        preco: precoFinal, moeda, quantidade: q,
+                        condicao: tipo === 'Novo' ? 'Novo' : document.getElementById('f_cond').value,
+                        saude_bateria: tipo === 'Novo' ? '' : document.getElementById('f_bat').value,
+                        garantia: tipo === 'Novo' ? '1 ANO APPLE' : document.getElementById('f_gar').value,
+                        aceita_pix: document.getElementById('m_pix').checked,
+                        aceita_usdt: document.getElementById('m_usdt').checked,
+                        aceita_proposta: document.getElementById('m_neg').checked,
+                        faz_envio: document.getElementById('m_envi').checked,
+                        aceita_coleta: document.getElementById('m_cole').checked,
+                        emite_nota: document.getElementById('m_nota').checked,
+                        status_aprovacao: 'aprovado'
+                    }
+                };
+                document.getElementById('guruMensagem').innerText = `O preço informado está ${moeda === 'BRL' ? 'R$' : '$'} ${guru.diff.toFixed(2)} acima da média do mercado. Deseja continuar?`;
+                document.getElementById('modalGuru').classList.remove('hidden');
+                return;
             }
-            const rOraculo = rate + 0.06;
-            const cFinal = (v * rOraculo) * 1.06;
-            document.getElementById('custoFinal').innerText = cFinal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('resAlto').innerText = rndUp(cFinal + 200).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('resAta').innerText = rndUp(cFinal + 350).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('resAtcrj').innerText = rndUp(cFinal + 500).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('resVar').innerText = rndUp(cFinal + 1000).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            await executarCriacao(pendingGuruData?.dados || {
+                fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('f_orig').value,
+                preco: precoFinal, moeda, quantidade: q,
+                condicao: tipo === 'Novo' ? 'Novo' : document.getElementById('f_cond').value,
+                saude_bateria: tipo === 'Novo' ? '' : document.getElementById('f_bat').value,
+                garantia: tipo === 'Novo' ? '1 ANO APPLE' : document.getElementById('f_gar').value,
+                aceita_pix: document.getElementById('m_pix').checked,
+                aceita_usdt: document.getElementById('m_usdt').checked,
+                aceita_proposta: document.getElementById('m_neg').checked,
+                faz_envio: document.getElementById('m_envi').checked,
+                aceita_coleta: document.getElementById('m_cole').checked,
+                emite_nota: document.getElementById('m_nota').checked,
+                status_aprovacao: 'aprovado'
+            });
+            pendingGuruData = null;
         }
 
-        function calcularImportacaoMobile() {
-            const v = parseFloat(document.getElementById('calcUsdMobile').value);
-            if (isNaN(v) || rate === 0) { 
-                document.getElementById('custoFinalMobile').innerText = "R$ 0,00";
-                document.getElementById('resAltoMobile').innerText = "R$ 0,00";
-                document.getElementById('resAtaMobile').innerText = "R$ 0,00";
-                document.getElementById('resAtcrjMobile').innerText = "R$ 0,00";
-                document.getElementById('resVarMobile').innerText = "R$ 0,00";
-                return; 
+        async function executarCriacao(dados) {
+            await registrarAcao();
+            await _s.from('ofertas').insert([dados]);
+            window.location.reload();
+        }
+
+        function confirmarGuru() {
+            if (pendingGuruData) {
+                executarCriacao(pendingGuruData.dados);
             }
-            const rOraculo = rate + 0.06;
-            const cFinal = (v * rOraculo) * 1.06;
-            document.getElementById('custoFinalMobile').innerText = cFinal.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('resAltoMobile').innerText = rndUp(cFinal + 200).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('resAtaMobile').innerText = rndUp(cFinal + 350).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('resAtcrjMobile').innerText = rndUp(cFinal + 500).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-            document.getElementById('resVarMobile').innerText = rndUp(cFinal + 1000).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+            document.getElementById('modalGuru').classList.add('hidden');
+        }
+        function cancelarGuru() {
+            pendingGuruData = null;
+            document.getElementById('modalGuru').classList.add('hidden');
         }
 
-        // Funções do drawer
-        function abrirDrawer() { 
-            document.getElementById('drawer').classList.add('open'); 
-            document.getElementById('drawerOverlay').classList.add('open'); 
-        }
-        function fecharDrawer() { 
-            document.getElementById('drawer').classList.remove('open'); 
-            document.getElementById('drawerOverlay').classList.remove('open'); 
+        // === TABELA DE OFERTAS (RENDER) ===
+        async function upTab() {
+            const filtro = document.getElementById('filtroTipoLista').value;
+            let html = '';
+            ofertas.forEach(o => {
+                if (filtro && o.condicao !== filtro) return;
+                let badgeEstoque = o.quantidade <= 5 ? 'bg-red-600' : (o.quantidade <= 10 ? 'bg-blue-600' : 'bg-green-600');
+                html += `<tr>
+                    <td><input type="checkbox" class="chk" value="${o.id}" onclick="upBulkCount()"></td>
+                    <td>
+                        <div class="font-bold text-sm">${o.variacoes?.produtos_mestre?.nome} ${o.variacoes?.capacidade}</div>
+                        <div class="text-[10px] text-gray-400">${o.variacoes?.cor}</div>
+                    </td>
+                    <td><span class="px-2 py-1 rounded-full text-[9px] ${o.condicao === 'Novo' ? 'bg-green-600' : 'bg-yellow-600'}">${o.condicao}</span></td>
+                    <td>${o.regioes?.bandeira || ''} ${o.regioes?.nome || ''}</td>
+                    <td><input type="number" class="w-16 bg-transparent border-b border-dashed border-gray-500 text-center" value="${o.quantidade}" min="0" onblur="edit(${o.id}, 'quantidade', this.value)"></td>
+                    <td class="font-mono">${o.moeda === 'BRL' ? 'R$' : '$'} <input type="text" class="w-20 bg-transparent border-b border-dashed border-gray-500 text-center" value="${o.preco.toFixed(2).replace('.', ',')}" oninput="mascara(this)" onblur="edit(${o.id}, 'preco', this.value)"></td>
+                    <td>
+                        <button onclick="abrirModalEditar(${o.id})" class="text-blue-400 text-xs mr-2"><i class="fas fa-edit"></i></button>
+                        <button onclick="abrirModalDuplicar(${o.id})" class="text-green-400 text-xs mr-2"><i class="fas fa-copy"></i></button>
+                        <button onclick="del(${o.id})" class="text-red-400 text-xs"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('lista').innerHTML = html || '<tr><td colspan="7" class="text-center py-4 text-gray-400">Nenhum anúncio encontrado.</td></tr>';
+            upBulkCount();
         }
 
-        // Funções de conta
+        async function edit(id, campo, valor) {
+            let val = campo === 'preco' ? parseP(valor) : parseInt(valor);
+            if (isNaN(val) || val < 0) val = 0;
+            await _s.from('ofertas').update({ [campo]: val }).eq('id', id);
+            upTab();
+        }
+
+        async function del(id) {
+            if (confirm('Apagar permanentemente?')) {
+                await _s.from('ofertas').delete().eq('id', id);
+                upTab();
+            }
+        }
+
+        // === SELEÇÃO EM MASSA ===
+        function selAll(el) {
+            document.querySelectorAll('.chk').forEach(c => c.checked = el.checked);
+            upBulkCount();
+        }
+        function upBulkCount() {
+            document.getElementById('bulkCount').innerText = document.querySelectorAll('.chk:checked').length;
+        }
+        async function bulkDel() {
+            let ids = Array.from(document.querySelectorAll('.chk:checked')).map(c => parseInt(c.value));
+            if (!ids.length) return alert('Selecione itens.');
+            if (confirm('Apagar permanentemente?')) {
+                await _s.from('ofertas').delete().in('id', ids);
+                upTab();
+            }
+        }
+
+        // === BOTÃO COPIAR LISTA WHATSAPP ===
+        async function copiarListaWhatsApp() {
+            let ativas = ofertas.filter(o => o.quantidade > 0);
+            if (!ativas.length) return alert('Lista vazia.');
+            let saudacao = ['BOM DIA', 'BOA TARDE', 'BOA NOITE'][Math.floor(new Date().getHours() / 6)];
+            let cidade = loja.cidade ? ` ${loja.cidade.toUpperCase()}` : '';
+            let texto = `*${saudacao} 🚀🔥*\n\n*PRONTA ENTREGA NOVOS*${cidade} 📍\n\n`;
+            ativas.filter(o => o.condicao === 'Novo').forEach(o => {
+                texto += `*${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade}*\n`;
+                texto += `(${o.quantidade}) ${o.variacoes.cor.toUpperCase()} R$ ${o.preco.toFixed(2)}\n\n`;
+            });
+            if (ativas.some(o => o.condicao !== 'Novo')) {
+                texto += `*PRONTA ENTREGA SEMINOVOS*\n\n`;
+                ativas.filter(o => o.condicao !== 'Novo').forEach(o => {
+                    texto += `* (${o.quantidade}) ${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade} ${o.variacoes.cor.toUpperCase()} 🔋 ${o.saude_bateria || ''} 🛡️ ${o.garantia || ''} R$ ${o.preco.toFixed(2)}*\n`;
+                });
+            }
+            texto += `\nFale com a gente agora mesmo: https://wa.me/${loja.whatsapp}\n\n`;
+            texto += `Lista Gerada pelo iFipe - *A Tabela Fipe do iPhone 📲*\n`;
+            texto += `Acesse Nosso site https://ifipe.com.br/`;
+            await navigator.clipboard.writeText(texto);
+            alert('Lista copiada!');
+        }
+
+        // === PROPOSTAS ===
+        let propostasPend = [], propostasResp = [];
+        async function carregarPropostas() {
+            const { data } = await _s
+                .from('comentarios')
+                .select('*, ofertas!inner(variacao_id, variacoes!inner(produtos_mestre!inner(nome), capacidade, cor)), clientes_buscador(nome)')
+                .eq('fornecedor_id', loja.id)
+                .order('criado_em', { ascending: false });
+            propostasPend = (data || []).filter(p => !p.resposta);
+            propostasResp = (data || []).filter(p => p.resposta);
+            document.getElementById('badgeSino').classList.toggle('hidden', propostasPend.length === 0);
+            document.getElementById('badgeSino').innerText = propostasPend.length;
+            renderizarPropostas();
+        }
+        function renderizarPropostas() {
+            document.getElementById('listaPendentes').innerHTML = propostasPend.map(p => `
+                <div class="border border-[#38383a] rounded-lg p-3">
+                    <div class="flex justify-between text-[9px] text-gray-400"><span>${p.clientes_buscador?.nome}</span><span>${new Date(p.criado_em).toLocaleString()}</span></div>
+                    <p class="text-xs mt-1 mb-2">${p.pergunta}</p>
+                    <textarea id="resp_${p.id}" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-2 text-xs" placeholder="Responder..."></textarea>
+                    <button onclick="responder(${p.id})" class="mt-2 bg-blue-600 text-white text-xs px-4 py-2 rounded-full">Enviar resposta</button>
+                </div>
+            `).join('');
+            document.getElementById('listaRespondidas').innerHTML = propostasResp.map(p => `
+                <div class="border border-[#38383a] rounded-lg p-3">
+                    <div class="flex justify-between text-[9px] text-gray-400"><span>${p.clientes_buscador?.nome}</span><span>${new Date(p.criado_em).toLocaleString()}</span></div>
+                    <p class="text-xs mt-1">${p.pergunta}</p>
+                    <p class="text-xs text-green-400 mt-1">✅ ${p.resposta}</p>
+                </div>
+            `).join('');
+        }
+        async function responder(id) {
+            let resposta = document.getElementById(`resp_${id}`).value.trim();
+            if (!resposta) return;
+            await _s.from('comentarios').update({ resposta, respondido_em: new Date(), lida_cliente: false }).eq('id', id);
+            carregarPropostas();
+        }
+
+        // === FUNÇÕES DE MODAL (EDIÇÃO, DUPLICAÇÃO, BULK) ===
+        function abrirDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('open'); }
+        function fecharDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); }
+        function logout() { localStorage.clear(); window.location.replace('index.html'); }
+        function abrirSino() { carregarPropostas(); document.getElementById('propostasModal').classList.remove('hidden'); }
+        function fecharSino() { document.getElementById('propostasModal').classList.add('hidden'); }
         function abrirConta() {
             document.getElementById('c_nome').value = loja.nome || '';
             document.getElementById('c_whats').value = loja.whatsapp || '';
-            document.getElementById('c_senha').value = '';
             document.getElementById('contaModal').classList.remove('hidden');
         }
         function fecharConta() { document.getElementById('contaModal').classList.add('hidden'); }
         async function salvarConta(e) {
             e.preventDefault();
-            let n = document.getElementById('c_nome').value.toUpperCase().trim();
-            let w = document.getElementById('c_whats').value.toUpperCase().trim();
-            let s = document.getElementById('c_senha').value;
-            let updates = { nome: n, whatsapp: w };
-            if(s.trim() !== '') updates.senha = s;
-            await _s.from('fornecedores').update(updates).eq('id', loja.id);
-            alert('Dados de conta atualizados com sucesso!');
+            await _s.from('fornecedores').update({
+                nome: document.getElementById('c_nome').value.toUpperCase(),
+                whatsapp: document.getElementById('c_whats').value
+            }).eq('id', loja.id);
+            alert('Atualizado!');
             fecharConta();
-            window.location.reload();
         }
-
-        // Funções de propostas
-        async function abrirSino() {
-            await carregarPropostas();
-            document.getElementById('propostasModal').classList.remove('hidden');
-            mostrarAba('pendentes');
+        function abrirBulk() {
+            if (!document.querySelectorAll('.chk:checked').length) return alert('Selecione anúncios.');
+            document.getElementById('bulkModal').classList.remove('hidden');
         }
-        function fecharPropostas() {
-            document.getElementById('propostasModal').classList.add('hidden');
-        }
-
-        async function carregarPropostas() {
-            if (!loja || !loja.id) return;
-            const { data, error } = await _s
-                .from('comentarios')
-                .select('*, ofertas(*, variacoes(*, produtos_mestre(*)))')
-                .eq('fornecedor_id', loja.id)
-                .order('criado_em', { ascending: false });
-            
-            if (error) {
-                console.error('Erro ao carregar propostas:', error);
-                return;
-            }
-
-            propostasPendentes = data.filter(p => !p.resposta);
-            propostasRespondidas = data.filter(p => p.resposta);
-
-            const badge = document.getElementById('badgeSino');
-            if (propostasPendentes.length > 0) {
-                badge.innerText = propostasPendentes.length;
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
-
-            renderizarPropostas();
-        }
-
-        function renderizarPropostas() {
-            const listaPend = document.getElementById('listaPendentes');
-            const listaResp = document.getElementById('listaRespondidas');
-
-            listaPend.innerHTML = propostasPendentes.map(p => {
-                const produto = p.ofertas?.variacoes?.produtos_mestre?.nome || 'Produto';
-                const capacidade = p.ofertas?.variacoes?.capacidade || '';
-                const cor = p.ofertas?.variacoes?.cor || '';
-                return `
-                <div class="border border-[#38383a] rounded-lg p-3 bg-[#1c1c1e]">
-                    <div class="flex justify-between text-[9px] text-gray-400 mb-1">
-                        <span>${p.autor_nome}</span>
-                        <span>${new Date(p.criado_em).toLocaleString()}</span>
-                    </div>
-                    <p class="text-[10px] font-bold mb-1">${produto} ${capacidade} ${cor}</p>
-                    <p class="text-[10px] mb-2">${p.pergunta}</p>
-                    <textarea id="resp_${p.id}" class="apple-input text-[9px] h-16 mb-2 uppercase-input" placeholder="Digite sua resposta..."></textarea>
-                    <button onclick="responderProposta(${p.id})" class="btn-lancar text-[9px] py-2">RESPONDER</button>
-                </div>
-            `}).join('');
-
-            listaResp.innerHTML = propostasRespondidas.map(p => {
-                const produto = p.ofertas?.variacoes?.produtos_mestre?.nome || 'Produto';
-                const capacidade = p.ofertas?.variacoes?.capacidade || '';
-                const cor = p.ofertas?.variacoes?.cor || '';
-                return `
-                <div class="border border-[#38383a] rounded-lg p-3 bg-[#1c1c1e]">
-                    <div class="flex justify-between text-[9px] text-gray-400 mb-1">
-                        <span>${p.autor_nome}</span>
-                        <span>${new Date(p.criado_em).toLocaleString()}</span>
-                    </div>
-                    <p class="text-[10px] font-bold mb-1">${produto} ${capacidade} ${cor}</p>
-                    <p class="text-[10px] mb-1">📨 ${p.pergunta}</p>
-                    <p class="text-[10px] text-green-400">✅ ${p.resposta}</p>
-                </div>
-            `}).join('');
-        }
-
-        function mostrarAba(aba) {
-            if (aba === 'pendentes') {
-                document.getElementById('tabPendentes').classList.add('border-yellow-500', 'text-yellow-500');
-                document.getElementById('tabPendentes').classList.remove('text-gray-500');
-                document.getElementById('tabRespondidas').classList.remove('border-yellow-500', 'text-yellow-500');
-                document.getElementById('tabRespondidas').classList.add('text-gray-500');
-                document.getElementById('listaPendentes').classList.remove('hidden');
-                document.getElementById('listaRespondidas').classList.add('hidden');
-            } else {
-                document.getElementById('tabRespondidas').classList.add('border-yellow-500', 'text-yellow-500');
-                document.getElementById('tabRespondidas').classList.remove('text-gray-500');
-                document.getElementById('tabPendentes').classList.remove('border-yellow-500', 'text-yellow-500');
-                document.getElementById('tabPendentes').classList.add('text-gray-500');
-                document.getElementById('listaRespondidas').classList.remove('hidden');
-                document.getElementById('listaPendentes').classList.add('hidden');
-            }
-        }
-
-        async function responderProposta(comentarioId) {
-            const resposta = document.getElementById(`resp_${comentarioId}`).value.trim();
-            if (!resposta) {
-                alert('Digite uma resposta.');
-                return;
-            }
-            const { error } = await _s
-                .from('comentarios')
-                .update({ 
-                    resposta: resposta, 
-                    respondido_em: new Date(),
-                    lida_cliente: false 
-                })
-                .eq('id', comentarioId);
-            
-            if (error) {
-                alert('Erro ao responder: ' + error.message);
-            } else {
-                fecharPropostas();
-                document.getElementById('respostaModal').classList.remove('hidden');
-                setTimeout(() => {
-                    document.getElementById('respostaModal').classList.add('hidden');
-                }, 2000);
-                await carregarPropostas();
-                upTab(); // atualiza a tabela para remover o botão
-            }
-        }
-
-        function fecharRespostaModal() {
-            document.getElementById('respostaModal').classList.add('hidden');
-        }
-
-        // Funções de publicação
-        function selTipo(t) {
-            document.getElementById('f_tipo').value = t;
-            document.getElementById('btN').classList.toggle('active', t==='Novo'); 
-            document.getElementById('btS').classList.toggle('active', t==='Seminovo');
-            document.getElementById('z_semi').classList.toggle('hidden', t==='Novo');
-            
-            if(t==='Novo') {
-                document.getElementById('f_bat').classList.add('hidden');
-                document.getElementById('f_bat').value = '';
-                document.getElementById('f_gar').style.display = 'none';
-            } else {
-                document.getElementById('f_bat').classList.remove('hidden');
-                document.getElementById('f_gar').style.display = 'block';
-            }
-
-            document.getElementById('f_mod').innerHTML = '<option value="">MODELO...</option>' + produtos.map(x=>`<option value="${x.id}">${x.nome}</option>`).join('');
-            document.getElementById('f_mod').disabled = false; document.getElementById('s1').classList.add('active');
-        }
-        function libMem() {
-            let p = document.getElementById('f_mod').value;
-            let caps = [...new Set(vars.filter(v => v.produto_id == p).map(v => v.capacidade))];
-            document.getElementById('f_cap').innerHTML = '<option value="">MEMÓRIA...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join('');
-            document.getElementById('f_cap').disabled = false; document.getElementById('s2').classList.add('active');
-        }
-        function libCor() {
-            let p = document.getElementById('f_mod').value, c = document.getElementById('f_cap').value;
-            let cores = vars.filter(v => v.produto_id == p && v.capacidade == c).map(v => v.cor);
-            document.getElementById('f_cor').innerHTML = '<option value="">COR...</option>' + cores.map(co=>`<option value="${co}">${co.toUpperCase()}</option>`).join('');
-            document.getElementById('f_cor').disabled = false; document.getElementById('s3').classList.add('active');
-        }
-        function libDet() { document.getElementById('s4').classList.add('active'); document.getElementById('btnS').classList.remove('hidden'); }
-
-        async function doPost(e) {
+        function fecharBulk() { document.getElementById('bulkModal').classList.add('hidden'); }
+        async function doBulk(e) {
             e.preventDefault();
-            let tipo = document.getElementById('f_tipo').value;
-            let v = vars.find(x => x.produto_id == document.getElementById('f_mod').value && x.capacidade == document.getElementById('f_cap').value && x.cor == document.getElementById('f_cor').value);
-            
-            let isBrl = document.getElementById('f_brl').value.length > 0;
-            let precoFinal = isBrl ? parseP(document.getElementById('f_brl').value) : parseP(document.getElementById('f_usd').value);
-            
-            let g = tipo === 'Novo' ? '1 ANO APPLE' : document.getElementById('f_gar').value;
-            let b = tipo === 'Novo' ? '' : document.getElementById('f_bat').value;
-            let q = parseInt(document.getElementById('f_qtd').value);
-            if (isNaN(q) || q < 0) q = 0;
+            let ids = Array.from(document.querySelectorAll('.chk:checked')).map(c => parseInt(c.value));
+            let updates = {};
 
-            await _s.from('ofertas').insert([{
-                fornecedor_id: loja.id, 
-                variacao_id: v.id, 
-                regiao_id: document.getElementById('f_orig').value,
-                preco: precoFinal, 
-                moeda: isBrl ? 'BRL' : 'USD', 
-                quantidade: q,
-                condicao: tipo==='Novo'?'Novo':document.getElementById('f_cond').value,
-                saude_bateria: b,
-                garantia: g,
-                aceita_pix: document.getElementById('m_pix').checked, 
-                aceita_usdt: document.getElementById('m_usdt').checked, 
-                emite_nota: document.getElementById('m_nota').checked, 
-                faz_envio: document.getElementById('m_envi').checked, 
-                aceita_coleta: document.getElementById('m_cole').checked, 
-                aceita_proposta: document.getElementById('m_neg').checked, 
-                status_aprovacao: 'aprovado'
-            }]);
-            window.location.reload();
-        }
-
-        // Função para encontrar concorrente mais barato
-        function encontrarConcorrente(oferta) {
-            if (!oferta.variacoes) return null;
-            const produtoId = oferta.variacoes.produto_id;
-            const capacidade = oferta.variacoes.capacidade;
-            const cor = oferta.variacoes.cor;
-            const condicao = oferta.condicao;
-            const moeda = oferta.moeda;
-
-            const concorrentes = ofertasGlobais.filter(o => 
-                o.id !== oferta.id && 
-                o.quantidade > 0 &&
-                o.variacoes?.produto_id === produtoId &&
-                o.variacoes?.capacidade === capacidade &&
-                o.variacoes?.cor === cor &&
-                o.condicao === condicao &&
-                o.moeda === moeda
-            );
-
-            if (concorrentes.length === 0) return null;
-
-            const menorPreco = Math.min(...concorrentes.map(o => o.preco));
-            if (menorPreco < oferta.preco) {
-                const concorrente = concorrentes.find(o => o.preco === menorPreco);
-                return {
-                    preco: menorPreco,
-                    diferenca: oferta.preco - menorPreco,
-                    nome: concorrente.fornecedores?.nome || 'Concorrente'
-                };
+            // Modelo, capacidade, cor (se preenchidos)
+            const modelo = document.getElementById('bulkModelo').value;
+            const cap = document.getElementById('bulkCapacidade').value;
+            const cor = document.getElementById('bulkCor').value;
+            if (modelo && cap && cor) {
+                const v = variacoes.find(x => x.produto_id == modelo && x.capacidade == cap && x.cor == cor);
+                if (v) updates.variacao_id = v.id;
+                else return alert('Variação inválida');
+            } else if (modelo || cap || cor) {
+                alert('Para alterar variação, preencha Modelo, Capacidade e Cor juntos.');
+                return;
             }
-            return null;
-        }
 
-        async function upTab() {
-            if (!loja || !loja.id) return; 
-            
-            let filtro = document.getElementById('filtroTipoLista') ? document.getElementById('filtroTipoLista').value : '';
-            
-            let query = _s.from('ofertas').select('*, variacoes(capacidade, cor, produto_id, produtos_mestre(nome)), regioes(nome, bandeira), fornecedores!inner(nome)').eq('fornecedor_id', loja.id).order('criado_em', {ascending:false});
-            
-            const { data } = await query;
-            ofertas = data || [];
-            
-            let ofertasFiltradas = ofertas;
-            if(filtro === 'Novo') ofertasFiltradas = ofertas.filter(o => o.condicao === 'Novo');
-            if(filtro === 'Seminovo') ofertasFiltradas = ofertas.filter(o => o.condicao !== 'Novo');
+            if (document.getElementById('bulkCondicao').value) updates.condicao = document.getElementById('bulkCondicao').value;
+            if (document.getElementById('bulkBateria').value) updates.saude_bateria = document.getElementById('bulkBateria').value;
+            if (document.getElementById('bulkGarantia').value) updates.garantia = document.getElementById('bulkGarantia').value;
+            if (document.getElementById('bulkOrigem').value) updates.regiao_id = document.getElementById('bulkOrigem').value;
+            if (document.getElementById('bulkQtd').value !== '') updates.quantidade = parseInt(document.getElementById('bulkQtd').value);
+            if (document.getElementById('bulkUsd').value) { updates.preco = parseP(document.getElementById('bulkUsd').value); updates.moeda = 'USD'; }
+            if (document.getElementById('bulkBrl').value) { updates.preco = parseP(document.getElementById('bulkBrl').value); updates.moeda = 'BRL'; }
+            if (document.getElementById('bulkPix').checked) updates.aceita_pix = true;
+            if (document.getElementById('bulkUsdt').checked) updates.aceita_usdt = true;
+            if (document.getElementById('bulkNegocia').checked) updates.aceita_proposta = true;
+            if (document.getElementById('bulkEnvio').checked) updates.faz_envio = true;
+            if (document.getElementById('bulkColeta').checked) updates.aceita_coleta = true;
+            if (document.getElementById('bulkNota').checked) updates.emite_nota = true;
 
-            document.getElementById('lista').innerHTML = ofertasFiltradas.map(o => {
-                
-                let tagCond = `<span class="tag-chapada ${o.condicao==='Novo'?'tag-novo':'tag-semi'}">${o.condicao}</span>`;
-                let m_orig = o.regioes ? `<span class="moldura-sobria">${o.regioes.bandeira} ${o.regioes.nome}</span>` : '';
-                let m_bat = o.saude_bateria ? `<span class="moldura-sobria">🔋 ${o.saude_bateria}</span>` : '';
-                
-                let precoDisplay = o.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-                const concorrente = encontrarConcorrente(o);
-                let alertaConcorrencia = '';
-                if (concorrente) {
-                    alertaConcorrencia = `<div class="mt-2 ml-5 text-[8px] font-black text-red-500 bg-red-900/30 p-1 rounded border border-red-500">🚨 VOCÊ ESTÁ PERDENDO A VENDA! ${concorrente.nome} está R$ ${concorrente.diferenca.toFixed(2)} mais barato!</div>`;
-                }
-
-                // Verifica se há proposta pendente para este anúncio
-                let temPropostaPendente = propostasPendentes.some(p => p.oferta_id == o.id);
-                let botaoProposta = temPropostaPendente 
-                    ? `<button onclick="abrirSino()" class="mt-2 ml-5 bg-yellow-500 text-black px-3 py-1 rounded text-[9px] font-black animate-pulse">💬 VOCÊ TEM PROPOSTA! CLIQUE PARA RESPONDER</button>`
-                    : '';
-
-                return `
-                <tr class="hover:bg-white/5 transition border-b border-[#2c2c2e]">
-                    <td><input type="checkbox" class="chk" value="${o.id}" onclick="upBulkCount()"></td>
-                    <td>
-                        <div class="flex items-center mb-1">
-                            <span class="color-dot" style="background:${getAppleColorHex(o.variacoes.cor)}"></span>
-                            <p class="font-black text-[#fff] text-[12px]">${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade}</p>
-                        </div>
-                        <p class="text-[9px] text-gray-400 mb-2 font-bold ml-5">${o.variacoes.cor}</p>
-                        <div class="mb-1 ml-5">${tagCond}</div>
-                        <div class="ml-5">${m_orig} ${m_bat}</div>
-                        ${alertaConcorrencia}
-                        ${botaoProposta}
-                        <div class="mt-2 ml-5"><button onclick="del(${o.id})" class="text-red-500 font-bold text-[9px] hover:underline">Apagar Lançamento</button></div>
-                    </td>
-                    <td class="text-center">
-                        <input type="number" class="mini-edit" value="${o.quantidade}" min="0" onblur="edit(${o.id}, 'quantidade', this.value)">
-                    </td>
-                    <td class="text-center font-mono font-black text-white text-[14px]">
-                        ${o.moeda==='BRL'?'R$':'$'} 
-                        <input type="text" class="mini-edit mini-edit-preco" value="${precoDisplay}" oninput="mascara(this)" onblur="edit(${o.id}, 'preco', this.value)">
-                    </td>
-                </tr>`;
-            }).join('');
-            
-            document.getElementById('userInsignias').innerHTML = renderizarInsignias(loja);
-        }
-
-        async function edit(id, c, v) { 
-            let val;
-            if (c === 'preco') {
-                val = parseP(v);
-                if (isNaN(val) || val < 0) val = 0;
-            } else {
-                val = parseInt(v);
-                if (isNaN(val) || val < 0) val = 0;
-            }
-            await _s.from('ofertas').update({[c]:val}).eq('id',id); 
-            upTab(); 
-        }
-        
-        function selAll(m) { document.querySelectorAll('.chk').forEach(c=>c.checked=m.checked); upBulkCount(); }
-        function upBulkCount() { document.getElementById('bulkCount').innerText = document.querySelectorAll('.chk:checked').length; }
-        
-        async function del(id) { if(confirm("Deseja apagar este anúncio?")) { await _s.from('ofertas').delete().eq('id',id); upTab(); } }
-        async function bulkDel() { 
-            let ids = Array.from(document.querySelectorAll('.chk:checked')).map(c=>parseInt(c.value)); 
-            if(ids.length && confirm(`Tem certeza que deseja APAGAR ${ids.length} anúncios?`)) { await _s.from('ofertas').delete().in('id',ids); upTab(); } 
-        }
-
-        async function bulkDup() {
-            let ids = Array.from(document.querySelectorAll('.chk:checked')).map(c=>parseInt(c.value));
-            if(!ids.length) return alert("Selecione os anúncios.");
-            let qStr = prompt("Quantas cópias?", "1"); let q = parseInt(qStr); if(isNaN(q) || q < 1) return;
-            const {data} = await _s.from('ofertas').select('*').in('id',ids);
-            let n = [];
-            for(let i=0; i<q; i++) { data.forEach(o => { let {id, criado_em, ...rest} = o; n.push(rest); }); }
-            await _s.from('ofertas').insert(n);
+            if (Object.keys(updates).length === 0) return alert('Nada para alterar.');
+            await _s.from('ofertas').update(updates).in('id', ids);
+            fecharBulk();
             upTab();
         }
 
-        function abrirBulk() { if(!document.querySelectorAll('.chk:checked').length) return alert("Selecione anúncios."); document.getElementById('bulkModal').classList.remove('hidden'); }
-        function fecharBulk() { document.getElementById('bulkModal').classList.add('hidden'); }
-        
-        async function doBulk(e) {
+        // Funções cascata para os modais
+        function editCarregarMemoria() {
+            let p = document.getElementById('editModelo').value;
+            if (!p) return;
+            let caps = [...new Set(variacoes.filter(v => v.produto_id == p).map(v => v.capacidade))];
+            document.getElementById('editCapacidade').innerHTML = '<option value="">MEMÓRIA</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('editCapacidade').disabled = false;
+        }
+        function editCarregarCor() {
+            let p = document.getElementById('editModelo').value, c = document.getElementById('editCapacidade').value;
+            if (!p || !c) return;
+            let cores = variacoes.filter(v => v.produto_id == p && v.capacidade == c).map(v => v.cor);
+            document.getElementById('editCor').innerHTML = '<option value="">COR</option>' + cores.map(co => `<option value="${co}">${co.toUpperCase()}</option>`).join('');
+            document.getElementById('editCor').disabled = false;
+        }
+        function dupCarregarMemoria() {
+            let p = document.getElementById('dupModelo').value;
+            if (!p) return;
+            let caps = [...new Set(variacoes.filter(v => v.produto_id == p).map(v => v.capacidade))];
+            document.getElementById('dupCapacidade').innerHTML = '<option value="">MEMÓRIA</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('dupCapacidade').disabled = false;
+        }
+        function dupCarregarCor() {
+            let p = document.getElementById('dupModelo').value, c = document.getElementById('dupCapacidade').value;
+            if (!p || !c) return;
+            let cores = variacoes.filter(v => v.produto_id == p && v.capacidade == c).map(v => v.cor);
+            document.getElementById('dupCor').innerHTML = '<option value="">COR</option>' + cores.map(co => `<option value="${co}">${co.toUpperCase()}</option>`).join('');
+            document.getElementById('dupCor').disabled = false;
+        }
+        function bulkCarregarMemoria() {
+            let p = document.getElementById('bulkModelo').value;
+            if (!p) return;
+            let caps = [...new Set(variacoes.filter(v => v.produto_id == p).map(v => v.capacidade))];
+            document.getElementById('bulkCapacidade').innerHTML = '<option value="">MANTER CAPACIDADE</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('bulkCapacidade').disabled = false;
+        }
+        function bulkCarregarCor() {
+            let p = document.getElementById('bulkModelo').value, c = document.getElementById('bulkCapacidade').value;
+            if (!p || !c) return;
+            let cores = variacoes.filter(v => v.produto_id == p && v.capacidade == c).map(v => v.cor);
+            document.getElementById('bulkCor').innerHTML = '<option value="">MANTER COR</option>' + cores.map(co => `<option value="${co}">${co.toUpperCase()}</option>`).join('');
+            document.getElementById('bulkCor').disabled = false;
+        }
+
+        // Abrir modal de edição individual
+        function abrirModalEditar(ofertaId) {
+            let oferta = ofertas.find(o => o.id == ofertaId);
+            if (!oferta) return;
+            document.getElementById('editId').value = oferta.id;
+            document.getElementById('editModelo').value = oferta.variacoes?.produto_id || '';
+            editCarregarMemoria();
+            setTimeout(() => {
+                document.getElementById('editCapacidade').value = oferta.variacoes?.capacidade || '';
+                editCarregarCor();
+                setTimeout(() => {
+                    document.getElementById('editCor').value = oferta.variacoes?.cor || '';
+                }, 50);
+            }, 50);
+            document.getElementById('editCondicao').value = oferta.condicao;
+            document.getElementById('editBateria').value = oferta.saude_bateria || '';
+            document.getElementById('editGarantia').value = oferta.garantia || '';
+            document.getElementById('editOrigem').value = oferta.regiao_id || '';
+            document.getElementById('editQuantidade').value = oferta.quantidade;
+            if (oferta.moeda === 'USD') {
+                document.getElementById('editUsd').value = oferta.preco.toFixed(2).replace('.', ',');
+                document.getElementById('editBrl').value = '';
+            } else {
+                document.getElementById('editBrl').value = oferta.preco.toFixed(2).replace('.', ',');
+                document.getElementById('editUsd').value = '';
+            }
+            document.getElementById('editPix').checked = oferta.aceita_pix || false;
+            document.getElementById('editUsdt').checked = oferta.aceita_usdt || false;
+            document.getElementById('editNegocia').checked = oferta.aceita_proposta || false;
+            document.getElementById('editEnvio').checked = oferta.faz_envio || false;
+            document.getElementById('editColeta').checked = oferta.aceita_coleta || false;
+            document.getElementById('editNota').checked = oferta.emite_nota || false;
+            document.getElementById('modalEditar').classList.remove('hidden');
+        }
+        function fecharModalEditar() { document.getElementById('modalEditar').classList.add('hidden'); }
+
+        // Abrir modal de duplicação com pré-preenchimento
+        function abrirModalDuplicar(ofertaId) {
+            let oferta = ofertas.find(o => o.id == ofertaId);
+            if (!oferta) return;
+            document.getElementById('dupId').value = oferta.id;
+            document.getElementById('dupModelo').value = oferta.variacoes?.produto_id || '';
+            dupCarregarMemoria();
+            setTimeout(() => {
+                document.getElementById('dupCapacidade').value = oferta.variacoes?.capacidade || '';
+                dupCarregarCor();
+                setTimeout(() => {
+                    document.getElementById('dupCor').value = oferta.variacoes?.cor || '';
+                }, 50);
+            }, 50);
+            document.getElementById('dupCondicao').value = oferta.condicao;
+            document.getElementById('dupBateria').value = oferta.saude_bateria || '';
+            document.getElementById('dupGarantia').value = oferta.garantia || '';
+            document.getElementById('dupOrigem').value = oferta.regiao_id || '';
+            document.getElementById('dupQuantidade').value = oferta.quantidade;
+            if (oferta.moeda === 'USD') {
+                document.getElementById('dupUsd').value = oferta.preco.toFixed(2).replace('.', ',');
+                document.getElementById('dupBrl').value = '';
+            } else {
+                document.getElementById('dupBrl').value = oferta.preco.toFixed(2).replace('.', ',');
+                document.getElementById('dupUsd').value = '';
+            }
+            document.getElementById('dupPix').checked = oferta.aceita_pix || false;
+            document.getElementById('dupUsdt').checked = oferta.aceita_usdt || false;
+            document.getElementById('dupNegocia').checked = oferta.aceita_proposta || false;
+            document.getElementById('dupEnvio').checked = oferta.faz_envio || false;
+            document.getElementById('dupColeta').checked = oferta.aceita_coleta || false;
+            document.getElementById('dupNota').checked = oferta.emite_nota || false;
+            document.getElementById('modalDuplicar').classList.remove('hidden');
+        }
+        function fecharModalDuplicar() { document.getElementById('modalDuplicar').classList.add('hidden'); }
+
+        // Salvar edição individual
+        async function salvarEdicao(e) {
             e.preventDefault();
-            let ids = Array.from(document.querySelectorAll('.chk:checked')).map(c=>parseInt(c.value));
-            let p = parseP(document.getElementById('b_preco').value), q = document.getElementById('b_qtd').value;
-            let c = document.getElementById('b_cond').value, b = document.getElementById('b_bat').value;
-            let u = {}; 
-            if(p) u.preco = p; 
-            if(q !== '') {
-                let qVal = parseInt(q);
-                u.quantidade = isNaN(qVal) || qVal < 0 ? 0 : qVal; 
-            }
-            if(c) u.condicao = c;
-            if(b) u.saude_bateria = b;
-            await _s.from('ofertas').update(u).in('id', ids); 
-            fecharBulk(); upTab();
+            let id = document.getElementById('editId').value;
+            let modelo = document.getElementById('editModelo').value;
+            let cap = document.getElementById('editCapacidade').value;
+            let cor = document.getElementById('editCor').value;
+            let v = variacoes.find(x => x.produto_id == modelo && x.capacidade == cap && x.cor == cor);
+            if (!v) return alert('Variação inválida');
+            let isBrl = document.getElementById('editBrl').value.length > 0;
+            let preco = isBrl ? parseP(document.getElementById('editBrl').value) : parseP(document.getElementById('editUsd').value);
+            let moeda = isBrl ? 'BRL' : 'USD';
+            let q = parseInt(document.getElementById('editQuantidade').value) || 0;
+
+            const guru = await verificarPrecoGuru(modelo, cap, preco, moeda);
+            if (guru && !confirm(`Preço fora da média. Deseja continuar?`)) return;
+
+            let updates = {
+                variacao_id: v.id,
+                regiao_id: document.getElementById('editOrigem').value,
+                preco, moeda, quantidade: q,
+                condicao: document.getElementById('editCondicao').value,
+                saude_bateria: document.getElementById('editBateria').value || null,
+                garantia: document.getElementById('editGarantia').value || null,
+                aceita_pix: document.getElementById('editPix').checked,
+                aceita_usdt: document.getElementById('editUsdt').checked,
+                aceita_proposta: document.getElementById('editNegocia').checked,
+                faz_envio: document.getElementById('editEnvio').checked,
+                aceita_coleta: document.getElementById('editColeta').checked,
+                emite_nota: document.getElementById('editNota').checked
+            };
+            await _s.from('ofertas').update(updates).eq('id', id);
+            fecharModalEditar();
+            upTab();
         }
 
-        // Função copiarListaWhatsApp corrigida
-        async function copiarListaWhatsApp() {
-            let ofertasAtivas = ofertas.filter(o => o.quantidade > 0);
-            
-            if (!ofertasAtivas || ofertasAtivas.length === 0) return alert("Sua lista está vazia ou todos os itens estão sem estoque (Zero).");
+        // Duplicar (inserir novo)
+        async function duplicarOferta(e) {
+            e.preventDefault();
+            let modelo = document.getElementById('dupModelo').value;
+            let cap = document.getElementById('dupCapacidade').value;
+            let cor = document.getElementById('dupCor').value;
+            let v = variacoes.find(x => x.produto_id == modelo && x.capacidade == cap && x.cor == cor);
+            if (!v) return alert('Variação inválida');
+            let isBrl = document.getElementById('dupBrl').value.length > 0;
+            let preco = isBrl ? parseP(document.getElementById('dupBrl').value) : parseP(document.getElementById('dupUsd').value);
+            let moeda = isBrl ? 'BRL' : 'USD';
+            let q = parseInt(document.getElementById('dupQuantidade').value) || 0;
 
-            let text = "";
-            let novos = ofertasAtivas.filter(o => o.condicao === 'Novo');
-            let seminovos = ofertasAtivas.filter(o => o.condicao !== 'Novo');
+            const guru = await verificarPrecoGuru(modelo, cap, preco, moeda);
+            if (guru && !confirm(`Preço fora da média. Continuar?`)) return;
 
-            const formatarMoeda = (val) => val.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            
-            let hora = new Date().getHours();
-            let saudacao = "BOM DIA";
-            if (hora >= 12 && hora < 18) saudacao = "BOA TARDE";
-            else if (hora >= 18) saudacao = "BOA NOITE";
-
-            text += `*${saudacao} 🚀🔥*\n\n`;
-
-            let cidadeExibida = false;
-
-            // Bloco NOVOS
-            if (novos.length > 0) {
-                let cabecalhoNovos = `*PRONTA ENTREGA NOVOS*`;
-                if (loja.cidade && !cidadeExibida) {
-                    cabecalhoNovos += ` ${loja.cidade.toUpperCase()}`;
-                    cidadeExibida = true;
-                }
-                text += `${cabecalhoNovos} 📍\n\n`;
-                
-                let groupedNovos = {};
-                novos.forEach(o => {
-                    let headerKey = `*${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade}*`;
-                    if (!groupedNovos[headerKey]) groupedNovos[headerKey] = {};
-                    
-                    let itemKey = `${o.variacoes.cor.toUpperCase()}_${o.preco}`;
-                    if (!groupedNovos[headerKey][itemKey]) {
-                        groupedNovos[headerKey][itemKey] = { cor: o.variacoes.cor.toUpperCase(), preco: o.preco, quantidade: 0 };
-                    }
-                    groupedNovos[headerKey][itemKey].quantidade += o.quantidade;
-                });
-
-                for (let headerKey in groupedNovos) {
-                    text += `${headerKey}\n`;
-                    for (let itemKey in groupedNovos[headerKey]) {
-                        let item = groupedNovos[headerKey][itemKey];
-                        text += `(${item.quantidade}) ${item.cor} R$ ${formatarMoeda(item.preco)}\n`;
-                    }
-                    text += `\n`;
-                }
-            }
-
-            // Bloco SEMINOVOS
-            if (seminovos.length > 0) {
-                let cabecalhoSemi = `*PRONTA ENTREGA SEMINOVOS*`;
-                if (loja.cidade && !cidadeExibida) {
-                    cabecalhoSemi += ` ${loja.cidade.toUpperCase()}`;
-                    cidadeExibida = true;
-                }
-                text += `${cabecalhoSemi} 📍\n\n`;
-                
-                let groupedSemis = {};
-                seminovos.forEach(o => {
-                    let bat = o.saude_bateria ? ` 🔋 ${o.saude_bateria}` : '';
-                    let gar = o.garantia ? ` 🛡️ ${o.garantia}` : '';
-                    
-                    let itemKey = `${o.variacoes.produtos_mestre.nome}_${o.variacoes.capacidade}_${o.variacoes.cor.toUpperCase()}_${bat}_${gar}_${o.preco}`;
-                    
-                    if (!groupedSemis[itemKey]) {
-                        groupedSemis[itemKey] = { 
-                            nome: o.variacoes.produtos_mestre.nome, 
-                            cap: o.variacoes.capacidade, 
-                            cor: o.variacoes.cor.toUpperCase(), 
-                            bat: bat, 
-                            gar: gar, 
-                            preco: o.preco, 
-                            quantidade: 0 
-                        };
-                    }
-                    groupedSemis[itemKey].quantidade += o.quantidade;
-                });
-
-                for (let itemKey in groupedSemis) {
-                    let item = groupedSemis[itemKey];
-                    text += `* (${item.quantidade}) ${item.nome} ${item.cap} ${item.cor}${item.bat}${item.gar} R$ ${formatarMoeda(item.preco)}*\n`;
-                }
-                text += `\n`;
-            }
-
-            // Rodapé
-            let linkZap = loja.whatsapp ? `https://wa.me/${loja.whatsapp.replace(/\D/g, '')}` : 'Nosso WhatsApp';
-            text += `Fale com a gente agora mesmo: ${linkZap}\n\n`;
-            text += `Lista Gerada pelo iFipe - *A Tabela Fipe do iPhone 📲*\n\n`;
-            text += `Acesse Nosso site https://ifipe.com.br/\n\n`;
-
-            try {
-                await navigator.clipboard.writeText(text);
-                alert("✅ Lista agrupada copiada com sucesso! Vá no WhatsApp e aperte Colar (Ctrl+V).");
-            } catch (err) {
-                alert("Erro ao copiar a lista. Tente novamente.");
-            }
+            await registrarAcao();
+            await _s.from('ofertas').insert([{
+                fornecedor_id: loja.id,
+                variacao_id: v.id,
+                regiao_id: document.getElementById('dupOrigem').value,
+                preco, moeda, quantidade: q,
+                condicao: document.getElementById('dupCondicao').value,
+                saude_bateria: document.getElementById('dupBateria').value || null,
+                garantia: document.getElementById('dupGarantia').value || null,
+                aceita_pix: document.getElementById('dupPix').checked,
+                aceita_usdt: document.getElementById('dupUsdt').checked,
+                aceita_proposta: document.getElementById('dupNegocia').checked,
+                faz_envio: document.getElementById('dupEnvio').checked,
+                aceita_coleta: document.getElementById('dupColeta').checked,
+                emite_nota: document.getElementById('dupNota').checked,
+                status_aprovacao: 'aprovado'
+            }]);
+            fecharModalDuplicar();
+            window.location.reload();
         }
 
-        window.addEventListener('scroll', () => { const b = document.getElementById('scrollTopBtn'); if(window.scrollY > 300) b.classList.add('show'); else b.classList.remove('show'); });
-        function logout() { 
-            localStorage.removeItem('iFipe_Anunciante'); 
-            localStorage.removeItem('iFipe_Token');
-            localStorage.removeItem('iFipe_Master_Auth');
-            window.location.replace('index.html'); 
+        // Insígnias
+        function atualizarInsignias() {
+            let t = ofertas.reduce((a, b) => a + (b.quantidade || 0), 0);
+            let html = '';
+            if (t >= 1000) html += '<span class="bg-purple-600 text-white px-3 py-1 rounded-full text-[9px]">👑 KHALIFA</span>';
+            else if (t >= 700) html += '<span class="bg-purple-500 text-white px-3 py-1 rounded-full text-[9px]">🏆 SULTÃO</span>';
+            else if (t >= 500) html += '<span class="bg-purple-400 text-white px-3 py-1 rounded-full text-[9px]">🤴🏽 SHEIKH</span>';
+            else if (t >= 200) html += '<span class="bg-blue-500 text-white px-3 py-1 rounded-full text-[9px]">🫅🏽 EMIR</span>';
+            else if (t >= 100) html += '<span class="bg-blue-400 text-white px-3 py-1 rounded-full text-[9px]">👑 REI</span>';
+            else if (t >= 50) html += '<span class="bg-yellow-500 text-black px-3 py-1 rounded-full text-[9px]">💰 MAGNATA</span>';
+            document.getElementById('userInsignias').innerHTML = html;
         }
+
+        // Calculadora
+        function calcularImportacao() {
+            let usd = parseFloat(document.getElementById('calcUsd').value) || 0;
+            let r = rate + 0.06;
+            let base = usd * r * 1.06;
+            document.getElementById('custoFinal').innerText = base.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('precoAtacado').innerText = (base * 1.2).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('precoAtacarejo').innerText = (base * 1.4).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('precoVarejo').innerText = (base * 1.55).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+        function calcularImportacaoMobile() {
+            let usd = parseFloat(document.getElementById('calcUsdMobile').value) || 0;
+            let r = rate + 0.06;
+            let base = usd * r * 1.06;
+            document.getElementById('custoFinalMobile').innerText = base.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('precoAtacadoMobile').innerText = (base * 1.2).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('precoAtacarejoMobile').innerText = (base * 1.4).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('precoVarejoMobile').innerText = (base * 1.55).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // Expor funções globais
+        window.abrirSugestao = abrirSugestao;
+        window.fecharSugestao = fecharSugestao;
+        window.enviarSugestao = enviarSugestao;
+        window.abrirDrawer = abrirDrawer;
+        window.fecharDrawer = fecharDrawer;
+        window.logout = logout;
+        window.abrirSino = abrirSino;
+        window.fecharSino = fecharSino;
+        window.abrirConta = abrirConta;
+        window.fecharConta = fecharConta;
+        window.salvarConta = salvarConta;
+        window.abrirBulk = abrirBulk;
+        window.fecharBulk = fecharBulk;
+        window.doBulk = doBulk;
+        window.copiarListaWhatsApp = copiarListaWhatsApp;
+        window.upTab = upTab;
+        window.selAll = selAll;
+        window.upBulkCount = upBulkCount;
+        window.bulkDel = bulkDel;
+        window.edit = edit;
+        window.del = del;
+        window.mascara = mascara;
+        window.selTipo = selTipo;
+        window.libMem = libMem;
+        window.libCor = libCor;
+        window.libDet = libDet;
+        window.doPost = doPost;
+        window.confirmarGuru = confirmarGuru;
+        window.cancelarGuru = cancelarGuru;
+        window.abrirModalEditar = abrirModalEditar;
+        window.fecharModalEditar = fecharModalEditar;
+        window.salvarEdicao = salvarEdicao;
+        window.abrirModalDuplicar = abrirModalDuplicar;
+        window.fecharModalDuplicar = fecharModalDuplicar;
+        window.duplicarOferta = duplicarOferta;
+        window.editCarregarMemoria = editCarregarMemoria;
+        window.editCarregarCor = editCarregarCor;
+        window.dupCarregarMemoria = dupCarregarMemoria;
+        window.dupCarregarCor = dupCarregarCor;
+        window.bulkCarregarMemoria = bulkCarregarMemoria;
+        window.bulkCarregarCor = bulkCarregarCor;
+        window.calcularImportacao = calcularImportacao;
+        window.calcularImportacaoMobile = calcularImportacaoMobile;
+        window.mostrarAba = (aba) => {
+            document.getElementById('tabPendentes').classList.toggle('border-yellow-500', aba === 'pendentes');
+            document.getElementById('tabPendentes').classList.toggle('text-yellow-500', aba === 'pendentes');
+            document.getElementById('tabRespondidas').classList.toggle('border-yellow-500', aba === 'respondidas');
+            document.getElementById('tabRespondidas').classList.toggle('text-yellow-500', aba === 'respondidas');
+            document.getElementById('listaPendentes').classList.toggle('hidden', aba !== 'pendentes');
+            document.getElementById('listaRespondidas').classList.toggle('hidden', aba !== 'respondidas');
+        };
+        window.responder = responder;
     </script>
-</body></html>
+</body>
+</html>
