@@ -6,143 +6,237 @@
     <title>iFipe - A Fipe do iPhone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        :root { --bg:#050505; --card:#121212; --border:#2a2a2a; --blue:#0071e3; }
-        body { background:var(--bg); color:#fff; font-family:-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin:0; min-height:100vh; }
-        .apple-input{ background:#151515; border:1px solid var(--border); border-radius:12px; padding:14px; width:100%; color:#fff; outline:none; font-size:11px; text-align:center; }
-        .apple-input:focus{ border-color:var(--blue); }
-        .btn-primary{ background:#fff; color:#000; font-weight:900; border-radius:50px; padding:14px; cursor:pointer; border:none; font-size:11px; width:100%; text-transform:uppercase; }
-        .btn-primary:hover{ background:var(--blue); color:#fff; }
-        .glass-card{ background:var(--card); border:1px solid var(--border); border-radius:20px; padding:30px; }
-        .banner-fabrica{ background:#000; border:1px solid var(--border); border-radius:20px; display:flex; align-items:center; justify-content:center; min-height:350px; }
-        .hidden{ display:none!important; }
-        .status-badge { background: rgba(255, 204, 0, 0.1); border: 1px solid #ffcc00; color: #ffcc00; padding: 12px; border-radius: 12px; font-size: 10px; font-weight: 900; text-align: center; margin-bottom: 20px; }
-        /* Modal */
+        :root {
+            --bg: #f5f5f7;
+            --card: #ffffff;
+            --text: #1d1d1f;
+            --border: #d2d2d7;
+            --input: #f5f5f7;
+            --blue: #0071e3;
+            --gray-light: #e5e5e5;
+            --gray-dark: #86868b;
+        }
+        body.dark-mode {
+            --bg: #000;
+            --card: #1c1c1e;
+            --text: #fff;
+            --border: #38383a;
+            --input: #2c2c2e;
+            --gray-light: #2c2c2e;
+            --gray-dark: #6e6e73;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            -webkit-font-smoothing: antialiased;
+            transition: background 0.3s, color 0.3s;
+        }
+        .nav-blur {
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        .dark-mode .nav-blur {
+            background: rgba(0,0,0,0.8);
+        }
+        .glass-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        }
+        .btn-profile {
+            background: var(--gray-light);
+            color: var(--text);
+            font-weight: 600;
+            padding: 1rem;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-profile.active {
+            background: var(--blue);
+            color: white;
+        }
+        .btn-profile:not(.active):hover {
+            background: var(--border);
+        }
+        .btn-primary {
+            background: var(--blue);
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        .btn-primary:hover {
+            background: #005bb5;
+            transform: scale(1.02);
+        }
+        .btn-secondary {
+            background: transparent;
+            color: var(--blue);
+            font-weight: 600;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        .btn-secondary:hover {
+            background: rgba(0,113,227,0.1);
+            border-color: var(--blue);
+        }
+        .apple-input {
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 0.9rem;
+            color: var(--text);
+            outline: none;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .apple-input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(0,113,227,0.2);
+        }
         .modal-overlay {
-            position: fixed; inset:0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-            display: flex; align-items: center; justify-content: center; z-index: 1000;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
         }
         .modal-content {
-            background: var(--card); border: 1px solid var(--border); border-radius: 24px;
-            padding: 2rem; max-width: 450px; width: 90%; max-height: 90vh; overflow-y: auto;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
         }
-        .uppercase-input { text-transform: uppercase; }
-        .uppercase-input::placeholder { text-transform: none; }
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-dark);
+        }
+        .close-modal:hover {
+            color: var(--blue);
+        }
+        .hidden {
+            display: none !important;
+        }
+        .footer-link {
+            color: var(--gray-dark);
+            text-decoration: none;
+            font-size: 0.8rem;
+            transition: color 0.2s;
+        }
+        .footer-link:hover {
+            color: var(--blue);
+        }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center p-4 py-12 md:py-20">
+<body class="dark-mode flex flex-col items-center justify-center min-h-screen p-4">
 
-    <!-- Ticker Binance -->
-    <div class="absolute top-4 left-6 text-[10px] font-black text-[#32d74b] flex items-center gap-2">
-        <span class="w-1.5 h-1.5 rounded-full bg-[#32d74b] animate-pulse"></span>
-        USDT/BRL: $ <span id="topRateTicker">--,----</span>
+    <!-- Ticker Binance (opcional, mantido do original) -->
+    <div class="absolute top-4 left-4 text-[10px] font-mono text-yellow-500 flex items-center gap-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
+        USDT/BRL: $<span id="topRateTicker">5,2907</span>
     </div>
 
-    <!-- Título -->
-    <div class="mb-10 text-center flex items-center justify-center gap-3">
-        <h1 class="text-4xl md:text-5xl font-black italic">iFipe</h1>
-        <div class="h-8 w-[2px] bg-[#2a2a2a]"></div>
-        <h2 class="text-lg md:text-xl font-black text-[#0071e3] uppercase italic">A Fipe do iPhone</h2>
-    </div>
-
-    <main class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full max-w-6xl">
-
-        <!-- Calculadora -->
-        <div class="glass-card order-2 lg:order-1">
-            <h2 class="text-lg font-black text-center mb-2">Calculadora de iPhone Importado</h2>
-            <p class="text-[9px] text-gray-500 text-center mb-4">Custo Final Brasil</p>
-            <div class="relative mb-4">
-                <span class="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500 font-black text-xl">$</span>
-                <input type="number" id="calcUsd" class="apple-input !pl-12 !text-left font-mono text-xl font-black" oninput="calcularImportacao()">
-            </div>
-            <div class="bg-[#0a0a0a] border border-[#2c2c2e] rounded-2xl p-4 text-right mb-4">
-                <span class="text-[9px] text-gray-500">Custo Final Brasil</span>
-                <div id="calcResult" class="font-mono text-3xl font-black text-[#0071e3] mt-2">R$ 0,00</div>
-            </div>
-            <div class="bg-[#1c1c1e] border border-[#2a2a2a] rounded-xl p-4 text-[10px] font-black space-y-2">
-                <div class="flex justify-between"><span>ATACADO</span><span id="res_ata">R$ 0,00</span></div>
-                <div class="flex justify-between"><span>ATACAREJO</span><span id="res_atcrj">R$ 0,00</span></div>
-                <div class="flex justify-between"><span>VAREJO</span><span id="res_var">R$ 0,00</span></div>
-            </div>
+    <div class="w-full max-w-md">
+        <!-- Título -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-black tracking-tight">iFipe</h1>
+            <p class="text-sm text-gray-400">A Tabela Fipe do iPhone</p>
         </div>
 
-        <!-- Login + Botões de Cadastro -->
-        <div class="glass-card order-1 lg:order-2 min-h-[400px] flex flex-col">
-            <div id="statusCheck" class="hidden status-badge">
-                ⚠️ Estamos em atualização para trazer melhorias para você time iFipe
+        <!-- Card principal -->
+        <div class="glass-card">
+            <!-- Botões de perfil -->
+            <div class="flex gap-3 mb-6">
+                <button id="profileBuscador" class="btn-profile active" onclick="setProfile('buscador')">
+                    <i class="fas fa-search"></i> SOU BUSCADOR
+                </button>
+                <button id="profileAnunciante" class="btn-profile" onclick="setProfile('anunciante')">
+                    <i class="fas fa-store"></i> SOU ANUNCIANTE
+                </button>
             </div>
 
-            <div id="loginForm" class="flex-1">
-                <h3 class="text-lg font-black text-center mb-2">Acesso ao Sistema</h3>
-                <p class="text-[8px] text-gray-500 text-center mb-4">Selecione seu perfil</p>
-                <select id="loginType" class="apple-input mb-4">
-                    <option value="buscador">SOU BUSCADOR</option>
-                    <option value="anunciante">SOU ANUNCIANTE</option>
-                </select>
-                <input id="user" class="apple-input mb-4 uppercase-input" placeholder="WHATSAPP OU EMAIL">
-                <input id="pass" type="password" class="apple-input mb-4" placeholder="SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
+            <!-- Formulário de login (único, mas a validação depende do perfil) -->
+            <div class="space-y-4">
+                <input type="text" id="loginUser" class="apple-input" placeholder="WHATSAPP OU E-MAIL">
+                <input type="password" id="loginPass" class="apple-input" placeholder="SENHA" onkeypress="if(event.key==='Enter') handleLogin()">
                 <button onclick="handleLogin()" class="btn-primary">ENTRAR</button>
-                <p id="msg" class="text-[9px] text-center text-red-500 h-4 mt-3"></p>
+                <p id="loginMsg" class="text-xs text-red-500 text-center h-4"></p>
             </div>
 
             <!-- Botões de cadastro -->
             <div class="mt-6 space-y-3">
-                <button onclick="abrirModalCadastro('buscador')" class="btn-primary !bg-transparent border border-[#0071e3] text-[#0071e3] hover:bg-[#0071e3] hover:text-white transition">
-                    CRIAR CONTA COMO BUSCADOR
+                <button onclick="abrirModalCadastro('buscador')" class="btn-secondary">
+                    <i class="fas fa-user-plus mr-2"></i> CRIAR CONTA COMO BUSCADOR
                 </button>
-                <button onclick="abrirModalCadastro('anunciante')" class="btn-primary !bg-transparent border border-[#0071e3] text-[#0071e3] hover:bg-[#0071e3] hover:text-white transition">
-                    CRIAR CONTA COMO ANUNCIANTE
+                <button onclick="abrirModalCadastro('anunciante')" class="btn-secondary">
+                    <i class="fas fa-store-alt mr-2"></i> CRIAR CONTA COMO ANUNCIANTE
                 </button>
             </div>
         </div>
 
-        <!-- Banner -->
-        <div class="order-3">
-            <a href="https://fabricademarcas.mercos.com/" target="_blank" class="banner-fabrica h-full w-full flex items-center justify-center">
-                <div class="text-center px-6">
-                    <h3 class="text-xl font-black italic">Fábrica de Marcas</h3>
-                    <div class="mt-6 inline-block bg-white text-black font-black text-[10px] px-6 py-3 rounded-full uppercase hover:bg-[#0071e3] hover:text-white transition">Conhecer</div>
-                </div>
-            </a>
+        <!-- Footer com links para termos -->
+        <div class="mt-8 text-center space-x-4">
+            <a href="#" onclick="abrirModalTermosUso()" class="footer-link">Termos de Uso</a>
+            <a href="#" onclick="abrirModalPrivacidade()" class="footer-link">Privacidade</a>
         </div>
-    </main>
+    </div>
 
     <!-- MODAL CADASTRO BUSCADOR -->
     <div id="modalCadastroBuscador" class="modal-overlay hidden">
         <div class="modal-content">
-            <h2 class="text-2xl font-black text-center mb-4">Criar Conta - Buscador</h2>
-            <form id="formCadastroBuscador" onsubmit="cadastrarBuscador(event)">
-                <div class="space-y-3">
-                    <input type="text" id="buscadorNome" class="apple-input uppercase-input" placeholder="NOME COMPLETO" required>
-                    <input type="text" id="buscadorCpf" class="apple-input uppercase-input" placeholder="CPF" required>
-                    <input type="text" id="buscadorWhatsapp" class="apple-input uppercase-input" placeholder="WHATSAPP (SOMENTE NÚMEROS)" required>
-                    
-                    <select id="buscadorPais" class="apple-input" onchange="toggleEstadoCidade('buscador')" required>
-                        <option value="">SELECIONE O PAÍS</option>
-                        <option value="Brasil">BRASIL</option>
-                        <option value="Paraguai">PARAGUAI</option>
-                        <option value="EUA">EUA</option>
-                    </select>
-
-                    <div id="buscadorEstadoDiv" class="hidden">
-                        <select id="buscadorEstado" class="apple-input" onchange="carregarCidades('buscador', this.value)">
-                            <option value="">SELECIONE O ESTADO</option>
-                        </select>
-                    </div>
-
-                    <div id="buscadorCidadeDiv" class="hidden">
-                        <select id="buscadorCidade" class="apple-input">
-                            <option value="">SELECIONE A CIDADE</option>
-                        </select>
-                    </div>
-
-                    <input type="email" id="buscadorEmail" class="apple-input" placeholder="E-MAIL" required>
+            <span class="close-modal" onclick="fecharModalCadastro('buscador')">&times;</span>
+            <h2 class="text-2xl font-bold text-center mb-6">Criar Conta - Buscador</h2>
+            <form onsubmit="cadastrarBuscador(event)">
+                <div class="space-y-4">
+                    <input type="text" id="buscadorNome" class="apple-input" placeholder="NOME COMPLETO" required>
+                    <input type="text" id="buscadorWhatsapp" class="apple-input" placeholder="WHATSAPP" required>
                     <input type="password" id="buscadorSenha" class="apple-input" placeholder="SENHA" required>
                 </div>
                 <div class="flex gap-3 mt-6">
-                    <button type="submit" class="btn-primary">CADASTRAR</button>
-                    <button type="button" onclick="fecharModalCadastro('buscador')" class="btn-primary !bg-transparent border border-gray-600 text-gray-400">CANCELAR</button>
+                    <button type="submit" class="btn-primary flex-1">CADASTRAR</button>
+                    <button type="button" onclick="fecharModalCadastro('buscador')" class="btn-secondary flex-1">CANCELAR</button>
                 </div>
             </form>
         </div>
@@ -151,324 +245,230 @@
     <!-- MODAL CADASTRO ANUNCIANTE -->
     <div id="modalCadastroAnunciante" class="modal-overlay hidden">
         <div class="modal-content">
-            <h2 class="text-2xl font-black text-center mb-4">Criar Conta - Anunciante</h2>
-            <form id="formCadastroAnunciante" onsubmit="cadastrarAnunciante(event)">
-                <div class="space-y-3">
-                    <input type="text" id="anuncianteLoja" class="apple-input uppercase-input" placeholder="NOME DA LOJA" required>
-                    <input type="text" id="anuncianteDono" class="apple-input uppercase-input" placeholder="NOME DO DONO" required>
-                    <input type="text" id="anuncianteWhatsapp" class="apple-input uppercase-input" placeholder="WHATSAPP (SOMENTE NÚMEROS)" required>
-                    
-                    <select id="anunciantePais" class="apple-input" onchange="toggleEstadoCidade('anunciante')" required>
-                        <option value="">SELECIONE O PAÍS</option>
-                        <option value="Brasil">BRASIL</option>
-                        <option value="Paraguai">PARAGUAI</option>
-                        <option value="EUA">EUA</option>
-                    </select>
-
-                    <div id="anuncianteEstadoDiv" class="hidden">
-                        <select id="anuncianteEstado" class="apple-input" onchange="carregarCidades('anunciante', this.value)">
-                            <option value="">SELECIONE O ESTADO</option>
-                        </select>
-                    </div>
-
-                    <div id="anuncianteCidadeDiv" class="hidden">
-                        <select id="anuncianteCidade" class="apple-input">
-                            <option value="">SELECIONE A CIDADE</option>
-                        </select>
-                    </div>
-
-                    <input type="email" id="anuncianteEmail" class="apple-input" placeholder="E-MAIL" required>
+            <span class="close-modal" onclick="fecharModalCadastro('anunciante')">&times;</span>
+            <h2 class="text-2xl font-bold text-center mb-6">Criar Conta - Anunciante</h2>
+            <form onsubmit="cadastrarAnunciante(event)">
+                <div class="space-y-4">
+                    <input type="text" id="anuncianteLoja" class="apple-input" placeholder="NOME DA LOJA" required>
+                    <input type="text" id="anuncianteDono" class="apple-input" placeholder="NOME DO DONO" required>
+                    <input type="text" id="anuncianteNumeroDono" class="apple-input" placeholder="NÚMERO DO DONO" required>
+                    <input type="text" id="anuncianteWhatsapp" class="apple-input" placeholder="WHATSAPP DE ATENDIMENTO" required>
                     <input type="password" id="anuncianteSenha" class="apple-input" placeholder="SENHA" required>
                 </div>
                 <div class="flex gap-3 mt-6">
-                    <button type="submit" class="btn-primary">CADASTRAR</button>
-                    <button type="button" onclick="fecharModalCadastro('anunciante')" class="btn-primary !bg-transparent border border-gray-600 text-gray-400">CANCELAR</button>
+                    <button type="submit" class="btn-primary flex-1">CADASTRAR</button>
+                    <button type="button" onclick="fecharModalCadastro('anunciante')" class="btn-secondary flex-1">CANCELAR</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- MODAL TERMOS DE USO -->
+    <div id="modalTermosUso" class="modal-overlay hidden">
+        <div class="modal-content max-w-lg">
+            <span class="close-modal" onclick="fecharModalTermosUso()">&times;</span>
+            <h2 class="text-2xl font-bold mb-4">Acordo de Utilização</h2>
+            <div class="text-sm text-gray-400 space-y-4 max-h-96 overflow-y-auto pr-2">
+                <p><strong>I. DA NATUREZA JURÍDICA DOS SERVIÇOS:</strong> A presente plataforma consubstancia-se, de forma estrita e insofismável, como um motor de busca e indexador de dados informacionais. A arquitetura tecnológica aqui empregada atua exclusivamente no rastreamento, organização e exibição de dados comerciais e contatos de fornecedores atacadistas cujas informações já se encontram dispostas em domínio público ou em canais abertos de comunicação.</p>
+                <p><strong>II. DA EXCLUSÃO DE RESPONSABILIDADE SOLIDÁRIA:</strong> A plataforma atua de maneira apartada da cadeia de consumo. É imperioso destacar que não figuramos como mandatários, corretores, intermediadores ou garantidores de quaisquer negócios jurídicos. Toda e qualquer tratativa financeira, logística ou comercial, bem como a efetivação de pagamentos e garantias, constitui relação jurídica de risco exclusivo entre o titular do anúncio e o usuário consulente.</p>
+                <p><strong>III. DA DISPONIBILIDADE E AUDITORIA DE ESTOQUES:</strong> As informações concernentes a precificação e quantitativo de estoque são de responsabilidade civil e penal exclusiva dos atacadistas que as inserem. A plataforma não exerce função de auditoria física ou certificação de procedência, restando isenta de qualquer reparação por perdas e danos decorrentes de inexatidões.</p>
+            </div>
+            <button onclick="fecharModalTermosUso()" class="btn-primary w-full mt-6">FECHAR</button>
+        </div>
+    </div>
+
+    <!-- MODAL PRIVACIDADE -->
+    <div id="modalPrivacidade" class="modal-overlay hidden">
+        <div class="modal-content max-w-lg">
+            <span class="close-modal" onclick="fecharModalPrivacidade()">&times;</span>
+            <h2 class="text-2xl font-bold mb-4">Diretrizes de Privacidade</h2>
+            <div class="text-sm text-gray-400 space-y-4 max-h-96 overflow-y-auto pr-2">
+                <p><strong>I. DA COLETA ESTATUÍDA E MINIMALISTA:</strong> Em observância aos princípios da finalidade e adequação, a coleta de dados neste ambiente virtual restringe-se ao mínimo indispensável para a manutenção do ecossistema, consubstanciado em credenciais de acesso, correio eletrônico e contato telefônico.</p>
+                <p><strong>II. DO VEDAMENTO À COMERCIALIZAÇÃO DE ATIVOS DE DADOS:</strong> Asseguramos, de modo peremptório, que as informações de cadastro dos usuários consulentes jamais constituirão objeto de cessão, permuta, locação ou comercialização com entes de terceiros. A utilização destes registros é adstrita ao combate de fraudes internas e à validação de autenticidade sistêmica.</p>
+                <p><strong>III. DA PROTEÇÃO DA INFRAESTRUTURA:</strong> O acervo de dados repousa em bases operadas sob rigorosos protocolos de criptografia e barreiras de acesso. As eventuais solicitações de intervenção por parte do Estado dar-se-ão estritamente mediante mandado judicial específico.</p>
+                <p><strong>IV. DO ENQUADRAMENTO DAS INFORMAÇÕES DE NATUREZA COMERCIAL:</strong> Faz-se elementar a distinção de que os dados indexados relativos aos Atacadistas (tais quais Razão Social, CNPJ, contato corporativo e praça de atuação) configuram dados de Pessoa Jurídica e de exercício de atividade econômica pública. Tais dados não se subsumem à tutela de dados pessoais sensíveis preconizada pela norma.</p>
+                <p><strong>V. DO EXERCÍCIO DOS DIREITOS DOS TITULARES:</strong> Aos usuários cadastrados na qualidade de pessoa natural, assegura-se o irrestrito exercício dos direitos basilares dispostos no Artigo 18 da referida Lei, abarcando o direito de acesso, retificação, portabilidade e anonimização.</p>
+                <p><strong>VI. DO DIREITO DE DESINDEXAÇÃO:</strong> Fica assegurado a todo lojista o direito ao esquecimento e à desindexação de suas listas comerciais. Para o deferimento e remoção dos dados nos servidores desta plataforma, bastará a manifestação de vontade expressa aos canais oficiais de curadoria, cujo cumprimento ocorrerá em prazos delineados pela norma vigente.</p>
+            </div>
+            <button onclick="fecharModalPrivacidade()" class="btn-primary w-full mt-6">FECHAR</button>
+        </div>
+    </div>
+
     <script>
-        const _s = supabase.createClient(
-            'https://zmgosywpwidypxyhxkry.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M'
-        );
+        const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
+        const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let rateBinance = 0, rateOraculo = 0;
+        let currentProfile = 'buscador'; // 'buscador' ou 'anunciante'
 
+        function setProfile(profile) {
+            currentProfile = profile;
+            const btnBuscador = document.getElementById('profileBuscador');
+            const btnAnunciante = document.getElementById('profileAnunciante');
+            if (profile === 'buscador') {
+                btnBuscador.classList.add('active');
+                btnAnunciante.classList.remove('active');
+            } else {
+                btnAnunciante.classList.add('active');
+                btnBuscador.classList.remove('active');
+            }
+        }
+
+        // Ticker (simplificado)
         window.onload = () => {
-            const status = localStorage.getItem('iFipe_Status') || 'on';
-            document.getElementById('statusCheck').classList.toggle('hidden', status !== 'off');
-            iniciarTicker();
+            // Iniciar WebSocket da Binance (opcional, pode remover se não quiser)
+            const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+            ws.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                document.getElementById('topRateTicker').innerText = parseFloat(data.c).toFixed(4);
+            };
         };
 
-        function iniciarTicker() {
-            const ws = new WebSocket("wss://stream.binance.com:9443/ws/usdtbrl@ticker");
-            ws.onmessage = e => {
-                const data = JSON.parse(e.data);
-                rateBinance = parseFloat(data.c);
-                rateOraculo = rateBinance + 0.06;
-                document.getElementById("topRateTicker").innerText = rateBinance.toFixed(4);
-                calcularImportacao();
-            };
-        }
-
-        function calcularImportacao() {
-            const usd = parseFloat(document.getElementById('calcUsd').value);
-            if (!usd || rateOraculo === 0) return;
-            const custo = (usd * rateOraculo) * 1.06;
-            document.getElementById('calcResult').innerText = custo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            const ata = usd <= 750 ? custo * 1.20 : custo + 350;
-            const atacarejo = usd <= 750 ? custo * 1.40 : custo + 550;
-            const varejo = usd <= 750 ? custo * 1.55 : custo + 1000;
-            document.getElementById('res_ata').innerText = ata.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('res_atcrj').innerText = atacarejo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            document.getElementById('res_var').innerText = varejo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        }
-
-        // Função de login existente
+        // Login
         async function handleLogin() {
-            const status = localStorage.getItem('iFipe_Status') || 'on';
-            const u = document.getElementById("user").value.trim();
-            const p = document.getElementById("pass").value.trim();
-            const tipo = document.getElementById("loginType").value;
-            const msg = document.getElementById("msg");
-            msg.innerText = "";
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value.trim();
+            const msg = document.getElementById('loginMsg');
+            msg.innerText = '';
 
-            if (!u || !p) {
-                msg.innerText = "PREENCHA TUDO.";
+            if (!user || !pass) {
+                msg.innerText = 'Preencha todos os campos.';
                 return;
             }
 
-            // Master bypass
-            const masterPass = '96197577@';
-            const uLower = u.toLowerCase();
-            if ((uLower === 'bryan' || uLower === 'master') && p === masterPass) {
+            // Master bypass (opcional, mantido do original)
+            if ((user.toLowerCase() === 'bryan' || user.toLowerCase() === 'master') && pass === '96197577@') {
                 localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
                 window.location.replace('master.html');
                 return;
             }
 
-            if (status === 'off') {
-                msg.innerText = "Estamos em atualização para trazer melhorias para você time iFipe";
-                return;
-            }
+            const uLower = user.toLowerCase();
+            const uDigits = user.replace(/\D/g, '');
 
-            msg.innerText = "VERIFICANDO...";
-
-            const uDigits = u.replace(/\D/g, '');
-            const tabela = tipo === 'anunciante' ? 'fornecedores' : 'clientes_buscador';
+            let tabela = currentProfile === 'buscador' ? 'clientes_buscador' : 'fornecedores';
 
             const { data, error } = await _s.from(tabela).select('*');
             if (error) {
-                msg.innerText = "ERRO DE CONEXÃO.";
+                msg.innerText = 'Erro de conexão.';
                 return;
             }
 
-            const user = data.find(r => {
+            const encontrado = data.find(r => {
                 const emailMatch = (r.email || '').toLowerCase() === uLower;
                 const whatsMatch = (r.whatsapp || '').replace(/\D/g, '') === uDigits;
-                return (emailMatch || whatsMatch) && r.senha.trim() === p && r.ativo === true;
+                return (emailMatch || whatsMatch) && r.senha === pass && r.ativo === true;
             });
 
-            if (!user) {
-                msg.innerText = "DADOS INCORRETOS OU INATIVO.";
+            if (!encontrado) {
+                msg.innerText = 'Dados incorretos ou inativo.';
                 return;
             }
 
-            if (tipo === 'anunciante') {
-                localStorage.setItem('iFipe_Anunciante', user.id);
+            if (currentProfile === 'anunciante') {
+                localStorage.setItem('iFipe_Anunciante', encontrado.id);
                 window.location.replace('atacadista.html');
             } else {
-                await _s.from('clientes_buscador').update({ logins_count: (user.logins_count || 0) + 1 }).eq('id', user.id);
-                localStorage.setItem('iFipe_Token', user.id);
+                await _s.from('clientes_buscador').update({ logins_count: (encontrado.logins_count || 0) + 1 }).eq('id', encontrado.id);
+                localStorage.setItem('iFipe_Token', encontrado.id);
                 window.location.replace('buscar.html');
             }
         }
 
-        // ========== FUNÇÕES DE CADASTRO ==========
+        // Funções de cadastro
         function abrirModalCadastro(tipo) {
-            if (tipo === 'buscador') {
-                document.getElementById('modalCadastroBuscador').classList.remove('hidden');
-                setTimeout(() => document.getElementById('buscadorNome').focus(), 100);
-            } else {
-                document.getElementById('modalCadastroAnunciante').classList.remove('hidden');
-                setTimeout(() => document.getElementById('anuncianteLoja').focus(), 100);
-            }
+            document.getElementById(`modalCadastro${tipo === 'buscador' ? 'Buscador' : 'Anunciante'}`).classList.remove('hidden');
         }
 
         function fecharModalCadastro(tipo) {
-            if (tipo === 'buscador') {
-                document.getElementById('modalCadastroBuscador').classList.add('hidden');
-                document.getElementById('formCadastroBuscador').reset();
-                document.getElementById('buscadorEstadoDiv').classList.add('hidden');
-                document.getElementById('buscadorCidadeDiv').classList.add('hidden');
-            } else {
-                document.getElementById('modalCadastroAnunciante').classList.add('hidden');
-                document.getElementById('formCadastroAnunciante').reset();
-                document.getElementById('anuncianteEstadoDiv').classList.add('hidden');
-                document.getElementById('anuncianteCidadeDiv').classList.add('hidden');
-            }
+            document.getElementById(`modalCadastro${tipo === 'buscador' ? 'Buscador' : 'Anunciante'}`).classList.add('hidden');
+            // Resetar formulário
+            const form = tipo === 'buscador' ? document.getElementById('buscadorNome').form : document.getElementById('anuncianteLoja').form;
+            form.reset();
         }
 
-        function toggleEstadoCidade(tipo) {
-            const pais = document.getElementById(`${tipo}Pais`).value;
-            const estadoDiv = document.getElementById(`${tipo}EstadoDiv`);
-            const cidadeDiv = document.getElementById(`${tipo}CidadeDiv`);
-            const estadoSelect = document.getElementById(`${tipo}Estado`);
-            const cidadeSelect = document.getElementById(`${tipo}Cidade`);
-
-            if (pais === 'Brasil') {
-                estadoDiv.classList.remove('hidden');
-                cidadeDiv.classList.remove('hidden');
-                carregarEstados(tipo);
-            } else {
-                estadoDiv.classList.add('hidden');
-                cidadeDiv.classList.add('hidden');
-                estadoSelect.innerHTML = '<option value="">SELECIONE O ESTADO</option>';
-                cidadeSelect.innerHTML = '<option value="">SELECIONE A CIDADE</option>';
-            }
-        }
-
-        async function carregarEstados(tipo) {
-            const estadoSelect = document.getElementById(`${tipo}Estado`);
-            try {
-                const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados');
-                const estados = await response.json();
-                estados.sort((a, b) => a.nome.localeCompare(b.nome));
-                estadoSelect.innerHTML = '<option value="">SELECIONE O ESTADO</option>';
-                estados.forEach(est => {
-                    estadoSelect.innerHTML += `<option value="${est.sigla}">${est.nome}</option>`;
-                });
-            } catch (error) {
-                console.error('Erro ao carregar estados:', error);
-                estadoSelect.innerHTML = '<option value="">ERRO AO CARREGAR</option>';
-            }
-        }
-
-        async function carregarCidades(tipo, uf) {
-            if (!uf) return;
-            const cidadeSelect = document.getElementById(`${tipo}Cidade`);
-            try {
-                const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
-                const cidades = await response.json();
-                cidades.sort((a, b) => a.nome.localeCompare(b.nome));
-                cidadeSelect.innerHTML = '<option value="">SELECIONE A CIDADE</option>';
-                cidades.forEach(cid => {
-                    cidadeSelect.innerHTML += `<option value="${cid.nome}">${cid.nome}</option>`;
-                });
-            } catch (error) {
-                console.error('Erro ao carregar cidades:', error);
-                cidadeSelect.innerHTML = '<option value="">ERRO AO CARREGAR</option>';
-            }
-        }
-
-        // Cadastro de Buscador - agora com login automático
         async function cadastrarBuscador(e) {
             e.preventDefault();
-
-            const nome = document.getElementById('buscadorNome').value.toUpperCase().trim();
-            const cpf = document.getElementById('buscadorCpf').value.replace(/\D/g, '');
+            const nome = document.getElementById('buscadorNome').value.trim().toUpperCase();
             const whatsapp = document.getElementById('buscadorWhatsapp').value.replace(/\D/g, '');
-            const pais = document.getElementById('buscadorPais').value;
-            const estado = pais === 'Brasil' ? document.getElementById('buscadorEstado').value : null;
-            const cidade = pais === 'Brasil' ? document.getElementById('buscadorCidade').value : null;
-            const email = document.getElementById('buscadorEmail').value.trim().toLowerCase();
             const senha = document.getElementById('buscadorSenha').value.trim();
 
-            if (!nome || !cpf || !whatsapp || !pais || !email || !senha) {
-                alert('Preencha todos os campos obrigatórios.');
-                return;
-            }
-            if (pais === 'Brasil' && (!estado || !cidade)) {
-                alert('Selecione estado e cidade.');
+            if (!nome || !whatsapp || !senha) {
+                alert('Preencha todos os campos.');
                 return;
             }
 
-            // Inserir no Supabase e retornar o ID criado
-            const { data, error } = await _s
-                .from('clientes_buscador')
-                .insert([{
-                    nome: nome,
-                    cpf: cpf,
-                    whatsapp: whatsapp,
-                    pais: pais,
-                    estado: estado,
-                    cidade: cidade,
-                    email: email,
-                    senha: senha,
-                    ativo: true,
-                    logins_count: 0
-                }])
-                .select(); // importante para obter o ID retornado
+            const { error } = await _s.from('clientes_buscador').insert([{
+                nome: nome,
+                whatsapp: whatsapp,
+                senha: senha,
+                ativo: true,
+                logins_count: 0
+            }]);
 
             if (error) {
                 alert('Erro ao cadastrar: ' + error.message);
-                return;
-            }
-
-            // Login automático: salva token e redireciona
-            if (data && data[0] && data[0].id) {
-                localStorage.setItem('iFipe_Token', data[0].id);
-                window.location.replace('buscar.html');
             } else {
-                alert('Cadastro realizado, mas houve um problema no login automático. Faça login manualmente.');
+                alert('Cadastro realizado! Faça login.');
                 fecharModalCadastro('buscador');
             }
         }
 
-        // Cadastro de Anunciante - permanece inalterado (aguarda aprovação)
         async function cadastrarAnunciante(e) {
             e.preventDefault();
-
-            const loja = document.getElementById('anuncianteLoja').value.toUpperCase().trim();
-            const dono = document.getElementById('anuncianteDono').value.toUpperCase().trim();
+            const loja = document.getElementById('anuncianteLoja').value.trim().toUpperCase();
+            const dono = document.getElementById('anuncianteDono').value.trim().toUpperCase();
+            const numeroDono = document.getElementById('anuncianteNumeroDono').value.replace(/\D/g, '');
             const whatsapp = document.getElementById('anuncianteWhatsapp').value.replace(/\D/g, '');
-            const pais = document.getElementById('anunciantePais').value;
-            const estado = pais === 'Brasil' ? document.getElementById('anuncianteEstado').value : null;
-            const cidade = pais === 'Brasil' ? document.getElementById('anuncianteCidade').value : null;
-            const email = document.getElementById('anuncianteEmail').value.trim().toLowerCase();
             const senha = document.getElementById('anuncianteSenha').value.trim();
 
-            if (!loja || !dono || !whatsapp || !pais || !email || !senha) {
-                alert('Preencha todos os campos obrigatórios.');
-                return;
-            }
-            if (pais === 'Brasil' && (!estado || !cidade)) {
-                alert('Selecione estado e cidade.');
+            if (!loja || !dono || !numeroDono || !whatsapp || !senha) {
+                alert('Preencha todos os campos.');
                 return;
             }
 
             const { error } = await _s.from('fornecedores').insert([{
                 nome: loja,
                 nome_dono: dono,
+                numero_dono: numeroDono,
                 whatsapp: whatsapp,
-                pais: pais,
-                estado: estado,
-                cidade: cidade,
-                email: email,
                 senha: senha,
-                ativo: false,
-                verificado: false,
-                insignia_manual: []
+                ativo: false // aguardando aprovação
             }]);
 
             if (error) {
                 alert('Erro ao cadastrar: ' + error.message);
             } else {
-                alert('Cadastro realizado com sucesso! Aguarde aprovação do administrador.');
+                alert('Cadastro realizado! Aguarde aprovação do administrador.');
                 fecharModalCadastro('anunciante');
             }
         }
 
-        // Expor funções globalmente
+        // Modais de termos e privacidade
+        function abrirModalTermosUso() {
+            document.getElementById('modalTermosUso').classList.remove('hidden');
+        }
+        function fecharModalTermosUso() {
+            document.getElementById('modalTermosUso').classList.add('hidden');
+        }
+        function abrirModalPrivacidade() {
+            document.getElementById('modalPrivacidade').classList.remove('hidden');
+        }
+        function fecharModalPrivacidade() {
+            document.getElementById('modalPrivacidade').classList.add('hidden');
+        }
+
+        // Expor funções globais
+        window.setProfile = setProfile;
+        window.handleLogin = handleLogin;
         window.abrirModalCadastro = abrirModalCadastro;
         window.fecharModalCadastro = fecharModalCadastro;
-        window.toggleEstadoCidade = toggleEstadoCidade;
-        window.carregarCidades = carregarCidades;
         window.cadastrarBuscador = cadastrarBuscador;
         window.cadastrarAnunciante = cadastrarAnunciante;
-        window.handleLogin = handleLogin;
+        window.abrirModalTermosUso = abrirModalTermosUso;
+        window.fecharModalTermosUso = fecharModalTermosUso;
+        window.abrirModalPrivacidade = abrirModalPrivacidade;
+        window.fecharModalPrivacidade = fecharModalPrivacidade;
     </script>
 </body>
 </html>
