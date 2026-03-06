@@ -77,9 +77,12 @@
                         <button id="maintenanceBtn" onclick="toggleMaintenanceDropdown()" class="btn-master bg-green-600 px-3 py-1 text-[9px] ml-2">SISTEMA: ON</button>
                         <div id="maintenanceMenu" class="absolute right-0 mt-2 w-64 bg-[#1c1c1e] border border-zinc-700 rounded-lg shadow-lg z-50 hidden">
                             <div class="py-1">
-                                <button onclick="setMaintenance('status_geral')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">⚙️ LIGAR / DESLIGAR Sistema Geral</button>
-                                <button onclick="setMaintenance('status_atacadista')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">⚙️ LIGAR / DESLIGAR Painel Atacadista</button>
-                                <button onclick="setMaintenance('status_buscador')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">⚙️ LIGAR / DESLIGAR Painel Buscador</button>
+                                <button onclick="setMaintenance('status_geral', 'on')" class="block w-full text-left px-4 py-2 text-[10px] text-green-500 hover:bg-zinc-800">🟢 LIGAR Sistema Geral</button>
+                                <button onclick="setMaintenance('status_geral', 'off')" class="block w-full text-left px-4 py-2 text-[10px] text-red-500 hover:bg-zinc-800 border-b border-zinc-800">🔴 DESLIGAR Sistema Geral</button>
+                                <button onclick="setMaintenance('status_atacadista', 'on')" class="block w-full text-left px-4 py-2 text-[10px] text-green-500 hover:bg-zinc-800">🟢 LIGAR Painel Atacadista</button>
+                                <button onclick="setMaintenance('status_atacadista', 'off')" class="block w-full text-left px-4 py-2 text-[10px] text-red-500 hover:bg-zinc-800 border-b border-zinc-800">🔴 DESLIGAR Painel Atacadista</button>
+                                <button onclick="setMaintenance('status_buscador', 'on')" class="block w-full text-left px-4 py-2 text-[10px] text-green-500 hover:bg-zinc-800">🟢 LIGAR Painel Buscador</button>
+                                <button onclick="setMaintenance('status_buscador', 'off')" class="block w-full text-left px-4 py-2 text-[10px] text-red-500 hover:bg-zinc-800">🔴 DESLIGAR Painel Buscador</button>
                             </div>
                         </div>
                     </div>
@@ -88,10 +91,9 @@
             <!-- NOVO BLOCO HEADER (HORUS + SINO) -->
             <div class="flex items-center gap-4">
                 <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 master-only text-[9px] px-3 py-1 flex items-center gap-2">
-                    <img src="logo-horus.png" alt="Horus" class="h-4 w-4">
-                    HORUS O OLHO QUE MENOR PREÇO VÊ
+                    👁️‍🗨️ HORUS O OLHO QUE MENOR PREÇO VÊ
                 </button>
-                <span onclick="alert('Sistema de notificações em desenvolvimento pela equipe iFipe.')" class="cursor-pointer text-lg hover:opacity-80 master-only" title="Sugestões e Alertas">🔔</span>
+                <span onclick="abrirNotificacoes()" class="cursor-pointer text-lg hover:opacity-80 master-only" title="Sugestões e Alertas">🔔</span>
                 <span id="headerMasterName" class="text-[10px] font-black text-blue-500 tracking-widest">MASTER</span>
                 <button id="minhaContaBtn" onclick="abrirConta()" class="btn-header" style="background: var(--input); color: #fff; border-color: #38383a;">
                     <span>⚙️ MINHA CONTA</span>
@@ -318,6 +320,17 @@
                 <button onclick="fecharModais()" class="btn-master !bg-zinc-800 text-[10px] px-3 py-1">FECHAR</button>
             </div>
             <div id="horusList" class="space-y-2 text-[10px]"></div>
+        </div>
+    </div>
+
+    <!-- MODAL DE NOTIFICAÇÕES (SUGESTÕES) -->
+    <div id="modalNotificacoes" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-2xl bg-[#050505] border-[#38383a] max-h-[80vh] overflow-y-auto">
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 text-white">🔔 SUGESTÕES E ALERTAS DOS USUÁRIOS</h3>
+            <div id="notificacoesList" class="space-y-3 text-[10px] text-zinc-300">Carregando...</div>
+            <div class="flex gap-2 pt-4">
+                <button onclick="fecharModais()" class="btn-master w-full bg-zinc-800">FECHAR</button>
+            </div>
         </div>
     </div>
 
@@ -611,7 +624,7 @@
 
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
 
-        // Função para verificar se está online (últimos 5 minutos)
+        // Função para verificar se está online (últimos 5 minutos) - versão genérica
         function isOnline(updatedAt) {
             if (!updatedAt) return false;
             const data = new Date(updatedAt);
@@ -843,23 +856,15 @@
             document.getElementById('maintenanceMenu').classList.toggle('hidden');
         }
 
-        // FUNÇÃO DE MANUTENÇÃO AGORA COMO INTERRUPTOR (LIGA/DESLIGA)
-        async function setMaintenance(campo) {
-            // Busca o status atual no banco
-            const { data: config, error: fetchError } = await _s.from('sistema_config').select('*').eq('id', 1).single();
-            if (fetchError || !config) return alert("Erro: Configuração não encontrada.");
-            
-            // Inverte o status atual
-            const novoStatus = config[campo] === 'on' ? 'off' : 'on';
-            
+        // FUNÇÃO DE MANUTENÇÃO COM AÇÃO EXPLÍCITA (LIGAR/DESLIGAR)
+        async function setMaintenance(campo, acao) {
             const payload = {};
-            payload[campo] = novoStatus;
-            
+            payload[campo] = acao;
             const { error } = await _s.from('sistema_config').update(payload).eq('id', 1);
             if (error) {
                 alert('Erro ao atualizar manutenção: ' + error.message);
             } else {
-                alert(`Sistema ${campo.replace('status_','').toUpperCase()} agora está: ${novoStatus.toUpperCase()}`);
+                alert(`Sistema ${campo.replace('status_','').toUpperCase()} mudou para: ${acao.toUpperCase()}`);
                 renderSystemStatus();
             }
             document.getElementById('maintenanceMenu').classList.add('hidden');
@@ -949,6 +954,28 @@
                 `;
             });
             document.getElementById('modalHorus').classList.remove('hidden');
+        }
+
+        // NOVA FUNÇÃO: ABRIR NOTIFICAÇÕES (SUGESTÕES)
+        async function abrirNotificacoes() {
+            document.getElementById('modalNotificacoes').classList.remove('hidden');
+            document.getElementById('notificacoesList').innerHTML = 'Buscando sugestões...';
+            // Busca na tabela sugestoes (fallback para campos padrões)
+            const { data, error } = await _s.from('sugestoes').select('*').order('criado_em', { ascending: false }).limit(30);
+            if (error) {
+                document.getElementById('notificacoesList').innerHTML = `<p class="text-red-500">Nenhuma sugestão encontrada ou tabela "sugestoes" não existe.</p>`;
+                return;
+            }
+            if (!data || data.length === 0) {
+                document.getElementById('notificacoesList').innerHTML = '<p>Nenhuma notificação no momento.</p>';
+                return;
+            }
+            document.getElementById('notificacoesList').innerHTML = data.map(n => `
+                <div class="p-3 bg-[#141415] border border-zinc-800 rounded">
+                    <span class="text-blue-400 font-bold">${n.nome || n.usuario || 'Usuário Anônimo'}</span> - <span class="text-[8px] text-zinc-500">${n.criado_em ? new Date(n.criado_em).toLocaleString() : ''}</span>
+                    <p class="mt-2 text-white text-[11px]">${n.mensagem || n.sugestao || n.texto || '(Sem conteúdo)'}</p>
+                </div>
+            `).join('');
         }
 
         function selAll(el, selector) { document.querySelectorAll(selector).forEach(c => c.checked = el.checked); }
@@ -1079,7 +1106,7 @@
             document.getElementById('listAta').innerHTML = dbAta
                 .filter(a => {
                     if (!filtroOnline) return true;
-                    return isOnline(a.updated_at);
+                    return isOnline(a.updated_at || a.ultimo_login || a.atualizado_em);
                 })
                 .map(a => { 
                     let l = a.pais === 'Brasil' ? `${a.cidade||'-'} / ${a.estado||'-'}` : (a.pais || '-'); 
@@ -1089,7 +1116,7 @@
                         else if (typeof a.insignia_manual === 'string') insig = JSON.parse(a.insignia_manual || '[]');
                     } catch(e) { insig = []; }
                     let b = insig.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); 
-                    let statusIcon = isOnline(a.updated_at) ? '<span title="Online">🟢</span>' : '<span title="Offline">🔴</span>';
+                    let statusIcon = isOnline(a.updated_at || a.ultimo_login || a.atualizado_em) ? '<span title="Online">🟢</span>' : '<span title="Offline">🔴</span>';
                     return `<tr>
                         <td><input type="checkbox" class="chk-ata" value="${a.id}"></td>
                         <td><span class="font-black text-white text-xs">${a.nome} ${statusIcon}</span><br><span class="text-[8px] text-zinc-500">${l}</span></td>
@@ -1115,7 +1142,7 @@
             document.getElementById('listCli').innerHTML = dbCli
                 .filter(c => {
                     if (!filtroOnline) return true;
-                    return isOnline(c.updated_at);
+                    return isOnline(c.updated_at || c.ultimo_login || c.atualizado_em);
                 })
                 .map(c => { 
                     let n = c.nome || c.email || c.whatsapp || 'SEM NOME'; 
@@ -1131,7 +1158,7 @@
                     else if(colInfo.name === 'status') isAtivo = c.status === 'ativo';
                     else if(colInfo.name === 'bloqueado') isAtivo = c.bloqueado !== true;
                     let statusBadge = isAtivo ? `<span class="badge b-green">ATIVO</span>` : `<span class="badge b-red">BLOQUEADO</span>`;
-                    let statusIcon = isOnline(c.updated_at) ? '<span title="Online">🟢</span>' : '<span title="Offline">🔴</span>';
+                    let statusIcon = isOnline(c.updated_at || c.ultimo_login || c.atualizado_em) ? '<span title="Online">🟢</span>' : '<span title="Offline">🔴</span>';
                     return `<tr>
                         <td><input type="checkbox" class="chk-cli" value="${c.id}"></td>
                         <td><span class="font-black text-white text-xs">${n} ${statusIcon}</span><br><span class="text-[8px] text-zinc-500 font-mono">ID #${c.id}</span></td>
