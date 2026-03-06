@@ -76,11 +76,15 @@
         td {
             color: #fff;
         }
+        /* Estilo para checkbox de localização */
+        .localizacao-fieldset {
+            background: #2c2c2e; border-radius: 12px; padding: 12px; margin-top: 10px;
+        }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- DRAWER MOBILE -->
+    <!-- DRAWER MOBILE (mantido igual) -->
     <div id="drawerOverlay" class="drawer-overlay" onclick="fecharDrawer()"></div>
     <div id="drawer" class="drawer">
         <div class="flex justify-between items-center mb-6">
@@ -118,7 +122,7 @@
         </div>
     </div>
 
-    <!-- NAVBAR -->
+    <!-- NAVBAR ATUALIZADA -->
     <nav class="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-[#38383a] px-4 py-3 flex justify-between items-center z-50">
         <div class="flex items-center gap-3">
             <button class="text-2xl text-gray-400 lg:hidden" onclick="abrirDrawer()">☰</button>
@@ -126,18 +130,38 @@
             <span class="text-[10px] text-gray-400 border-l border-[#38383a] pl-2 hidden sm:inline">PAINEL ATACADISTA</span>
         </div>
         <div class="flex items-center gap-2">
+            <!-- Nome da loja logada (mobile: ícone + nome? só nome mesmo) -->
+            <span class="text-xs text-blue-400 font-bold hidden md:inline" id="nomeLojaHeader"></span>
+
             <!-- Botão Sugestão desktop -->
             <button onclick="abrirSugestao()" class="hidden lg:flex items-center gap-1 bg-purple-600 text-white px-3 py-1.5 rounded-full text-xs font-bold hover:bg-purple-700">
-                <i class="fas fa-lightbulb"></i> Sugerir Melhoria
+                <i class="fas fa-lightbulb"></i> <span class="hidden md:inline">Sugerir Melhoria</span>
             </button>
-            <a href="https://wa.me/556896003049" target="_blank" class="btn-header text-xs hidden lg:flex">Suporte</a>
+
+            <!-- Botão GESTOR SETH -->
+            <button onclick="window.open('gestor_seth.html', '_blank')" class="btn-master !bg-blue-600 px-3 py-1 text-[10px] rounded-full flex items-center gap-1">
+                📊 <span class="hidden md:inline">GESTOR SETH</span>
+            </button>
+
+            <!-- Botão HORUS -->
+            <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 text-[10px] px-3 py-1 rounded-full flex items-center gap-1">
+                👁️‍🗨️ <span class="hidden md:inline">HORUS</span>
+            </button>
+
+            <a href="https://wa.me/556896003049" target="_blank" class="btn-header text-xs hidden lg:flex items-center gap-1">
+                <i class="fab fa-whatsapp"></i> <span class="hidden md:inline">Suporte</span>
+            </a>
             <div class="relative">
                 <button onclick="abrirSino()" class="text-xl px-2">
                     🔔<span id="badgeSino" class="hidden absolute top-0 right-0 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
                 </button>
             </div>
-            <button onclick="abrirConta()" class="text-xs border border-[#38383a] px-3 py-1.5 rounded-full hidden lg:block">Minha Conta</button>
-            <button onclick="logout()" class="text-red-400 text-xs ml-2 hover:underline">Sair</button>
+            <button onclick="abrirConta()" class="text-xs border border-[#38383a] px-3 py-1.5 rounded-full hidden lg:flex items-center gap-1">
+                <i class="fas fa-user"></i> <span class="hidden md:inline">Minha Conta</span>
+            </button>
+            <button onclick="logout()" class="text-red-400 text-xs ml-2 hover:underline flex items-center gap-1">
+                <i class="fas fa-sign-out-alt"></i> <span class="hidden md:inline">Sair</span>
+            </button>
         </div>
     </nav>
 
@@ -167,11 +191,12 @@
                 </div>
             </div>
 
-            <!-- Card de Publicar Oferta (completo) -->
+            <!-- Card de Publicar Oferta (completo) COM MODIFICAÇÕES: botão CPO, campo garantia, localização alternativa -->
             <div class="bg-[#1c1c1e] border border-[#38383a] rounded-2xl p-5" id="publicar">
                 <h2 class="text-sm font-bold mb-4">Publicar Oferta</h2>
-                <div class="grid grid-cols-2 gap-2 mb-4">
+                <div class="grid grid-cols-3 gap-2 mb-4"> <!-- 3 botões: Novo, CPO, Seminovo -->
                     <button type="button" id="btN" class="bg-[#2c2c2e] border-2 border-[#38383a] text-white font-bold p-3 rounded-xl text-xs" onclick="selTipo('Novo')">📦 NOVO</button>
+                    <button type="button" id="btCPO" class="bg-[#2c2c2e] border-2 border-[#38383a] text-white font-bold p-3 rounded-xl text-xs" onclick="selTipo('CPO')">🔄 CPO</button>
                     <button type="button" id="btS" class="bg-[#2c2c2e] border-2 border-[#38383a] text-white font-bold p-3 rounded-xl text-xs" onclick="selTipo('Seminovo')">♻️ SEMINOVO</button>
                 </div>
                 <form onsubmit="doPost(event)">
@@ -191,9 +216,9 @@
                     <div class="step-block mb-3" id="s4">
                         <span class="text-[9px] text-gray-400">4. DETALHES</span>
                         <div id="z_semi" class="hidden space-y-2 mt-2">
+                            <!-- Condição (apenas para seminovos) -->
                             <select id="f_cond" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
                                 <option value="Seminovo">SEMINOVO</option>
-                                <option value="CPO">CPO</option>
                                 <option value="Grade A">GRADE A</option>
                                 <option value="Grade B">GRADE B</option>
                                 <option value="Grade C">GRADE C</option>
@@ -207,7 +232,8 @@
                                 <option value="Bateria em 100%">Bateria em 100%</option>
                             </select>
                         </div>
-                        <select id="f_gar" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs hidden">
+                        <!-- Garantia (aparece para seminovos, oculto para Novo/CPO) -->
+                        <select id="f_gar" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mt-2">
                             <option value="">GARANTIA...</option>
                             <option value="Sem garantia">Sem garantia</option>
                             <option value="1 Mês">1 Mês</option>
@@ -216,9 +242,27 @@
                             <option value="6 Meses">6 Meses</option>
                             <option value="12 Meses">12 Meses</option>
                         </select>
-                        <div class="grid grid-cols-2 gap-2 mt-2">
+                        <!-- Localização do aparelho (sede ou outra) -->
+                        <div class="localizacao-fieldset mt-3">
+                            <label class="flex items-center gap-2 text-xs">
+                                <input type="checkbox" id="localOrigem" checked onchange="toggleLocalizacaoAlternativa()">
+                                Aparelho na minha cidade sede?
+                            </label>
+                            <div id="localizacaoAlternativa" class="hidden mt-3 space-y-2">
+                                <select id="estadoAparelho" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="carregarCidadesAparelho()">
+                                    <option value="">Selecione o estado</option>
+                                    <!-- opções serão preenchidas via JS -->
+                                </select>
+                                <select id="cidadeAparelho" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                                    <option value="">Selecione a cidade</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Origem (região de venda) -->
+                        <select id="f_orig" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mt-3" required></select>
+
+                        <div class="grid grid-cols-2 gap-2 mt-3">
                             <input type="number" id="f_qtd" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="QTD" min="0" required>
-                            <select id="f_orig" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" required></select>
                         </div>
                         <div class="grid grid-cols-2 gap-2 mt-2">
                             <input type="text" id="f_usd" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="$ USD" oninput="mascara(this); document.getElementById('f_brl').value=''">
@@ -248,9 +292,12 @@
                             <option value="">TODAS</option>
                             <option value="Novo">NOVOS</option>
                             <option value="Seminovo">SEMINOVOS</option>
+                            <option value="CPO">CPO</option>
                         </select>
                     </div>
                     <div class="flex gap-2 flex-wrap">
+                        <!-- Input de busca de anúncios -->
+                        <input type="text" placeholder="🔍 Buscar modelo, cor..." class="apple-input text-xs bg-[#2c2c2e] border border-[#38383a] rounded-lg px-3 py-1.5 w-40" onkeyup="filtrarMeusAnuncios(this.value)">
                         <button onclick="copiarListaWhatsApp()" class="bg-[#25d366] text-white px-3 py-1.5 rounded-full text-[8px] font-bold flex items-center gap-1"><i class="fab fa-whatsapp"></i> Lista</button>
                         <button onclick="abrirBulk()" class="bg-white text-black px-3 py-1.5 rounded-full text-[8px] font-bold">Editar Lote</button>
                         <button onclick="bulkDel()" class="bg-red-600 text-white px-3 py-1.5 rounded-full text-[8px] font-bold">Apagar</button>
@@ -259,7 +306,7 @@
 
                 <!-- Tabela com rolagem horizontal -->
                 <div class="table-wrapper custom-scroll">
-                    <table>
+                    <table id="tabelaOfertas">
                         <thead>
                             <tr>
                                 <th><input type="checkbox" onclick="selAll(this)"></th>
@@ -302,7 +349,7 @@
         </div>
     </div>
 
-    <!-- MODAL CONTA -->
+    <!-- MODAL CONTA (ATUALIZADO PARA TROCAR SENHA) -->
     <div id="contaModal" class="hidden modal-overlay">
         <div class="modal-content">
             <h3 class="text-lg font-bold mb-4">⚙️ Minha Conta</h3>
@@ -622,11 +669,12 @@
             }
             if (masterAuth === 'gov_absoluto') {
                 loja = { id: 1, nome: 'MASTER', verificado: true };
-                document.getElementById('dashNome').innerText = loja.nome;
+                document.getElementById('nomeLojaHeader').innerText = loja.nome;
             } else {
                 const { data, error } = await _s.from('fornecedores').select('*').eq('id', tokenAta).single();
                 if (error || !data) { logout(); return; }
                 loja = data;
+                document.getElementById('nomeLojaHeader').innerText = loja.nome;
             }
 
             new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
@@ -644,7 +692,9 @@
             ]);
             produtos = p.data || [];
             variacoes = v.data || [];
-            regioes = r.data || [];
+            // Filtrar regiões para apenas as 6 origens especificadas
+            const origensPermitidas = ['BRASIL ANATEL', 'CHINA', 'ÍNDIA', 'CANADÁ', 'JAPÃO', 'EUA'];
+            regioes = (r.data || []).filter(reg => origensPermitidas.includes(reg.nome.toUpperCase().replace(/[ÁÀÃÂ]/g,'A').replace(/[Í]/g,'I')));
             ofertas = o.data || [];
             todasOfertas = oGlobal.data || [];
 
@@ -656,6 +706,9 @@
 
             // Preencher selects dos modais com as opções
             preencherSelectsModais();
+
+            // Preencher estados no select de localização alternativa
+            carregarEstadosBrasil();
         };
 
         function preencherSelectsModais() {
@@ -666,7 +719,7 @@
             document.getElementById('dupModelo').innerHTML = modelosHTML;
             document.getElementById('bulkModelo').innerHTML = '<option value="">MANTER MODELO</option>' + modelosHTML.slice(15); // remove primeiro option
 
-            // Origens
+            // Origens (filtradas)
             let origensHTML = '<option value="">ORIGEM</option>';
             regioes.forEach(r => origensHTML += `<option value="${r.id}">${r.bandeira} ${r.nome}</option>`);
             document.getElementById('editOrigem').innerHTML = origensHTML;
@@ -690,8 +743,18 @@
         function selTipo(t) {
             document.getElementById('f_tipo').value = t;
             document.getElementById('btN').classList.toggle('active', t === 'Novo');
+            document.getElementById('btCPO').classList.toggle('active', t === 'CPO');
             document.getElementById('btS').classList.toggle('active', t === 'Seminovo');
-            document.getElementById('z_semi').classList.toggle('hidden', t === 'Novo');
+            // Se for Novo ou CPO, esconde bateria e fixa garantia como "1 ANO APPLE" (oculta)
+            if (t === 'Novo' || t === 'CPO') {
+                document.getElementById('z_semi').classList.add('hidden');
+                document.getElementById('f_gar').classList.add('hidden'); // oculta garantia
+                // Define garantia como 1 ANO APPLE (será usada no submit)
+                // Não precisa setar no select, apenas no momento do envio
+            } else {
+                document.getElementById('z_semi').classList.remove('hidden');
+                document.getElementById('f_gar').classList.remove('hidden'); // mostra garantia
+            }
             document.getElementById('f_mod').disabled = false;
             document.getElementById('s1').classList.add('active');
         }
@@ -714,15 +777,71 @@
             document.getElementById('btnS').classList.remove('hidden');
         }
 
+        // Função para mostrar/esconder campos de localização alternativa
+        function toggleLocalizacaoAlternativa() {
+            const checkbox = document.getElementById('localOrigem');
+            const divAlt = document.getElementById('localizacaoAlternativa');
+            if (checkbox.checked) {
+                divAlt.classList.add('hidden');
+            } else {
+                divAlt.classList.remove('hidden');
+            }
+        }
+
+        // Carregar estados brasileiros para o select
+        function carregarEstadosBrasil() {
+            const selectEstado = document.getElementById('estadoAparelho');
+            const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+            estados.forEach(uf => {
+                selectEstado.innerHTML += `<option value="${uf}">${uf}</option>`;
+            });
+        }
+
+        // Carregar cidades via IBGE
+        async function carregarCidadesAparelho() {
+            const uf = document.getElementById('estadoAparelho').value;
+            const selCidade = document.getElementById('cidadeAparelho');
+            if (!uf) {
+                selCidade.innerHTML = '<option value="">Selecione a cidade</option>';
+                return;
+            }
+            selCidade.innerHTML = '<option value="">Carregando...</option>';
+            try {
+                const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
+                const cidades = await res.json();
+                selCidade.innerHTML = '<option value="">Selecione a cidade</option>';
+                cidades.forEach(c => {
+                    selCidade.innerHTML += `<option value="${c.nome}">${c.nome}</option>`;
+                });
+            } catch (e) {
+                selCidade.innerHTML = '<option value="">Erro ao carregar</option>';
+            }
+        }
+
         // === CRIAÇÃO DE OFERTA COM GURU ===
         async function doPost(e) {
             e.preventDefault();
             let tipo = document.getElementById('f_tipo').value;
+            if (!tipo) return alert('Selecione o tipo do produto');
             let v = variacoes.find(x => x.produto_id == document.getElementById('f_mod').value && x.capacidade == document.getElementById('f_cap').value && x.cor == document.getElementById('f_cor').value);
+            if (!v) return alert('Variação inválida');
             let isBrl = document.getElementById('f_brl').value.length > 0;
             let precoFinal = isBrl ? parseP(document.getElementById('f_brl').value) : parseP(document.getElementById('f_usd').value);
             let moeda = isBrl ? 'BRL' : 'USD';
             let q = parseInt(document.getElementById('f_qtd').value) || 0;
+
+            // Determinar garantia: para Novo/CPO é fixa "1 ANO APPLE", senão pega do select
+            let garantia = (tipo === 'Novo' || tipo === 'CPO') ? '1 ANO APPLE' : document.getElementById('f_gar').value;
+            if (!garantia && tipo !== 'Novo' && tipo !== 'CPO') return alert('Selecione a garantia');
+
+            // Localização do aparelho (se não estiver na sede)
+            let cidadeAparelho = null;
+            let estadoAparelho = null;
+            if (!document.getElementById('localOrigem').checked) {
+                cidadeAparelho = document.getElementById('cidadeAparelho').value;
+                estadoAparelho = document.getElementById('estadoAparelho').value;
+                if (!cidadeAparelho || !estadoAparelho) return alert('Selecione a cidade e estado onde o aparelho se encontra');
+            }
 
             // Guru check
             const guru = await verificarPrecoGuru(v.produto_id, v.capacidade, precoFinal, moeda);
@@ -732,16 +851,18 @@
                     dados: {
                         fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('f_orig').value,
                         preco: precoFinal, moeda, quantidade: q,
-                        condicao: tipo === 'Novo' ? 'Novo' : document.getElementById('f_cond').value,
-                        saude_bateria: tipo === 'Novo' ? '' : document.getElementById('f_bat').value,
-                        garantia: tipo === 'Novo' ? '1 ANO APPLE' : document.getElementById('f_gar').value,
+                        condicao: tipo === 'Novo' ? 'Novo' : (tipo === 'CPO' ? 'CPO' : document.getElementById('f_cond').value),
+                        saude_bateria: (tipo === 'Novo' || tipo === 'CPO') ? '' : document.getElementById('f_bat').value,
+                        garantia: garantia,
                         aceita_pix: document.getElementById('m_pix').checked,
                         aceita_usdt: document.getElementById('m_usdt').checked,
                         aceita_proposta: document.getElementById('m_neg').checked,
                         faz_envio: document.getElementById('m_envi').checked,
                         aceita_coleta: document.getElementById('m_cole').checked,
                         emite_nota: document.getElementById('m_nota').checked,
-                        status_aprovacao: 'aprovado'
+                        status_aprovacao: 'aprovado',
+                        cidade_aparelho: cidadeAparelho,
+                        estado_aparelho: estadoAparelho
                     }
                 };
                 document.getElementById('guruMensagem').innerText = `O preço informado está ${moeda === 'BRL' ? 'R$' : '$'} ${guru.diff.toFixed(2)} acima da média do mercado. Deseja continuar?`;
@@ -751,16 +872,18 @@
             await executarCriacao(pendingGuruData?.dados || {
                 fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('f_orig').value,
                 preco: precoFinal, moeda, quantidade: q,
-                condicao: tipo === 'Novo' ? 'Novo' : document.getElementById('f_cond').value,
-                saude_bateria: tipo === 'Novo' ? '' : document.getElementById('f_bat').value,
-                garantia: tipo === 'Novo' ? '1 ANO APPLE' : document.getElementById('f_gar').value,
+                condicao: tipo === 'Novo' ? 'Novo' : (tipo === 'CPO' ? 'CPO' : document.getElementById('f_cond').value),
+                saude_bateria: (tipo === 'Novo' || tipo === 'CPO') ? '' : document.getElementById('f_bat').value,
+                garantia: garantia,
                 aceita_pix: document.getElementById('m_pix').checked,
                 aceita_usdt: document.getElementById('m_usdt').checked,
                 aceita_proposta: document.getElementById('m_neg').checked,
                 faz_envio: document.getElementById('m_envi').checked,
                 aceita_coleta: document.getElementById('m_cole').checked,
                 emite_nota: document.getElementById('m_nota').checked,
-                status_aprovacao: 'aprovado'
+                status_aprovacao: 'aprovado',
+                cidade_aparelho: cidadeAparelho,
+                estado_aparelho: estadoAparelho
             });
             pendingGuruData = null;
         }
@@ -794,8 +917,9 @@
                     <td>
                         <div class="font-bold text-sm">${o.variacoes?.produtos_mestre?.nome} ${o.variacoes?.capacidade}</div>
                         <div class="text-[10px] text-gray-400">${o.variacoes?.cor}</div>
+                        ${o.cidade_aparelho ? `<div class="text-[8px] text-gray-500">📍 ${o.cidade_aparelho}/${o.estado_aparelho}</div>` : ''}
                     </td>
-                    <td><span class="px-2 py-1 rounded-full text-[9px] ${o.condicao === 'Novo' ? 'bg-green-600' : 'bg-yellow-600'}">${o.condicao}</span></td>
+                    <td><span class="px-2 py-1 rounded-full text-[9px] ${o.condicao === 'Novo' ? 'bg-green-600' : o.condicao === 'CPO' ? 'bg-blue-600' : 'bg-yellow-600'}">${o.condicao}</span></td>
                     <td>${o.regioes?.bandeira || ''} ${o.regioes?.nome || ''}</td>
                     <td><input type="number" class="w-16 bg-transparent border-b border-dashed border-gray-500 text-center" value="${o.quantidade}" min="0" onblur="edit(${o.id}, 'quantidade', this.value)"></td>
                     <td class="font-mono">${o.moeda === 'BRL' ? 'R$' : '$'} <input type="text" class="w-20 bg-transparent border-b border-dashed border-gray-500 text-center" value="${o.preco.toFixed(2).replace('.', ',')}" oninput="mascara(this)" onblur="edit(${o.id}, 'preco', this.value)"></td>
@@ -808,6 +932,16 @@
             });
             document.getElementById('lista').innerHTML = html || '<tr><td colspan="7" class="text-center py-4 text-gray-400">Nenhum anúncio encontrado.</td></tr>';
             upBulkCount();
+        }
+
+        // Filtro de anúncios na tabela
+        function filtrarMeusAnuncios(query) {
+            const q = query.toLowerCase();
+            const rows = document.querySelectorAll('#lista tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(q) ? '' : 'none';
+            });
         }
 
         async function edit(id, campo, valor) {
@@ -841,23 +975,51 @@
             }
         }
 
-        // === BOTÃO COPIAR LISTA WHATSAPP ===
+        // === BOTÃO COPIAR LISTA WHATSAPP (ATUALIZADO) ===
         async function copiarListaWhatsApp() {
             let ativas = ofertas.filter(o => o.quantidade > 0);
             if (!ativas.length) return alert('Lista vazia.');
-            let saudacao = ['BOM DIA', 'BOA TARDE', 'BOA NOITE'][Math.floor(new Date().getHours() / 6)];
-            let cidade = loja.cidade ? ` ${loja.cidade.toUpperCase()}` : '';
-            let texto = `*${saudacao} 🚀🔥*\n\n*PRONTA ENTREGA NOVOS*${cidade} 📍\n\n`;
-            ativas.filter(o => o.condicao === 'Novo').forEach(o => {
-                texto += `*${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade}*\n`;
-                texto += `(${o.quantidade}) ${o.variacoes.cor.toUpperCase()} R$ ${o.preco.toFixed(2)}\n\n`;
-            });
-            if (ativas.some(o => o.condicao !== 'Novo')) {
-                texto += `*PRONTA ENTREGA SEMINOVOS*\n\n`;
-                ativas.filter(o => o.condicao !== 'Novo').forEach(o => {
-                    texto += `* (${o.quantidade}) ${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade} ${o.variacoes.cor.toUpperCase()} 🔋 ${o.saude_bateria || ''} 🛡️ ${o.garantia || ''} R$ ${o.preco.toFixed(2)}*\n`;
+            const hora = new Date().getHours();
+            let saudacao = '';
+            if (hora < 12) saudacao = '🚀 *BOM DIA* 🔥';
+            else if (hora < 18) saudacao = '🚀 *BOA TARDE* 🔥';
+            else saudacao = '🚀 *BOA NOITE* 🔥';
+            let cidade = loja.cidade ? loja.cidade.toUpperCase() : '';
+
+            let texto = `${saudacao}\n\n`;
+            texto += `📦 *PRONTA ENTREGA ${cidade}* 📍\n\n`;
+
+            // Agrupar por condição
+            const novos = ativas.filter(o => o.condicao === 'Novo');
+            const cpos = ativas.filter(o => o.condicao === 'CPO');
+            const seminovos = ativas.filter(o => o.condicao !== 'Novo' && o.condicao !== 'CPO');
+
+            if (novos.length) {
+                texto += `*NOVOS*\n`;
+                novos.forEach(o => {
+                    let local = o.cidade_aparelho ? ` 📍${o.cidade_aparelho}` : '';
+                    texto += `*${o.quantidade}* - iPhone ${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade} - ${o.variacoes.cor} ${o.regioes?.bandeira || ''} - R$ ${o.preco.toFixed(2)}${local}\n`;
+                    texto += `🛡️ *GARANTIA ${o.garantia || '1 ANO APPLE'}*\n\n`;
                 });
             }
+            if (cpos.length) {
+                texto += `*CPO*\n`;
+                cpos.forEach(o => {
+                    let local = o.cidade_aparelho ? ` 📍${o.cidade_aparelho}` : '';
+                    texto += `*${o.quantidade}* - iPhone ${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade} - ${o.variacoes.cor} ${o.regioes?.bandeira || ''} - R$ ${o.preco.toFixed(2)}${local}\n`;
+                    texto += `🛡️ *GARANTIA ${o.garantia || '1 ANO APPLE'}*\n\n`;
+                });
+            }
+            if (seminovos.length) {
+                texto += `*SEMINOVOS*\n`;
+                seminovos.forEach(o => {
+                    let local = o.cidade_aparelho ? ` 📍${o.cidade_aparelho}` : '';
+                    texto += `*${o.quantidade}* - iPhone ${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade} - ${o.variacoes.cor} ${o.regioes?.bandeira || ''} - R$ ${o.preco.toFixed(2)}${local}\n`;
+                    if (o.saude_bateria) texto += `🔋${o.saude_bateria}\n`;
+                    texto += `🛡️ *GARANTIA ${o.garantia}*\n\n`;
+                });
+            }
+
             texto += `\nFale com a gente agora mesmo: https://wa.me/${loja.whatsapp}\n\n`;
             texto += `Lista Gerada pelo iFipe - *A Tabela Fipe do iPhone 📲*\n`;
             texto += `Acesse Nosso site https://ifipe.com.br/`;
@@ -906,21 +1068,33 @@
         // === FUNÇÕES DE MODAL (EDIÇÃO, DUPLICAÇÃO, BULK) ===
         function abrirDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('open'); }
         function fecharDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); }
-        function logout() { localStorage.clear(); window.location.replace('index.html'); }
+        function logout() {
+            // Remove apenas os itens específicos, não usa clear()
+            localStorage.removeItem('iFipe_Anunciante');
+            localStorage.removeItem('iFipe_Master_Auth');
+            localStorage.removeItem('iFipe_Func_Nome');
+            window.location.replace('index.html');
+        }
         function abrirSino() { carregarPropostas(); document.getElementById('propostasModal').classList.remove('hidden'); }
         function fecharSino() { document.getElementById('propostasModal').classList.add('hidden'); }
         function abrirConta() {
             document.getElementById('c_nome').value = loja.nome || '';
             document.getElementById('c_whats').value = loja.whatsapp || '';
+            document.getElementById('c_senha').value = '';
             document.getElementById('contaModal').classList.remove('hidden');
         }
         function fecharConta() { document.getElementById('contaModal').classList.add('hidden'); }
         async function salvarConta(e) {
             e.preventDefault();
-            await _s.from('fornecedores').update({
+            const updates = {
                 nome: document.getElementById('c_nome').value.toUpperCase(),
                 whatsapp: document.getElementById('c_whats').value
-            }).eq('id', loja.id);
+            };
+            const novaSenha = document.getElementById('c_senha').value;
+            if (novaSenha) {
+                updates.senha = novaSenha;
+            }
+            await _s.from('fornecedores').update(updates).eq('id', loja.id);
             alert('Atualizado!');
             fecharConta();
         }
@@ -1242,6 +1416,9 @@
             document.getElementById('listaRespondidas').classList.toggle('hidden', aba !== 'respondidas');
         };
         window.responder = responder;
+        window.toggleLocalizacaoAlternativa = toggleLocalizacaoAlternativa;
+        window.carregarCidadesAparelho = carregarCidadesAparelho;
+        window.filtrarMeusAnuncios = filtrarMeusAnuncios;
     </script>
 </body>
 </html>
