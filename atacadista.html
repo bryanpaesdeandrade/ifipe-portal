@@ -122,7 +122,7 @@
         </div>
     </div>
 
-    <!-- NAVBAR ATUALIZADA COM TEXTOS EXPLÍCITOS -->
+    <!-- NAVBAR ATUALIZADA (com textos sempre visíveis) -->
     <nav class="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-[#38383a] px-4 py-3 flex justify-between items-center z-50">
         <div class="flex items-center gap-3">
             <button class="text-2xl text-gray-400 lg:hidden" onclick="abrirDrawer()">☰</button>
@@ -130,17 +130,17 @@
             <span class="text-xs text-blue-400 font-bold border-l border-[#38383a] pl-2" id="nomeLojaHeader">CARREGANDO...</span>
         </div>
         <div class="flex items-center gap-3 flex-wrap justify-end">
-            <a href="https://wa.me/556896003049" target="_blank" class="text-green-500 hover:text-green-400 text-[10px] font-bold flex items-center gap-1">
-                <i class="fab fa-whatsapp text-sm"></i> <span class="hidden md:inline">SUPORTE</span>
+            <a href="https://wa.me/556896003049" target="_blank" class="text-green-500 hover:text-green-400 text-[10px] font-bold flex items-center gap-1" title="Suporte">
+                <i class="fab fa-whatsapp text-sm"></i> <span>SUPORTE</span>
             </a>
-            <button onclick="abrirSugestao()" class="text-purple-500 hover:text-purple-400 text-[10px] font-bold flex items-center gap-1">
-                💡 <span class="hidden md:inline">SUGESTÃO</span>
+            <button onclick="abrirSugestao()" class="text-purple-500 hover:text-purple-400 text-[10px] font-bold flex items-center gap-1" title="Sugerir Melhoria">
+                💡 <span>SUGESTÕES</span>
             </button>
             <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1">
                 👁️‍🗨️ HORUS O OLHO QUE MENOR PREÇO VÊ
             </button>
             <button onclick="window.open('gestor_seth.html', '_blank')" class="bg-blue-600 text-white px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1">
-                7️⃣ <span class="hidden md:inline">GESTOR SETH</span>
+                7️⃣ GESTOR SETH
             </button>
             <span onclick="abrirSino()" class="cursor-pointer text-xl hover:opacity-80 relative" title="Propostas e Avisos">
                 🔔<span id="badgeSino" class="hidden absolute -top-1 -right-2 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
@@ -565,19 +565,21 @@
         </div>
     </div>
 
-    <!-- MODAL PROPOSTAS -->
+    <!-- MODAL PROPOSTAS (ATUALIZADO) -->
     <div id="propostasModal" class="hidden modal-overlay">
         <div class="modal-content max-w-2xl w-full">
-            <h3 class="text-lg font-bold mb-2">📬 Propostas Recebidas</h3>
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="text-lg font-bold">📬 Propostas Recebidas</h3>
+                <button onclick="fecharSino()" class="text-red-500 text-2xl font-black">&times;</button>
+            </div>
             <div class="flex border-b border-[#38383a] mb-4">
                 <button id="tabPendentes" class="flex-1 py-2 text-center text-xs font-bold text-yellow-500 border-b-2 border-yellow-500" onclick="mostrarAba('pendentes')">PENDENTES</button>
                 <button id="tabRespondidas" class="flex-1 py-2 text-center text-xs font-bold text-gray-500" onclick="mostrarAba('respondidas')">RESPONDIDAS</button>
             </div>
             <div id="listaPendentes" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
             <div id="listaRespondidas" class="space-y-3 max-h-80 overflow-y-auto pr-2 hidden"></div>
-            
-            <div class="flex gap-3 mt-4 pt-4 border-t border-[#38383a]">
-                <button onclick="fecharSino()" class="bg-zinc-700 text-white w-full p-3 rounded-lg text-sm font-bold hover:bg-zinc-600">FECHAR PAINEL</button>
+            <div class="mt-4 pt-4 border-t border-[#38383a]">
+                <button onclick="fecharSino()" class="w-full bg-zinc-800 text-white font-bold p-3 rounded-lg hover:bg-zinc-700">FECHAR PAINEL</button>
             </div>
         </div>
     </div>
@@ -980,10 +982,31 @@
             });
         }
 
+        // === FUNÇÃO EDIT (SUBSTITUÍDA) ===
         async function edit(id, campo, valor) {
             let val = campo === 'preco' ? parseP(valor) : parseInt(valor);
             if (isNaN(val) || val < 0) val = 0;
-            await _s.from('ofertas').update({ [campo]: val }).eq('id', id);
+            
+            const ofertaAtual = ofertas.find(o => o.id === id);
+            if (!ofertaAtual) return;
+
+            // Se for alteração de preço, dispara o Guru da Canibalização
+            if (campo === 'preco') {
+                const guru = await verificarPrecoGuru(ofertaAtual.variacoes.produto_id, ofertaAtual.variacoes.capacidade, val, ofertaAtual.moeda);
+                if (guru && !confirm(`⚠️ ALERTA DE CANIBALIZAÇÃO: \nO seu preço está fora da média do mercado (Diferença de ${guru.diff.toFixed(2)}). Deseja aplicar mesmo assim?`)) {
+                    upTab(); // Cancela e volta o valor antigo na tela
+                    return;
+                }
+            }
+
+            // Atualiza a oferta e força o updated_at para o Master ver que o Lojista está online
+            const agora = new Date().toISOString();
+            await _s.from('ofertas').update({ [campo]: val, atualizado_em: agora }).eq('id', id);
+            await _s.from('fornecedores').update({ updated_at: agora }).eq('id', loja.id); // Força bolinha verde no Master
+            
+            // Recarrega silenciosamente os dados para refletir imediatamente
+            const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), regioes(*)').eq('fornecedor_id', loja.id).order('criado_em', { ascending: false });
+            ofertas = data || [];
             upTab();
         }
 
@@ -1370,7 +1393,7 @@
             window.location.reload();
         }
 
-        // === FUNÇÃO ATUALIZAR INSÍGNIAS (SUBSTITUÍDA) ===
+        // === FUNÇÃO ATUALIZAR INSÍGNIAS ===
         function atualizarInsignias() {
             let html = '';
             
