@@ -75,20 +75,23 @@
                     <!-- DROPDOWN DE MANUTENÇÃO (APENAS MASTER) -->
                     <div class="relative master-only" id="maintenanceDropdownContainer">
                         <button id="maintenanceBtn" onclick="toggleMaintenanceDropdown()" class="btn-master bg-green-600 px-3 py-1 text-[9px] ml-2">SISTEMA: ON</button>
-                        <div id="maintenanceMenu" class="absolute right-0 mt-2 w-56 bg-[#1c1c1e] border border-zinc-700 rounded-lg shadow-lg z-50 hidden">
+                        <div id="maintenanceMenu" class="absolute right-0 mt-2 w-64 bg-[#1c1c1e] border border-zinc-700 rounded-lg shadow-lg z-50 hidden">
                             <div class="py-1">
-                                <button onclick="setMaintenance('status_geral')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">🔴 Atualizar Sistema Geral</button>
-                                <button onclick="setMaintenance('status_atacadista')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">🔴 Atualizar Painel Atacadista</button>
-                                <button onclick="setMaintenance('status_buscador')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">🔴 Atualizar Painel Buscador</button>
+                                <button onclick="setMaintenance('status_geral')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">⚙️ LIGAR / DESLIGAR Sistema Geral</button>
+                                <button onclick="setMaintenance('status_atacadista')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">⚙️ LIGAR / DESLIGAR Painel Atacadista</button>
+                                <button onclick="setMaintenance('status_buscador')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">⚙️ LIGAR / DESLIGAR Painel Buscador</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <!-- NOVO BLOCO HEADER (HORUS + SINO) -->
             <div class="flex items-center gap-4">
-                <!-- HORUS NOVO BOTÃO E SINO -->
-                <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 master-only text-[9px] px-3 py-1">👁️$ HORUS O OLHO QUE TUDO VÊ</button>
-                <span class="cursor-pointer text-lg hover:opacity-80" title="Sugestões e Alertas">🔔</span>
+                <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 master-only text-[9px] px-3 py-1 flex items-center gap-2">
+                    <img src="logo-horus.png" alt="Horus" class="h-4 w-4">
+                    HORUS O OLHO QUE MENOR PREÇO VÊ
+                </button>
+                <span onclick="alert('Sistema de notificações em desenvolvimento pela equipe iFipe.')" class="cursor-pointer text-lg hover:opacity-80 master-only" title="Sugestões e Alertas">🔔</span>
                 <span id="headerMasterName" class="text-[10px] font-black text-blue-500 tracking-widest">MASTER</span>
                 <button id="minhaContaBtn" onclick="abrirConta()" class="btn-header" style="background: var(--input); color: #fff; border-color: #38383a;">
                     <span>⚙️ MINHA CONTA</span>
@@ -158,7 +161,7 @@
                     <h2 class="text-sm font-black text-white">GESTÃO GLOBAL DE ANÚNCIOS</h2>
                     <div class="flex gap-2 w-2/3 justify-end items-center">
                         <input type="text" placeholder="🔍 BUSCAR PRODUTO, LOJA, COR..." class="apple-input !w-1/3 !py-2" onkeyup="filterAnuncios(this.value)" id="buscaAnuncios">
-                        <!-- BOTÕES DE ESTOQUE SUBSTITUÍDOS -->
+                        <!-- BOTÕES DE ESTOQUE -->
                         <button onclick="zerarEstoqueSelecionados()" class="btn-master !bg-orange-600 master-only">🚫 ZERAR SELECIONADOS</button>
                         <button onclick="restaurarEstoqueSelecionados()" class="btn-master !bg-emerald-600 master-only">♻️ RESTAURAR ESTOQUE</button>
                         <button onclick="abrirModalZerarEstoque()" class="btn-master !bg-red-600 master-only">🚫 ZERAR ESTOQUE DE LOJA</button>
@@ -840,16 +843,23 @@
             document.getElementById('maintenanceMenu').classList.toggle('hidden');
         }
 
+        // FUNÇÃO DE MANUTENÇÃO AGORA COMO INTERRUPTOR (LIGA/DESLIGA)
         async function setMaintenance(campo) {
-            // campo pode ser 'status_geral', 'status_atacadista', 'status_buscador'
+            // Busca o status atual no banco
+            const { data: config, error: fetchError } = await _s.from('sistema_config').select('*').eq('id', 1).single();
+            if (fetchError || !config) return alert("Erro: Configuração não encontrada.");
+            
+            // Inverte o status atual
+            const novoStatus = config[campo] === 'on' ? 'off' : 'on';
+            
             const payload = {};
-            payload[campo] = 'off';
+            payload[campo] = novoStatus;
+            
             const { error } = await _s.from('sistema_config').update(payload).eq('id', 1);
-            console.log("Sistema atualizado para OFF no campo:", campo);
             if (error) {
                 alert('Erro ao atualizar manutenção: ' + error.message);
             } else {
-                alert(`Sistema ${campo.replace('status_','')} desligado com sucesso.`);
+                alert(`Sistema ${campo.replace('status_','').toUpperCase()} agora está: ${novoStatus.toUpperCase()}`);
                 renderSystemStatus();
             }
             document.getElementById('maintenanceMenu').classList.add('hidden');
