@@ -122,7 +122,7 @@
         </div>
     </div>
 
-    <!-- NAVBAR ATUALIZADA (com textos sempre visíveis) -->
+    <!-- NAVBAR -->
     <nav class="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-[#38383a] px-4 py-3 flex justify-between items-center z-50">
         <div class="flex items-center gap-3">
             <button class="text-2xl text-gray-400 lg:hidden" onclick="abrirDrawer()">☰</button>
@@ -359,7 +359,7 @@
         </div>
     </div>
 
-    <!-- MODAL EDIÇÃO COMPLETA -->
+    <!-- MODAL EDIÇÃO COMPLETA (ATUALIZADO) -->
     <div id="modalEditar" class="hidden modal-overlay">
         <div class="modal-content max-w-xl">
             <h3 class="text-lg font-bold mb-4">✏️ Editar Anúncio</h3>
@@ -377,7 +377,7 @@
                     <option value="">COR</option>
                 </select>
                 <div class="grid grid-cols-2 gap-2 mb-2">
-                    <select id="editCondicao" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                    <select id="editCondicao" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="toggleCondicaoModal(this.value, 'edit')">
                         <option value="Novo">NOVO</option>
                         <option value="Seminovo">SEMINOVO</option>
                         <option value="CPO">CPO</option>
@@ -403,6 +403,23 @@
                     <option value="6 Meses">6 Meses</option>
                     <option value="12 Meses">12 Meses</option>
                 </select>
+
+                <!-- Localização do aparelho (IBGE) -->
+                <div class="localizacao-fieldset mt-3 mb-2">
+                    <label class="flex items-center gap-2 text-xs">
+                        <input type="checkbox" id="editLocalOrigem" checked onchange="document.getElementById('editLocAlt').classList.toggle('hidden', this.checked)">
+                        Aparelho na minha cidade sede?
+                    </label>
+                    <div id="editLocAlt" class="hidden mt-3 space-y-2">
+                        <select id="editEstadoAparelho" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="carregarCidadesDinamico(this.value, 'editCidadeAparelho')">
+                            <option value="">Selecione o estado</option>
+                        </select>
+                        <select id="editCidadeAparelho" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                            <option value="">Selecione a cidade</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-2 mb-2">
                     <select id="editOrigem" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" required></select>
                     <input type="number" id="editQuantidade" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="QTD" min="0" required>
@@ -427,7 +444,7 @@
         </div>
     </div>
 
-    <!-- MODAL DUPLICAR -->
+    <!-- MODAL DUPLICAR (ATUALIZADO) -->
     <div id="modalDuplicar" class="hidden modal-overlay">
         <div class="modal-content max-w-xl">
             <h3 class="text-lg font-bold mb-4">📋 Duplicar Anúncio</h3>
@@ -445,7 +462,7 @@
                     <option value="">COR</option>
                 </select>
                 <div class="grid grid-cols-2 gap-2 mb-2">
-                    <select id="dupCondicao" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                    <select id="dupCondicao" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="toggleCondicaoModal(this.value, 'dup')">
                         <option value="Novo">NOVO</option>
                         <option value="Seminovo">SEMINOVO</option>
                         <option value="CPO">CPO</option>
@@ -471,6 +488,23 @@
                     <option value="6 Meses">6 Meses</option>
                     <option value="12 Meses">12 Meses</option>
                 </select>
+
+                <!-- Localização do aparelho (IBGE) -->
+                <div class="localizacao-fieldset mt-3 mb-2">
+                    <label class="flex items-center gap-2 text-xs">
+                        <input type="checkbox" id="dupLocalOrigem" checked onchange="document.getElementById('dupLocAlt').classList.toggle('hidden', this.checked)">
+                        Aparelho na minha cidade sede?
+                    </label>
+                    <div id="dupLocAlt" class="hidden mt-3 space-y-2">
+                        <select id="dupEstadoAparelho" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="carregarCidadesDinamico(this.value, 'dupCidadeAparelho')">
+                            <option value="">Selecione o estado</option>
+                        </select>
+                        <select id="dupCidadeAparelho" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                            <option value="">Selecione a cidade</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-2 mb-2">
                     <select id="dupOrigem" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" required></select>
                     <input type="number" id="dupQuantidade" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="QTD" min="0" required>
@@ -565,7 +599,7 @@
         </div>
     </div>
 
-    <!-- MODAL PROPOSTAS (ATUALIZADO) -->
+    <!-- MODAL PROPOSTAS -->
     <div id="propostasModal" class="hidden modal-overlay">
         <div class="modal-content max-w-2xl w-full">
             <div class="flex justify-between items-center mb-2">
@@ -839,120 +873,69 @@
             else divAlt.classList.remove('hidden');
         }
 
+        // === NOVAS FUNÇÕES IBGE UNIFICADAS ===
         function carregarEstadosBrasil() {
-            const selectEstado = document.getElementById('estadoAparelho');
             const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
-            estados.forEach(uf => selectEstado.innerHTML += `<option value="${uf}">${uf}</option>`);
+            ['estadoAparelho', 'editEstadoAparelho', 'dupEstadoAparelho'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = '<option value="">Selecione o estado</option>';
+                    estados.forEach(uf => el.innerHTML += `<option value="${uf}">${uf}</option>`);
+                }
+            });
         }
 
-        async function carregarCidadesAparelho() {
-            const uf = document.getElementById('estadoAparelho').value;
-            const selCidade = document.getElementById('cidadeAparelho');
-            if (!uf) {
-                selCidade.innerHTML = '<option value="">Selecione a cidade</option>';
-                return;
-            }
+        async function carregarCidadesDinamico(uf, targetSelectId) {
+            const selCidade = document.getElementById(targetSelectId);
+            if (!uf) { selCidade.innerHTML = '<option value="">Selecione a cidade</option>'; return; }
             selCidade.innerHTML = '<option value="">Carregando...</option>';
             try {
                 const res = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`);
                 const cidades = await res.json();
                 selCidade.innerHTML = '<option value="">Selecione a cidade</option>';
                 cidades.forEach(c => selCidade.innerHTML += `<option value="${c.nome}">${c.nome}</option>`);
-            } catch (e) {
-                selCidade.innerHTML = '<option value="">Erro ao carregar</option>';
+            } catch (e) { selCidade.innerHTML = '<option value="">Erro</option>'; }
+        }
+
+        function carregarCidadesAparelho() {
+            carregarCidadesDinamico(document.getElementById('estadoAparelho').value, 'cidadeAparelho');
+        }
+
+        function toggleCondicaoModal(cond, prefix) {
+            const bat = document.getElementById(prefix + 'Bateria');
+            const gar = document.getElementById(prefix + 'Garantia');
+            if (cond === 'Novo' || cond === 'CPO') {
+                if (bat) bat.classList.add('hidden');
+                if (gar) gar.classList.add('hidden');
+            } else {
+                if (bat) bat.classList.remove('hidden');
+                if (gar) gar.classList.remove('hidden');
             }
         }
 
-        async function doPost(e) {
-            e.preventDefault();
-            let tipo = document.getElementById('f_tipo').value;
-            if (!tipo) return alert('Selecione o tipo do produto');
-            let v = variacoes.find(x => x.produto_id == document.getElementById('f_mod').value && x.capacidade == document.getElementById('f_cap').value && x.cor == document.getElementById('f_cor').value);
-            if (!v) return alert('Variação inválida');
-            let isBrl = document.getElementById('f_brl').value.length > 0;
-            let precoFinal = isBrl ? parseP(document.getElementById('f_brl').value) : parseP(document.getElementById('f_usd').value);
-            let moeda = isBrl ? 'BRL' : 'USD';
-            let q = parseInt(document.getElementById('f_qtd').value) || 0;
-
-            let garantia = (tipo === 'Novo' || tipo === 'CPO') ? '1 ANO APPLE' : document.getElementById('f_gar').value;
-            if (!garantia && tipo !== 'Novo' && tipo !== 'CPO') return alert('Selecione a garantia');
-
-            let cidadeAparelho = null, estadoAparelho = null;
-            if (!document.getElementById('localOrigem').checked) {
-                cidadeAparelho = document.getElementById('cidadeAparelho').value;
-                estadoAparelho = document.getElementById('estadoAparelho').value;
-                if (!cidadeAparelho || !estadoAparelho) return alert('Selecione a cidade e estado onde o aparelho se encontra');
-            }
-
-            const guru = await verificarPrecoGuru(v.produto_id, v.capacidade, precoFinal, moeda);
-            if (guru) {
-                pendingGuruData = {
-                    acao: 'criar',
-                    dados: {
-                        fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('f_orig').value,
-                        preco: precoFinal, moeda, quantidade: q,
-                        condicao: tipo === 'Novo' ? 'Novo' : (tipo === 'CPO' ? 'CPO' : document.getElementById('f_cond').value),
-                        saude_bateria: (tipo === 'Novo' || tipo === 'CPO') ? '' : document.getElementById('f_bat').value,
-                        garantia: garantia,
-                        aceita_pix: document.getElementById('m_pix').checked,
-                        aceita_usdt: document.getElementById('m_usdt').checked,
-                        aceita_proposta: document.getElementById('m_neg').checked,
-                        faz_envio: document.getElementById('m_envi').checked,
-                        aceita_coleta: document.getElementById('m_cole').checked,
-                        emite_nota: document.getElementById('m_nota').checked,
-                        status_aprovacao: 'aprovado',
-                        cidade_aparelho: cidadeAparelho,
-                        estado_aparelho: estadoAparelho
-                    }
-                };
-                document.getElementById('guruMensagem').innerText = `O preço informado está ${moeda === 'BRL' ? 'R$' : '$'} ${guru.diff.toFixed(2)} acima da média do mercado. Deseja continuar?`;
-                document.getElementById('modalGuru').classList.remove('hidden');
-                return;
-            }
-            await executarCriacao(pendingGuruData?.dados || {
-                fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('f_orig').value,
-                preco: precoFinal, moeda, quantidade: q,
-                condicao: tipo === 'Novo' ? 'Novo' : (tipo === 'CPO' ? 'CPO' : document.getElementById('f_cond').value),
-                saude_bateria: (tipo === 'Novo' || tipo === 'CPO') ? '' : document.getElementById('f_bat').value,
-                garantia: garantia,
-                aceita_pix: document.getElementById('m_pix').checked,
-                aceita_usdt: document.getElementById('m_usdt').checked,
-                aceita_proposta: document.getElementById('m_neg').checked,
-                faz_envio: document.getElementById('m_envi').checked,
-                aceita_coleta: document.getElementById('m_cole').checked,
-                emite_nota: document.getElementById('m_nota').checked,
-                status_aprovacao: 'aprovado',
-                cidade_aparelho: cidadeAparelho,
-                estado_aparelho: estadoAparelho
-            });
-            pendingGuruData = null;
-        }
-
-        async function executarCriacao(dados) {
-            await registrarAcao();
-            const { error } = await _s.from('ofertas').insert([dados]);
-            if (error) {
-                alert("ERRO DO BANCO DE DADOS:\n" + error.message + "\n\nVerifique se as colunas 'cidade_aparelho' e 'estado_aparelho' existem no seu Supabase!");
-                return;
-            }
-            window.location.reload();
-        }
-
-        function confirmarGuru() {
-            if (pendingGuruData) executarCriacao(pendingGuruData.dados);
-            document.getElementById('modalGuru').classList.add('hidden');
-        }
-        function cancelarGuru() {
-            pendingGuruData = null;
-            document.getElementById('modalGuru').classList.add('hidden');
-        }
-
-        // === TABELA DE OFERTAS ===
+        // === TABELA DE OFERTAS (COM ALERTA DE CANIBALIZAÇÃO RESTAURADO) ===
         async function upTab() {
             const filtro = document.getElementById('filtroTipoLista').value;
             let html = '';
+            
             ofertas.forEach(o => {
                 if (filtro && o.condicao !== filtro) return;
+
+                let alertaConcorrencia = '';
+                const concorrentes = todasOfertas.filter(g => 
+                    g.variacao_id === o.variacao_id && g.condicao === o.condicao && g.fornecedor_id !== loja.id && g.quantidade > 0
+                );
+
+                if (concorrentes.length > 0) {
+                    const menorPreco = Math.min(...concorrentes.map(c => c.preco));
+                    if (o.preco > menorPreco) {
+                        alertaConcorrencia = `
+                            <div class="text-[8px] text-red-500 font-bold mt-1 bg-red-900/20 px-2 py-0.5 rounded border border-red-500/30">
+                                ⚠️ PERDENDO VENDA: Há ofertas a R$ ${menorPreco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                            </div>`;
+                    }
+                }
+
                 html += `<tr>
                     <td><input type="checkbox" class="chk" value="${o.id}" onclick="upBulkCount()"></td>
                     <td>
@@ -960,14 +943,17 @@
                         <div class="text-[10px] text-gray-400">${o.variacoes?.cor}</div>
                         ${o.cidade_aparelho ? `<div class="text-[8px] text-gray-500">📍 ${o.cidade_aparelho}/${o.estado_aparelho}</div>` : ''}
                     </td>
-                    <td><span class="px-2 py-1 rounded-full text-[9px] ${o.condicao === 'Novo' ? 'bg-green-600' : o.condicao === 'CPO' ? 'bg-blue-600' : 'bg-yellow-600'}">${o.condicao}</span></td>
+                    <td><span class="px-2 py-1 rounded-full text-[9px] ${o.condicao === 'Novo' ? 'bg-green-600' : o.condicao === 'CPO' ? 'bg-blue-600' : 'bg-yellow-600'} text-white">${o.condicao}</span></td>
                     <td>${o.regioes?.bandeira || ''} ${o.regioes?.nome || ''}</td>
-                    <td><input type="number" class="w-16 bg-transparent border-b border-dashed border-gray-500 text-center" value="${o.quantidade}" min="0" onblur="edit(${o.id}, 'quantidade', this.value)"></td>
-                    <td class="font-mono">${o.moeda === 'BRL' ? 'R$' : '$'} <input type="text" class="w-20 bg-transparent border-b border-dashed border-gray-500 text-center" value="${o.preco.toFixed(2).replace('.', ',')}" oninput="mascara(this)" onblur="edit(${o.id}, 'preco', this.value)"></td>
+                    <td><input type="number" class="w-16 bg-transparent border-b border-dashed border-gray-500 text-center text-white" value="${o.quantidade}" min="0" onblur="edit(${o.id}, 'quantidade', this.value)"></td>
+                    <td class="font-mono text-white">
+                        ${o.moeda === 'BRL' ? 'R$' : '$'} <input type="text" class="w-20 bg-transparent border-b border-dashed border-gray-500 text-center text-white" value="${o.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}" oninput="mascara(this)" onblur="edit(${o.id}, 'preco', this.value)">
+                        ${alertaConcorrencia}
+                    </td>
                     <td>
-                        <button onclick="abrirModalEditar(${o.id})" class="text-blue-400 text-xs mr-2"><i class="fas fa-edit"></i></button>
-                        <button onclick="abrirModalDuplicar(${o.id})" class="text-green-400 text-xs mr-2"><i class="fas fa-copy"></i></button>
-                        <button onclick="del(${o.id})" class="text-red-400 text-xs"><i class="fas fa-trash"></i></button>
+                        <button onclick="abrirModalEditar(${o.id})" class="text-blue-400 text-xs mr-2 hover:text-blue-300"><i class="fas fa-edit"></i></button>
+                        <button onclick="abrirModalDuplicar(${o.id})" class="text-green-400 text-xs mr-2 hover:text-green-300"><i class="fas fa-copy"></i></button>
+                        <button onclick="del(${o.id})" class="text-red-400 text-xs hover:text-red-300"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>`;
             });
@@ -982,7 +968,7 @@
             });
         }
 
-        // === FUNÇÃO EDIT (SUBSTITUÍDA) ===
+        // === FUNÇÃO EDIT ===
         async function edit(id, campo, valor) {
             let val = campo === 'preco' ? parseP(valor) : parseInt(valor);
             if (isNaN(val) || val < 0) val = 0;
@@ -990,21 +976,18 @@
             const ofertaAtual = ofertas.find(o => o.id === id);
             if (!ofertaAtual) return;
 
-            // Se for alteração de preço, dispara o Guru da Canibalização
             if (campo === 'preco') {
                 const guru = await verificarPrecoGuru(ofertaAtual.variacoes.produto_id, ofertaAtual.variacoes.capacidade, val, ofertaAtual.moeda);
                 if (guru && !confirm(`⚠️ ALERTA DE CANIBALIZAÇÃO: \nO seu preço está fora da média do mercado (Diferença de ${guru.diff.toFixed(2)}). Deseja aplicar mesmo assim?`)) {
-                    upTab(); // Cancela e volta o valor antigo na tela
+                    upTab();
                     return;
                 }
             }
 
-            // Atualiza a oferta e força o updated_at para o Master ver que o Lojista está online
             const agora = new Date().toISOString();
             await _s.from('ofertas').update({ [campo]: val, atualizado_em: agora }).eq('id', id);
-            await _s.from('fornecedores').update({ updated_at: agora }).eq('id', loja.id); // Força bolinha verde no Master
+            await _s.from('fornecedores').update({ updated_at: agora }).eq('id', loja.id);
             
-            // Recarrega silenciosamente os dados para refletir imediatamente
             const { data } = await _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), regioes(*)').eq('fornecedor_id', loja.id).order('criado_em', { ascending: false });
             ofertas = data || [];
             upTab();
@@ -1034,7 +1017,7 @@
             }
         }
 
-        // === LISTA WHATSAPP (DEFINITIVA) ===
+        // === LISTA WHATSAPP ===
         async function copiarListaWhatsApp() {
             let ativas = ofertas.filter(o => o.quantidade > 0);
             if (!ativas.length) return alert('Lista vazia.');
@@ -1252,152 +1235,127 @@
             document.getElementById('bulkCor').disabled = false;
         }
 
+        // === NOVAS FUNÇÕES PARA ABRIR E SALVAR EDIÇÃO/DUPLICAÇÃO ===
+        function prepararModalEdDup(oferta, prefix) {
+            document.getElementById(`${prefix}Id`).value = oferta.id;
+            document.getElementById(`${prefix}Modelo`).value = oferta.variacoes?.produto_id || '';
+            if (prefix === 'edit') editCarregarMemoria(); else dupCarregarMemoria();
+            setTimeout(() => {
+                document.getElementById(`${prefix}Capacidade`).value = oferta.variacoes?.capacidade || '';
+                if (prefix === 'edit') editCarregarCor(); else dupCarregarCor();
+                setTimeout(() => { document.getElementById(`${prefix}Cor`).value = oferta.variacoes?.cor || ''; }, 50);
+            }, 50);
+            
+            document.getElementById(`${prefix}Condicao`).value = oferta.condicao;
+            toggleCondicaoModal(oferta.condicao, prefix);
+            
+            document.getElementById(`${prefix}Bateria`).value = oferta.saude_bateria || '';
+            document.getElementById(`${prefix}Garantia`).value = oferta.garantia || '';
+            document.getElementById(`${prefix}Origem`).value = oferta.regiao_id || '';
+            document.getElementById(`${prefix}Quantidade`).value = oferta.quantidade;
+            
+            if (oferta.moeda === 'USD') {
+                document.getElementById(`${prefix}Usd`).value = oferta.preco.toFixed(2).replace('.', ',');
+                document.getElementById(`${prefix}Brl`).value = '';
+            } else {
+                document.getElementById(`${prefix}Brl`).value = oferta.preco.toFixed(2).replace('.', ',');
+                document.getElementById(`${prefix}Usd`).value = '';
+            }
+            
+            ['Pix','Usdt','Negocia','Envio','Coleta','Nota'].forEach(c => {
+                const el = document.getElementById(`${prefix}${c}`);
+                if (el) el.checked = oferta[`aceita_${c.toLowerCase().replace('negocia','proposta')}`] || false;
+            });
+
+            if (oferta.cidade_aparelho && oferta.estado_aparelho) {
+                document.getElementById(`${prefix}LocalOrigem`).checked = false;
+                document.getElementById(`${prefix}LocAlt`).classList.remove('hidden');
+                document.getElementById(`${prefix}EstadoAparelho`).value = oferta.estado_aparelho;
+                carregarCidadesDinamico(oferta.estado_aparelho, `${prefix}CidadeAparelho`).then(() => {
+                    document.getElementById(`${prefix}CidadeAparelho`).value = oferta.cidade_aparelho;
+                });
+            } else {
+                document.getElementById(`${prefix}LocalOrigem`).checked = true;
+                document.getElementById(`${prefix}LocAlt`).classList.add('hidden');
+                document.getElementById(`${prefix}EstadoAparelho`).value = '';
+                document.getElementById(`${prefix}CidadeAparelho`).innerHTML = '<option value="">Selecione a cidade</option>';
+            }
+        }
+
         function abrirModalEditar(ofertaId) {
             let oferta = ofertas.find(o => o.id == ofertaId);
             if (!oferta) return;
-            document.getElementById('editId').value = oferta.id;
-            document.getElementById('editModelo').value = oferta.variacoes?.produto_id || '';
-            editCarregarMemoria();
-            setTimeout(() => {
-                document.getElementById('editCapacidade').value = oferta.variacoes?.capacidade || '';
-                editCarregarCor();
-                setTimeout(() => {
-                    document.getElementById('editCor').value = oferta.variacoes?.cor || '';
-                }, 50);
-            }, 50);
-            document.getElementById('editCondicao').value = oferta.condicao;
-            document.getElementById('editBateria').value = oferta.saude_bateria || '';
-            document.getElementById('editGarantia').value = oferta.garantia || '';
-            document.getElementById('editOrigem').value = oferta.regiao_id || '';
-            document.getElementById('editQuantidade').value = oferta.quantidade;
-            if (oferta.moeda === 'USD') {
-                document.getElementById('editUsd').value = oferta.preco.toFixed(2).replace('.', ',');
-                document.getElementById('editBrl').value = '';
-            } else {
-                document.getElementById('editBrl').value = oferta.preco.toFixed(2).replace('.', ',');
-                document.getElementById('editUsd').value = '';
-            }
-            document.getElementById('editPix').checked = oferta.aceita_pix || false;
-            document.getElementById('editUsdt').checked = oferta.aceita_usdt || false;
-            document.getElementById('editNegocia').checked = oferta.aceita_proposta || false;
-            document.getElementById('editEnvio').checked = oferta.faz_envio || false;
-            document.getElementById('editColeta').checked = oferta.aceita_coleta || false;
-            document.getElementById('editNota').checked = oferta.emite_nota || false;
+            prepararModalEdDup(oferta, 'edit');
             document.getElementById('modalEditar').classList.remove('hidden');
         }
-        function fecharModalEditar() { document.getElementById('modalEditar').classList.add('hidden'); }
 
         function abrirModalDuplicar(ofertaId) {
             let oferta = ofertas.find(o => o.id == ofertaId);
             if (!oferta) return;
-            document.getElementById('dupId').value = oferta.id;
-            document.getElementById('dupModelo').value = oferta.variacoes?.produto_id || '';
-            dupCarregarMemoria();
-            setTimeout(() => {
-                document.getElementById('dupCapacidade').value = oferta.variacoes?.capacidade || '';
-                dupCarregarCor();
-                setTimeout(() => {
-                    document.getElementById('dupCor').value = oferta.variacoes?.cor || '';
-                }, 50);
-            }, 50);
-            document.getElementById('dupCondicao').value = oferta.condicao;
-            document.getElementById('dupBateria').value = oferta.saude_bateria || '';
-            document.getElementById('dupGarantia').value = oferta.garantia || '';
-            document.getElementById('dupOrigem').value = oferta.regiao_id || '';
-            document.getElementById('dupQuantidade').value = oferta.quantidade;
-            if (oferta.moeda === 'USD') {
-                document.getElementById('dupUsd').value = oferta.preco.toFixed(2).replace('.', ',');
-                document.getElementById('dupBrl').value = '';
-            } else {
-                document.getElementById('dupBrl').value = oferta.preco.toFixed(2).replace('.', ',');
-                document.getElementById('dupUsd').value = '';
-            }
-            document.getElementById('dupPix').checked = oferta.aceita_pix || false;
-            document.getElementById('dupUsdt').checked = oferta.aceita_usdt || false;
-            document.getElementById('dupNegocia').checked = oferta.aceita_proposta || false;
-            document.getElementById('dupEnvio').checked = oferta.faz_envio || false;
-            document.getElementById('dupColeta').checked = oferta.aceita_coleta || false;
-            document.getElementById('dupNota').checked = oferta.emite_nota || false;
+            prepararModalEdDup(oferta, 'dup');
             document.getElementById('modalDuplicar').classList.remove('hidden');
         }
-        function fecharModalDuplicar() { document.getElementById('modalDuplicar').classList.add('hidden'); }
 
-        async function salvarEdicao(e) {
+        async function processarSubmitEdDup(e, prefix) {
             e.preventDefault();
-            let id = document.getElementById('editId').value;
-            let modelo = document.getElementById('editModelo').value;
-            let cap = document.getElementById('editCapacidade').value;
-            let cor = document.getElementById('editCor').value;
+            let id = document.getElementById(`${prefix}Id`).value;
+            let modelo = document.getElementById(`${prefix}Modelo`).value;
+            let cap = document.getElementById(`${prefix}Capacidade`).value;
+            let cor = document.getElementById(`${prefix}Cor`).value;
             let v = variacoes.find(x => x.produto_id == modelo && x.capacidade == cap && x.cor == cor);
             if (!v) return alert('Variação inválida');
-            let isBrl = document.getElementById('editBrl').value.length > 0;
-            let preco = isBrl ? parseP(document.getElementById('editBrl').value) : parseP(document.getElementById('editUsd').value);
+            
+            let isBrl = document.getElementById(`${prefix}Brl`).value.length > 0;
+            let preco = isBrl ? parseP(document.getElementById(`${prefix}Brl`).value) : parseP(document.getElementById(`${prefix}Usd`).value);
             let moeda = isBrl ? 'BRL' : 'USD';
-            let q = parseInt(document.getElementById('editQuantidade').value) || 0;
+            let q = parseInt(document.getElementById(`${prefix}Quantidade`).value) || 0;
+            let cond = document.getElementById(`${prefix}Condicao`).value;
+
+            let garantia = (cond === 'Novo' || cond === 'CPO') ? '1 ANO APPLE' : document.getElementById(`${prefix}Garantia`).value;
+            let bateria = (cond === 'Novo' || cond === 'CPO') ? null : document.getElementById(`${prefix}Bateria`).value;
+
+            let cidadeAparelho = null, estadoAparelho = null;
+            if (!document.getElementById(`${prefix}LocalOrigem`).checked) {
+                cidadeAparelho = document.getElementById(`${prefix}CidadeAparelho`).value;
+                estadoAparelho = document.getElementById(`${prefix}EstadoAparelho`).value;
+                if (!cidadeAparelho || !estadoAparelho) return alert('Selecione a cidade e estado onde o aparelho se encontra');
+            }
 
             const guru = await verificarPrecoGuru(modelo, cap, preco, moeda);
-            if (guru && !confirm(`Preço fora da média. Deseja continuar?`)) return;
+            if (guru && !confirm(`⚠️ ALERTA DE CANIBALIZAÇÃO:\nSeu preço está R$ ${guru.diff.toFixed(2)} fora da média do mercado. Deseja continuar?`)) return;
 
-            let updates = {
-                variacao_id: v.id,
-                regiao_id: document.getElementById('editOrigem').value,
-                preco, moeda, quantidade: q,
-                condicao: document.getElementById('editCondicao').value,
-                saude_bateria: document.getElementById('editBateria').value || null,
-                garantia: document.getElementById('editGarantia').value || null,
-                aceita_pix: document.getElementById('editPix').checked,
-                aceita_usdt: document.getElementById('editUsdt').checked,
-                aceita_proposta: document.getElementById('editNegocia').checked,
-                faz_envio: document.getElementById('editEnvio').checked,
-                aceita_coleta: document.getElementById('editColeta').checked,
-                emite_nota: document.getElementById('editNota').checked
+            let payload = {
+                variacao_id: v.id, regiao_id: document.getElementById(`${prefix}Origem`).value,
+                preco, moeda, quantidade: q, condicao: cond, saude_bateria: bateria, garantia,
+                cidade_aparelho: cidadeAparelho, estado_aparelho: estadoAparelho,
+                aceita_pix: document.getElementById(`${prefix}Pix`).checked,
+                aceita_usdt: document.getElementById(`${prefix}Usdt`).checked,
+                aceita_proposta: document.getElementById(`${prefix}Negocia`).checked,
+                faz_envio: document.getElementById(`${prefix}Envio`).checked,
+                aceita_coleta: document.getElementById(`${prefix}Coleta`).checked,
+                emite_nota: document.getElementById(`${prefix}Nota`).checked
             };
-            await _s.from('ofertas').update(updates).eq('id', id);
-            fecharModalEditar();
-            upTab();
-        }
 
-        async function duplicarOferta(e) {
-            e.preventDefault();
-            let modelo = document.getElementById('dupModelo').value;
-            let cap = document.getElementById('dupCapacidade').value;
-            let cor = document.getElementById('dupCor').value;
-            let v = variacoes.find(x => x.produto_id == modelo && x.capacidade == cap && x.cor == cor);
-            if (!v) return alert('Variação inválida');
-            let isBrl = document.getElementById('dupBrl').value.length > 0;
-            let preco = isBrl ? parseP(document.getElementById('dupBrl').value) : parseP(document.getElementById('dupUsd').value);
-            let moeda = isBrl ? 'BRL' : 'USD';
-            let q = parseInt(document.getElementById('dupQuantidade').value) || 0;
-
-            const guru = await verificarPrecoGuru(modelo, cap, preco, moeda);
-            if (guru && !confirm(`Preço fora da média. Continuar?`)) return;
-
-            await registrarAcao();
-            await _s.from('ofertas').insert([{
-                fornecedor_id: loja.id,
-                variacao_id: v.id,
-                regiao_id: document.getElementById('dupOrigem').value,
-                preco, moeda, quantidade: q,
-                condicao: document.getElementById('dupCondicao').value,
-                saude_bateria: document.getElementById('dupBateria').value || null,
-                garantia: document.getElementById('dupGarantia').value || null,
-                aceita_pix: document.getElementById('dupPix').checked,
-                aceita_usdt: document.getElementById('dupUsdt').checked,
-                aceita_proposta: document.getElementById('dupNegocia').checked,
-                faz_envio: document.getElementById('dupEnvio').checked,
-                aceita_coleta: document.getElementById('dupColeta').checked,
-                emite_nota: document.getElementById('dupNota').checked,
-                status_aprovacao: 'aprovado'
-            }]);
-            fecharModalDuplicar();
+            if (prefix === 'edit') {
+                await _s.from('ofertas').update(payload).eq('id', id);
+                document.getElementById('modalEditar').classList.add('hidden');
+            } else {
+                payload.fornecedor_id = loja.id;
+                payload.status_aprovacao = 'aprovado';
+                await registrarAcao();
+                await _s.from('ofertas').insert([payload]);
+                document.getElementById('modalDuplicar').classList.add('hidden');
+            }
             window.location.reload();
         }
 
-        // === FUNÇÃO ATUALIZAR INSÍGNIAS ===
+        function salvarEdicao(e) { processarSubmitEdDup(e, 'edit'); }
+        function duplicarOferta(e) { processarSubmitEdDup(e, 'dup'); }
+
+        // === INSÍGNIAS ===
         function atualizarInsignias() {
             let html = '';
             
-            // 1. Puxar Insígnias Manuais (Atribuídas pelo Master)
             let manuais = [];
             try {
                 if (Array.isArray(loja.insignia_manual)) manuais = loja.insignia_manual;
@@ -1408,7 +1366,6 @@
                 html += `<span class="bg-blue-900/30 text-blue-400 border border-blue-500 px-3 py-1 rounded-full text-[8px] font-black">${ins}</span>`;
             });
 
-            // 2. Calcular Insígnias Automáticas (Por Estoque)
             let t = ofertas.reduce((a, b) => a + (b.quantidade || 0), 0);
             if (t >= 1000) html += '<span class="bg-purple-600 text-white px-3 py-1 rounded-full text-[8px] font-black">👑 1.000+ KHALIFA</span>';
             else if (t >= 700) html += '<span class="bg-purple-500 text-white px-3 py-1 rounded-full text-[8px] font-black">🏆 700+ SULTÃO</span>';
@@ -1422,6 +1379,7 @@
             document.getElementById('userInsignias').innerHTML = html;
         }
 
+        // === CALCULADORA ===
         function calcularImportacao() {
             let usd = parseFloat(document.getElementById('calcUsd').value) || 0;
             let r = rate + 0.06;
@@ -1499,6 +1457,8 @@
         window.filtrarMeusAnuncios = filtrarMeusAnuncios;
         window.abrirModalHorus = abrirModalHorus;
         window.filtrarHorus = filtrarHorus;
+        window.toggleCondicaoModal = toggleCondicaoModal;
+        window.carregarCidadesDinamico = carregarCidadesDinamico;
     </script>
 </body>
 </html>
