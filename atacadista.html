@@ -122,34 +122,34 @@
         </div>
     </div>
 
-    <!-- NAVBAR DEFINITIVA (COM BOTÃO SAIR) -->
+    <!-- NAVBAR ATUALIZADA COM SUPORTE E SUGESTÕES SEMPRE VISÍVEIS -->
     <nav class="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-[#38383a] px-4 py-3 flex justify-between items-center z-50">
         <div class="flex items-center gap-3">
             <button class="text-2xl text-gray-400 lg:hidden" onclick="abrirDrawer()">☰</button>
             <h1 class="text-xl font-black italic text-white">iFipe</h1>
-            <span class="text-[10px] text-blue-400 font-bold border-l border-[#38383a] pl-2 whitespace-nowrap" id="nomeLojaHeader">CARREGANDO...</span>
+            <span class="text-xs text-blue-400 font-bold border-l border-[#38383a] pl-2" id="nomeLojaHeader">CARREGANDO...</span>
         </div>
-        <div class="flex items-center gap-2 flex-wrap justify-end">
+        <div class="flex items-center gap-3 flex-wrap justify-end">
             <a href="https://wa.me/556896003049" target="_blank" class="text-green-500 hover:text-green-400 text-[10px] font-bold flex items-center gap-1" title="Suporte">
-                <i class="fab fa-whatsapp text-sm"></i> <span class="hidden md:inline">SUPORTE</span>
+                <i class="fab fa-whatsapp text-sm"></i> <span>SUPORTE</span>
             </a>
             <button onclick="abrirSugestao()" class="text-purple-500 hover:text-purple-400 text-[10px] font-bold flex items-center gap-1" title="Sugerir Melhoria">
-                💡 <span class="hidden md:inline">SUGESTÕES</span>
+                💡 <span>SUGESTÕES</span>
             </button>
-            <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 text-[9px] px-3 py-1 rounded-full flex items-center gap-1 whitespace-nowrap">
+            <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1">
                 👁️‍🗨️ HORUS O OLHO QUE MENOR PREÇO VÊ
             </button>
-            <button onclick="window.open('gestor_seth.html', '_blank')" class="bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">
+            <button onclick="window.open('gestor_seth.html', '_blank')" class="bg-blue-600 text-white px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1">
                 7️⃣ GESTOR SETH
             </button>
-            <span onclick="abrirSino()" class="cursor-pointer text-xl hover:opacity-80 relative ml-1" title="Propostas e Avisos">
+            <span onclick="abrirSino()" class="cursor-pointer text-xl hover:opacity-80 relative" title="Propostas e Avisos">
                 🔔<span id="badgeSino" class="hidden absolute -top-1 -right-2 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
             </span>
-            <button onclick="abrirConta()" class="text-xs border border-[#38383a] px-3 py-1 rounded-full flex items-center gap-1">
-                <i class="fas fa-user"></i> <span class="hidden lg:inline">CONTA</span>
+            <button onclick="abrirConta()" class="text-xs border border-[#38383a] px-3 py-1.5 rounded-full flex items-center gap-1">
+                <i class="fas fa-user"></i> <span class="hidden lg:inline">Conta</span>
             </button>
-            <button onclick="logout()" class="text-red-500 font-black text-xs hover:underline flex items-center gap-1 ml-2 border border-red-500/30 px-3 py-1 rounded-full bg-red-900/20" title="Sair do Sistema">
-                <i class="fas fa-sign-out-alt"></i> SAIR
+            <button onclick="logout()" class="text-red-500 font-black text-xs hover:underline flex items-center gap-1 ml-2" title="Sair do Sistema">
+                <i class="fas fa-sign-out-alt"></i> <span class="hidden lg:inline">SAIR</span>
             </button>
         </div>
     </nav>
@@ -365,10 +365,13 @@
         </div>
     </div>
 
-    <!-- MODAL EDIÇÃO COMPLETA -->
+    <!-- MODAL EDIÇÃO COMPLETA (COM BOTÃO FECHAR) -->
     <div id="modalEditar" class="hidden modal-overlay">
         <div class="modal-content max-w-xl">
-            <h3 class="text-lg font-bold mb-4">✏️ Editar Anúncio</h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">✏️ Editar Anúncio</h3>
+                <button type="button" onclick="fecharModalEditar()" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
+            </div>
             <form onsubmit="salvarEdicao(event)" id="formEditar">
                 <input type="hidden" id="editId">
                 <div class="grid grid-cols-2 gap-2 mb-2">
@@ -605,7 +608,7 @@
         </div>
     </div>
 
-    <!-- MODAL PROPOSTAS (ATUALIZADO) -->
+    <!-- MODAL PROPOSTAS -->
     <div id="propostasModal" class="hidden modal-overlay">
         <div class="modal-content max-w-2xl w-full">
             <div class="flex justify-between items-center mb-4">
@@ -658,7 +661,7 @@
             logout();
         }
 
-        // === GURU PRICE CHECK ===
+        // === GURU PRICE CHECK (NOVA VERSÃO: RETORNA O MENOR CONCORRENTE) ===
         async function verificarPrecoGuru(produtoId, capacidade, preco, moeda) {
             if (!loja) return false;
             const { data } = await _s
@@ -666,14 +669,19 @@
                 .select('preco, moeda, fornecedor_id, variacoes!inner(produto_id, capacidade)')
                 .not('fornecedor_id', 'eq', loja.id)
                 .gt('quantidade', 0);
+            
             const ofertasSimilares = (data || []).filter(o => 
                 o.variacoes?.produto_id == produtoId && o.variacoes?.capacidade == capacidade
             );
             if (ofertasSimilares.length === 0) return false;
-            const media = ofertasSimilares.reduce((s, o) => s + o.preco, 0) / ofertasSimilares.length;
-            const diff = Math.abs(preco - media);
-            const limite = moeda === 'BRL' ? (loja.verificado ? 1400 : 700) : (loja.verificado ? 200 : 100);
-            return diff > limite ? { media, diff } : false;
+            
+            const menorPreco = Math.min(...ofertasSimilares.map(o => o.preco));
+            const diff = preco - menorPreco;
+            // Se o nosso preço for maior que o menor concorrente, retorna os dados para alertar
+            if (diff > 0) {
+                return { menor: menorPreco, diff: diff };
+            }
+            return false;
         }
 
         // === SUGESTÕES ===
@@ -975,7 +983,7 @@
             });
         }
 
-        // === FUNÇÃO EDIT (ATUALIZADA COM ALERTA GURU) ===
+        // === FUNÇÃO EDIT (ATUALIZADA) ===
         async function edit(id, campo, valor) {
             let val = campo === 'preco' ? parseP(valor) : parseInt(valor);
             if (isNaN(val) || val < 0) val = 0;
@@ -983,29 +991,36 @@
             const ofertaAtual = ofertas.find(o => o.id === id);
             if (!ofertaAtual) return;
 
-            // Alerta de Canibalização (Bloqueio Dinâmico)
+            // Alerta Guru (Canibalização na edição da tabela)
             if (campo === 'preco') {
                 const guru = await verificarPrecoGuru(ofertaAtual.variacoes.produto_id, ofertaAtual.variacoes.capacidade, val, ofertaAtual.moeda);
-                if (guru && !confirm(`⚠️ ALERTA GURU:\nO seu preço está R$ ${guru.diff.toFixed(2)} acima/abaixo da média do mercado.\nDeseja aplicar mesmo assim?`)) {
-                    upTab(); // Reverte a alteração na tela
-                    return;
+                if (guru) {
+                    if (!confirm(`⚠️ ALERTA DE CANIBALIZAÇÃO:\nO menor preço do mercado é R$ ${guru.menor.toFixed(2)} (Você está R$ ${guru.diff.toFixed(2)} mais caro).\nDeseja salvar mesmo assim?`)) {
+                        upTab(); // Cancela edição visual
+                        return;
+                    }
                 }
             }
 
-            // Atualiza a Oferta e avisa o Master (Atualizando a data da loja)
+            // Salvar no Banco
             const agora = new Date().toISOString();
-            await _s.from('ofertas').update({ [campo]: val, atualizado_em: agora }).eq('id', id);
-            await _s.from('fornecedores').update({ updated_at: agora }).eq('id', loja.id);
+            const { error } = await _s.from('ofertas').update({ [campo]: val, atualizado_em: agora }).eq('id', id);
             
-            // Recarrega a tabela de forma invisível para refletir tudo
+            if (error) {
+                alert("Erro ao salvar: " + error.message);
+                return;
+            }
+            
+            await _s.from('fornecedores').update({ updated_at: agora }).eq('id', loja.id); // Força online no Master
+            
+            // Recarregar dados para refletir
             const [oGlobal, oLocal] = await Promise.all([
                 _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), fornecedores(verificado)').gt('quantidade', 0),
                 _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), regioes(*)').eq('fornecedor_id', loja.id).order('criado_em', { ascending: false })
             ]);
             todasOfertas = oGlobal.data || [];
             ofertas = oLocal.data || [];
-            
-            upTab(); // Redesenha a tela com a tarja de "PERDENDO VENDA" se necessário
+            upTab();
         }
 
         async function del(id) {
@@ -1337,7 +1352,7 @@
             }
 
             const guru = await verificarPrecoGuru(modelo, cap, preco, moeda);
-            if (guru && !confirm(`⚠️ ALERTA DE CANIBALIZAÇÃO:\nSeu preço está R$ ${guru.diff.toFixed(2)} fora da média do mercado. Deseja continuar?`)) return;
+            if (guru && !confirm(`⚠️ ALERTA DE CANIBALIZAÇÃO:\nO menor preço do mercado é R$ ${guru.menor.toFixed(2)} (Você está R$ ${guru.diff.toFixed(2)} mais caro).\nDeseja continuar?`)) return;
 
             let payload = {
                 variacao_id: v.id, regiao_id: document.getElementById(`${prefix}Origem`).value,
@@ -1366,6 +1381,74 @@
 
         function salvarEdicao(e) { processarSubmitEdDup(e, 'edit'); }
         function duplicarOferta(e) { processarSubmitEdDup(e, 'dup'); }
+
+        // === NOVA FUNÇÃO doPost (SUBSTITUÍDA) ===
+        async function doPost(e) {
+            e.preventDefault();
+            let tipo = document.getElementById('f_tipo').value;
+            if (!tipo) return alert('Selecione o tipo do produto');
+            let v = variacoes.find(x => x.produto_id == document.getElementById('f_mod').value && x.capacidade == document.getElementById('f_cap').value && x.cor == document.getElementById('f_cor').value);
+            if (!v) return alert('Variação inválida');
+            let isBrl = document.getElementById('f_brl').value.length > 0;
+            let precoFinal = isBrl ? parseP(document.getElementById('f_brl').value) : parseP(document.getElementById('f_usd').value);
+            let moeda = isBrl ? 'BRL' : 'USD';
+            let q = parseInt(document.getElementById('f_qtd').value) || 0;
+
+            let garantia = (tipo === 'Novo' || tipo === 'CPO') ? '1 ANO APPLE' : document.getElementById('f_gar').value;
+            if (!garantia && tipo !== 'Novo' && tipo !== 'CPO') return alert('Selecione a garantia');
+
+            let cidadeAparelho = null, estadoAparelho = null;
+            if (!document.getElementById('localOrigem').checked) {
+                cidadeAparelho = document.getElementById('cidadeAparelho').value;
+                estadoAparelho = document.getElementById('estadoAparelho').value;
+                if (!cidadeAparelho || !estadoAparelho) return alert('Selecione a cidade e estado onde o aparelho se encontra');
+            }
+
+            const guru = await verificarPrecoGuru(v.produto_id, v.capacidade, precoFinal, moeda);
+            let confirmacao = true;
+            if (guru) {
+                confirmacao = confirm(`⚠️ ALERTA GURU:\nO menor preço do mercado é R$ ${guru.menor.toFixed(2)} (Você está R$ ${guru.diff.toFixed(2)} mais caro).\nDeseja postar mesmo assim?`);
+            }
+            
+            if (confirmacao) {
+                let payload = {
+                    fornecedor_id: loja.id, variacao_id: v.id, regiao_id: document.getElementById('f_orig').value,
+                    preco: precoFinal, moeda, quantidade: q,
+                    condicao: tipo === 'Novo' ? 'Novo' : (tipo === 'CPO' ? 'CPO' : document.getElementById('f_cond').value),
+                    saude_bateria: (tipo === 'Novo' || tipo === 'CPO') ? null : document.getElementById('f_bat').value,
+                    garantia: garantia,
+                    aceita_pix: document.getElementById('m_pix').checked,
+                    aceita_usdt: document.getElementById('m_usdt').checked,
+                    aceita_proposta: document.getElementById('m_neg').checked,
+                    faz_envio: document.getElementById('m_envi').checked,
+                    aceita_coleta: document.getElementById('m_cole').checked,
+                    emite_nota: document.getElementById('m_nota').checked,
+                    status_aprovacao: 'aprovado',
+                    cidade_aparelho: cidadeAparelho || null,
+                    estado_aparelho: estadoAparelho || null
+                };
+                await executarCriacao(payload);
+            }
+        }
+
+        async function executarCriacao(dados) {
+            await registrarAcao();
+            const { error } = await _s.from('ofertas').insert([dados]);
+            if (error) {
+                alert("ERRO DO BANCO DE DADOS:\n" + error.message + "\n\nVerifique se as colunas 'cidade_aparelho' e 'estado_aparelho' existem no seu Supabase!");
+                return;
+            }
+            window.location.reload();
+        }
+
+        function confirmarGuru() {
+            if (pendingGuruData) executarCriacao(pendingGuruData.dados);
+            document.getElementById('modalGuru').classList.add('hidden');
+        }
+        function cancelarGuru() {
+            pendingGuruData = null;
+            document.getElementById('modalGuru').classList.add('hidden');
+        }
 
         // === INSÍGNIAS ===
         function atualizarInsignias() {
