@@ -122,7 +122,7 @@
         </div>
     </div>
 
-    <!-- NAVBAR ATUALIZADA -->
+    <!-- NAVBAR CORRIGIDA (BOTÕES SEMPRE VISÍVEIS) -->
     <nav class="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-[#38383a] px-4 py-3 flex justify-between items-center z-50">
         <div class="flex items-center gap-3">
             <button class="text-2xl text-gray-400 lg:hidden" onclick="abrirDrawer()">☰</button>
@@ -130,8 +130,8 @@
             <span class="text-xs text-blue-400 font-bold border-l border-[#38383a] pl-2" id="nomeLojaHeader">CARREGANDO...</span>
         </div>
         <div class="flex items-center gap-3">
-            <a href="https://wa.me/556896003049" target="_blank" class="text-green-500 hover:text-green-400 text-lg hidden md:block" title="Suporte"><i class="fab fa-whatsapp"></i></a>
-            <button onclick="abrirSugestao()" class="text-purple-500 hover:text-purple-400 text-lg hidden md:block" title="Sugerir Melhoria">💡</button>
+            <a href="https://wa.me/556896003049" target="_blank" class="text-green-500 hover:text-green-400 text-lg" title="Suporte"><i class="fab fa-whatsapp"></i></a>
+            <button onclick="abrirSugestao()" class="text-purple-500 hover:text-purple-400 text-lg" title="Sugerir Melhoria">💡</button>
             <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1 whitespace-nowrap">
                 👁️‍🗨️ <span class="hidden sm:inline">HORUS O OLHO QUE MENOR PREÇO VÊ</span><span class="sm:hidden">HORUS</span>
             </button>
@@ -327,7 +327,7 @@
         </div>
     </div>
 
-    <!-- MODAL HORUS (ATUALIZADO) -->
+    <!-- MODAL HORUS -->
     <div id="modalHorus" class="hidden modal-overlay">
         <div class="modal-content max-w-3xl w-full">
             <div class="flex justify-between items-center mb-4">
@@ -561,16 +561,20 @@
         </div>
     </div>
 
-    <!-- MODAL PROPOSTAS -->
+    <!-- MODAL PROPOSTAS (ATUALIZADO COM BOTÃO FECHAR) -->
     <div id="propostasModal" class="hidden modal-overlay">
-        <div class="modal-content max-w-2xl">
+        <div class="modal-content max-w-2xl w-full">
             <h3 class="text-lg font-bold mb-2">📬 Propostas Recebidas</h3>
             <div class="flex border-b border-[#38383a] mb-4">
                 <button id="tabPendentes" class="flex-1 py-2 text-center text-xs font-bold text-yellow-500 border-b-2 border-yellow-500" onclick="mostrarAba('pendentes')">PENDENTES</button>
                 <button id="tabRespondidas" class="flex-1 py-2 text-center text-xs font-bold text-gray-500" onclick="mostrarAba('respondidas')">RESPONDIDAS</button>
             </div>
-            <div id="listaPendentes" class="space-y-3 max-h-96 overflow-y-auto"></div>
-            <div id="listaRespondidas" class="space-y-3 max-h-96 overflow-y-auto hidden"></div>
+            <div id="listaPendentes" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
+            <div id="listaRespondidas" class="space-y-3 max-h-80 overflow-y-auto pr-2 hidden"></div>
+            
+            <div class="flex gap-3 mt-4 pt-4 border-t border-[#38383a]">
+                <button onclick="fecharSino()" class="bg-zinc-700 text-white w-full p-3 rounded-lg text-sm font-bold hover:bg-zinc-600">FECHAR PAINEL</button>
+            </div>
         </div>
     </div>
 
@@ -641,7 +645,7 @@
             document.getElementById('sugestaoMensagem').value = '';
         }
 
-        // === HORUS REAL (SUBSTITUÍDO) ===
+        // === HORUS REAL ===
         async function abrirModalHorus() {
             const { data: globalOfertas, error } = await _s
                 .from('ofertas')
@@ -701,7 +705,7 @@
             });
         }
 
-        // === DADOS INICIAIS (COM LOGIN BLINDADO MASTER/ATACADISTA) ===
+        // === DADOS INICIAIS (COM FILTRO DE PAÍSES CORRIGIDO) ===
         window.onload = async () => {
             const tokenAta = localStorage.getItem('iFipe_Anunciante');
             const masterAuth = localStorage.getItem('iFipe_Master_Auth');
@@ -743,10 +747,10 @@
             produtos = p.data || [];
             variacoes = v.data || [];
 
+            // FILTRO DE PAÍSES CORRIGIDO
             const origensPermitidas = ['BRASIL ANATEL', 'CHINA', 'ÍNDIA', 'CANADÁ', 'JAPÃO', 'EUA'];
             regioes = (r.data || []).filter(reg => {
-                const nome = reg.nome.toUpperCase().replace(/[ÁÀÃÂ]/g,'A').replace(/[Í]/g,'I');
-                return origensPermitidas.some(origem => nome.includes(origem));
+                return origensPermitidas.includes(reg.nome.toUpperCase());
             });
 
             ofertas = o.data || [];
@@ -919,7 +923,6 @@
             pendingGuruData = null;
         }
 
-        // === BLINDAGEM DE INSERÇÃO (SUBSTITUÍDA) ===
         async function executarCriacao(dados) {
             await registrarAcao();
             const { error } = await _s.from('ofertas').insert([dados]);
