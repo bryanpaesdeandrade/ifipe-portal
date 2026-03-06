@@ -34,20 +34,21 @@
         .master-view.active { display: block; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
         .hidden { display: none !important; }
-        #scrollTopBtn { opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 9999; position: fixed; bottom: 20px; right: 20px; background: var(--blue-master); color: white; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        #scrollTopBtn { opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 9999; }
         #scrollTopBtn.show { opacity: 1; pointer-events: auto; }
         .mini-edit { background: transparent; border: 1px solid transparent; color: #fff; font-weight: 800; width: 60px; text-align: center; font-family: 'JetBrains Mono'; border-radius: 6px; transition: 0.3s; border-bottom: 1px dashed rgba(255,255,255,0.3); outline: none; }
         .mini-edit:focus { border-color: var(--blue-master); background: rgba(0, 113, 227, 0.1); border-bottom: 1px solid var(--blue-master); }
         .mini-edit-preco { width: 80px; }
         .btn-tipo { background: var(--border); border: 2px solid var(--border); color: var(--text); padding: 12px; border-radius: 12px; font-weight: 900; font-size: 10px; cursor: pointer; width: 100%; text-align: center; }
         .btn-tipo.active { border-color: var(--blue-master); color: var(--blue-master); background: rgba(0, 113, 227, 0.1); }
-        .master-only { display: inline-block; } /* controlado por JS */
+        /* INJEÇÃO 1: classe para elementos exclusivos do master */
+        .master-only { display: inline-block; } /* será controlado via JS */
+        /* INJEÇÃO 4: estilo para o ícone Horus */
         .horus-icon { font-size: 18px; cursor: pointer; margin-right: 8px; }
     </style>
 </head>
 <body>
 
-    <!-- TELA DE LOGIN -->
     <div id="masterAuth" class="hidden">
         <div class="auth-box">
             <h1 class="text-3xl font-black italic mb-2 text-blue-500">MASTER</h1>
@@ -58,34 +59,28 @@
         </div>
     </div>
 
-    <!-- APLICAÇÃO PRINCIPAL -->
     <div id="masterApp" class="hidden">
-        <!-- HEADER -->
         <nav class="master-nav">
             <div class="flex items-center gap-6">
                 <h1 class="text-2xl font-black italic">iFipe <span class="text-blue-500">MASTER</span></h1>
                 <div class="flex gap-6 border-l border-zinc-800 pl-6 items-center">
                     <div><span class="text-[7px] text-zinc-500 font-black block">BINANCE REAL</span><span id="tBin" class="text-xs font-mono font-black text-white">R$ --</span></div>
                     <div><span class="text-[7px] text-green-500 font-black block">USDT ORÁCULO (+ R$ 0,06)</span><span id="tUsdt" class="text-xs font-mono font-black text-green-400">R$ --</span></div>
-                    <!-- CONTADORES DE ATIVOS -->
-                    <div class="border-l border-zinc-800 pl-4 flex gap-4">
-                        <div><span class="text-[7px] text-blue-400 font-black block">ANUNCIANTES ATIVOS</span><span id="contAtaAtivos" class="text-xs font-mono font-black text-white">0</span></div>
-                        <div><span class="text-[7px] text-blue-400 font-black block">BUSCADORES ATIVOS</span><span id="contCliAtivos" class="text-xs font-mono font-black text-white">0</span></div>
-                    </div>
-                    <!-- DROPDOWN DE MANUTENÇÃO (APENAS MASTER) -->
+                    <!-- INJEÇÃO 2: Dropdown de manutenção (substitui o botão SISTEMA: ON/OFF) -->
                     <div class="relative master-only" id="maintenanceDropdownContainer">
                         <button id="maintenanceBtn" onclick="toggleMaintenanceDropdown()" class="btn-master bg-green-600 px-3 py-1 text-[9px] ml-2">SISTEMA: ON</button>
-                        <div id="maintenanceMenu" class="absolute right-0 mt-2 w-56 bg-[#1c1c1e] border border-zinc-700 rounded-lg shadow-lg z-50 hidden">
+                        <div id="maintenanceMenu" class="absolute right-0 mt-2 w-48 bg-[#1c1c1e] border border-zinc-700 rounded-lg shadow-lg z-50 hidden">
                             <div class="py-1">
-                                <button onclick="setMaintenance('geral')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">🔴 Sistema Geral</button>
-                                <button onclick="setMaintenance('atacadista')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">🔴 Painel Atacadista</button>
-                                <button onclick="setMaintenance('buscador')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">🔴 Painel Buscador</button>
+                                <button onclick="setMaintenance('geral')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">🔴 Desligar Geral</button>
+                                <button onclick="setMaintenance('atacadista')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">🔴 Desligar Atacadista</button>
+                                <button onclick="setMaintenance('buscador')" class="block w-full text-left px-4 py-2 text-[10px] text-white hover:bg-zinc-800">🔴 Desligar Buscador</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="flex items-center gap-4">
+                <!-- INJEÇÃO 4: Ícone Horus no header -->
                 <span class="horus-icon master-only" onclick="abrirModalHorus()" title="Ferramenta Horus">👁️$</span>
                 <span id="headerMasterName" class="text-[10px] font-black text-blue-500 tracking-widest">MASTER</span>
                 <button id="minhaContaBtn" onclick="abrirConta()" class="btn-header" style="background: var(--input); color: #fff; border-color: #38383a;">
@@ -96,7 +91,6 @@
             </div>
         </nav>
 
-        <!-- MENU DE ABAS -->
         <div class="master-menu">
             <button class="menu-btn active" onclick="switchView('v-atacadistas', this)">🏢 ATACADISTAS</button>
             <button class="menu-btn" onclick="switchView('v-clientes', this)">👥 BUSCADORES</button>
@@ -106,8 +100,6 @@
             <button class="menu-btn" onclick="switchView('v-conta', this)">⚙️ MINHA CONTA</button>
         </div>
 
-        <!-- CONTEÚDO DAS ABAS -->
-        <!-- ATACADISTAS -->
         <div id="v-atacadistas" class="master-view active">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
@@ -127,7 +119,6 @@
             </div>
         </div>
 
-        <!-- BUSCADORES -->
         <div id="v-clientes" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
@@ -147,13 +138,13 @@
             </div>
         </div>
 
-        <!-- GESTÃO GLOBAL (ANÚNCIOS) -->
         <div id="v-anuncios" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
                     <h2 class="text-sm font-black text-white">GESTÃO GLOBAL DE ANÚNCIOS</h2>
                     <div class="flex gap-2 w-2/3 justify-end">
                         <input type="text" placeholder="🔍 BUSCAR PRODUTO, LOJA, COR..." class="apple-input !w-2/3 !py-2" onkeyup="filterTable('listAnu', this.value)">
+                        <!-- INJEÇÃO 3: Botão Zerar Estoque de Loja (apenas master) -->
                         <button onclick="abrirModalZerarEstoque()" class="btn-master !bg-red-600 master-only">🚫 ZERAR ESTOQUE DE LOJA</button>
                         <button onclick="abrirModalGestaoAnuncio()" class="btn-master !bg-blue-600">➕ LANÇAR ANÚNCIO</button>
                         <button onclick="abrirModalEdicaoCompleta()" class="btn-master !bg-yellow-600">✏️ EDITAR COMPLETO</button>
@@ -169,12 +160,11 @@
             </div>
         </div>
 
-        <!-- GESTÃO DE SELOS -->
         <div id="v-selos" class="master-view">
             <div class="apple-card">
                 <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">GESTÃO DE PATENTES FIPE 1.0</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- ATRIBUIÇÃO MANUAL -->
+                    <!-- Card de Atribuição Manual -->
                     <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
                         <h3 class="text-[10px] font-black text-purple-400 mb-4">ATRIBUIÇÃO POR NOME</h3>
                         <select id="seloTableSel" class="apple-input mb-3" onchange="loadUsersForSelo()">
@@ -216,8 +206,8 @@
                         <div class="flex gap-2"><button onclick="addInsignia()" class="btn-master w-1/2 !bg-purple-600">+ ATRIBUIR</button><button onclick="clearInsignias()" class="btn-master w-1/2 bg-zinc-800">LIMPAR</button></div>
                     </div>
 
-                    <!-- VARREDURA GLOBAL (APENAS MASTER) -->
-                    <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800 master-only" id="varreduraCard">
+                    <!-- Card de Varredura Global -->
+                    <div class="bg-zinc-900 p-6 rounded-xl border border-zinc-800">
                         <h3 class="text-[10px] font-black text-green-400 mb-4">VARREDURA GLOBAL (ESTOQUE E LOGINS)</h3>
                         <p class="text-[9px] text-gray-400 mb-4 leading-relaxed">
                             Atualiza automaticamente as insígnias de todos os usuários com base no estoque total (anunciantes) e número de logins (buscadores). Os selos manuais não são removidos.
@@ -230,7 +220,6 @@
             </div>
         </div>
 
-        <!-- FUNCIONÁRIOS -->
         <div id="v-funcionarios" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
@@ -248,7 +237,6 @@
             </div>
         </div>
 
-        <!-- MINHA CONTA (MASTER) -->
         <div id="v-conta" class="master-view">
             <div class="apple-card max-w-md mx-auto">
                 <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4 text-center">PERFIL MASTER</h2>
@@ -271,22 +259,20 @@
         </div>
     </div>
 
-    <!-- MODAIS -->
-
-    <!-- MODAL TROCA DE PAINEL (APÓS LOGIN MASTER) -->
+    <!-- INJEÇÃO 1: Modal de Troca de Painel (Acessar como) -->
     <div id="modalTrocaPainel" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-sm bg-[#050505] border-[#38383a] text-center">
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">👁️ ACESSAR COMO</h3>
             <p class="text-[10px] text-zinc-400 mb-6">Escolha o painel que deseja visualizar</p>
             <div class="flex gap-4 justify-center">
-                <button onclick="window.open('buscar.html', '_blank')" class="btn-master !bg-blue-600 w-1/2">BUSCADOR</button>
-                <button onclick="window.open('atacadista.html', '_blank')" class="btn-master !bg-green-600 w-1/2">ATACADISTA</button>
+                <button onclick="window.open('BUSCAR.html', '_blank')" class="btn-master !bg-blue-600 w-1/2">BUSCADOR</button>
+                <button onclick="window.open('ATACADISTA.html', '_blank')" class="btn-master !bg-green-600 w-1/2">ATACADISTA</button>
             </div>
             <button onclick="fecharModais()" class="btn-master bg-zinc-800 w-full mt-4">FECHAR</button>
         </div>
     </div>
 
-    <!-- MODAL ZERAR ESTOQUE -->
+    <!-- INJEÇÃO 3: Modal Zerar Estoque de Loja -->
     <div id="modalZerarEstoque" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-md bg-[#050505] border-[#38383a]">
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 text-red-500">🚫 ZERAR ESTOQUE DE LOJA</h3>
@@ -300,7 +286,7 @@
         </div>
     </div>
 
-    <!-- MODAL HORUS -->
+    <!-- INJEÇÃO 4: Modal Horus -->
     <div id="modalHorus" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-4xl bg-[#050505] border-[#38383a] max-h-[80vh] overflow-y-auto">
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 flex items-center gap-2">👁️$ FERRAMENTA HORUS <span class="text-[8px] text-zinc-500">MENOR PREÇO ABSOLUTO</span></h3>
@@ -311,7 +297,7 @@
         </div>
     </div>
 
-    <!-- MODAL GURU -->
+    <!-- Modal Guru -->
     <div id="modalGuru" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a]">
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 text-purple-400">👁️ GURU - MONITORAMENTO INVISÍVEL</h3>
@@ -326,7 +312,7 @@
         </div>
     </div>
 
-    <!-- MODAL EDIÇÃO COMPLETA (INDIVIDUAL) -->
+    <!-- Modal Edição Completa (Individual) -->
     <div id="modalEdicaoCompleta" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-xl bg-[#050505] border-[#38383a]">
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">✏️ EDITAR ANÚNCIO COMPLETO</h3>
@@ -394,7 +380,7 @@
         </div>
     </div>
 
-    <!-- MODAL EDIÇÃO EM MASSA -->
+    <!-- Modal Edição em Massa (Novo - completo) -->
     <div id="modalBulkAnu" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-xl bg-[#050505] border-[#38383a]">
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">⚙️ EDIÇÃO EM MASSA (ANÚNCIOS)</h3>
@@ -464,7 +450,6 @@
         </div>
     </div>
 
-    <!-- MODAL CLIENTE (BUSCADOR) -->
     <div id="modalCli" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a]">
             <h3 id="mCliTitle" class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">INTERVENÇÃO NO BUSCADOR</h3>
@@ -485,7 +470,6 @@
         </div>
     </div>
 
-    <!-- MODAL GESTÃO ANÚNCIO (LANÇAR) -->
     <div id="modalGestaoAnuncio" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-xl bg-[#050505] border-[#38383a]">
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">➕ LANÇAR ANÚNCIO (GLOBAL)</h3>
@@ -496,11 +480,13 @@
                     <button type="button" id="btSM" class="btn-tipo" onclick="selTipoM('Seminovo')">♻️ SEMINOVO</button>
                 </div>
                 <input type="hidden" id="f_tipo_m">
+                
                 <div class="grid grid-cols-3 gap-2">
                     <select id="f_mod_m" class="apple-input" onchange="libMemM()" required disabled></select>
                     <select id="f_cap_m" class="apple-input" onchange="libCorM()" required disabled></select>
                     <select id="f_cor_m" class="apple-input" required disabled></select>
                 </div>
+                
                 <div id="z_semi_m" class="hidden grid grid-cols-2 gap-2">
                     <select id="f_cond_m" class="apple-input">
                         <option value="Seminovo">SEMINOVO</option>
@@ -518,6 +504,7 @@
                         <option value="Bateria em 100%">Bateria em 100%</option>
                     </select>
                 </div>
+                
                 <select id="f_gar_m" class="apple-input hidden">
                     <option value="">GARANTIA...</option>
                     <option value="Sem garantia">Sem garantia</option>
@@ -527,14 +514,17 @@
                     <option value="6 Meses">6 Meses</option>
                     <option value="12 Meses">12 Meses</option>
                 </select>
+
                 <div class="grid grid-cols-2 gap-2">
                     <input type="number" id="f_qtd_m" class="apple-input" placeholder="QTD" min="0" required>
                     <select id="f_orig_m" class="apple-input" required></select>
                 </div>
+                
                 <div class="grid grid-cols-2 gap-2">
                     <input type="text" id="f_usd_m" class="apple-input" placeholder="$ USD" oninput="mascara(this); document.getElementById('f_brl_m').value=''">
                     <input type="text" id="f_brl_m" class="apple-input" placeholder="R$ BRL" oninput="mascara(this); document.getElementById('f_usd_m').value=''">
                 </div>
+
                 <div class="grid grid-cols-3 gap-2 bg-[#1c1c1e] p-3 rounded-lg border border-[#38383a]">
                     <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_pix_m"> PIX</label>
                     <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_usdt_m"> USDT</label>
@@ -543,12 +533,12 @@
                     <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_cole_m"> COLETA</label>
                     <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="m_nota_m"> NF</label>
                 </div>
+
                 <div class="flex gap-2 pt-2"><button type="button" onclick="fecharModais()" class="btn-master w-1/3 bg-zinc-800">CANCELAR</button><button type="submit" class="btn-master w-2/3 !bg-blue-600">PUBLICAR</button></div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL ATACADISTA -->
     <div id="modalAta" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a]">
             <h3 id="mAtaTitle" class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">INTERVENÇÃO NO ATACADISTA</h3>
@@ -569,7 +559,6 @@
         </div>
     </div>
 
-    <!-- MODAL FUNCIONÁRIO -->
     <div id="modalFunc" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-sm bg-[#050505] border-[#38383a]">
             <h3 id="mFuncTitle" class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">FUNCIONÁRIO</h3>
@@ -583,23 +572,19 @@
         </div>
     </div>
 
-    <!-- MODAIS DE AÇÕES EM MASSA (ATACADISTAS E BUSCADORES) -->
     <div id="modalBulkAta" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505]"><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (ATACADISTAS)</h3><input type="text" id="bulkAtaSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('fornecedores', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('fornecedores', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button><button onclick="runBulk('fornecedores', 'desativar')" class="btn-master w-full bg-zinc-700 mb-2">DESATIVAR SELECIONADOS</button><button onclick="runBulk('fornecedores', 'verificar')" class="btn-master w-full border border-blue-600 text-blue-500 bg-transparent mb-4">APLICAR SELO VERIFICADO</button><button onclick="runBulk('fornecedores', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button><button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button></div></div>
     <div id="modalBulkCli" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505]"><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">AÇÕES EM MASSA (BUSCADORES)</h3><input type="text" id="bulkCliSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('clientes_buscador', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('clientes_buscador', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button><button onclick="runBulk('clientes_buscador', 'desativar')" class="btn-master w-full bg-zinc-700 mb-4">DESATIVAR SELECIONADOS</button><button onclick="runBulk('clientes_buscador', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button><button onclick="fecharModais()" class="btn-master w-full bg-transparent text-zinc-500 mt-2">CANCELAR</button></div></div>
-
-    <!-- BOTÃO SCROLL TO TOP -->
-    <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
     <script>
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let dbAta=[], dbCli=[], dbAnu=[], dbVar=[], dbFunc=[], dbReg=[], currentOracleUsdt=0;
-        let currentUserType = null; // 'master' ou 'andressa'
-        let isAndressa = false;
+        let currentUserType = null; // 'master', 'funcionario' ou 'andressa'
+        let isAndressa = false; // flag específica para Andressa
 
         const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
 
-        // PERFIL MASTER (persistência local)
+        // REGRA MASTER PERSISTÊNCIA LOCAL
         function updateMasterProfile(e) {
             e.preventDefault();
             const n = document.getElementById('mProfNome').value.toUpperCase();
@@ -616,25 +601,32 @@
             const nome = localStorage.getItem('Master_Custom_Nome') || 'MASTER';
             const whats = localStorage.getItem('Master_Custom_Whats') || '';
             const pass = localStorage.getItem('Master_Custom_Pass') || '96197577';
+            
             if (currentUserType === 'master') {
                 document.getElementById('headerMasterName').innerText = nome;
                 document.getElementById('minhaContaBtn').style.display = 'flex';
                 if(document.getElementById('mProfNome')) document.getElementById('mProfNome').value = nome;
                 if(document.getElementById('mProfWhats')) document.getElementById('mProfWhats').value = whats;
                 if(document.getElementById('mProfSenha')) document.getElementById('mProfSenha').value = pass;
-            } else {
+            } else if (currentUserType === 'funcionario' || currentUserType === 'andressa') {
                 const funcNome = localStorage.getItem('iFipe_Func_Nome') || 'FUNCIONÁRIO';
                 document.getElementById('headerMasterName').innerText = funcNome;
                 document.getElementById('minhaContaBtn').style.display = 'none';
             }
         }
 
+        // INJEÇÃO 1: Aplicar restrições de UI baseado no tipo de usuário
         function applyUIRestrictions() {
             const isMaster = currentUserType === 'master';
+            const isAndressa = currentUserType === 'andressa';
+            
+            // Elementos com classe .master-only: só aparecem para master
             document.querySelectorAll('.master-only').forEach(el => {
                 if (isMaster) el.classList.remove('hidden');
                 else el.classList.add('hidden');
             });
+
+            // Aba funcionários: esconder para Andressa (não master)
             const abaFunc = document.querySelector('.menu-btn[onclick*="v-funcionarios"]');
             if (abaFunc) {
                 if (isAndressa) abaFunc.classList.add('hidden');
@@ -642,6 +634,7 @@
             }
         }
 
+        // VERIFICADOR DINÂMICO DE COLUNA DE STATUS
         function getStatusCol(table) {
             if (table === 'clientes_buscador' && dbCli.length > 0) {
                 if ('ativo' in dbCli[0]) return { name: 'ativo', valT: true, valF: false };
@@ -655,10 +648,12 @@
         async function toggleStatus(table, id, statusReq) {
             const colInfo = getStatusCol(table);
             const val = statusReq ? colInfo.valT : colInfo.valF;
+            
             const { error } = await _s.from(table).update({ [colInfo.name]: val }).eq('id', id);
+            
             if(error) {
                 if(error.message.includes('Could not find the')) {
-                    alert(`ERRO ESTRUTURAL: A coluna '${colInfo.name}' não existe na tabela '${table}'.`);
+                    alert(`ERRO ESTRUTURAL NO SUPABASE: A coluna '${colInfo.name}' não existe na tabela '${table}'.\n\nSolução: Vá ao Supabase e crie uma coluna booleana chamada 'ativo' com valor padrão 'true'.`);
                 } else {
                     alert("ERRO AO ATUALIZAR STATUS: " + error.message);
                 }
@@ -704,37 +699,68 @@
             }
         }
 
-        // LOGIN com hierarquia fixa
+        // INJEÇÃO 1: tryLogin modificado
         async function tryLogin() { 
             const senhaDigitada = document.getElementById('mPass').value;
-            // Master (Bryan)
-            if (senhaDigitada === '96197577@') { 
+
+            // Verifica se é Master (credenciais fixas)
+            const masterUser = '11998077677';
+            const masterPass = '96197577@';
+            if (senhaDigitada === masterPass) { 
                 localStorage.setItem('iFipe_Master_Auth', 'gov_absoluto');
                 currentUserType = 'master';
-                isAndressa = false;
                 checkAuth();
+                // Abre modal de troca de painel automaticamente
                 setTimeout(() => {
                     document.getElementById('modalTrocaPainel').classList.remove('hidden');
                 }, 500);
                 return;
             }
-            // Andressa
+
+            // Verifica se é Andressa (credenciais fixas)
+            const andressaUser = '6896003049';
+            const andressaPass = '96197577';
+            if (senhaDigitada === andressaPass) {
+                // Para Andressa, precisamos verificar se o usuário realmente é Andressa (whatsapp = 6896003049)
+                // Vamos buscar na tabela funcionarios se existe um funcionário com esse whatsapp e senha
+                const { data: funcData, error } = await _s
+                    .from('funcionarios')
+                    .select('*')
+                    .eq('whatsapp', andressaUser)
+                    .eq('senha', andressaPass)
+                    .eq('ativo', true)
+                    .single();
+
+                if (!error && funcData) {
+                    localStorage.setItem('iFipe_Master_Auth', 'andressa');
+                    localStorage.setItem('iFipe_Func_Nome', funcData.nome);
+                    currentUserType = 'andressa';
+                    isAndressa = true;
+                    checkAuth();
+                    return;
+                } else {
+                    document.getElementById('mLoginMsg').innerText = "ACESSO NEGADO.";
+                    return;
+                }
+            }
+
+            // Verifica se é funcionário comum (outros)
             const { data: funcData, error } = await _s
                 .from('funcionarios')
                 .select('*')
-                .eq('whatsapp', '6896003049')
                 .eq('senha', senhaDigitada)
                 .eq('ativo', true)
                 .single();
-            if (!error && funcData) {
-                localStorage.setItem('iFipe_Master_Auth', 'andressa');
-                localStorage.setItem('iFipe_Func_Nome', funcData.nome);
-                currentUserType = 'andressa';
-                isAndressa = true;
-                checkAuth();
+
+            if (error || !funcData) {
+                document.getElementById('mLoginMsg').innerText = "ACESSO NEGADO.";
                 return;
             }
-            document.getElementById('mLoginMsg').innerText = "ACESSO NEGADO.";
+
+            localStorage.setItem('iFipe_Master_Auth', 'funcionario');
+            localStorage.setItem('iFipe_Func_Nome', funcData.nome);
+            currentUserType = 'funcionario';
+            checkAuth();
         }
 
         function masterLogout() { 
@@ -747,13 +773,13 @@
 
         function checkAuth() { 
             const auth = localStorage.getItem('iFipe_Master_Auth');
-            if (auth === 'gov_absoluto' || auth === 'andressa') { 
+            if (auth === 'gov_absoluto' || auth === 'funcionario' || auth === 'andressa') { 
                 currentUserType = auth;
                 if (auth === 'andressa') isAndressa = true;
                 document.getElementById('masterAuth').classList.add('hidden'); 
                 document.getElementById('masterApp').classList.remove('hidden'); 
                 renderMasterInfo();
-                applyUIRestrictions();
+                applyUIRestrictions(); // Aplica restrições de UI
                 initMaster(); 
             } else { 
                 document.getElementById('masterAuth').classList.remove('hidden'); 
@@ -761,35 +787,35 @@
         }
 
         function fecharModais() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.add('hidden')); }
-        function switchView(id, btn) { 
-            document.querySelectorAll('.master-view').forEach(v => v.classList.remove('active')); 
-            document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active')); 
-            document.getElementById(id).classList.add('active'); 
-            btn.classList.add('active'); 
-            if(id==='v-selos') loadUsersForSelo(); 
-        }
+        function switchView(id, btn) { document.querySelectorAll('.master-view').forEach(v => v.classList.remove('active')); document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('active'); btn.classList.add('active'); if(id==='v-selos') loadUsersForSelo(); }
 
-        // DROPDOWN DE MANUTENÇÃO
+        // INJEÇÃO 2: Funções do dropdown de manutenção
         function toggleMaintenanceDropdown() {
             document.getElementById('maintenanceMenu').classList.toggle('hidden');
         }
 
         async function setMaintenance(tipo) {
-            let campo = {};
-            if (tipo === 'geral') campo = { status_geral: 'off' };
-            else if (tipo === 'atacadista') campo = { status_atacadista: 'off' };
-            else if (tipo === 'buscador') campo = { status_buscador: 'off' };
-            const { error } = await _s.from('sistema_config').update(campo).eq('id', 1);
+            const payload = {};
+            if (tipo === 'geral') payload.status_geral = 'off';
+            else if (tipo === 'atacadista') payload.status_atacadista = 'off';
+            else if (tipo === 'buscador') payload.status_buscador = 'off';
+
+            // Upsert na tabela sistema_config (id = 1)
+            const { error } = await _s.from('sistema_config').upsert({ id: 1, ...payload });
             if (error) {
                 alert('Erro ao atualizar manutenção: ' + error.message);
             } else {
                 alert(`Sistema ${tipo} desligado com sucesso.`);
+                // Atualiza a cor do botão para indicar que algo está off? Podemos ler depois.
+                // Por simplicidade, apenas muda a cor para vermelho se algum estiver off.
                 renderSystemStatus();
             }
             document.getElementById('maintenanceMenu').classList.add('hidden');
         }
 
+        // Atualiza o botão de manutenção com base na config atual
         async function renderSystemStatus() {
+            // Tenta buscar config atual
             const { data } = await _s.from('sistema_config').select('*').eq('id', 1).single();
             const btn = document.getElementById('maintenanceBtn');
             if (!data || (data.status_geral === 'on' && data.status_atacadista === 'on' && data.status_buscador === 'on')) {
@@ -797,11 +823,13 @@
                 btn.innerText = "SISTEMA: ON";
             } else {
                 btn.className = "btn-master btn-danger px-3 py-1 text-[9px] ml-2";
-                btn.innerText = "SISTEMA: OFF";
+                btn.innerText = "SISTEMA: OFF (MANUTENÇÃO)";
             }
         }
 
+        // INJEÇÃO 3: Zerar Estoque
         function abrirModalZerarEstoque() {
+            // Popula o select com os atacadistas
             const select = document.getElementById('selectLojaZerar');
             select.innerHTML = '<option value="">Selecione a loja...</option>';
             dbAta.forEach(ata => {
@@ -812,18 +840,34 @@
 
         async function zerarEstoqueLoja() {
             const lojaId = document.getElementById('selectLojaZerar').value;
-            if (!lojaId) { alert('Selecione uma loja.'); return; }
+            if (!lojaId) {
+                alert('Selecione uma loja.');
+                return;
+            }
             if (!confirm('Tem certeza que deseja zerar TODO o estoque desta loja?')) return;
+
             const { error } = await _s.from('ofertas').update({ quantidade: 0 }).eq('fornecedor_id', lojaId);
-            if (error) alert('Erro ao zerar estoque: ' + error.message);
-            else { alert('Estoque zerado com sucesso!'); fecharModais(); loadAll(); }
+            if (error) {
+                alert('Erro ao zerar estoque: ' + error.message);
+            } else {
+                alert('Estoque zerado com sucesso!');
+                fecharModais();
+                loadAll();
+            }
         }
 
+        // INJEÇÃO 4: Ferramenta Horus
         async function abrirModalHorus() {
+            // Carrega ofertas com relacionamentos
             const { data: ofertas, error } = await _s
                 .from('ofertas')
                 .select('*, fornecedores!inner(nome, whatsapp), variacoes!inner(produtos_mestre!inner(nome), capacidade, cor), regioes!inner(nome, bandeira)');
-            if (error) { alert('Erro ao carregar dados para Horus: ' + error.message); return; }
+            if (error) {
+                alert('Erro ao carregar dados para Horus: ' + error.message);
+                return;
+            }
+
+            // Agrupa por produto_id + capacidade + cor + regiao_id
             const grupos = {};
             ofertas.forEach(o => {
                 const key = `${o.variacoes.produto_id}-${o.variacoes.capacidade}-${o.variacoes.cor}-${o.regiao_id}`;
@@ -842,6 +886,8 @@
                     };
                 }
             });
+
+            // Gera HTML da lista
             const lista = document.getElementById('horusList');
             lista.innerHTML = '';
             const agora = new Date();
@@ -849,6 +895,7 @@
             let saudacao = 'Boa noite';
             if (hora < 12) saudacao = 'Bom dia';
             else if (hora < 18) saudacao = 'Boa tarde';
+
             Object.values(grupos).sort((a, b) => a.preco - b.preco).forEach(g => {
                 const precoFormatado = g.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 const produtoCompleto = `${g.produto} ${g.capacidade} ${g.cor} ${g.bandeira}`;
@@ -864,36 +911,39 @@
                     </div>
                 `;
             });
+
             document.getElementById('modalHorus').classList.remove('hidden');
         }
 
+        // Função original toggleSysStatus foi removida/substituída, mas mantemos a renderSystemStatus adaptada.
+        // A antiga toggleSysStatus não é mais usada, podemos comentar ou remover, mas vou manter comentada para referência.
+        // function toggleSysStatus() { ... } // não usada mais
+
         function selAll(el, selector) { document.querySelectorAll(selector).forEach(c => c.checked = el.checked); }
 
-        function abrirGuruModal() { document.getElementById('modalGuru').classList.remove('hidden'); }
-        function fecharGuruModal() { document.getElementById('modalGuru').classList.add('hidden'); }
+        // Funções do GURU
+        function abrirGuruModal() {
+            document.getElementById('modalGuru').classList.remove('hidden');
+        }
+        function fecharGuruModal() {
+            document.getElementById('modalGuru').classList.add('hidden');
+        }
 
-        // LOGIN AS com nomes minúsculos
+        // Funções de Login As
         function loginAsAta(id) {
             localStorage.setItem('iFipe_Anunciante', id);
-            window.open('atacadista.html', '_blank');
+            window.open('ATACADISTA.html', '_blank');
         }
         function loginAsCli(id) {
             localStorage.setItem('iFipe_Token', id);
-            window.open('buscar.html', '_blank');
+            window.open('BUSCAR.html', '_blank');
         }
-
-        window.addEventListener('scroll', function() {
-            const btn = document.getElementById('scrollTopBtn');
-            if (window.scrollY > 300) btn.classList.add('show');
-            else btn.classList.remove('show');
-        });
 
         async function initMaster() {
             renderMasterInfo();
             new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
                 let bin = parseFloat(JSON.parse(e.data).c); currentOracleUsdt = bin + 0.06;
-                document.getElementById('tBin').innerText = `R$ ${bin.toFixed(4)}`; 
-                document.getElementById('tUsdt').innerText = `R$ ${currentOracleUsdt.toFixed(4)}`;
+                document.getElementById('tBin').innerText = `R$ ${bin.toFixed(4)}`; document.getElementById('tUsdt').innerText = `R$ ${currentOracleUsdt.toFixed(4)}`;
             };
             await renderSystemStatus(); 
             await loadAll();
@@ -908,40 +958,12 @@
                 _s.from('regioes').select('*'),
                 _s.from('funcionarios').select('*').order('nome')
             ]);
-            dbAta = f.data || [];
-            dbCli = c.data || [];
-            dbAnu = o.data || [];
-            dbVar = v.data || [];
-            dbReg = r.data || [];
-            dbFunc = fn.data || [];
-
-            const ativosAta = dbAta.filter(a => a.ativo === true).length;
-            const colInfo = getStatusCol('clientes_buscador');
-            const ativosCli = dbCli.filter(c => {
-                if (colInfo.name === 'ativo' || colInfo.name === 'is_active') return c[colInfo.name] !== false;
-                if (colInfo.name === 'status') return c.status === 'ativo';
-                if (colInfo.name === 'bloqueado') return c.bloqueado !== true;
-                return true;
-            }).length;
-            document.getElementById('contAtaAtivos').innerText = ativosAta;
-            document.getElementById('contCliAtivos').innerText = ativosCli;
-
-            renderAta(); 
-            renderCli(); 
-            renderAnu(); 
-            renderFunc(); 
-            loadUsersForSelo();
+            dbAta=f.data||[]; dbCli=c.data||[]; dbAnu=o.data||[]; dbVar=v.data||[]; dbReg=r.data||[]; dbFunc=fn.data||[];
+            renderAta(); renderCli(); renderAnu(); renderFunc(); loadUsersForSelo();
             
             document.getElementById('gLoja').innerHTML = '<option value="">Selecione a Loja do Lançamento...</option>' + dbAta.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
             
-            let uM = []; 
-            let mM = new Set(); 
-            dbVar.forEach(va => { 
-                if(va.produtos_mestre && !mM.has(va.produtos_mestre.id)) { 
-                    mM.add(va.produtos_mestre.id); 
-                    uM.push(va.produtos_mestre); 
-                } 
-            });
+            let uM=[]; let mM=new Set(); dbVar.forEach(va => { if(va.produtos_mestre && !mM.has(va.produtos_mestre.id)) { mM.add(va.produtos_mestre.id); uM.push(va.produtos_mestre); } });
             document.getElementById('f_mod_m').innerHTML = '<option value="">MODELO...</option>' + uM.sort((a,b)=>a.nome.localeCompare(b.nome)).map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
 
             const origensPermitidas = [ { nome: 'BRASIL ANATEL', flag: '🇧🇷' }, { nome: 'EUA', flag: '🇺🇸' }, { nome: 'JAPÃO', flag: '🇯🇵' }, { nome: 'ÍNDIA', flag: '🇮🇳' }, { nome: 'CANADÁ', flag: '🇨🇦' }, { nome: 'CHINA', flag: '🇨🇳' } ];
@@ -952,21 +974,32 @@
                 if(match) htmlOrigem += `<option value="${match.id}">${rm.flag} ${rm.nome}</option>`;
             });
             document.getElementById('f_orig_m').innerHTML = htmlOrigem;
+
+            // Popular selects do modal de edição individual
             document.getElementById('editModelo').innerHTML = '<option value="">MODELO...</option>' + uM.sort((a,b)=>a.nome.localeCompare(b.nome)).map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
             document.getElementById('editOrigem').innerHTML = htmlOrigem;
+
+            // Popular selects do modal de edição em massa
             document.getElementById('bulkModelo').innerHTML = '<option value="">MANTER MODELO...</option>' + uM.sort((a,b)=>a.nome.localeCompare(b.nome)).map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
             document.getElementById('bulkOrigem').innerHTML = '<option value="">MANTER ORIGEM...</option>' + htmlOrigem.slice(0, -14) + '</select>';
         }
 
+        // ================== FUNÇÕES RENDER COM PARSER DE INSÍGNIAS ==================
         function renderAta() { 
             document.getElementById('listAta').innerHTML = dbAta.map(a => { 
                 let l = a.pais === 'Brasil' ? `${a.cidade||'-'} / ${a.estado||'-'}` : (a.pais || '-'); 
+                
                 let insig = [];
                 try {
-                    if (Array.isArray(a.insignia_manual)) insig = a.insignia_manual;
-                    else if (typeof a.insignia_manual === 'string') insig = JSON.parse(a.insignia_manual || '[]');
+                    if (Array.isArray(a.insignia_manual)) {
+                        insig = a.insignia_manual;
+                    } else if (typeof a.insignia_manual === 'string') {
+                        insig = JSON.parse(a.insignia_manual || '[]');
+                    }
                 } catch(e) { insig = []; }
+                
                 let b = insig.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); 
+                
                 return `<tr>
                     <td><input type="checkbox" class="chk-ata" value="${a.id}"></td>
                     <td><span class="font-black text-white text-xs">${a.nome}</span><br><span class="text-[8px] text-zinc-500">${l}</span></td>
@@ -974,13 +1007,15 @@
                     <td class="font-mono text-red-400 text-[10px]">${a.senha||'--'}</td>
                     <td class="max-w-[150px] leading-tight">${b||'-'}</td>
                     <td><span class="badge ${a.ativo?'b-green':'b-red'}">${a.ativo?'ATIVO':'BLOQUEADO'}</span><br><span class="badge ${a.verificado?'b-blue':'bg-zinc-800'}">${a.verificado?'VERI':'SEM'}</span></td>
-                    <td class="text-right"><div class="flex justify-end gap-1 mt-1">
-                        <button onclick="toggleStatus('fornecedores', ${a.id}, true)" class="bg-green-900/30 text-green-500 px-2 py-1 rounded text-[8px] font-black hover:bg-green-500 hover:text-white">ATIVAR</button>
-                        <button onclick="toggleStatus('fornecedores', ${a.id}, false)" class="bg-yellow-900/30 text-yellow-500 px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500 hover:text-white">BLOQ</button>
-                        <button onclick="delRecord('fornecedores', ${a.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white">EXCLUIR</button>
-                        <button onclick="editAta(${a.id})" class="bg-zinc-800 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-500">EDITAR</button>
-                        <button onclick="loginAsAta(${a.id})" class="bg-blue-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-700">👁️ ACESSAR</button>
-                    </div></td>
+                    <td class="text-right">
+                        <div class="flex justify-end gap-1 mt-1">
+                            <button onclick="toggleStatus('fornecedores', ${a.id}, true)" class="bg-green-900/30 text-green-500 px-2 py-1 rounded text-[8px] font-black hover:bg-green-500 hover:text-white">ATIVAR</button>
+                            <button onclick="toggleStatus('fornecedores', ${a.id}, false)" class="bg-yellow-900/30 text-yellow-500 px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500 hover:text-white">BLOQ</button>
+                            <button onclick="delRecord('fornecedores', ${a.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white">EXCLUIR</button>
+                            <button onclick="editAta(${a.id})" class="bg-zinc-800 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-500">EDITAR</button>
+                            <button onclick="loginAsAta(${a.id})" class="bg-blue-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-700">👁️ ACESSAR</button>
+                        </div>
+                    </td>
                 </tr>`; 
             }).join(''); 
         }
@@ -990,16 +1025,23 @@
             document.getElementById('listCli').innerHTML = dbCli.map(c => { 
                 let n = c.nome || c.email || c.whatsapp || 'SEM NOME'; 
                 let local = c.pais === 'Brasil' ? `${c.cidade||'-'} / ${c.estado||'-'}` : (c.pais || 'Não definido'); 
+                
                 let insig = [];
                 try {
-                    if (Array.isArray(c.insignia_manual)) insig = c.insignia_manual;
-                    else if (typeof c.insignia_manual === 'string') insig = JSON.parse(c.insignia_manual || '[]');
+                    if (Array.isArray(c.insignia_manual)) {
+                        insig = c.insignia_manual;
+                    } else if (typeof c.insignia_manual === 'string') {
+                        insig = JSON.parse(c.insignia_manual || '[]');
+                    }
                 } catch(e) { insig = []; }
+                
                 let b = insig.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); 
+                
                 let isAtivo = true;
                 if(colInfo.name === 'ativo' || colInfo.name === 'is_active') isAtivo = c[colInfo.name] !== false;
                 else if(colInfo.name === 'status') isAtivo = c.status === 'ativo';
                 else if(colInfo.name === 'bloqueado') isAtivo = c.bloqueado !== true;
+
                 let statusBadge = isAtivo ? `<span class="badge b-green">ATIVO</span>` : `<span class="badge b-red">BLOQUEADO</span>`;
                 return `<tr>
                     <td><input type="checkbox" class="chk-cli" value="${c.id}"></td>
@@ -1009,13 +1051,15 @@
                     <td class="font-mono text-red-400 text-[10px]">${c.senha||'--'}</td>
                     <td>${statusBadge}</td>
                     <td class="max-w-[150px]"><span class="text-[9px] text-zinc-500 block mb-1">LOGINS: ${c.logins_count||0}</span>${b||'-'}</td>
-                    <td class="text-right"><div class="flex justify-end gap-1 mt-1">
-                        <button onclick="toggleStatus('clientes_buscador', ${c.id}, true)" class="bg-green-900/30 text-green-500 px-2 py-1 rounded text-[8px] font-black hover:bg-green-500 hover:text-white">ATIVAR</button>
-                        <button onclick="toggleStatus('clientes_buscador', ${c.id}, false)" class="bg-yellow-900/30 text-yellow-500 px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500 hover:text-white">BLOQ</button>
-                        <button onclick="delRecord('clientes_buscador', ${c.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white">EXCLUIR</button>
-                        <button onclick="editCli(${c.id})" class="bg-zinc-800 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-500">EDITAR</button>
-                        <button onclick="loginAsCli(${c.id})" class="bg-blue-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-700">👁️ ACESSAR</button>
-                    </div></td>
+                    <td class="text-right">
+                        <div class="flex justify-end gap-1 mt-1">
+                            <button onclick="toggleStatus('clientes_buscador', ${c.id}, true)" class="bg-green-900/30 text-green-500 px-2 py-1 rounded text-[8px] font-black hover:bg-green-500 hover:text-white">ATIVAR</button>
+                            <button onclick="toggleStatus('clientes_buscador', ${c.id}, false)" class="bg-yellow-900/30 text-yellow-500 px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500 hover:text-white">BLOQ</button>
+                            <button onclick="delRecord('clientes_buscador', ${c.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white">EXCLUIR</button>
+                            <button onclick="editCli(${c.id})" class="bg-zinc-800 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-500">EDITAR</button>
+                            <button onclick="loginAsCli(${c.id})" class="bg-blue-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-700">👁️ ACESSAR</button>
+                        </div>
+                    </td>
                 </tr>`; 
             }).join(''); 
         }
@@ -1023,23 +1067,23 @@
         function renderAnu() { 
             const tbody = document.getElementById('listAnu'); 
             if(!dbAnu.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">Vazio.</td></tr>'; return; } 
-            const regMap = {};
-            dbReg.forEach(r => regMap[r.id] = r.bandeira || '🌍');
+            
             let grouped = {}; 
             dbAnu.forEach(a => { 
                 let fNome = a.fornecedores ? a.fornecedores.nome : 'DESCONHECIDO'; 
                 if(!grouped[fNome]) grouped[fNome] = { ads: [], b: a.fornecedores?.insignia_manual || [] }; 
                 grouped[fNome].ads.push(a); 
             }); 
+            
             let lojasOrdenadas = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
+            
             let html = ''; 
             for(let loja of lojasOrdenadas) { 
                 let b = grouped[loja].b.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 text-[7px]">${i}</span>`).join(''); 
                 html += `<tr class="group-header bg-[#141415] border-y border-zinc-800"><td colspan="7" class="font-black text-blue-500 py-3">🏢 ${loja} ${b}</td></tr>`; 
                 grouped[loja].ads.forEach(a => { 
                     let d = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '--'; 
-                    let bandeira = regMap[a.regiao_id] || '';
-                    let p = a.variacoes ? `${bandeira} ${a.variacoes.produtos_mestre?.nome} ${a.variacoes.capacidade} <span class="text-zinc-500">${a.variacoes.cor}</span>` : 'Indisponível'; 
+                    let p = a.variacoes ? `${a.variacoes.produtos_mestre?.nome} ${a.variacoes.capacidade} <span class="text-zinc-500">${a.variacoes.cor}</span>` : 'Indisponível'; 
                     let c = a.condicao || 'NOVO'; 
                     let pDisp = a.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
                     html += `<tr>
@@ -1059,17 +1103,23 @@
             tbody.innerHTML = html; 
         }
 
+        // Modal Edição Completa (Individual)
         function abrirModalEdicaoCompleta(ofertaId) {
             if (!ofertaId) return;
             const oferta = dbAnu.find(o => o.id == ofertaId);
             if (!oferta) return;
+
             document.getElementById('editOfertaId').value = oferta.id;
             document.getElementById('editModelo').value = oferta.variacoes?.produto_id || '';
             document.getElementById('editCapacidade').innerHTML = '<option value="">MEMÓRIA...</option>';
-            if (oferta.variacoes?.produto_id) libMemMEdit(oferta.variacoes.produto_id);
+            if (oferta.variacoes?.produto_id) {
+                libMemMEdit(oferta.variacoes.produto_id);
+            }
             document.getElementById('editCapacidade').value = oferta.variacoes?.capacidade || '';
             document.getElementById('editCor').innerHTML = '<option value="">COR...</option>';
-            if (oferta.variacoes?.produto_id && oferta.variacoes?.capacidade) libCorMEdit(oferta.variacoes.produto_id, oferta.variacoes.capacidade);
+            if (oferta.variacoes?.produto_id && oferta.variacoes?.capacidade) {
+                libCorMEdit(oferta.variacoes.produto_id, oferta.variacoes.capacidade);
+            }
             document.getElementById('editCor').value = oferta.variacoes?.cor || '';
             document.getElementById('editCondicao').value = oferta.condicao || 'Novo';
             document.getElementById('editBateria').value = oferta.saude_bateria || '';
@@ -1087,10 +1137,13 @@
             document.getElementById('editEnvio').checked = oferta.faz_envio || false;
             document.getElementById('editColeta').checked = oferta.aceita_coleta || false;
             document.getElementById('editNota').checked = oferta.emite_nota || false;
+
             document.getElementById('modalEdicaoCompleta').classList.remove('hidden');
         }
 
-        function fecharModalEdicaoCompleta() { document.getElementById('modalEdicaoCompleta').classList.add('hidden'); }
+        function fecharModalEdicaoCompleta() {
+            document.getElementById('modalEdicaoCompleta').classList.add('hidden');
+        }
 
         async function salvarEdicaoCompleta(e) {
             e.preventDefault();
@@ -1108,8 +1161,13 @@
             const isBrl = precoBrl.length > 0;
             const precoFinal = isBrl ? parseP(precoBrl) : parseP(precoUsd);
             const moeda = isBrl ? 'BRL' : 'USD';
+
             const variacao = dbVar.find(v => v.produtos_mestre?.id == modelo && v.capacidade == capacidade && v.cor == cor);
-            if (!variacao) { alert('Variação não encontrada.'); return; }
+            if (!variacao) {
+                alert('Variação não encontrada.');
+                return;
+            }
+
             const updates = {
                 variacao_id: variacao.id,
                 regiao_id: origem,
@@ -1126,11 +1184,18 @@
                 aceita_coleta: document.getElementById('editColeta').checked,
                 emite_nota: document.getElementById('editNota').checked
             };
+
             const { error } = await _s.from('ofertas').update(updates).eq('id', id);
-            if (error) alert('Erro ao atualizar: ' + error.message);
-            else { alert('Atualizado com sucesso!'); fecharModalEdicaoCompleta(); loadAll(); }
+            if (error) {
+                alert('Erro ao atualizar: ' + error.message);
+            } else {
+                alert('Atualizado com sucesso!');
+                fecharModalEdicaoCompleta();
+                loadAll();
+            }
         }
 
+        // Funções auxiliares para edição INDIVIDUAL
         function libMemMEdit(produtoId) {
             let caps = [...new Set(dbVar.filter(v => v.produtos_mestre?.id == produtoId).map(v => v.capacidade))];
             document.getElementById('editCapacidade').innerHTML = '<option value="">MEMÓRIA...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join('');
@@ -1142,97 +1207,128 @@
             document.getElementById('editCor').disabled = false;
         }
 
+        // Funções auxiliares para edição EM MASSA
         function libMemMBulk() {
             let p = parseInt(document.getElementById('bulkModelo').value);
-            if(!p) { document.getElementById('bulkCapacidade').disabled = true; document.getElementById('bulkCor').disabled = true; return; }
+            if(!p) { 
+                document.getElementById('bulkCapacidade').disabled = true; 
+                document.getElementById('bulkCor').disabled = true; 
+                return; 
+            }
             let caps = [...new Set(dbVar.filter(v => v.produtos_mestre?.id === p).map(v => v.capacidade))];
             document.getElementById('bulkCapacidade').innerHTML = '<option value="">MANTER CAPACIDADE...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join('');
             document.getElementById('bulkCapacidade').disabled = false; 
         }
         function libCorMBulk() {
             let p = parseInt(document.getElementById('bulkModelo').value), c = document.getElementById('bulkCapacidade').value;
-            if(!c) { document.getElementById('bulkCor').disabled = true; return; }
+            if(!c) { 
+                document.getElementById('bulkCor').disabled = true; 
+                return; 
+            }
             let cores = dbVar.filter(v => v.produtos_mestre?.id === p && v.capacidade === c).map(v => v.cor);
             document.getElementById('bulkCor').innerHTML = '<option value="">MANTER COR...</option>' + cores.map(co=>`<option value="${co}">${co.toUpperCase()}</option>`).join('');
             document.getElementById('bulkCor').disabled = false; 
         }
 
+        // Funções do Modal Bulk Anu (Edição em Massa)
         function bulkAnuModal() {
             if(!document.querySelectorAll('.chk-anu:checked').length) return alert("Selecione anúncios.");
             document.getElementById('modalBulkAnu').classList.remove('hidden');
         }
-        function fecharBulkAnu() { document.getElementById('modalBulkAnu').classList.add('hidden'); }
+        function fecharBulkAnu() {
+            document.getElementById('modalBulkAnu').classList.add('hidden');
+        }
 
         async function runBulkAnu(e) {
             e.preventDefault();
             let ids = Array.from(document.querySelectorAll('.chk-anu:checked')).map(c => parseInt(c.value));
             if (!ids.length) return alert("Selecione anúncios.");
+
             let updates = {};
+
+            // Modelo, capacidade, cor (precisam ser tratados juntos pois alteram variacao_id)
             const modelo = document.getElementById('bulkModelo').value;
             const capacidade = document.getElementById('bulkCapacidade').value;
             const cor = document.getElementById('bulkCor').value;
+
             if (modelo && capacidade && cor) {
                 const variacao = dbVar.find(v => v.produtos_mestre?.id == modelo && v.capacidade == capacidade && v.cor == cor);
-                if (variacao) updates.variacao_id = variacao.id;
-                else { alert('Variação selecionada inválida.'); return; }
+                if (variacao) {
+                    updates.variacao_id = variacao.id;
+                } else {
+                    alert('Variação selecionada inválida.');
+                    return;
+                }
             } else if (modelo || capacidade || cor) {
                 alert('Para alterar a variação, preencha Modelo, Capacidade e Cor simultaneamente.');
                 return;
             }
+
+            // Condição
             const condicao = document.getElementById('bulkCondicao').value;
             if (condicao) updates.condicao = condicao;
+
+            // Bateria
             const bateria = document.getElementById('bulkBateria').value;
             if (bateria) updates.saude_bateria = bateria;
+
+            // Garantia
             const garantia = document.getElementById('bulkGarantia').value;
             if (garantia) updates.garantia = garantia;
+
+            // Origem
             const origem = document.getElementById('bulkOrigem').value;
             if (origem) updates.regiao_id = origem;
+
+            // Quantidade
             const qtd = document.getElementById('bulkQuantidade').value;
             if (qtd !== '') {
                 let qVal = parseInt(qtd);
                 updates.quantidade = isNaN(qVal) || qVal < 0 ? 0 : qVal;
             }
+
+            // Preço (apenas um dos dois)
             const precoUsd = document.getElementById('bulkPrecoUsd').value;
             const precoBrl = document.getElementById('bulkPrecoBrl').value;
-            if (precoUsd && precoBrl) { alert('Preencha apenas USD ou BRL, não ambos.'); return; }
-            if (precoUsd) { updates.preco = parseP(precoUsd); updates.moeda = 'USD'; }
-            if (precoBrl) { updates.preco = parseP(precoBrl); updates.moeda = 'BRL'; }
+            if (precoUsd && precoBrl) {
+                alert('Preencha apenas USD ou BRL, não ambos.');
+                return;
+            }
+            if (precoUsd) {
+                updates.preco = parseP(precoUsd);
+                updates.moeda = 'USD';
+            }
+            if (precoBrl) {
+                updates.preco = parseP(precoBrl);
+                updates.moeda = 'BRL';
+            }
+
+            // Checkboxes
             if (document.getElementById('bulkPix').checked) updates.aceita_pix = true;
             if (document.getElementById('bulkUsdt').checked) updates.aceita_usdt = true;
             if (document.getElementById('bulkNegocia').checked) updates.aceita_proposta = true;
             if (document.getElementById('bulkEnvio').checked) updates.faz_envio = true;
             if (document.getElementById('bulkColeta').checked) updates.aceita_coleta = true;
             if (document.getElementById('bulkNota').checked) updates.emite_nota = true;
-            if (Object.keys(updates).length === 0) { alert('Nenhum campo preenchido para atualizar.'); return; }
+
+            if (Object.keys(updates).length === 0) {
+                alert('Nenhum campo preenchido para atualizar.');
+                return;
+            }
+
             const { error } = await _s.from('ofertas').update(updates).in('id', ids);
-            if (error) alert('Erro ao atualizar: ' + error.message);
-            else { alert('Anúncios atualizados com sucesso!'); fecharBulkAnu(); loadAll(); }
+            if (error) {
+                alert('Erro ao atualizar: ' + error.message);
+            } else {
+                alert('Anúncios atualizados com sucesso!');
+                fecharBulkAnu();
+                loadAll();
+            }
         }
 
         function abrirModalAta() { document.getElementById('mAtaTitle').innerText = "NOVO ATACADISTA"; document.getElementById('mAtaId').value=''; document.getElementById('mAtaNome').value=''; document.getElementById('mAtaWhats').value=''; document.getElementById('mAtaEmail').value=''; document.getElementById('mAtaPais').value='Brasil'; toggleLocationFields('Ata'); document.getElementById('mAtaSenha').value=''; document.getElementById('modalAta').classList.remove('hidden'); }
         function editAta(id) { const a = dbAta.find(x => x.id == id); document.getElementById('mAtaTitle').innerText = `EDITANDO: ${a.nome}`; document.getElementById('mAtaId').value = a.id; document.getElementById('mAtaNome').value = a.nome; document.getElementById('mAtaWhats').value = a.whatsapp||''; document.getElementById('mAtaEmail').value = a.email||''; document.getElementById('mAtaPais').value = a.pais||'Brasil'; toggleLocationFields('Ata'); if(a.pais==='Brasil'){ document.getElementById('mAtaEst').value = a.estado||''; loadCidadesIBGE('Ata').then(()=> document.getElementById('mAtaCid').value = a.cidade||''); } document.getElementById('mAtaSenha').value = a.senha||''; document.getElementById('mAtaAtivo').checked = a.ativo; document.getElementById('mAtaVeri').checked = a.verificado; document.getElementById('modalAta').classList.remove('hidden'); }
-
-        async function saveAta(e) { 
-            e.preventDefault(); 
-            const d = { 
-                nome: document.getElementById('mAtaNome').value.toUpperCase(), 
-                whatsapp: document.getElementById('mAtaWhats').value, 
-                email: document.getElementById('mAtaEmail').value || null, 
-                pais: document.getElementById('mAtaPais').value, 
-                estado: (document.getElementById('mAtaPais').value === 'Brasil') ? document.getElementById('mAtaEst').value : null, 
-                cidade: (document.getElementById('mAtaPais').value === 'Brasil') ? document.getElementById('mAtaCid').value : null, 
-                ativo: document.getElementById('mAtaAtivo').checked, 
-                verificado: document.getElementById('mAtaVeri').checked, 
-                senha: document.getElementById('mAtaSenha').value 
-            }; 
-            const id = document.getElementById('mAtaId').value; 
-            let error;
-            if(id) ({ error } = await _s.from('fornecedores').update(d).eq('id', id));
-            else ({ error } = await _s.from('fornecedores').insert([d]));
-            if(error) alert("ERRO AO SALVAR: " + error.message);
-            else { fecharModais(); await loadAll(); } 
-        }
-
+        async function saveAta(e) { e.preventDefault(); const d = { nome: document.getElementById('mAtaNome').value.toUpperCase(), whatsapp: document.getElementById('mAtaWhats').value, email: document.getElementById('mAtaEmail').value, pais: document.getElementById('mAtaPais').value, estado: document.getElementById('mAtaPais').value==='Brasil'?document.getElementById('mAtaEst').value:null, cidade: document.getElementById('mAtaPais').value==='Brasil'?document.getElementById('mAtaCid').value:null, ativo: document.getElementById('mAtaAtivo').checked, verificado: document.getElementById('mAtaVeri').checked, senha: document.getElementById('mAtaSenha').value }; const id = document.getElementById('mAtaId').value; if(id) await _s.from('fornecedores').update(d).eq('id', id); else await _s.from('fornecedores').insert([d]); fecharModais(); loadAll(); }
         function bulkAtaModal() { document.getElementById('modalBulkAta').classList.remove('hidden'); }
 
         function abrirModalCliNovo() { document.getElementById('mCliTitle').innerText="NOVO BUSCADOR"; document.getElementById('mCliId').value=''; document.getElementById('formCli').reset(); toggleLocationFields('Cli'); document.getElementById('modalCli').classList.remove('hidden'); }
@@ -1244,25 +1340,25 @@
             const payload = { 
                 nome: document.getElementById('mCliNome').value.toUpperCase(), 
                 whatsapp: document.getElementById('mCliWhats').value, 
-                email: document.getElementById('mCliEmail').value || null, 
+                email: document.getElementById('mCliEmail').value, 
                 pais: document.getElementById('mCliPais').value, 
-                estado: (document.getElementById('mCliPais').value === 'Brasil') ? document.getElementById('mCliEst').value : null, 
-                cidade: (document.getElementById('mCliPais').value === 'Brasil') ? document.getElementById('mCliCid').value : null, 
+                estado: document.getElementById('mCliPais').value === 'Brasil' ? document.getElementById('mCliEst').value : null, 
+                cidade: document.getElementById('mCliPais').value === 'Brasil' ? document.getElementById('mCliCid').value : null, 
                 senha: document.getElementById('mCliSenha').value 
             }; 
+            
             if(!id) {
                 const colInfo = getStatusCol('clientes_buscador');
                 payload[colInfo.name] = colInfo.valT;
             }
-            let error;
-            if(id) ({ error } = await _s.from('clientes_buscador').update(payload).eq('id', id));
-            else ({ error } = await _s.from('clientes_buscador').insert([payload]));
-            if(error) alert("ERRO AO SALVAR: " + error.message);
-            else { fecharModais(); await loadAll(); } 
-        }
 
+            const { error } = id ? await _s.from('clientes_buscador').update(payload).eq('id', id) : await _s.from('clientes_buscador').insert([payload]); 
+            if(error) { alert("ERRO AO SALVAR: " + error.message); } 
+            else { fecharModais(); loadAll(); } 
+        }
         function bulkCliModal() { document.getElementById('modalBulkCli').classList.remove('hidden'); }
 
+        // FUNCIONÁRIOS
         function renderFunc() { 
             document.getElementById('listFunc').innerHTML = dbFunc.map(f => { 
                 return `<tr>
@@ -1270,12 +1366,14 @@
                     <td class="font-mono text-[9px] text-zinc-400">${f.whatsapp}</td>
                     <td class="font-mono text-red-400 text-[10px]">${f.senha}</td>
                     <td><span class="badge ${f.ativo?'b-green':'b-red'}">${f.ativo?'ATIVO':'BLOQUEADO'}</span></td>
-                    <td class="text-right"><div class="flex justify-end gap-1 mt-1">
-                        <button onclick="toggleStatus('funcionarios', ${f.id}, true)" class="bg-green-900/30 text-green-500 px-2 py-1 rounded text-[8px] font-black hover:bg-green-500">ATIVAR</button>
-                        <button onclick="toggleStatus('funcionarios', ${f.id}, false)" class="bg-yellow-900/30 text-yellow-500 px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500">BLOQ</button>
-                        <button onclick="delRecord('funcionarios', ${f.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black hover:bg-red-500">EXCLUIR</button>
-                        <button onclick="editFunc(${f.id})" class="bg-zinc-800 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-500">EDITAR</button>
-                    </div></td>
+                    <td class="text-right">
+                        <div class="flex justify-end gap-1 mt-1">
+                            <button onclick="toggleStatus('funcionarios', ${f.id}, true)" class="bg-green-900/30 text-green-500 px-2 py-1 rounded text-[8px] font-black hover:bg-green-500">ATIVAR</button>
+                            <button onclick="toggleStatus('funcionarios', ${f.id}, false)" class="bg-yellow-900/30 text-yellow-500 px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500">BLOQ</button>
+                            <button onclick="delRecord('funcionarios', ${f.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black hover:bg-red-500">EXCLUIR</button>
+                            <button onclick="editFunc(${f.id})" class="bg-zinc-800 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-blue-500">EDITAR</button>
+                        </div>
+                    </td>
                 </tr>`; 
             }).join(''); 
         }
@@ -1291,14 +1389,20 @@
                 ativo: true 
             }; 
             const { error } = id ? await _s.from('funcionarios').update(payload).eq('id', id) : await _s.from('funcionarios').insert([payload]); 
-            if(error) alert("ERRO: " + error.message); 
-            else { fecharModais(); loadAll(); } 
+            if(error) { 
+                alert("ERRO: " + error.message); 
+            } else { 
+                fecharModais(); 
+                loadAll(); 
+            } 
         }
 
+        // AÇÕES EM MASSA GENÉRICA
         async function runBulk(t, a) { 
             const cls = t === 'fornecedores' ? '.chk-ata:checked' : (t === 'clientes_buscador' ? '.chk-cli:checked' : '.chk-anu:checked'); 
             let ids = Array.from(document.querySelectorAll(cls)).map(c => parseInt(c.value)); 
             if(!ids.length) return alert("Selecione itens na lista primeiro.");
+
             if(a === 'apagar') { 
                 if(confirm("APAGAR DEFINITIVO OS SELECIONADOS?")) await _s.from(t).delete().in('id', ids); 
             } else if (a === 'senha') { 
@@ -1308,19 +1412,25 @@
             } else if(a === 'ativar' || a === 'desativar' || a === 'verificar') { 
                 let u = {}; 
                 const colInfo = getStatusCol(t);
+
                 if(a==='ativar') u[colInfo.name] = colInfo.valT; 
                 if(a==='desativar') u[colInfo.name] = colInfo.valF; 
                 if(a==='verificar') u.verificado=true; 
+                
                 const { error } = await _s.from(t).update(u).in('id', ids); 
                 if(error) {
-                    if(error.message.includes('Could not find the')) alert(`ERRO NO BANCO: A coluna '${colInfo.name}' não existe na tabela '${t}'.`);
-                    else alert("ERRO: " + error.message);
+                    if(error.message.includes('Could not find the')) {
+                        alert(`ERRO NO BANCO: A coluna '${colInfo.name}' não existe na tabela '${t}'. Vá ao Supabase e crie.`);
+                    } else {
+                        alert("ERRO: " + error.message);
+                    }
                     return;
                 }
             } 
             fecharModais(); loadAll(); 
         }
 
+        // ANUNCIOS GESTAO - funções auxiliares
         async function editAnuncio(id, f, v) {
             let val;
             if(f === 'preco') { val = parseP(v); if(isNaN(val)||val<0) val=0; } 
@@ -1329,6 +1439,7 @@
             loadAll();
         }
 
+        // LANÇAR ANÚNCIO (Lógica Atacadista Adaptada)
         function abrirModalGestaoAnuncio() { document.getElementById('modalGestaoAnuncio').classList.remove('hidden'); }
         function selTipoM(t) {
             document.getElementById('f_tipo_m').value = t;
@@ -1359,6 +1470,7 @@
             const cor = document.getElementById('f_cor_m').value; 
             const v = dbVar.find(x => x.produtos_mestre?.id === mId && x.capacidade === c && x.cor === cor); 
             if(!v) return alert("Variação não encontrada."); 
+            
             let tipo = document.getElementById('f_tipo_m').value;
             let isBrl = document.getElementById('f_brl_m').value.length > 0;
             let precoFinal = isBrl ? parseP(document.getElementById('f_brl_m').value) : parseP(document.getElementById('f_usd_m').value);
@@ -1366,6 +1478,7 @@
             let b = tipo === 'Novo' ? '' : document.getElementById('f_bat_m').value;
             let q = parseInt(document.getElementById('f_qtd_m').value);
             if (isNaN(q) || q < 0) q = 0;
+
             const payload = { 
                 fornecedor_id: lojaId, variacao_id: v.id, regiao_id: document.getElementById('f_orig_m').value,
                 preco: precoFinal, moeda: isBrl ? 'BRL' : 'USD', quantidade: q,
@@ -1380,6 +1493,7 @@
             if(error) alert(error.message); else { fecharModais(); e.target.reset(); loadAll(); } 
         }
 
+        // GESTAO DE SELOS
         function loadUsersForSelo() {
             const t = document.getElementById('seloTableSel').value;
             const sel = document.getElementById('seloUser');
@@ -1402,22 +1516,27 @@
         }
         async function clearInsignias() { const t = document.getElementById('seloTableSel').value; const id = document.getElementById('seloUser').value; if(confirm("Limpar?")) { await _s.from(t).update({insignia_manual: []}).eq('id', id); loadAll(); } }
 
+        // VARREDURA GLOBAL
         async function runVarreduraSelos() {
             alert('Iniciando varredura global de insígnias...');
+
             const [fornecedores, buscadores, ofertas] = await Promise.all([
                 _s.from('fornecedores').select('*'),
                 _s.from('clientes_buscador').select('*'),
                 _s.from('ofertas').select('fornecedor_id, quantidade')
             ]);
+
             const fData = fornecedores.data || [];
             const bData = buscadores.data || [];
             const oData = ofertas.data || [];
+
             const estoqueMap = {};
             oData.forEach(o => {
                 const fid = o.fornecedor_id;
                 if (!estoqueMap[fid]) estoqueMap[fid] = 0;
                 estoqueMap[fid] += (o.quantidade || 0);
             });
+
             const selosEstoque = [
                 "1.000 APARELHOS EM ESTOQUE - KHALIFA DO IPHONE",
                 "700 APARELHOS EM ESTOQUE - SULTÃO DO IPHONE",
@@ -1426,6 +1545,7 @@
                 "100 APARELHOS EM ESTOQUE - REI DO IPHONE",
                 "50 APARELHOS EM ESTOQUE - MAGNATA IPHONE"
             ];
+
             const selosLogin = [
                 "500 LOGINS: PREÇO DE MIAMI NO BRASIL 🤡",
                 "400 LOGINS: PASSANDO FOME",
@@ -1441,11 +1561,17 @@
                 "10 LOGINS: PEGOU A SENHA",
                 "1 LOGIN: LOJISTA EXPERTO"
             ];
+
             const parseInsignias = (campo) => {
                 if (!campo) return [];
                 if (Array.isArray(campo)) return campo;
-                try { return JSON.parse(campo) || []; } catch { return []; }
+                try {
+                    return JSON.parse(campo) || [];
+                } catch {
+                    return [];
+                }
             };
+
             for (const f of fData) {
                 const total = estoqueMap[f.id] || 0;
                 let novoSelo = null;
@@ -1455,13 +1581,16 @@
                 else if (total >= 200) novoSelo = selosEstoque[3];
                 else if (total >= 100) novoSelo = selosEstoque[4];
                 else if (total >= 50) novoSelo = selosEstoque[5];
+
                 const atuais = parseInsignias(f.insignia_manual);
                 const novos = atuais.filter(ins => !selosEstoque.includes(ins));
                 if (novoSelo) novos.push(novoSelo);
+
                 if (JSON.stringify(atuais) !== JSON.stringify(novos)) {
                     await _s.from('fornecedores').update({ insignia_manual: novos }).eq('id', f.id);
                 }
             }
+
             for (const b of bData) {
                 const logins = b.logins_count || 0;
                 let novoSelo = null;
@@ -1478,13 +1607,16 @@
                 else if (logins >= 20) novoSelo = selosLogin[10];
                 else if (logins >= 10) novoSelo = selosLogin[11];
                 else if (logins >= 1) novoSelo = selosLogin[12];
+
                 const atuais = parseInsignias(b.insignia_manual);
                 const novos = atuais.filter(ins => !selosLogin.includes(ins));
                 if (novoSelo) novos.push(novoSelo);
+
                 if (JSON.stringify(atuais) !== JSON.stringify(novos)) {
                     await _s.from('clientes_buscador').update({ insignia_manual: novos }).eq('id', b.id);
                 }
             }
+
             alert('Varredura concluída com sucesso!');
             loadAll();
         }
