@@ -24,13 +24,13 @@
     <div class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-8 border-b border-zinc-800 pb-6">
             <div>
-                <h1 class="text-3xl font-black italic">🚀 ANUNCIAR EM <span class="text-blue-500">MASSA</span></h1>
-                <p class="text-zinc-500 text-[10px] mt-1 tracking-widest">UPLOAD BLINDADO DE ESTOQUE</p>
+                <h1 class="text-3xl font-black italic">ANÚNCIOS EM <span class="text-blue-500">MASSA 🚀</span></h1>
+                <p class="text-zinc-500 text-[10px] mt-1 tracking-widest">PLANILHA BLINDADA COM CASCATA REAL</p>
             </div>
             <button onclick="window.close()" class="border border-zinc-700 px-5 py-2 rounded-full text-[10px] font-bold hover:bg-red-900 transition">FECHAR</button>
         </header>
 
-        <!-- Aviso de login (caso não esteja logado) -->
+        <!-- Verificação de login -->
         <div id="auth-warning" class="hidden card !p-4 mb-6 text-red-500 border-red-500/30">
             <i class="fas fa-exclamation-triangle mr-2"></i> Você não está logado como anunciante. Redirecionando...
         </div>
@@ -39,22 +39,22 @@
         <div class="grid md:grid-cols-2 gap-6 mb-10">
             <div class="card">
                 <h2 class="text-sm font-bold mb-2">1. BAIXAR PLANILHA</h2>
-                <p class="text-zinc-400 text-[9px] mb-6 leading-relaxed">A PLANILHA JÁ VEM COM LISTAS SUSPENSAS AMARRADAS AO BANCO DE DADOS. BASTA SELECIONAR.</p>
+                <p class="text-zinc-400 text-[9px] mb-6 leading-relaxed">A PLANILHA POSSUI CASCATA DE DROPDOWNS BASEADA NA BASE ABSOLUTA DE IPHONES.</p>
                 <button onclick="baixarPlanilha()" class="btn-blue w-full p-4 rounded-xl flex items-center justify-center gap-3">
                     <i class="fas fa-file-excel text-xl"></i> 📥 BAIXAR PLANILHA PADRÃO
                 </button>
             </div>
             <div class="card">
                 <h2 class="text-sm font-bold mb-2">2. SUBIR PREENCHIDO</h2>
-                <p class="text-zinc-400 text-[9px] mb-6 leading-relaxed">APÓS PREENCHER, ENVIE O ARQUIVO. O SISTEMA VALIDARÁ E SALVARÁ NO BANCO.</p>
+                <p class="text-zinc-400 text-[9px] mb-6 leading-relaxed">APÓS PREENCHER, ENVIE O ARQUIVO. O SISTEMA VALIDARÁ CADA LINHA.</p>
                 <input type="file" id="fileInput" class="hidden" accept=".xlsx" onchange="processarUpload(event)">
                 <button onclick="document.getElementById('fileInput').click()" class="bg-white text-black w-full p-4 rounded-xl font-black hover:bg-zinc-200 transition">
-                    <i class="fas fa-cloud-upload-alt mr-2"></i> 📤 SUBIR ESTOQUE PREENCHIDO
+                    <i class="fas fa-cloud-upload-alt mr-2"></i> 📤 SUBIR ARQUIVO
                 </button>
             </div>
         </div>
 
-        <!-- Área de log (inicialmente oculta) -->
+        <!-- Área de log -->
         <div id="logContainer" class="hidden card space-y-4">
             <h3 class="text-[10px] font-black text-zinc-500 mb-3 italic">PROCESSAMENTO EM TEMPO REAL</h3>
             <div id="logArea" class="log-area"></div>
@@ -75,18 +75,10 @@
         let variacoes = [];
         let regioes = [];
         let dadosCarregados = false;
+        let combinacoesUnicas = [];
 
-        // Listas fixas
-        const CONDICOES = ['Novo', 'Seminovo', 'CPO', 'Grade A', 'Grade B', 'Grade C'];
-        const BATERIAS = ['Abaixo de 85%', 'Acima de 85%', 'Acima de 90%', 'Acima de 95%', 'Bateria em 100%'];
-        const GARANTIAS = ['Sem garantia', '1 Mês', '2 Meses', '3 Meses', '6 Meses', '12 Meses'];
-        const ESTADOS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
-
-        // Cabeçalhos esperados na planilha de upload
-        const HEADERS_ESPERADOS = [
-            'Modelo', 'Capacidade', 'Cor', 'Condição', 'Bateria', 'Garantia',
-            'Origem', 'Estado (UF)', 'Cidade', 'Quantidade', 'Preço (BRL)', 'Preço (USD)'
-        ];
+        // Cabeçalhos esperados
+        const HEADERS_ESPERADOS = ['Modelo', 'Capacidade', 'Cor', 'Condição', 'Garantia', 'Bateria', 'Origem', 'Quantidade', 'Preço (BRL)', 'Preço (USD)'];
 
         // Verificação de login e carregamento inicial
         (async function init() {
@@ -109,9 +101,24 @@
             variacoes = v.data || [];
             regioes = r.data || [];
             dadosCarregados = true;
+
+            // Construir combinações únicas a partir das variações
+            const combinacoesSet = new Set();
+            variacoes.forEach(item => {
+                const modelo = item.produtos_mestre?.nome;
+                const capacidade = item.capacidade;
+                const cor = item.cor;
+                if (modelo && capacidade && cor) {
+                    const key = `${modelo}|${capacidade}|${cor}`;
+                    if (!combinacoesSet.has(key)) {
+                        combinacoesSet.add(key);
+                        combinacoesUnicas.push({ modelo, capacidade, cor });
+                    }
+                }
+            });
+            combinacoesUnicas.sort((a, b) => a.modelo.localeCompare(b.modelo) || a.capacidade.localeCompare(b.capacidade) || a.cor.localeCompare(b.cor));
         }
 
-        // Função de log
         function log(mensagem, tipo = 'info') {
             const area = document.getElementById('logArea');
             const cor = tipo === 'erro' ? 'text-red-400' : (tipo === 'ok' ? 'text-green-400' : 'text-blue-400');
@@ -119,138 +126,130 @@
             area.scrollTop = area.scrollHeight;
         }
 
-        // 1. GERAÇÃO DA PLANILHA BLINDADA
+        // ===== NOVA FUNÇÃO BAIXAR PLANILHA (COM NOMES DEFINIDOS) =====
         async function baixarPlanilha() {
-            if (!dadosCarregados) await carregarDados();
-
             const btn = event.target;
             const textoOriginal = btn.innerText;
             btn.innerText = "GERANDO PLANILHA...";
 
+            document.getElementById('logContainer').classList.add('hidden');
+            document.getElementById('logArea').innerHTML = '';
+            document.getElementById('progressBar').style.width = '0%';
+
             try {
-                // Extrair listas únicas dos dados
-                const modelos = [...new Set(variacoes.map(v => v.produtos_mestre?.nome).filter(Boolean))].sort((a,b) => a.localeCompare(b));
-                const capacidades = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))].sort((a,b) => a.localeCompare(b));
-                const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))].sort((a,b) => a.localeCompare(b));
-                const origens = regioes.map(r => r.nome).sort((a,b) => a.localeCompare(b));
+                // Usaremos combinacoesUnicas (já carregada) para criar as listas perfeitas
+                const modelosUnicos = [...new Set(combinacoesUnicas.map(c => c.modelo))].sort((a,b) => a.localeCompare(b));
+                
+                const capsPorModelo = {};
+                modelosUnicos.forEach(m => {
+                    capsPorModelo[m] = [...new Set(combinacoesUnicas.filter(c => c.modelo === m).map(c => c.capacidade))].sort((a,b) => a.localeCompare(b));
+                });
+
+                const coresPorModeloCap = {};
+                combinacoesUnicas.forEach(c => {
+                    const key = `${c.modelo}_${c.capacidade}`;
+                    if (!coresPorModeloCap[key]) coresPorModeloCap[key] = new Set();
+                    coresPorModeloCap[key].add(c.cor);
+                });
+                Object.keys(coresPorModeloCap).forEach(key => {
+                    coresPorModeloCap[key] = Array.from(coresPorModeloCap[key]).sort((a,b) => a.localeCompare(b));
+                });
 
                 const workbook = new ExcelJS.Workbook();
-
-                // Aba oculta BaseDB (lista de valores para os dropdowns)
                 const baseSheet = workbook.addWorksheet('BaseDB', { state: 'hidden' });
-                // Coluna A: Modelos
-                modelos.forEach((val, idx) => baseSheet.getCell(`A${idx+1}`).value = val);
-                // Coluna B: Capacidades
-                capacidades.forEach((val, idx) => baseSheet.getCell(`B${idx+1}`).value = val);
-                // Coluna C: Cores
-                cores.forEach((val, idx) => baseSheet.getCell(`C${idx+1}`).value = val);
-                // Coluna D: Origens
-                origens.forEach((val, idx) => baseSheet.getCell(`D${idx+1}`).value = val);
-                // Coluna E: Condições
-                CONDICOES.forEach((val, idx) => baseSheet.getCell(`E${idx+1}`).value = val);
-                // Coluna F: Baterias
-                BATERIAS.forEach((val, idx) => baseSheet.getCell(`F${idx+1}`).value = val);
-                // Coluna G: Garantias
-                GARANTIAS.forEach((val, idx) => baseSheet.getCell(`G${idx+1}`).value = val);
-                // Coluna H: Estados
-                ESTADOS.forEach((val, idx) => baseSheet.getCell(`H${idx+1}`).value = val);
+                let currentCol = 1;
 
-                // Aba principal: Estoque
-                const estoqueSheet = workbook.addWorksheet('Estoque');
-                estoqueSheet.columns = HEADERS_ESPERADOS.map(h => ({ header: h, key: h, width: 18 }));
+                // 1. Coluna de Modelos
+                const colLetModelos = baseSheet.getColumn(currentCol).letter;
+                baseSheet.getColumn(currentCol).values = ['Modelos', ...modelosUnicos];
+                workbook.addDefinedName({ name: 'ListaModelos', ref: `BaseDB!$${colLetModelos}$2:$${colLetModelos}$${modelosUnicos.length + 1}` });
+                currentCol++;
 
-                // Aplicar data validation nas primeiras 100 linhas
+                // 2. Colunas de Capacidades (1 para cada modelo)
+                Object.keys(capsPorModelo).forEach(modelo => {
+                    const nomeDef = modelo.replace(/[\s-]/g, '_');
+                    const caps = capsPorModelo[modelo];
+                    const colLetter = baseSheet.getColumn(currentCol).letter;
+                    baseSheet.getColumn(currentCol).values = [nomeDef, ...caps];
+                    workbook.addDefinedName({ name: nomeDef, ref: `BaseDB!$${colLetter}$2:$${colLetter}$${caps.length + 1}` });
+                    currentCol++;
+                });
+
+                // 3. Colunas de Cores (1 para cada comb. Modelo+Capacidade)
+                Object.keys(coresPorModeloCap).forEach(chave => {
+                    const nomeDef = chave.replace(/[\s-]/g, '_');
+                    const cores = coresPorModeloCap[chave];
+                    const colLetter = baseSheet.getColumn(currentCol).letter;
+                    baseSheet.getColumn(currentCol).values = [nomeDef, ...cores];
+                    workbook.addDefinedName({ name: nomeDef, ref: `BaseDB!$${colLetter}$2:$${colLetter}$${cores.length + 1}` });
+                    currentCol++;
+                });
+
+                // 4. Origens, Condições, etc.
+                const { data: regioesDB } = await _s.from('regioes').select('nome');
+                let origens = regioesDB ? regioesDB.map(r => r.nome).sort() : ['BRASIL ANATEL', 'EUA', 'JAPÃO', 'CHINA', 'ÍNDIA', 'CANADÁ'];
+                
+                const colOrigem = baseSheet.getColumn(currentCol).letter;
+                baseSheet.getColumn(currentCol).values = ['Origens', ...origens];
+                workbook.addDefinedName({ name: 'ListaOrigens', ref: `BaseDB!$${colOrigem}$2:$${colOrigem}$${origens.length + 1}` });
+                currentCol++;
+
+                const condicoes = ['Novo', 'Seminovo', 'CPO', 'Grade A', 'Grade B', 'Grade C'];
+                const colCond = baseSheet.getColumn(currentCol).letter;
+                baseSheet.getColumn(currentCol).values = ['Condicoes', ...condicoes];
+                workbook.addDefinedName({ name: 'ListaCondicoes', ref: `BaseDB!$${colCond}$2:$${colCond}$${condicoes.length + 1}` });
+
+                // Aba principal
+                const lanceSheet = workbook.addWorksheet('LANÇE AQUI');
+                lanceSheet.properties.tabColor = { argb: 'FF0071E3' };
+                lanceSheet.columns = HEADERS_ESPERADOS.map(h => ({ header: h, key: h, width: 20 }));
+
                 for (let i = 2; i <= 101; i++) {
-                    // Modelo (col A)
-                    estoqueSheet.getCell(`A${i}`).dataValidation = {
-                        type: 'list',
-                        allowBlank: false,
-                        formulae: [`BaseDB!$A$1:$A$${modelos.length}`]
+                    lanceSheet.getCell(`A${i}`).dataValidation = { type: 'list', allowBlank: false, formulae: ['ListaModelos'] };
+                    lanceSheet.getCell(`B${i}`).dataValidation = { 
+                        type: 'list', 
+                        allowBlank: false, 
+                        formulae: [`INDIRETO(SUBSTITUIR(SUBSTITUIR(A${i};" ";"_");"-";"_"))`] 
                     };
-                    // Capacidade (col B)
-                    estoqueSheet.getCell(`B${i}`).dataValidation = {
-                        type: 'list',
-                        allowBlank: false,
-                        formulae: [`BaseDB!$B$1:$B$${capacidades.length}`]
+                    lanceSheet.getCell(`C${i}`).dataValidation = { 
+                        type: 'list', 
+                        allowBlank: false, 
+                        formulae: [`INDIRETO(SUBSTITUIR(SUBSTITUIR(A${i}&"_"&B${i};" ";"_");"-";"_"))`] 
                     };
-                    // Cor (col C)
-                    estoqueSheet.getCell(`C${i}`).dataValidation = {
-                        type: 'list',
-                        allowBlank: false,
-                        formulae: [`BaseDB!$C$1:$C$${cores.length}`]
+                    lanceSheet.getCell(`D${i}`).dataValidation = { type: 'list', allowBlank: false, formulae: ['ListaCondicoes'] };
+                    lanceSheet.getCell(`E${i}`).dataValidation = { 
+                        type: 'list', 
+                        allowBlank: true, 
+                        formulae: ['"Sem garantia,1 Mês,2 Meses,3 Meses,6 Meses,12 Meses"'] 
                     };
-                    // Condição (col D)
-                    estoqueSheet.getCell(`D${i}`).dataValidation = {
-                        type: 'list',
-                        allowBlank: false,
-                        formulae: [`BaseDB!$E$1:$E$${CONDICOES.length}`]
+                    lanceSheet.getCell(`F${i}`).dataValidation = { 
+                        type: 'list', 
+                        allowBlank: true, 
+                        formulae: ['"Abaixo de 85%,Acima de 85%,Acima de 90%,Acima de 95%,Bateria em 100%"'] 
                     };
-                    // Bateria (col E) - opcional
-                    estoqueSheet.getCell(`E${i}`).dataValidation = {
-                        type: 'list',
-                        allowBlank: true,
-                        formulae: [`BaseDB!$F$1:$F$${BATERIAS.length}`]
+                    lanceSheet.getCell(`G${i}`).dataValidation = { type: 'list', allowBlank: false, formulae: ['ListaOrigens'] };
+                    lanceSheet.getCell(`H${i}`).dataValidation = { 
+                        type: 'whole', 
+                        allowBlank: false, 
+                        operator: 'greaterThanOrEqual', 
+                        formulae: [0] 
                     };
-                    // Garantia (col F) - opcional
-                    estoqueSheet.getCell(`F${i}`).dataValidation = {
-                        type: 'list',
-                        allowBlank: true,
-                        formulae: [`BaseDB!$G$1:$G$${GARANTIAS.length}`]
+                    lanceSheet.getCell(`I${i}`).dataValidation = { 
+                        type: 'decimal', 
+                        allowBlank: true, 
+                        operator: 'greaterThan', 
+                        formulae: [0] 
                     };
-                    // Origem (col G)
-                    estoqueSheet.getCell(`G${i}`).dataValidation = {
-                        type: 'list',
-                        allowBlank: false,
-                        formulae: [`BaseDB!$D$1:$D$${origens.length}`]
-                    };
-                    // Estado (UF) (col H)
-                    estoqueSheet.getCell(`H${i}`).dataValidation = {
-                        type: 'list',
-                        allowBlank: true,
-                        formulae: [`BaseDB!$H$1:$H$${ESTADOS.length}`]
-                    };
-                    // Cidade (col I) - sem validação, texto livre
-                    // Quantidade (col J) - número inteiro >=0
-                    estoqueSheet.getCell(`J${i}`).dataValidation = {
-                        type: 'whole',
-                        allowBlank: false,
-                        operator: 'greaterThanOrEqual',
-                        formulae: [0]
-                    };
-                    // Preço (BRL) (col K) - decimal >0 (opcional)
-                    estoqueSheet.getCell(`K${i}`).dataValidation = {
-                        type: 'decimal',
-                        allowBlank: true,
-                        operator: 'greaterThan',
-                        formulae: [0]
-                    };
-                    // Preço (USD) (col L) - decimal >0 (opcional)
-                    estoqueSheet.getCell(`L${i}`).dataValidation = {
-                        type: 'decimal',
-                        allowBlank: true,
-                        operator: 'greaterThan',
-                        formulae: [0]
+                    lanceSheet.getCell(`J${i}`).dataValidation = { 
+                        type: 'decimal', 
+                        allowBlank: true, 
+                        operator: 'greaterThan', 
+                        formulae: [0] 
                     };
                 }
 
-                // Linha de exemplo (opcional)
-                estoqueSheet.addRow({
-                    'Modelo': modelos[0] || '',
-                    'Capacidade': capacidades[0] || '',
-                    'Cor': cores[0] || '',
-                    'Condição': 'Novo',
-                    'Bateria': '',
-                    'Garantia': '1 ANO APPLE',
-                    'Origem': origens[0] || '',
-                    'Estado (UF)': 'SP',
-                    'Cidade': 'São Paulo',
-                    'Quantidade': 10,
-                    'Preço (BRL)': 5299.00,
-                    'Preço (USD)': ''
-                });
-
                 const buffer = await workbook.xlsx.writeBuffer();
-                saveAs(new Blob([buffer]), 'iFipe_Estoque_Blindado.xlsx');
+                saveAs(new Blob([buffer]), 'iFipe_Anuncio_Em_Massa.xlsx');
             } catch (err) {
                 alert('Erro ao gerar planilha: ' + err.message);
             } finally {
@@ -258,12 +257,11 @@
             }
         }
 
-        // 2. PROCESSAMENTO DO UPLOAD
+        // ===== PROCESSAMENTO DO UPLOAD (mantido inalterado) =====
         async function processarUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            // Mostrar container de log
             document.getElementById('logContainer').classList.remove('hidden');
             const logArea = document.getElementById('logArea');
             const progressBar = document.getElementById('progressBar');
@@ -275,9 +273,9 @@
             try {
                 const workbook = new ExcelJS.Workbook();
                 await workbook.xlsx.load(await file.arrayBuffer());
-                const worksheet = workbook.getWorksheet('Estoque');
+                const worksheet = workbook.getWorksheet('LANÇE AQUI');
                 if (!worksheet) {
-                    log('Aba "Estoque" não encontrada no arquivo.', 'erro');
+                    log('Aba "LANÇE AQUI" não encontrada no arquivo.', 'erro');
                     return;
                 }
 
@@ -297,53 +295,54 @@
                 const rows = [];
                 worksheet.eachRow((row, rowNumber) => {
                     if (rowNumber === 1) return;
-                    const values = row.values; // índice 1-based
+                    const values = row.values;
                     rows.push({
                         modelo: values[1]?.toString().trim() || '',
                         capacidade: values[2]?.toString().trim() || '',
                         cor: values[3]?.toString().trim() || '',
                         condicao: values[4]?.toString().trim() || '',
-                        bateria: values[5]?.toString().trim() || null,
-                        garantia: values[6]?.toString().trim() || null,
+                        garantia: values[5]?.toString().trim() || null,
+                        bateria: values[6]?.toString().trim() || null,
                         origem: values[7]?.toString().trim() || '',
-                        uf: values[8]?.toString().trim() || null,
-                        cidade: values[9]?.toString().trim() || null,
-                        quantidade: parseInt(values[10]) || 0,
-                        preco_brl: parseFloat(values[11]) || 0,
-                        preco_usd: parseFloat(values[12]) || 0
+                        quantidade: parseInt(values[8]) || 0,
+                        preco_brl: parseFloat(values[9]) || 0,
+                        preco_usd: parseFloat(values[10]) || 0
                     });
                 });
 
-                log(`${rows.length} linhas encontradas. Iniciando upsert...`);
+                log(`${rows.length} linhas encontradas. Iniciando validação...`);
 
-                // Garantir que dados do banco estão carregados
                 if (!dadosCarregados) await carregarDados();
 
                 let processados = 0;
                 let sucessos = 0;
                 let erros = 0;
 
+                // Criar um Set de combinações válidas
+                const combinacoesValidas = new Set(combinacoesUnicas.map(item => `${item.modelo}|${item.capacidade}|${item.cor}`));
+
                 for (const [idx, row] of rows.entries()) {
-                    // Pular linha vazia (sem modelo e sem preço)
                     if (!row.modelo && !row.preco_brl && !row.preco_usd) {
                         processados++;
                         continue;
                     }
 
                     try {
-                        // Encontrar variação
+                        const key = `${row.modelo}|${row.capacidade}|${row.cor}`;
+                        if (!combinacoesValidas.has(key)) {
+                            throw new Error(`Combinação inválida: ${row.modelo} ${row.capacidade} ${row.cor}`);
+                        }
+
                         const variacao = variacoes.find(v => 
                             v.produtos_mestre?.nome?.toUpperCase() === row.modelo.toUpperCase() &&
                             v.capacidade?.toUpperCase() === row.capacidade.toUpperCase() &&
                             v.cor?.toUpperCase() === row.cor.toUpperCase()
                         );
-                        if (!variacao) throw new Error(`Variação não encontrada: ${row.modelo} ${row.capacidade} ${row.cor}`);
+                        if (!variacao) throw new Error(`Variação não encontrada no banco: ${row.modelo} ${row.capacidade} ${row.cor}`);
 
-                        // Encontrar região (origem)
                         const regiao = regioes.find(r => r.nome.toUpperCase() === row.origem.toUpperCase());
                         if (!regiao) throw new Error(`Origem não encontrada: ${row.origem}`);
 
-                        // Determinar preço e moeda
                         let preco = 0, moeda = '';
                         if (row.preco_brl > 0) {
                             preco = row.preco_brl;
@@ -355,7 +354,6 @@
                             throw new Error('Nenhum preço válido (BRL ou USD) informado');
                         }
 
-                        // Aplicar regras de Novo/CPO
                         let bateriaFinal = row.bateria;
                         let garantiaFinal = row.garantia;
                         if (row.condicao === 'Novo' || row.condicao === 'CPO') {
@@ -373,8 +371,6 @@
                             quantidade: row.quantidade,
                             saude_bateria: bateriaFinal,
                             garantia: garantiaFinal,
-                            cidade_aparelho: row.cidade || null,
-                            estado_aparelho: row.uf || null,
                             status_aprovacao: 'aprovado',
                             atualizado_em: new Date().toISOString()
                         };
@@ -402,6 +398,10 @@
                 log('Erro fatal: ' + err.message, 'erro');
             }
         }
+
+        // Expor funções globalmente
+        window.baixarPlanilha = baixarPlanilha;
+        window.processarUpload = processarUpload;
     </script>
 </body>
 </html>
