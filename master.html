@@ -73,13 +73,23 @@
                     <div class="relative master-only" id="maintenanceDropdownContainer">
                         <button id="maintenanceBtn" onclick="toggleMaintenanceDropdown()" class="btn-master bg-green-600 px-3 py-1 text-[9px] ml-2">SISTEMA: ON</button>
                         <div id="maintenanceMenu" class="absolute right-0 mt-2 w-64 bg-[#1c1c1e] border border-zinc-700 rounded-lg shadow-lg z-50 hidden">
-                            <div class="py-1">
-                                <button onclick="setMaintenance('status_geral', 'on')" class="block w-full text-left px-4 py-2 text-[10px] text-green-500 hover:bg-zinc-800">🟢 LIGAR Sistema Geral</button>
-                                <button onclick="setMaintenance('status_geral', 'off')" class="block w-full text-left px-4 py-2 text-[10px] text-red-500 hover:bg-zinc-800 border-b border-zinc-800">🔴 DESLIGAR Sistema Geral</button>
-                                <button onclick="setMaintenance('status_atacadista', 'on')" class="block w-full text-left px-4 py-2 text-[10px] text-green-500 hover:bg-zinc-800">🟢 LIGAR Painel Atacadista</button>
-                                <button onclick="setMaintenance('status_atacadista', 'off')" class="block w-full text-left px-4 py-2 text-[10px] text-red-500 hover:bg-zinc-800 border-b border-zinc-800">🔴 DESLIGAR Painel Atacadista</button>
-                                <button onclick="setMaintenance('status_buscador', 'on')" class="block w-full text-left px-4 py-2 text-[10px] text-green-500 hover:bg-zinc-800">🟢 LIGAR Painel Buscador</button>
-                                <button onclick="setMaintenance('status_buscador', 'off')" class="block w-full text-left px-4 py-2 text-[10px] text-red-500 hover:bg-zinc-800">🔴 DESLIGAR Painel Buscador</button>
+                            <div class="py-3 px-4 space-y-3">
+                                <h4 class="text-[10px] font-black text-zinc-400 border-b border-zinc-700 pb-1 mb-2">CHAVES DE ACESSO</h4>
+                                
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <span class="text-[10px] font-bold text-white">SISTEMA GERAL (Buscador)</span>
+                                    <input type="checkbox" id="chk_status_geral" class="w-4 h-4" onchange="setMaintenance('status_geral', this.checked ? 'on' : 'off')">
+                                </label>
+                                
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <span class="text-[10px] font-bold text-white">PAINEL ATACADISTA</span>
+                                    <input type="checkbox" id="chk_status_atacadista" class="w-4 h-4" onchange="setMaintenance('status_atacadista', this.checked ? 'on' : 'off')">
+                                </label>
+                                
+                                <label class="flex items-center justify-between cursor-pointer">
+                                    <span class="text-[10px] font-bold text-white">PAINEL BUSCADOR (Logados)</span>
+                                    <input type="checkbox" id="chk_status_buscador" class="w-4 h-4" onchange="setMaintenance('status_buscador', this.checked ? 'on' : 'off')">
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -89,8 +99,8 @@
                 <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 master-only text-[9px] px-3 py-1 flex items-center gap-2">
                     👁️‍🗨️ HORUS O OLHO QUE MENOR PREÇO VÊ
                 </button>
-                <div class="relative master-only">
-                    <span onclick="abrirNotificacoes()" class="cursor-pointer text-lg hover:opacity-80" title="Sugestões e Alertas">🔔</span>
+                <div class="relative master-only cursor-pointer" onclick="abrirNotificacoes()" title="Sugestões e Alertas">
+                    <span class="text-lg hover:opacity-80">🔔</span>
                     <span id="badgeNotif" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full pointer-events-none">0</span>
                 </div>
                 <span id="headerMasterName" class="text-[10px] font-black text-blue-500 tracking-widest">MASTER</span>
@@ -869,43 +879,45 @@
             document.getElementById('maintenanceMenu').classList.toggle('hidden');
         }
 
-        // FUNÇÃO DE SET MAINTENANCE BLINDADA
         async function setMaintenance(campo, acao) {
             const payload = {};
             payload[campo] = acao;
+            
+            // O botão força o Supabase a aceitar e recalcula a tela na marra
             const { error } = await _s.from('sistema_config').update(payload).eq('id', 1);
             if (error) {
                 alert('ALERTA: Banco recusou o comando. ' + error.message);
+                await renderSystemStatus(); 
             } else {
-                alert(`Sistema mudou para: ${acao.toUpperCase()}`);
                 await renderSystemStatus();
             }
-            document.getElementById('maintenanceMenu').classList.add('hidden');
         }
 
         async function renderSystemStatus() {
             let { data, error } = await _s.from('sistema_config').select('*').eq('id', 1).maybeSingle();
+            
             if (error || !data) {
-                const defaultConfig = {
-                    id: 1,
-                    status_geral: 'on',
-                    status_atacadista: 'on',
-                    status_buscador: 'on'
-                };
-                const { error: insertError } = await _s.from('sistema_config').insert([defaultConfig]);
-                if (insertError) {
-                    console.warn('Não foi possível criar configuração padrão:', insertError);
-                    data = defaultConfig;
-                } else {
-                    data = defaultConfig;
-                }
+                const defaultConfig = { id: 1, status_geral: 'on', status_atacadista: 'on', status_buscador: 'on' };
+                await _s.from('sistema_config').insert([defaultConfig]);
+                data = defaultConfig;
             }
+
+            // Atualiza o estado dos checkboxes baseados no banco real
+            const chkGeral = document.getElementById('chk_status_geral');
+            const chkAta = document.getElementById('chk_status_atacadista');
+            const chkBusca = document.getElementById('chk_status_buscador');
+            
+            if(chkGeral) chkGeral.checked = (data.status_geral === 'on');
+            if(chkAta) chkAta.checked = (data.status_atacadista === 'on');
+            if(chkBusca) chkBusca.checked = (data.status_buscador === 'on');
+
+            // A Lógica Central do Botão: Vermelho se QUALQUER coisa estiver em OFF
             const btn = document.getElementById('maintenanceBtn');
             if (data.status_geral === 'on' && data.status_atacadista === 'on' && data.status_buscador === 'on') {
                 btn.className = "btn-master bg-green-600 px-3 py-1 text-[9px] ml-2";
                 btn.innerText = "SISTEMA: ON";
             } else {
-                btn.className = "btn-master btn-danger px-3 py-1 text-[9px] ml-2";
+                btn.className = "btn-master bg-red-600 px-3 py-1 text-[9px] ml-2";
                 btn.innerText = "SISTEMA: OFF";
             }
         }
@@ -1010,7 +1022,6 @@
 
         async function deletarTodosFeedbacks() {
             if(!confirm("ATENÇÃO: Deseja apagar TODAS as mensagens recebidas? Esta ação não tem volta.")) return;
-            // Pega todos os IDs das mensagens
             const { data, error } = await _s.from('feedbacks').select('id');
             if (error || !data || data.length === 0) return;
             const ids = data.map(m => m.id);
