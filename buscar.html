@@ -278,7 +278,7 @@
 <body class="dark-mode">
 
     <!-- TELA DE MANUTENÇÃO -->
-    <div id="telaManutencao" class="hidden">
+    <div id="telaManutencao" class="hidden fixed inset-0 z-[999999] bg-black flex flex-col items-center justify-center text-center p-4">
         <h1 class="text-4xl font-black text-red-600 mb-2">🚧 SISTEMA EM MANUTENÇÃO 🚧</h1>
         <p class="text-zinc-400 text-sm font-bold tracking-widest">O iFipe está recebendo melhorias. Retornamos em breve.</p>
     </div>
@@ -342,6 +342,8 @@
             <button class="text-2xl mr-2 text-gray-400 hover:text-white transition" onclick="abrirDrawer()">☰</button>
             <h1 class="text-xl lg:text-2xl font-black tracking-tight">iFipe</h1>
             <span class="text-xs lg:text-sm text-gray-400 hidden sm:inline">A TABELA FIPE DO IPHONE</span>
+            <!-- Nome do usuário logado (visível apenas no desktop) -->
+            <span id="navbarUserName" class="text-xs text-blue-400 font-bold border-l border-[#38383a] pl-2 hidden lg:inline"></span>
             <!-- Botão Insígnias de Poder (desktop) -->
             <button class="header-btn btn-insignia ml-2 hidden lg:flex" onclick="abrirLegendaInsignias()">
                 <i class="fas fa-crown"></i> Insígnias de Poder
@@ -738,7 +740,9 @@
 
                 if (config && (config.status_geral === 'off' || config.status_buscador === 'off')) {
                     document.getElementById('telaManutencao').classList.remove('hidden');
-                    return;
+                    return; // Interrompe o carregamento
+                } else {
+                    document.getElementById('telaManutencao').classList.add('hidden');
                 }
             } catch (e) {
                 console.warn("Erro ao verificar sistema_config, prosseguindo normalmente.");
@@ -753,17 +757,18 @@
             
             if (masterAuth === 'gov_absoluto') {
                 currentUser = { id: 0, nome: 'MASTER', whatsapp: '', insignia_manual: [], logins_count: 0 };
-                document.getElementById('nomeLojaHeader')?.remove(); // não precisa, mas mantemos
+                // Não exibe nome na navbar
             } else {
                 try {
                     const { data, error } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
                     if (error || !data) { logout(); return; }
                     currentUser = data;
-                    // Atualiza nome na navbar
-                    const nomeSpan = document.createElement('span');
-                    nomeSpan.className = "text-xs text-blue-400 font-bold border-l border-[#38383a] pl-2";
-                    nomeSpan.innerText = currentUser.nome;
-                    document.querySelector('.nav-blur .flex.items-center.gap-2.lg\\:gap-3').appendChild(nomeSpan);
+                    // Atualiza nome na navbar (span fixo)
+                    const nomeSpan = document.getElementById('navbarUserName');
+                    if (nomeSpan) {
+                        nomeSpan.innerText = currentUser.nome;
+                        nomeSpan.classList.remove('hidden');
+                    }
 
                     const { data: curtidas } = await _s.from('curtidas').select('oferta_id').eq('cliente_id', currentUser.id);
                     minhasCurtidas = new Set(curtidas?.map(c => c.oferta_id) || []);
@@ -1403,6 +1408,9 @@
                 if (error) throw error;
                 currentUser = { ...currentUser, ...updates };
                 alert('Conta atualizada!'); fecharConta();
+                // Atualiza nome na navbar
+                const nomeSpan = document.getElementById('navbarUserName');
+                if (nomeSpan) nomeSpan.innerText = currentUser.nome;
             } catch (err) { alert('Erro: ' + err.message); }
         }
 
