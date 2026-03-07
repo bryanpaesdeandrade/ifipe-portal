@@ -183,7 +183,6 @@
                             <th>LOCALIZAÇÃO FÍSICA</th>
                             <th class="text-center">PREÇO (EDITAR)</th>
                             <th class="text-center">ESTOQUE (EDITAR)</th>
-                            <th class="text-center">ALERTA</th>
                             <th class="text-right">AÇÕES</th>
                         </tr></thead>
                         <tbody id="listAnu"></tbody>
@@ -323,7 +322,7 @@
         </div>
     </div>
 
-    <!-- MODAL HORUS (ATUALIZADO - VERSÃO AVANÇADA) -->
+    <!-- MODAL HORUS (VERSÃO AVANÇADA) -->
     <div id="modalHorus" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-4xl bg-[#050505] border-[#38383a] max-h-[80vh] overflow-y-auto">
             <h3 class="text-sm font-black mb-2 border-b border-zinc-800 pb-2 flex items-center gap-2">👁️$ FERRAMENTA HORUS <span class="text-[8px] text-zinc-500">MENOR PREÇO ABSOLUTO</span></h3>
@@ -361,7 +360,7 @@
         </div>
     </div>
 
-    <!-- MODAL EDIÇÃO COMPLETA (ATUALIZADO COM IBGE) -->
+    <!-- MODAL EDIÇÃO COMPLETA (PADRONIZADO) -->
     <div id="modalEdicaoCompleta" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-xl bg-[#050505] border-[#38383a]">
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">✏️ EDITAR ANÚNCIO COMPLETO</h3>
@@ -387,7 +386,7 @@
                         <option value="Grade B">GRADE B</option>
                         <option value="Grade C">GRADE C</option>
                     </select>
-                    <select id="editBateria" class="apple-input">
+                    <select id="editBateria" class="apple-input" style="display:block;">
                         <option value="">BATERIA...</option>
                         <option value="Abaixo de 85%">Abaixo de 85%</option>
                         <option value="Acima de 85%">Acima de 85%</option>
@@ -396,7 +395,7 @@
                         <option value="Bateria em 100%">Bateria em 100%</option>
                     </select>
                 </div>
-                <select id="editGarantia" class="apple-input">
+                <select id="editGarantia" class="apple-input" style="display:block;">
                     <option value="">GARANTIA...</option>
                     <option value="Sem garantia">Sem garantia</option>
                     <option value="1 Mês">1 Mês</option>
@@ -446,7 +445,7 @@
         </div>
     </div>
 
-    <!-- MODAL GESTÃO ANÚNCIO (LANÇAR - ATUALIZADO COM IBGE) -->
+    <!-- MODAL GESTÃO ANÚNCIO (LANÇAR - PADRONIZADO) -->
     <div id="modalGestaoAnuncio" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-xl bg-[#050505] border-[#38383a]">
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">➕ LANÇAR ANÚNCIO (GLOBAL)</h3>
@@ -528,7 +527,7 @@
         </div>
     </div>
 
-    <!-- MODAL EDIÇÃO EM MASSA (ATUALIZADO COM IBGE) -->
+    <!-- MODAL EDIÇÃO EM MASSA (PADRONIZADO) -->
     <div id="modalBulkAnu" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-xl bg-[#050505] border-[#38383a]">
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">⚙️ EDIÇÃO EM MASSA (ANÚNCIOS)</h3>
@@ -684,9 +683,6 @@
         let currentUserType = null;
         let isAndressa = false;
 
-        // Mapa para alerta de canibalização
-        let menorPrecoDetalhe = {}; // chave: variacao_id+condicao -> {preco, fornecedor_nome}
-
         const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
 
@@ -697,7 +693,6 @@
             return (agora - data) < 5 * 60 * 1000;
         }
 
-        // Atualização de perfil master (mantido)
         function updateMasterProfile(e) {
             e.preventDefault();
             const n = document.getElementById('mProfNome').value.toUpperCase();
@@ -804,7 +799,6 @@
             }
         }
 
-        // Função para filtrar anúncios (já existente)
         function filterAnuncios(query) {
             const q = query.toLowerCase();
             const tbody = document.getElementById('listAnu');
@@ -950,7 +944,7 @@
             else { alert('Estoque zerado com sucesso!'); fecharModais(); loadAll(); }
         }
 
-        // ===== NOVO HORUS (VERSÃO AVANÇADA) =====
+        // ===== HORUS AVANÇADO =====
         async function abrirModalHorus() {
             const { data: ofertas, error } = await _s
                 .from('ofertas')
@@ -1061,20 +1055,6 @@
             await loadAll();
         }
 
-        // Função para processar menor preço global e nome do fornecedor (canibalização)
-        function processarMenorPrecoDetalhe() {
-            menorPrecoDetalhe = {};
-            dbAnu.forEach(o => {
-                if (!o.variacao_id || !o.condicao) return;
-                const chave = `${o.variacao_id}_${o.condicao}`;
-                const preco = o.preco;
-                const fornecedorNome = o.fornecedores?.nome || 'Desconhecido';
-                if (!menorPrecoDetalhe[chave] || preco < menorPrecoDetalhe[chave].preco) {
-                    menorPrecoDetalhe[chave] = { preco, fornecedor: fornecedorNome };
-                }
-            });
-        }
-
         async function loadAll() {
             const [f, c, o, v, r, fn] = await Promise.all([
                 _s.from('fornecedores').select('*').order('nome'),
@@ -1090,9 +1070,6 @@
             dbVar = v.data || [];
             dbReg = r.data || [];
             dbFunc = fn.data || [];
-
-            // Processar menor preço para alerta de canibalização
-            processarMenorPrecoDetalhe();
 
             const cincoMinAtras = new Date(Date.now() - 5 * 60000).toISOString();
             let onlineAta = 0;
@@ -1159,11 +1136,9 @@
             document.getElementById('bulkModelo').innerHTML = '<option value="">MANTER MODELO...</option>' + uM.sort((a,b)=>a.nome.localeCompare(b.nome)).map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
             document.getElementById('bulkOrigem').innerHTML = '<option value="">MANTER ORIGEM...</option>' + htmlOrigem.slice(0, -14) + '</select>';
 
-            // Carregar estados para IBGE
             carregarEstadosMaster();
         }
 
-        // Funções para IBGE nos modais
         function carregarEstadosMaster() {
             const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
             ['editEstadoAparelho', 'gEstadoAparelho', 'bulkEstadoAparelho'].forEach(id => {
@@ -1199,7 +1174,6 @@
             }
         }
 
-        // Funções para cascata nos modais (já existentes, apenas ajustadas)
         function libMemM() {
             let p = parseInt(document.getElementById('f_mod_m').value);
             let caps = [...new Set(dbVar.filter(v => v.produtos_mestre && v.produtos_mestre.id === p).map(v => v.capacidade))];
@@ -1382,7 +1356,6 @@
             if (precoUsd) { updates.preco = parseP(precoUsd); updates.moeda = 'USD'; }
             if (precoBrl) { updates.preco = parseP(precoBrl); updates.moeda = 'BRL'; }
 
-            // Localização em massa
             if (!document.getElementById('bulkLocalOrigem').checked) {
                 const cidade = document.getElementById('bulkCidadeAparelho').value;
                 const estado = document.getElementById('bulkEstadoAparelho').value;
@@ -1519,7 +1492,6 @@
             fecharModais(); loadAll(); 
         }
 
-        // Função editAnuncio com alerta do GURU (mantida)
         async function editAnuncio(id, f, v) {
             let val;
             if(f === 'preco') { 
@@ -1537,10 +1509,10 @@
             loadAll();
         }
 
-        // Função renderAnu ATUALIZADA com alerta de canibalização
+        // Função renderAnu ATUALIZADA (sem alerta de preço, com localização)
         function renderAnu() { 
             const tbody = document.getElementById('listAnu'); 
-            if(!dbAnu.length) { tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4">Vazio.</td></tr>'; return; } 
+            if(!dbAnu.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4">Vazio.</td></tr>'; return; } 
             const regMap = {};
             dbReg.forEach(r => regMap[r.id] = r.bandeira || '🌍');
             let grouped = {}; 
@@ -1553,27 +1525,13 @@
             let html = ''; 
             for(let loja of lojasOrdenadas) { 
                 let b = grouped[loja].b.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 text-[7px]">${i}</span>`).join(''); 
-                html += `<tr class="group-header bg-[#141415] border-y border-zinc-800"><td colspan="9" class="font-black text-blue-500 py-3">🏢 ${loja} ${b}</td></tr>`; 
+                html += `<tr class="group-header bg-[#141415] border-y border-zinc-800"><td colspan="8" class="font-black text-blue-500 py-3">🏢 ${loja} ${b}</td></tr>`; 
                 grouped[loja].ads.forEach(a => { 
                     let d = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '--'; 
                     let bandeira = regMap[a.regiao_id] || '';
                     let p = a.variacoes ? `${bandeira} ${a.variacoes.produtos_mestre?.nome} ${a.variacoes.capacidade} <span class="text-zinc-500">${a.variacoes.cor}</span>` : 'Indisponível'; 
                     let c = a.condicao || 'NOVO'; 
                     let pDisp = a.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-                    // Alerta de canibalização
-                    let alertaHtml = '';
-                    if (a.variacao_id && a.condicao) {
-                        const chave = `${a.variacao_id}_${a.condicao}`;
-                        const menor = menorPrecoDetalhe[chave];
-                        if (menor && a.preco > menor.preco) {
-                            alertaHtml = `
-                                <div class="text-[8px] text-red-500 font-bold mt-1 bg-red-900/20 px-2 py-0.5 rounded border border-red-500/30">
-                                    ⚠️ PERDENDO VENDA: ${menor.fornecedor.toUpperCase()} vende a R$ ${menor.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                                </div>`;
-                        }
-                    }
-
                     let localizacaoFisica = a.cidade_aparelho ? `${a.cidade_aparelho}/${a.estado_aparelho}` : '-';
 
                     html += `<tr>
@@ -1584,7 +1542,6 @@
                         <td class="text-[9px] text-zinc-400">${localizacaoFisica}</td>
                         <td class="text-center font-mono text-white">${a.moeda} <input type="text" class="mini-edit mini-edit-preco" value="${pDisp}" oninput="mascara(this)" onblur="editAnuncio(${a.id}, 'preco', this.value)"></td>
                         <td class="text-center"><input type="number" class="mini-edit" value="${a.quantidade}" min="0" onblur="editAnuncio(${a.id}, 'quantidade', this.value)"></td>
-                        <td class="text-center">${alertaHtml}</td>
                         <td class="text-right">
                             <button onclick="abrirModalEdicaoCompleta(${a.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-[8px] font-black mr-1">✏️</button>
                             <button onclick="delRecord('ofertas', ${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black">X</button>
@@ -1704,7 +1661,6 @@
             loadAll();
         }
 
-        // Funções restantes (renderAta, renderCli, etc.) mantidas como no original
         function renderAta() { 
             const filtroOnline = document.getElementById('filtroOnlineAta')?.checked || false;
             document.getElementById('listAta').innerHTML = dbAta
@@ -1781,7 +1737,6 @@
                 }).join(''); 
         }
 
-        // Exposição global
         window.abrirModalHorus = abrirModalHorus;
         window.filtrarHorus = filtrarHorus;
         window.selAll = selAll;
@@ -1791,13 +1746,64 @@
         window.restaurarEstoqueSelecionados = restaurarEstoqueSelecionados;
         window.abrirModalZerarEstoque = abrirModalZerarEstoque;
         window.zerarEstoqueLoja = zerarEstoqueLoja;
-        window.abrirModalEdicaoCompleta = abrirModalEdicaoCompleta;
+        window.abrirModalEdicaoCompleta = (id) => {
+            const oferta = dbAnu.find(o => o.id == id);
+            if (!oferta) return;
+            document.getElementById('editOfertaId').value = oferta.id;
+            document.getElementById('editModelo').value = oferta.variacoes?.produto_id || '';
+            libMemMEdit(oferta.variacoes?.produto_id);
+            setTimeout(() => {
+                document.getElementById('editCapacidade').value = oferta.variacoes?.capacidade || '';
+                libCorMEdit(oferta.variacoes?.produto_id, oferta.variacoes?.capacidade);
+                setTimeout(() => {
+                    document.getElementById('editCor').value = oferta.variacoes?.cor || '';
+                }, 50);
+            }, 50);
+            document.getElementById('editCondicao').value = oferta.condicao;
+            toggleCondicaoModalMaster(oferta.condicao, 'edit');
+            document.getElementById('editBateria').value = oferta.saude_bateria || '';
+            document.getElementById('editGarantia').value = oferta.garantia || '';
+            document.getElementById('editOrigem').value = oferta.regiao_id || '';
+            document.getElementById('editQuantidade').value = oferta.quantidade;
+            if (oferta.moeda === 'USD') {
+                document.getElementById('editPrecoUsd').value = oferta.preco.toFixed(2).replace('.', ',');
+                document.getElementById('editPrecoBrl').value = '';
+            } else {
+                document.getElementById('editPrecoBrl').value = oferta.preco.toFixed(2).replace('.', ',');
+                document.getElementById('editPrecoUsd').value = '';
+            }
+            document.getElementById('editPix').checked = oferta.aceita_pix || false;
+            document.getElementById('editUsdt').checked = oferta.aceita_usdt || false;
+            document.getElementById('editNegocia').checked = oferta.aceita_proposta || false;
+            document.getElementById('editEnvio').checked = oferta.faz_envio || false;
+            document.getElementById('editColeta').checked = oferta.aceita_coleta || false;
+            document.getElementById('editNota').checked = oferta.emite_nota || false;
+
+            if (oferta.cidade_aparelho && oferta.estado_aparelho) {
+                document.getElementById('editLocalOrigem').checked = false;
+                document.getElementById('editLocAlt').classList.remove('hidden');
+                document.getElementById('editEstadoAparelho').value = oferta.estado_aparelho;
+                carregarCidadesDinamicoMaster(oferta.estado_aparelho, 'editCidadeAparelho').then(() => {
+                    document.getElementById('editCidadeAparelho').value = oferta.cidade_aparelho;
+                });
+            } else {
+                document.getElementById('editLocalOrigem').checked = true;
+                document.getElementById('editLocAlt').classList.add('hidden');
+                document.getElementById('editEstadoAparelho').value = '';
+                document.getElementById('editCidadeAparelho').innerHTML = '<option value="">Selecione a cidade</option>';
+            }
+            document.getElementById('modalEdicaoCompleta').classList.remove('hidden');
+        };
         window.fecharModalEdicaoCompleta = fecharModalEdicaoCompleta;
         window.salvarEdicaoCompleta = salvarEdicaoCompleta;
         window.bulkAnuModal = bulkAnuModal;
         window.fecharBulkAnu = fecharBulkAnu;
         window.runBulkAnu = runBulkAnu;
-        window.abrirModalGestaoAnuncio = abrirModalGestaoAnuncio;
+        window.abrirModalGestaoAnuncio = () => {
+            document.getElementById('modalGestaoAnuncio').classList.remove('hidden');
+            document.getElementById('gLocalOrigem').checked = true;
+            document.getElementById('gLocAlt').classList.add('hidden');
+        };
         window.selTipoM = selTipoM;
         window.libMemM = libMemM;
         window.libCorM = libCorM;
