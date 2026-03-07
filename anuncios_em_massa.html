@@ -13,7 +13,6 @@
     <style>
         body { background: #000; color: #fff; font-family: 'Inter', sans-serif; text-transform: uppercase; }
         .card-seth { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; }
-        .stat-box { background: #0a0a0a; border: 1px solid #2c2c2e; padding: 1.5rem; border-radius: 16px; text-align: center; }
         .btn-blue { background: #0071e3; color: #fff; font-weight: 900; transition: 0.3s; }
         .btn-blue:hover { background: #0077ed; transform: scale(1.02); }
         .log-matrix { background: #000; border: 1px solid #1a1a1a; border-radius: 12px; padding: 1rem; font-family: monospace; font-size: 10px; height: 150px; overflow-y: auto; color: #00ff41; }
@@ -22,254 +21,386 @@
 </head>
 <body class="p-4 md:p-8">
 
-    <div class="max-w-6xl mx-auto">
+    <div class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-8 border-b border-zinc-800 pb-6">
             <div>
                 <h1 class="text-3xl font-black italic">ANÚNCIOS EM <span class="text-blue-500">MASSA ⚡</span></h1>
-                <p class="text-zinc-500 text-[10px] mt-1 tracking-widest">SISTEMA DE SINCRONIZAÇÃO BLINDADA</p>
+                <p class="text-zinc-500 text-[10px] mt-1 tracking-widest">UPLOADER BLINDADO DE ESTOQUE</p>
             </div>
             <button onclick="window.close()" class="border border-zinc-700 px-5 py-2 rounded-full text-[10px] font-bold hover:bg-red-900 transition">FECHAR</button>
         </header>
 
-        <div id="step-init" class="grid md:grid-cols-2 gap-6">
+        <!-- Verificação de login (invisível se ok) -->
+        <div id="auth-warning" class="hidden card-seth !p-4 mb-6 text-red-500 border-red-500/30">
+            <i class="fas fa-exclamation-triangle mr-2"></i> Você não está logado como anunciante. Redirecionando...
+        </div>
+
+        <!-- Botões principais -->
+        <div class="grid md:grid-cols-2 gap-6 mb-10">
             <div class="card-seth">
                 <h2 class="text-sm font-bold mb-2">1. PREPARAR ESTOQUE</h2>
-                <p class="text-zinc-400 text-[9px] mb-6 leading-relaxed">BAIXE A PLANILHA OFICIAL. ELA POSSUI LISTAS SUSPENSAS AMARRADAS AO NOSSO BANCO DE DADOS PARA EVITAR ERROS.</p>
+                <p class="text-zinc-400 text-[9px] mb-6 leading-relaxed">BAIXE A PLANILHA OFICIAL COM LISTAS SUSPENSAS AMARRADAS AO BANCO DE DADOS.</p>
                 <button onclick="baixarPlanilhaInteligente()" class="btn-blue w-full p-4 rounded-xl flex items-center justify-center gap-3">
                     <i class="fas fa-file-excel text-xl"></i> BAIXAR PLANILHA BLINDADA
                 </button>
             </div>
             <div class="card-seth">
-                <h2 class="text-sm font-bold mb-2">2. ENVIAR ATUALIZAÇÃO</h2>
-                <p class="text-zinc-400 text-[9px] mb-6 leading-relaxed">APÓS PREENCHER, SUBIR O ARQUIVO PARA ANÁLISE. O SISTEMA VALIDARÁ CADA ITEM ANTES DE PUBLICAR.</p>
-                <input type="file" id="fileInput" class="hidden" accept=".xlsx" onchange="lerArquivoExcel(event)">
+                <h2 class="text-sm font-bold mb-2">2. SUBIR ESTOQUE PREENCHIDO</h2>
+                <p class="text-zinc-400 text-[9px] mb-6 leading-relaxed">APÓS PREENCHER, ENVIE O ARQUIVO. O SISTEMA VALIDARÁ CADA LINHA.</p>
+                <input type="file" id="fileInput" class="hidden" accept=".xlsx" onchange="processarUpload(event)">
                 <button onclick="document.getElementById('fileInput').click()" class="bg-white text-black w-full p-4 rounded-xl font-black hover:bg-zinc-200 transition">
-                    <i class="fas fa-cloud-upload-alt mr-2"></i> SUBIR ESTOQUE PREENCHIDO
+                    <i class="fas fa-cloud-upload-alt mr-2"></i> SUBIR ARQUIVO PREENCHIDO
                 </button>
             </div>
         </div>
 
-        <div id="dashboard-seth" class="mt-8 hidden space-y-6">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="stat-box">
-                    <span class="text-[8px] text-zinc-500 font-bold block">INVESTIMENTO</span>
-                    <span id="stat-invest" class="text-lg font-black text-white">R$ 0,00</span>
-                </div>
-                <div class="stat-box">
-                    <span class="text-[8px] text-green-500 font-bold block">LUCRO ESTIMADO</span>
-                    <span id="stat-lucro" class="text-lg font-black text-green-500">R$ 0,00</span>
-                </div>
-                <div class="stat-box">
-                    <span class="text-[8px] text-blue-400 font-bold block">MARKUP MÉDIO</span>
-                    <span id="stat-markup" class="text-lg font-black text-blue-400">0%</span>
-                </div>
-                <div class="stat-box">
-                    <span class="text-[8px] text-purple-400 font-bold block">ITENS VÁLIDOS</span>
-                    <span id="stat-count" class="text-lg font-black text-white">0</span>
-                </div>
-            </div>
-
-            <div class="card-seth">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xs font-black">REVISÃO DE PREÇOS E MARGENS</h3>
-                    <button onclick="sincronizarComBanco()" id="btnSync" class="bg-green-600 px-8 py-3 rounded-lg text-[10px] font-black hover:bg-green-500 transition">APLICAR NO iFIPE AGORA</button>
-                </div>
-                <div class="overflow-x-auto max-h-80 custom-scroll">
-                    <table class="w-full text-[10px]">
-                        <thead class="sticky top-0 bg-[#1c1c1e] text-zinc-500">
-                            <tr class="border-b border-zinc-800">
-                                <th class="py-2 text-left">PRODUTO</th>
-                                <th class="text-center">CUSTO</th>
-                                <th class="text-center">VENDA</th>
-                                <th class="text-center">LUCRO</th>
-                                <th class="text-right">LOCAL</th>
-                            </tr>
-                        </thead>
-                        <tbody id="preview-table"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card-seth">
-                <h3 class="text-[10px] font-black text-zinc-500 mb-3 italic">PROCESSAMENTO EM TEMPO REAL</h3>
-                <div id="logArea" class="log-matrix"></div>
-                <div class="w-full bg-zinc-900 h-1.5 mt-4 rounded-full overflow-hidden">
-                    <div id="progressBar" class="bg-blue-600 h-full w-0 transition-all duration-300"></div>
-                </div>
+        <!-- Área de log e progresso (inicialmente oculta) -->
+        <div id="logContainer" class="hidden card-seth space-y-4">
+            <h3 class="text-[10px] font-black text-zinc-500 mb-3 italic">PROCESSAMENTO EM TEMPO REAL</h3>
+            <div id="logArea" class="log-matrix"></div>
+            <div class="w-full bg-zinc-900 h-1.5 mt-4 rounded-full overflow-hidden">
+                <div id="progressBar" class="bg-blue-600 h-full w-0 transition-all duration-300"></div>
             </div>
         </div>
     </div>
 
     <script>
-        const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
-        const fId = localStorage.getItem('iFipe_Anunciante');
-        let dataToUpload = [], variacoes = [], regioes = [];
+        // Configuração Supabase
+        const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
+        const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 1. GERAÇÃO DE PLANILHA COM DROPDOWNS (AMARRADA AO BANCO)
-        async function baixarPlanilhaInteligente() {
-            const btn = event.target;
-            btn.innerText = "SINCROZINANDO BANCO...";
-            
-            const [v, r] = await Promise.all([
-                _s.from('variacoes').select('capacidade, cor, produtos_mestre(nome)'),
-                _s.from('regioes').select('nome')
-            ]);
+        // Variáveis globais (cache)
+        let fornecedorId = null;
+        let variacoes = [];
+        let regioes = [];
+        let dadosCarregados = false;
 
-            const wb = new ExcelJS.Workbook();
-            const wsBase = wb.addWorksheet('BaseDB', { state: 'hidden' });
-            const wsApp = wb.addWorksheet('Estoque');
+        // Listas fixas
+        const CONDICOES = ['Novo', 'Seminovo', 'CPO', 'Grade A', 'Grade B', 'Grade C'];
+        const BATERIAS = ['Abaixo de 85%', 'Acima de 85%', 'Acima de 90%', 'Acima de 95%', 'Bateria em 100%'];
+        const GARANTIAS = ['Sem garantia', '1 Mês', '2 Meses', '3 Meses', '6 Meses', '12 Meses'];
+        const ESTADOS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 
-            // Listas únicas
-            const modelos = [...new Set(v.data.map(i => i.produtos_mestre.nome))].sort();
-            const capacidades = [...new Set(v.data.map(i => i.capacidade))].sort();
-            const cores = [...new Set(v.data.map(i => i.cor))].sort();
-            const origens = r.data.map(i => i.nome).sort();
-            const condicoes = ['Novo', 'Seminovo', 'CPO', 'Grade A', 'Grade B', 'Grade C'];
-            const ufs = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+        // Cabeçalhos esperados na planilha de upload
+        const HEADERS_ESPERADOS = [
+            'Modelo', 'Capacidade', 'Cor', 'Condição', 'Bateria', 'Garantia',
+            'Origem', 'Estado (UF)', 'Cidade', 'Quantidade', 'Preço (BRL)', 'Preço (USD)'
+        ];
 
-            // Popula aba oculta para validação
-            modelos.forEach((m, i) => wsBase.getCell(`A${i+1}`).value = m);
-            capacidades.forEach((c, i) => wsBase.getCell(`B${i+1}`).value = c);
-            cores.forEach((co, i) => wsBase.getCell(`C${i+1}`).value = co);
-            origens.forEach((o, i) => wsBase.getCell(`D${i+1}`).value = o);
-            condicoes.forEach((con, i) => wsBase.getCell(`E${i+1}`).value = con);
-            ufs.forEach((uf, i) => wsBase.getCell(`F${i+1}`).value = uf);
-
-            // Cabeçalho da Planilha principal
-            wsApp.columns = [
-                { header: 'Modelo', key: 'm', width: 25 },
-                { header: 'Capacidade', key: 'ca', width: 15 },
-                { header: 'Cor', key: 'co', width: 15 },
-                { header: 'Condição', key: 'con', width: 15 },
-                { header: 'Origem', key: 'o', width: 20 },
-                { header: 'Quantidade', key: 'q', width: 10 },
-                { header: 'Custo (R$)', key: 'custo', width: 15 },
-                { header: 'Preço Venda (R$)', key: 'venda', width: 15 },
-                { header: 'Bateria', key: 'bat', width: 15 },
-                { header: 'Garantia', key: 'gar', width: 15 },
-                { header: 'Estado (UF)', key: 'uf', width: 10 },
-                { header: 'Cidade', key: 'cid', width: 20 }
-            ];
-
-            // Formatação e Validação (Dropdowns) nas primeiras 100 linhas
-            for (let i = 2; i <= 101; i++) {
-                wsApp.getCell(`A${i}`).dataValidation = { type: 'list', formulae: [`BaseDB!$A$1:$A$${modelos.length}`] };
-                wsApp.getCell(`B${i}`).dataValidation = { type: 'list', formulae: [`BaseDB!$B$1:$B$${capacidades.length}`] };
-                wsApp.getCell(`C${i}`).dataValidation = { type: 'list', formulae: [`BaseDB!$C$1:$C$${cores.length}`] };
-                wsApp.getCell(`D${i}`).dataValidation = { type: 'list', formulae: [`BaseDB!$E$1:$E$${condicoes.length}`] };
-                wsApp.getCell(`E${i}`).dataValidation = { type: 'list', formulae: [`BaseDB!$D$1:$D$${origens.length}`] };
-                wsApp.getCell(`K${i}`).dataValidation = { type: 'list', formulae: [`BaseDB!$F$1:$F$${ufs.length}`] };
+        // Verificação de login e carregamento inicial
+        (async function init() {
+            const token = localStorage.getItem('iFipe_Anunciante');
+            const masterAuth = localStorage.getItem('iFipe_Master_Auth');
+            if (!token && masterAuth !== 'gov_absoluto') {
+                document.getElementById('auth-warning').classList.remove('hidden');
+                setTimeout(() => window.location.href = 'index.html', 2000);
+                return;
             }
+            fornecedorId = token || (masterAuth === 'gov_absoluto' ? 1 : null);
+            await carregarDados();
+        })();
 
-            const buffer = await wb.xlsx.writeBuffer();
-            saveAs(new Blob([buffer]), 'iFipe_Anuncio_Em_Massa.xlsx');
-            btn.innerText = "1. BAIXAR PLANILHA BLINDADA";
-        }
-
-        // 2. LEITURA E ANÁLISE FINANCEIRA
-        async function lerArquivoExcel(event) {
-            const file = event.target.files[0];
-            const wb = new ExcelJS.Workbook();
-            await wb.xlsx.load(await file.arrayBuffer());
-            const ws = wb.getWorksheet('Estoque');
-            
-            dataToUpload = [];
-            let invest = 0, lucro = 0, mkp = 0, count = 0;
-            const table = document.getElementById('preview-table');
-            table.innerHTML = '';
-
-            ws.eachRow((row, i) => {
-                if (i === 1) return; // pula header
-                const r = {
-                    m: row.getCell(1).value, ca: row.getCell(2).value, co: row.getCell(3).value,
-                    con: row.getCell(4).value, o: row.getCell(5).value, q: parseInt(row.getCell(6).value) || 0,
-                    custo: parseFloat(row.getCell(7).value) || 0, venda: parseFloat(row.getCell(8).value) || 0,
-                    bat: row.getCell(9).value, gar: row.getCell(10).value,
-                    uf: row.getCell(11).value, cid: row.getCell(12).value
-                };
-
-                if (r.m && r.venda > 0) {
-                    dataToUpload.push(r);
-                    const l = (r.venda - r.custo) * r.q;
-                    invest += r.custo * r.q;
-                    lucro += l;
-                    mkp += r.custo > 0 ? ((r.venda/r.custo)-1)*100 : 0;
-                    count++;
-
-                    table.innerHTML += `
-                        <tr class="border-b border-zinc-900">
-                            <td class="py-3 font-bold">${r.m} ${r.ca}<br><span class="text-zinc-500">${r.co}</span></td>
-                            <td class="text-center font-mono">R$ ${r.custo.toLocaleString()}</td>
-                            <td class="text-center font-mono text-blue-400">R$ ${r.venda.toLocaleString()}</td>
-                            <td class="text-center font-mono text-green-500">+R$ ${l.toLocaleString()}</td>
-                            <td class="text-right text-[8px] text-zinc-500">${r.cid||'SEDE'}/${r.uf||''}</td>
-                        </tr>`;
-                }
-            });
-
-            document.getElementById('stat-invest').innerText = `R$ ${invest.toLocaleString()}`;
-            document.getElementById('stat-lucro').innerText = `R$ ${lucro.toLocaleString()}`;
-            document.getElementById('stat-markup').innerText = `${(mkp/count || 0).toFixed(1)}%`;
-            document.getElementById('stat-count').innerText = count;
-            document.getElementById('dashboard-seth').classList.remove('hidden');
-        }
-
-        // 3. SINCRONIZAÇÃO FINAL (UPSERT COM REGRAS DE NEGÓCIO)
-        async function sincronizarComBanco() {
-            if (!confirm("CONFIRMA A PUBLICAÇÃO DOS ITENS?")) return;
-            const logArea = document.getElementById('logArea');
-            logArea.innerHTML = '';
-            
+        async function carregarDados() {
             const [v, r] = await Promise.all([
-                _s.from('variacoes').select('id, capacidade, cor, produtos_mestre(nome)'),
+                _s.from('variacoes').select('id, capacidade, cor, produtos_mestre!inner(nome)'),
                 _s.from('regioes').select('id, nome')
             ]);
+            variacoes = v.data || [];
+            regioes = r.data || [];
+            dadosCarregados = true;
+        }
 
-            let sucessos = 0;
-            for (let i = 0; i < dataToUpload.length; i++) {
-                const row = dataToUpload[i];
-                try {
-                    const varMatch = v.data.find(x => x.produtos_mestre.nome === row.m && x.capacidade === row.ca && x.cor === row.co);
-                    const regMatch = r.data.find(x => x.nome === row.o);
+        // Função de log (será usada durante o upload)
+        function log(mensagem, tipo = 'info') {
+            const area = document.getElementById('logArea');
+            const cor = tipo === 'erro' ? 'text-red-400' : (tipo === 'ok' ? 'text-green-400' : 'text-blue-400');
+            area.innerHTML += `<div class="${cor}">[${new Date().toLocaleTimeString()}] ${mensagem}</div>`;
+            area.scrollTop = area.scrollHeight;
+        }
 
-                    if (!varMatch || !regMatch) throw new Error("DADOS NÃO MAPEADOS NO BANCO");
+        // 1. GERAÇÃO DA PLANILHA INTELIGENTE
+        async function baixarPlanilhaInteligente() {
+            if (!dadosCarregados) await carregarDados();
 
-                    // REGRAS DE OURO: NOVO/CPO
-                    let bateria = row.bat;
-                    let garantia = row.gar;
-                    if (row.con === 'Novo' || row.con === 'CPO') {
-                        bateria = null;
-                        garantia = '1 ANO APPLE';
+            const btn = event.target;
+            const textoOriginal = btn.innerText;
+            btn.innerText = "GERANDO PLANILHA...";
+
+            try {
+                // Extrair listas únicas dos dados
+                const modelos = [...new Set(variacoes.map(v => v.produtos_mestre?.nome).filter(Boolean))].sort((a,b) => a.localeCompare(b));
+                const capacidades = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))].sort((a,b) => a.localeCompare(b));
+                const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))].sort((a,b) => a.localeCompare(b));
+                const origens = regioes.map(r => r.nome).sort((a,b) => a.localeCompare(b));
+
+                const workbook = new ExcelJS.Workbook();
+
+                // Aba oculta BaseDB (lista de valores para os dropdowns)
+                const baseSheet = workbook.addWorksheet('BaseDB', { state: 'hidden' });
+                // Coluna A: Modelos
+                modelos.forEach((val, idx) => baseSheet.getCell(`A${idx+1}`).value = val);
+                // Coluna B: Capacidades
+                capacidades.forEach((val, idx) => baseSheet.getCell(`B${idx+1}`).value = val);
+                // Coluna C: Cores
+                cores.forEach((val, idx) => baseSheet.getCell(`C${idx+1}`).value = val);
+                // Coluna D: Origens
+                origens.forEach((val, idx) => baseSheet.getCell(`D${idx+1}`).value = val);
+                // Coluna E: Condições
+                CONDICOES.forEach((val, idx) => baseSheet.getCell(`E${idx+1}`).value = val);
+                // Coluna F: Baterias
+                BATERIAS.forEach((val, idx) => baseSheet.getCell(`F${idx+1}`).value = val);
+                // Coluna G: Garantias
+                GARANTIAS.forEach((val, idx) => baseSheet.getCell(`G${idx+1}`).value = val);
+                // Coluna H: Estados
+                ESTADOS.forEach((val, idx) => baseSheet.getCell(`H${idx+1}`).value = val);
+
+                // Aba principal: Estoque
+                const estoqueSheet = workbook.addWorksheet('Estoque');
+                estoqueSheet.columns = HEADERS_ESPERADOS.map(h => ({ header: h, key: h, width: 18 }));
+
+                // Aplicar data validation nas primeiras 100 linhas
+                for (let i = 2; i <= 101; i++) {
+                    // Modelo (col A)
+                    estoqueSheet.getCell(`A${i}`).dataValidation = {
+                        type: 'list',
+                        allowBlank: false,
+                        formulae: [`BaseDB!$A$1:$A$${modelos.length}`]
+                    };
+                    // Capacidade (col B)
+                    estoqueSheet.getCell(`B${i}`).dataValidation = {
+                        type: 'list',
+                        allowBlank: false,
+                        formulae: [`BaseDB!$B$1:$B$${capacidades.length}`]
+                    };
+                    // Cor (col C)
+                    estoqueSheet.getCell(`C${i}`).dataValidation = {
+                        type: 'list',
+                        allowBlank: false,
+                        formulae: [`BaseDB!$C$1:$C$${cores.length}`]
+                    };
+                    // Condição (col D)
+                    estoqueSheet.getCell(`D${i}`).dataValidation = {
+                        type: 'list',
+                        allowBlank: false,
+                        formulae: [`BaseDB!$E$1:$E$${CONDICOES.length}`]
+                    };
+                    // Bateria (col E) - opcional
+                    estoqueSheet.getCell(`E${i}`).dataValidation = {
+                        type: 'list',
+                        allowBlank: true,
+                        formulae: [`BaseDB!$F$1:$F$${BATERIAS.length}`]
+                    };
+                    // Garantia (col F) - opcional
+                    estoqueSheet.getCell(`F${i}`).dataValidation = {
+                        type: 'list',
+                        allowBlank: true,
+                        formulae: [`BaseDB!$G$1:$G$${GARANTIAS.length}`]
+                    };
+                    // Origem (col G)
+                    estoqueSheet.getCell(`G${i}`).dataValidation = {
+                        type: 'list',
+                        allowBlank: false,
+                        formulae: [`BaseDB!$D$1:$D$${origens.length}`]
+                    };
+                    // Estado (UF) (col H)
+                    estoqueSheet.getCell(`H${i}`).dataValidation = {
+                        type: 'list',
+                        allowBlank: true,
+                        formulae: [`BaseDB!$H$1:$H$${ESTADOS.length}`]
+                    };
+                    // Cidade (col I) - sem validação, texto livre
+                    // Quantidade (col J) - número inteiro >=0
+                    estoqueSheet.getCell(`J${i}`).dataValidation = {
+                        type: 'whole',
+                        allowBlank: false,
+                        operator: 'greaterThanOrEqual',
+                        formulae: [0]
+                    };
+                    // Preço (BRL) (col K) - decimal >0 (opcional)
+                    estoqueSheet.getCell(`K${i}`).dataValidation = {
+                        type: 'decimal',
+                        allowBlank: true,
+                        operator: 'greaterThan',
+                        formulae: [0]
+                    };
+                    // Preço (USD) (col L) - decimal >0 (opcional)
+                    estoqueSheet.getCell(`L${i}`).dataValidation = {
+                        type: 'decimal',
+                        allowBlank: true,
+                        operator: 'greaterThan',
+                        formulae: [0]
+                    };
+                }
+
+                // Linha de exemplo (opcional)
+                estoqueSheet.addRow({
+                    'Modelo': modelos[0] || '',
+                    'Capacidade': capacidades[0] || '',
+                    'Cor': cores[0] || '',
+                    'Condição': 'Novo',
+                    'Bateria': '',
+                    'Garantia': '1 ANO APPLE',
+                    'Origem': origens[0] || '',
+                    'Estado (UF)': 'SP',
+                    'Cidade': 'São Paulo',
+                    'Quantidade': 10,
+                    'Preço (BRL)': 5299.00,
+                    'Preço (USD)': ''
+                });
+
+                const buffer = await workbook.xlsx.writeBuffer();
+                saveAs(new Blob([buffer]), 'iFipe_Estoque_Blindado.xlsx');
+            } catch (err) {
+                alert('Erro ao gerar planilha: ' + err.message);
+            } finally {
+                btn.innerText = textoOriginal;
+            }
+        }
+
+        // 2. PROCESSAMENTO DO UPLOAD
+        async function processarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Mostrar container de log
+            document.getElementById('logContainer').classList.remove('hidden');
+            const logArea = document.getElementById('logArea');
+            const progressBar = document.getElementById('progressBar');
+            logArea.innerHTML = '';
+            progressBar.style.width = '0%';
+
+            log('Iniciando leitura do arquivo...');
+
+            try {
+                const workbook = new ExcelJS.Workbook();
+                await workbook.xlsx.load(await file.arrayBuffer());
+                const worksheet = workbook.getWorksheet('Estoque');
+                if (!worksheet) {
+                    log('Aba "Estoque" não encontrada no arquivo.', 'erro');
+                    return;
+                }
+
+                // Validar cabeçalhos
+                const headers = [];
+                worksheet.getRow(1).eachCell({ includeEmpty: false }, (cell, colNumber) => {
+                    headers[colNumber-1] = cell.value ? cell.value.toString().trim() : '';
+                });
+                const headersOk = HEADERS_ESPERADOS.every((h, idx) => headers[idx] === h);
+                if (!headersOk) {
+                    alert('ARQUIVO INVÁLIDO: Os cabeçalhos não correspondem à planilha padrão.');
+                    log('Cabeçalhos incorretos. Abortando.', 'erro');
+                    return;
+                }
+
+                // Coletar linhas (ignorar cabeçalho)
+                const rows = [];
+                worksheet.eachRow((row, rowNumber) => {
+                    if (rowNumber === 1) return;
+                    const values = row.values; // índice 1-based
+                    rows.push({
+                        modelo: values[1]?.toString().trim() || '',
+                        capacidade: values[2]?.toString().trim() || '',
+                        cor: values[3]?.toString().trim() || '',
+                        condicao: values[4]?.toString().trim() || '',
+                        bateria: values[5]?.toString().trim() || null,
+                        garantia: values[6]?.toString().trim() || null,
+                        origem: values[7]?.toString().trim() || '',
+                        uf: values[8]?.toString().trim() || null,
+                        cidade: values[9]?.toString().trim() || null,
+                        quantidade: parseInt(values[10]) || 0,
+                        preco_brl: parseFloat(values[11]) || 0,
+                        preco_usd: parseFloat(values[12]) || 0
+                    });
+                });
+
+                log(`${rows.length} linhas encontradas. Iniciando validação e upsert...`);
+
+                // Garantir que dados do banco estão carregados
+                if (!dadosCarregados) await carregarDados();
+
+                let processados = 0;
+                let sucessos = 0;
+                let erros = 0;
+
+                for (const [idx, row] of rows.entries()) {
+                    // Pular linha vazia (sem modelo e sem preço)
+                    if (!row.modelo && !row.preco_brl && !row.preco_usd) {
+                        processados++;
+                        continue;
                     }
 
-                    const payload = {
-                        fornecedor_id: fId,
-                        variacao_id: varMatch.id,
-                        regiao_id: regMatch.id,
-                        condicao: row.con,
-                        preco: row.venda,
-                        moeda: 'BRL',
-                        quantidade: row.q,
-                        saude_bateria: bateria,
-                        garantia: garantia,
-                        cidade_aparelho: row.cid || null,
-                        estado_aparelho: row.uf || null,
-                        status_aprovacao: 'aprovado',
-                        atualizado_em: new Date().toISOString()
-                    };
+                    try {
+                        // Encontrar variação
+                        const variacao = variacoes.find(v => 
+                            v.produtos_mestre?.nome?.toUpperCase() === row.modelo.toUpperCase() &&
+                            v.capacidade?.toUpperCase() === row.capacidade.toUpperCase() &&
+                            v.cor?.toUpperCase() === row.cor.toUpperCase()
+                        );
+                        if (!variacao) throw new Error(`Variação não encontrada: ${row.modelo} ${row.capacidade} ${row.cor}`);
 
-                    const { error } = await _s.from('ofertas').upsert(payload, { onConflict: 'fornecedor_id, variacao_id, regiao_id, condicao' });
-                    if (error) throw error;
+                        // Encontrar região (origem)
+                        const regiao = regioes.find(r => r.nome.toUpperCase() === row.origem.toUpperCase());
+                        if (!regiao) throw new Error(`Origem não encontrada: ${row.origem}`);
 
-                    sucessos++;
-                    logArea.innerHTML += `<div>[OK] ${row.m} ${row.ca} ATUALIZADO.</div>`;
-                    document.getElementById('progressBar').style.width = `${(sucessos/dataToUpload.length)*100}%`;
-                } catch (err) {
-                    logArea.innerHTML += `<div class="text-red-500">[ERRO] ${row.m}: ${err.message}</div>`;
+                        // Determinar preço e moeda
+                        let preco = 0, moeda = '';
+                        if (row.preco_brl > 0) {
+                            preco = row.preco_brl;
+                            moeda = 'BRL';
+                        } else if (row.preco_usd > 0) {
+                            preco = row.preco_usd;
+                            moeda = 'USD';
+                        } else {
+                            throw new Error('Nenhum preço válido (BRL ou USD) informado');
+                        }
+
+                        // Aplicar regras de Novo/CPO
+                        let bateriaFinal = row.bateria;
+                        let garantiaFinal = row.garantia;
+                        if (row.condicao === 'Novo' || row.condicao === 'CPO') {
+                            bateriaFinal = null;
+                            garantiaFinal = '1 ANO APPLE';
+                        }
+
+                        const payload = {
+                            fornecedor_id: fornecedorId,
+                            variacao_id: variacao.id,
+                            regiao_id: regiao.id,
+                            condicao: row.condicao,
+                            preco: preco,
+                            moeda: moeda,
+                            quantidade: row.quantidade,
+                            saude_bateria: bateriaFinal,
+                            garantia: garantiaFinal,
+                            cidade_aparelho: row.cidade || null,
+                            estado_aparelho: row.uf || null,
+                            status_aprovacao: 'aprovado',
+                            atualizado_em: new Date().toISOString()
+                        };
+
+                        const { error } = await _s.from('ofertas').upsert(payload, {
+                            onConflict: 'fornecedor_id, variacao_id, regiao_id, condicao'
+                        });
+                        if (error) throw error;
+
+                        sucessos++;
+                        log(`OK: ${row.modelo} ${row.capacidade} ${row.cor} (${moeda} ${preco.toFixed(2)})`, 'ok');
+                    } catch (err) {
+                        erros++;
+                        log(`ERRO linha ${idx+2}: ${err.message}`, 'erro');
+                    }
+
+                    processados++;
+                    progressBar.style.width = `${(processados / rows.length) * 100}%`;
                 }
-                logArea.scrollTop = logArea.scrollHeight;
+
+                log(`Processamento concluído. Sucessos: ${sucessos}, Erros: ${erros}.`, sucessos > 0 ? 'ok' : 'erro');
+                document.getElementById('fileInput').value = '';
+
+            } catch (err) {
+                log('Erro fatal: ' + err.message, 'erro');
             }
-            alert("SINCRONIZAÇÃO CONCLUÍDA!");
         }
     </script>
 </body>
