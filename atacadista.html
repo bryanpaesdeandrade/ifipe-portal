@@ -84,6 +84,12 @@
 </head>
 <body class="antialiased">
 
+    <!-- TELA DE MANUTENÇÃO (SISTEMA LOCKDOWN) -->
+    <div id="telaManutencao" class="hidden fixed inset-0 z-[99999] bg-black flex flex-col items-center justify-center text-center p-4">
+        <h1 class="text-4xl font-black text-red-600 mb-2">🚧 SISTEMA EM MANUTENÇÃO 🚧</h1>
+        <p class="text-zinc-400 text-sm font-bold tracking-widest">O iFipe está recebendo melhorias. Retornamos em breve.</p>
+    </div>
+
     <!-- DRAWER MOBILE -->
     <div id="drawerOverlay" class="drawer-overlay" onclick="fecharDrawer()"></div>
     <div id="drawer" class="drawer">
@@ -122,13 +128,13 @@
         </div>
     </div>
 
-    <!-- NAVBAR ATUALIZADA COM COTAÇÃO E BOTÕES -->
+    <!-- NAVBAR ATUALIZADA COM COTAÇÃO VISÍVEL EM TODAS AS TELAS -->
     <nav class="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-[#38383a] px-4 py-3 flex justify-between items-center z-50">
         <div class="flex items-center gap-3">
             <button class="text-2xl text-gray-400 lg:hidden" onclick="abrirDrawer()">☰</button>
             <h1 class="text-xl font-black italic text-white">iFipe</h1>
-            <!-- Cotação Binance (desktop) -->
-            <div class="hidden lg:flex gap-4 border-l border-zinc-800 pl-4 items-center">
+            <!-- Cotação Binance (agora sempre visível, com layout flexível) -->
+            <div class="flex gap-2 border-l border-zinc-800 pl-2 lg:pl-4 items-center flex-wrap">
                 <div>
                     <span class="text-[7px] text-zinc-500 font-black block">BINANCE REAL</span>
                     <span id="tBin" class="text-xs font-mono font-black text-white">R$ --</span>
@@ -783,6 +789,22 @@
 
         // === DADOS INICIAIS (COM WEBSOCKET RESTAURADO E ATUALIZAÇÃO DOS SPANS) ===
         window.onload = async () => {
+            // VERIFICAÇÃO DE MANUTENÇÃO (SISTEMA LOCKDOWN)
+            try {
+                const { data: config, error } = await _s
+                    .from('sistema_config')
+                    .select('status_geral, status_atacadista')
+                    .eq('id', 1)
+                    .maybeSingle();
+
+                if (config && (config.status_geral === 'off' || config.status_atacadista === 'off')) {
+                    document.getElementById('telaManutencao').classList.remove('hidden');
+                    return; // interrompe carregamento do restante
+                }
+            } catch (e) {
+                console.warn("Erro ao verificar sistema_config, prosseguindo normalmente.");
+            }
+
             const tokenAta = localStorage.getItem('iFipe_Anunciante');
             const masterAuth = localStorage.getItem('iFipe_Master_Auth');
             
@@ -956,7 +978,7 @@
             }
         }
 
-        // === TABELA DE OFERTAS ===
+        // === TABELA DE OFERTAS (COM BOTÕES PADRONIZADOS) ===
         async function upTab() {
             const filtro = document.getElementById('filtroTipoLista').value;
             let html = '';
@@ -996,9 +1018,9 @@
                         ${alertaConcorrencia}
                     </td>
                     <td>
-                        <button onclick="abrirModalEditar(${o.id})" class="text-blue-400 text-xs mr-2 hover:text-blue-300"><i class="fas fa-edit"></i></button>
-                        <button onclick="abrirModalDuplicar(${o.id})" class="text-green-400 text-xs mr-2 hover:text-green-300"><i class="fas fa-copy"></i></button>
-                        <button onclick="del(${o.id})" class="text-red-400 text-xs hover:text-red-300"><i class="fas fa-trash"></i></button>
+                        <button onclick="abrirModalEditar(${o.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-[8px] font-black mr-1">✏️ EDITAR</button>
+                        <button onclick="abrirModalDuplicar(${o.id})" class="bg-blue-600 text-white px-2 py-1 rounded text-[8px] font-black mr-1">📋 DUPLICAR</button>
+                        <button onclick="del(${o.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white">X APAGAR</button>
                     </td>
                 </tr>`;
             });
@@ -1156,11 +1178,13 @@
 
             mensagensInternas = mensagens || [];
 
+            // Atualizar badge do sino (propostas pendentes + mensagens não lidas)
             const badge = document.getElementById('badgeSino');
-            // badge mostra apenas pendentes (propostas não respondidas)
             if (badge) {
-                badge.classList.toggle('hidden', propostasPend.length === 0);
-                badge.innerText = propostasPend.length;
+                let naoLidas = mensagensInternas.filter(m => !m.lida).length;
+                let totalNotif = propostasPend.length + naoLidas;
+                badge.classList.toggle('hidden', totalNotif === 0);
+                badge.innerText = totalNotif;
             }
 
             renderizarPropostas();
@@ -1173,7 +1197,10 @@
                     <div class="flex justify-between text-[9px] text-gray-400"><span>${p.clientes_buscador?.nome}</span><span>${new Date(p.criado_em).toLocaleString()}</span></div>
                     <p class="text-xs mt-1 mb-2">${p.pergunta}</p>
                     <textarea id="resp_${p.id}" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-2 text-xs" placeholder="Responder..."></textarea>
-                    <button onclick="responder(${p.id})" class="mt-2 bg-blue-600 text-white text-xs px-4 py-2 rounded-full">Enviar resposta</button>
+                    <div class="flex items-center gap-2 mt-2">
+                        <button onclick="responder(${p.id})" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-full">Enviar resposta</button>
+                        <button onclick="apagarProposta(${p.id})" class="bg-red-900/30 text-red-500 text-[9px] px-3 py-1 rounded font-black hover:bg-red-500 hover:text-white">🗑️ APAGAR</button>
+                    </div>
                 </div>
             `).join('');
 
@@ -1182,6 +1209,7 @@
                     <div class="flex justify-between text-[9px] text-gray-400"><span>${p.clientes_buscador?.nome}</span><span>${new Date(p.criado_em).toLocaleString()}</span></div>
                     <p class="text-xs mt-1">${p.pergunta}</p>
                     <p class="text-xs text-green-400 mt-1">✅ ${p.resposta}</p>
+                    <button onclick="apagarProposta(${p.id})" class="mt-2 bg-red-900/30 text-red-500 text-[9px] px-3 py-1 rounded font-black hover:bg-red-500 hover:text-white">🗑️ APAGAR</button>
                 </div>
             `).join('');
         }
@@ -1195,6 +1223,7 @@
                     </div>
                     <p class="text-xs mt-1 whitespace-pre-wrap">${m.mensagem}</p>
                     ${!m.lida ? '<span class="inline-block mt-1 text-[8px] bg-blue-600 px-2 py-0.5 rounded-full">Nova</span>' : ''}
+                    <button onclick="apagarMensagemSys(${m.id})" class="mt-2 bg-red-900/30 text-red-500 text-[9px] px-3 py-1 rounded font-black hover:bg-red-500 hover:text-white">🗑️ APAGAR</button>
                 </div>
             `).join('') || '<p class="text-center text-gray-400">Nenhuma mensagem do sistema.</p>';
         }
@@ -1204,6 +1233,27 @@
             if (!resposta) return;
             await _s.from('comentarios').update({ resposta, respondido_em: new Date(), lida_cliente: false }).eq('id', id);
             carregarPropostas();
+        }
+
+        // NOVAS FUNÇÕES PARA APAGAR PROPOSTAS E MENSAGENS
+        async function apagarProposta(id) {
+            if (!confirm("Tem certeza que deseja apagar esta proposta?")) return;
+            const { error } = await _s.from('comentarios').delete().eq('id', id);
+            if (error) {
+                alert('Erro ao apagar: ' + error.message);
+            } else {
+                carregarPropostas();
+            }
+        }
+
+        async function apagarMensagemSys(id) {
+            if (!confirm("Tem certeza que deseja apagar esta mensagem do sistema?")) return;
+            const { error } = await _s.from('mensagens_internas').delete().eq('id', id);
+            if (error) {
+                alert('Erro ao apagar: ' + error.message);
+            } else {
+                carregarPropostas();
+            }
         }
 
         // === FUNÇÕES DE MODAL ===
@@ -1584,7 +1634,7 @@
             toggleCondicaoModal(cond, 'edit');
         }
 
-        // Expor funções globais
+        // Expor funções globais (incluindo as novas de apagar)
         window.abrirSugestao = abrirSugestao;
         window.fecharSugestao = fecharSugestao;
         window.enviarSugestao = enviarSugestao;
@@ -1637,7 +1687,9 @@
         window.filtrarHorus = filtrarHorus;
         window.toggleCondicaoModal = toggleCondicaoModal;
         window.carregarCidadesDinamico = carregarCidadesDinamico;
-        window.setEditCondicao = setEditCondicao; // para uso futuro
+        window.setEditCondicao = setEditCondicao;
+        window.apagarProposta = apagarProposta;
+        window.apagarMensagemSys = apagarMensagemSys;
     </script>
 </body>
 </html>
