@@ -318,6 +318,9 @@
                 <h3 class="text-sm font-black text-white">🔔 SUGESTÕES E ALERTAS</h3>
                 <button onclick="fecharModais()" class="text-red-500 font-black text-lg hover:opacity-80">X</button>
             </div>
+            <div class="mb-4 flex justify-end">
+                <button onclick="deletarTodosFeedbacks()" class="bg-red-600 text-white font-black text-[9px] px-3 py-1 rounded">APAGAR TODAS AS MENSAGENS</button>
+            </div>
             <div id="notificacoesList" class="space-y-3 text-[10px] text-zinc-300">Carregando...</div>
         </div>
     </div>
@@ -866,7 +869,7 @@
             document.getElementById('maintenanceMenu').classList.toggle('hidden');
         }
 
-        // FUNÇÃO DE SET MAINTENANCE AJUSTADA PARA NÃO DAR ERRO DE SELECT
+        // FUNÇÃO DE SET MAINTENANCE BLINDADA
         async function setMaintenance(campo, acao) {
             const payload = {};
             payload[campo] = acao;
@@ -1005,13 +1008,24 @@
             checarNotificacoes();
         }
 
+        async function deletarTodosFeedbacks() {
+            if(!confirm("ATENÇÃO: Deseja apagar TODAS as mensagens recebidas? Esta ação não tem volta.")) return;
+            // Pega todos os IDs das mensagens
+            const { data, error } = await _s.from('feedbacks').select('id');
+            if (error || !data || data.length === 0) return;
+            const ids = data.map(m => m.id);
+            await _s.from('feedbacks').delete().in('id', ids);
+            abrirNotificacoes();
+            checarNotificacoes();
+        }
+
         function responderFeedbackInterno(id, nome) {
             alert(`Módulo de mensagem interna para ${nome} será ativado na próxima versão do sistema!`);
         }
 
         async function abrirNotificacoes() {
             document.getElementById('modalNotificacoes').classList.remove('hidden');
-            document.getElementById('badgeNotif').classList.add('hidden'); // Zera bolinha
+            document.getElementById('badgeNotif').classList.add('hidden'); 
             
             document.getElementById('notificacoesList').innerHTML = 'Buscando sugestões...';
             const { data, error } = await _s.from('feedbacks').select('*').order('criado_em', { ascending: false }).limit(30);
@@ -1738,7 +1752,7 @@
                     let local = c.pais === 'Brasil' ? `${c.cidade||'-'} / ${c.estado||'-'}` : (c.pais || 'Não definido'); 
                     let insig = [];
                     try {
-                        if (Array.isArray(c.insignia_manual)) insig = a.insignia_manual;
+                        if (Array.isArray(c.insignia_manual)) insig = c.insignia_manual;
                         else if (typeof c.insignia_manual === 'string') insig = JSON.parse(c.insignia_manual || '[]');
                     } catch(e) { insig = []; }
                     let b = insig.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); 
