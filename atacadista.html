@@ -1594,7 +1594,7 @@
 
                 _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), regioes(*)').eq('fornecedor_id', loja.id).order('criado_em', { ascending: false }),
 
-                _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), fornecedores(verificado)').gt('quantidade', 0)
+                _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), fornecedores(nome, verificado)').gt('quantidade', 0) // ← CORREÇÃO: adicionado nome
 
             ]);
 
@@ -1858,7 +1858,7 @@
 
 
 
-        // === TABELA DE OFERTAS (COM ALERTA DE CANIBALIZAÇÃO RESTAURADO) ===
+        // === TABELA DE OFERTAS (COM ALERTA DE CANIBALIZAÇÃO CORRIGIDO) ===
 
         async function upTab() {
 
@@ -1884,17 +1884,23 @@
 
 
 
+                // === BLOCO SUBSTITUÍDO (canibalização com nome do concorrente) ===
+
                 if (concorrentes.length > 0) {
 
-                    const menorPreco = Math.min(...concorrentes.map(c => c.preco));
+                    concorrentes.sort((a, b) => a.preco - b.preco);
 
-                    if (o.preco > menorPreco) {
+                    const maisBarato = concorrentes[0];
+
+                    if (o.preco > maisBarato.preco) {
+
+                        const nomeConcorrente = maisBarato.fornecedores?.nome || 'CONCORRENTE';
 
                         alertaConcorrencia = `
 
                             <div class="text-[8px] text-red-500 font-bold mt-1 bg-red-900/20 px-2 py-0.5 rounded border border-red-500/30">
 
-                                ⚠️ PERDENDO VENDA: Há ofertas a R$ ${menorPreco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                ⚠️ PERDENDO VENDA: ${nomeConcorrente.toUpperCase()} vende a R$ ${maisBarato.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
 
                             </div>`;
 
@@ -2032,7 +2038,7 @@
 
             const [oGlobal, oLocal] = await Promise.all([
 
-                _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), fornecedores(verificado)').gt('quantidade', 0),
+                _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), fornecedores(nome, verificado)').gt('quantidade', 0),
 
                 _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), regioes(*)').eq('fornecedor_id', loja.id).order('criado_em', { ascending: false })
 
@@ -2638,6 +2644,8 @@
 
         }
 
+        function fecharModalEditar() { document.getElementById('modalEditar').classList.add('hidden'); }
+
 
 
         function abrirModalDuplicar(ofertaId) {
@@ -2651,6 +2659,8 @@
             document.getElementById('modalDuplicar').classList.remove('hidden');
 
         }
+
+        function fecharModalDuplicar() { document.getElementById('modalDuplicar').classList.add('hidden'); }
 
 
 
@@ -2996,6 +3006,77 @@
 
 
 
+        // === MOTOR DE IMPORTAÇÃO (GESTOR SETH) ===
+        function baixarPlanilha() {
+            alert("Gerando planilha matriz... Preencha e salve.");
+            window.open('https://docs.google.com/spreadsheets/d/1Xy_SEUaVq19z9W-M1_U5M0FjDEx9oG9x6-pBq3Nl44M/export?format=xlsx'); 
+        }
+
+        async function processarPlanilha(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+
+            document.getElementById('modalSeth').classList.remove('hidden');
+            document.getElementById('btnFecharSeth').classList.add('hidden');
+            document.getElementById('logAreaSeth').innerHTML = '';
+            document.getElementById('progressBarSeth').style.width = '0%';
+            
+            const logS = (msg, cor) => {
+                const area = document.getElementById('logAreaSeth');
+                area.innerHTML += `<div class="text-${cor}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+                area.scrollTop = area.scrollHeight;
+            };
+
+            logS("Lendo " + file.name + "...", "blue-400");
+
+            reader.onload = async (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(worksheet);
+
+                logS(`Detectadas ${rows.length} linhas. A cruzar dados...`, "yellow-400");
+                const [{data: v}, {data: r}] = await Promise.all([
+                    _s.from('variacoes').select('id, capacidade, cor, produtos_mestre(nome)'),
+                    _s.from('regioes').select('id, nome')
+                ]);
+
+                let processados = 0;
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    try {
+                        const varEncontrada = v.find(item => item.produtos_mestre.nome.toUpperCase() === String(row.Modelo).toUpperCase() && item.capacidade.toUpperCase() === String(row.Capacidade).toUpperCase() && item.cor.toUpperCase() === String(row.Cor).toUpperCase());
+                        const regEncontrada = r.find(item => item.nome.toUpperCase() === String(row.Origem).toUpperCase());
+
+                        if (!varEncontrada || !regEncontrada) { logS(`Erro: ${row.Modelo} ou Origem desconhecidos.`, "red-500"); continue; }
+
+                        const pFinal = parseFloat(row["PREÇO DO ANÚNCIO (R$)"]);
+                        if (isNaN(pFinal) || pFinal <= 0) continue;
+
+                        const payload = { 
+                            fornecedor_id: loja.id, variacao_id: varEncontrada.id, regiao_id: regEncontrada.id, 
+                            condicao: row.Condição, preco: pFinal, moeda: "BRL", quantidade: parseInt(row.Estoque) || 0, 
+                            saude_bateria: row.Bateria || null, garantia: row.Garantia || "1 ANO APPLE", 
+                            status_aprovacao: 'aprovado', atualizado_em: new Date().toISOString() 
+                        };
+                        const { error } = await _s.from('ofertas').upsert(payload, { onConflict: 'fornecedor_id, variacao_id, regiao_id, condicao' });
+                        if (error) throw error;
+                        
+                        processados++;
+                        document.getElementById('progressBarSeth').style.width = ((processados / rows.length) * 100) + "%";
+                        logS(`OK: ${row.Modelo} sincronizado!`, "green-500");
+                    } catch (err) { logS(`Erro: ${err.message}`, "red-500"); }
+                }
+                logS(`FINALIZADO: ${processados} lançamentos!`, "white");
+                document.getElementById('btnFecharSeth').classList.remove('hidden');
+                document.getElementById('inputPlanilha').value = ''; 
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+
+
         // Expor funções globais
 
         window.abrirSugestao = abrirSugestao;
@@ -3115,6 +3196,10 @@
         window.toggleCondicaoModal = toggleCondicaoModal;
 
         window.carregarCidadesDinamico = carregarCidadesDinamico;
+
+        window.baixarPlanilha = baixarPlanilha;
+
+        window.processarPlanilha = processarPlanilha;
 
     </script>
 
