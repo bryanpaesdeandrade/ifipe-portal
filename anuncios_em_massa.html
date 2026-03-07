@@ -647,7 +647,7 @@
             area.scrollTop = area.scrollHeight;
         }
 
-        // ===== FUNÇÃO BAIXAR PLANILHA (COM NOMES DEFINIDOS E SINTAXE CORRETA) =====
+        // ===== FUNÇÃO BAIXAR PLANILHA (CORRIGIDA DEFINITIVA) =====
         async function baixarPlanilha() {
             const btn = event.target;
             const textoOriginal = btn.innerText;
@@ -658,7 +658,8 @@
             document.getElementById('progressBar').style.width = '0%';
 
             try {
-                // Usar combinacoesUnicas (já carregada da baseAbsoluta) para criar as listas perfeitas
+                if (!dadosCarregados) await carregarDados();
+
                 const modelosUnicos = [...new Set(combinacoesUnicas.map(c => c.modelo))].sort((a,b) => a.localeCompare(b));
                 
                 const capsPorModelo = {};
@@ -678,31 +679,43 @@
 
                 const workbook = new ExcelJS.Workbook();
                 const baseSheet = workbook.addWorksheet('BaseDB', { state: 'hidden' });
+                
+                // Helper para transformar numero de coluna em letra (1 -> A, 27 -> AA)
+                function getColL(col) {
+                    let letter = '';
+                    while (col > 0) {
+                        let temp = (col - 1) % 26;
+                        letter = String.fromCharCode(temp + 65) + letter;
+                        col = (col - temp - 1) / 26;
+                    }
+                    return letter;
+                }
+
                 let currentCol = 1;
 
-                // 1. Coluna de Modelos
-                const colLetModelos = baseSheet.getColumn(currentCol).letter;
+                // 1. Modelos
+                let colM = getColL(currentCol);
                 baseSheet.getColumn(currentCol).values = ['Modelos', ...modelosUnicos];
-                workbook.addDefinedName({ name: 'ListaModelos', ref: `BaseDB!$${colLetModelos}$2:$${colLetModelos}$${modelosUnicos.length + 1}` });
+                workbook.addDefinedName({ name: 'ListaModelos', ref: `BaseDB!$${colM}$2:$${colM}$${modelosUnicos.length + 1}` });
                 currentCol++;
 
-                // 2. Colunas de Capacidades (1 para cada modelo)
+                // 2. Capacidades
                 Object.keys(capsPorModelo).forEach(modelo => {
                     const nomeDef = modelo.replace(/[\s-]/g, '_');
                     const caps = capsPorModelo[modelo];
-                    const colLetter = baseSheet.getColumn(currentCol).letter;
+                    let cL = getColL(currentCol);
                     baseSheet.getColumn(currentCol).values = [nomeDef, ...caps];
-                    workbook.addDefinedName({ name: nomeDef, ref: `BaseDB!$${colLetter}$2:$${colLetter}$${caps.length + 1}` });
+                    workbook.addDefinedName({ name: nomeDef, ref: `BaseDB!$${cL}$2:$${cL}$${caps.length + 1}` });
                     currentCol++;
                 });
 
-                // 3. Colunas de Cores (1 para cada comb. Modelo+Capacidade)
+                // 3. Cores
                 Object.keys(coresPorModeloCap).forEach(chave => {
                     const nomeDef = chave.replace(/[\s-]/g, '_');
                     const cores = coresPorModeloCap[chave];
-                    const colLetter = baseSheet.getColumn(currentCol).letter;
+                    let cL = getColL(currentCol);
                     baseSheet.getColumn(currentCol).values = [nomeDef, ...cores];
-                    workbook.addDefinedName({ name: nomeDef, ref: `BaseDB!$${colLetter}$2:$${colLetter}$${cores.length + 1}` });
+                    workbook.addDefinedName({ name: nomeDef, ref: `BaseDB!$${cL}$2:$${cL}$${cores.length + 1}` });
                     currentCol++;
                 });
 
@@ -710,63 +723,54 @@
                 const { data: regioesDB } = await _s.from('regioes').select('nome');
                 let origens = regioesDB ? regioesDB.map(r => r.nome).sort() : ['BRASIL ANATEL', 'EUA', 'JAPÃO', 'CHINA', 'ÍNDIA', 'CANADÁ'];
                 
-                const colOrigem = baseSheet.getColumn(currentCol).letter;
+                let colO = getColL(currentCol);
                 baseSheet.getColumn(currentCol).values = ['Origens', ...origens];
-                workbook.addDefinedName({ name: 'ListaOrigens', ref: `BaseDB!$${colOrigem}$2:$${colOrigem}$${origens.length + 1}` });
+                workbook.addDefinedName({ name: 'ListaOrigens', ref: `BaseDB!$${colO}$2:$${colO}$${origens.length + 1}` });
                 currentCol++;
 
                 const condicoes = ['Novo', 'Seminovo', 'CPO', 'Grade A', 'Grade B', 'Grade C'];
-                const colCond = baseSheet.getColumn(currentCol).letter;
+                let colCond = getColL(currentCol);
                 baseSheet.getColumn(currentCol).values = ['Condicoes', ...condicoes];
                 workbook.addDefinedName({ name: 'ListaCondicoes', ref: `BaseDB!$${colCond}$2:$${colCond}$${condicoes.length + 1}` });
+                currentCol++;
+
+                const garantias = ['Sem garantia', '1 Mês', '2 Meses', '3 Meses', '6 Meses', '12 Meses'];
+                let colGar = getColL(currentCol);
+                baseSheet.getColumn(currentCol).values = ['Garantias', ...garantias];
+                workbook.addDefinedName({ name: 'ListaGarantias', ref: `BaseDB!$${colGar}$2:$${colGar}$${garantias.length + 1}` });
+                currentCol++;
+
+                const baterias = ['Abaixo de 85%', 'Acima de 85%', 'Acima de 90%', 'Acima de 95%', 'Bateria em 100%'];
+                let colBat = getColL(currentCol);
+                baseSheet.getColumn(currentCol).values = ['Baterias', ...baterias];
+                workbook.addDefinedName({ name: 'ListaBaterias', ref: `BaseDB!$${colBat}$2:$${colBat}$${baterias.length + 1}` });
 
                 // Aba principal
                 const lanceSheet = workbook.addWorksheet('LANÇE AQUI');
                 lanceSheet.properties.tabColor = { argb: 'FF0071E3' };
                 lanceSheet.columns = HEADERS_ESPERADOS.map(h => ({ header: h, key: h, width: 20 }));
 
+                // O Segredo: Fórmulas Nativas em Inglês com CHAR() para evitar erro de aspas duplas no OOXML
                 for (let i = 2; i <= 101; i++) {
                     lanceSheet.getCell(`A${i}`).dataValidation = { type: 'list', allowBlank: false, formulae: ['ListaModelos'] };
+                    
                     lanceSheet.getCell(`B${i}`).dataValidation = { 
-                        type: 'list', 
-                        allowBlank: false, 
-                        formulae: [`INDIRECT(SUBSTITUTE(SUBSTITUTE(A${i}, " ", "_"), "-", "_"))`] 
+                        type: 'list', allowBlank: false, 
+                        formulae: [`INDIRECT(SUBSTITUTE(SUBSTITUTE(A${i}, CHAR(32), CHAR(95)), CHAR(45), CHAR(95)))`] 
                     };
+                    
                     lanceSheet.getCell(`C${i}`).dataValidation = { 
-                        type: 'list', 
-                        allowBlank: false, 
-                        formulae: [`INDIRECT(SUBSTITUTE(SUBSTITUTE(A${i}&"_"&B${i}, " ", "_"), "-", "_"))`] 
+                        type: 'list', allowBlank: false, 
+                        formulae: [`INDIRECT(SUBSTITUTE(SUBSTITUTE(A${i}&CHAR(95)&B${i}, CHAR(32), CHAR(95)), CHAR(45), CHAR(95)))`] 
                     };
+                    
                     lanceSheet.getCell(`D${i}`).dataValidation = { type: 'list', allowBlank: false, formulae: ['ListaCondicoes'] };
-                    lanceSheet.getCell(`E${i}`).dataValidation = { 
-                        type: 'list', 
-                        allowBlank: true, 
-                        formulae: ['"Sem garantia,1 Mês,2 Meses,3 Meses,6 Meses,12 Meses"'] 
-                    };
-                    lanceSheet.getCell(`F${i}`).dataValidation = { 
-                        type: 'list', 
-                        allowBlank: true, 
-                        formulae: ['"Abaixo de 85%,Acima de 85%,Acima de 90%,Acima de 95%,Bateria em 100%"'] 
-                    };
+                    lanceSheet.getCell(`E${i}`).dataValidation = { type: 'list', allowBlank: true, formulae: ['ListaGarantias'] };
+                    lanceSheet.getCell(`F${i}`).dataValidation = { type: 'list', allowBlank: true, formulae: ['ListaBaterias'] };
                     lanceSheet.getCell(`G${i}`).dataValidation = { type: 'list', allowBlank: false, formulae: ['ListaOrigens'] };
-                    lanceSheet.getCell(`H${i}`).dataValidation = { 
-                        type: 'whole', 
-                        allowBlank: false, 
-                        operator: 'greaterThanOrEqual', 
-                        formulae: [0] 
-                    };
-                    lanceSheet.getCell(`I${i}`).dataValidation = { 
-                        type: 'decimal', 
-                        allowBlank: true, 
-                        operator: 'greaterThan', 
-                        formulae: [0] 
-                    };
-                    lanceSheet.getCell(`J${i}`).dataValidation = { 
-                        type: 'decimal', 
-                        allowBlank: true, 
-                        operator: 'greaterThan', 
-                        formulae: [0] 
-                    };
+                    lanceSheet.getCell(`H${i}`).dataValidation = { type: 'whole', allowBlank: false, operator: 'greaterThanOrEqual', formulae: [0] };
+                    lanceSheet.getCell(`I${i}`).dataValidation = { type: 'decimal', allowBlank: true, operator: 'greaterThanOrEqual', formulae: [0] };
+                    lanceSheet.getCell(`J${i}`).dataValidation = { type: 'decimal', allowBlank: true, operator: 'greaterThanOrEqual', formulae: [0] };
                 }
 
                 const buffer = await workbook.xlsx.writeBuffer();
