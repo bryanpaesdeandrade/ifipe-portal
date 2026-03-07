@@ -643,7 +643,7 @@
             area.scrollTop = area.scrollHeight;
         }
 
-        // ===== FUNÇÃO BAIXAR PLANILHA (CORRIGIDA DEFINITIVA) =====
+// ===== FUNÇÃO BAIXAR PLANILHA (COM TRAVAS DE GARANTIA E BATERIA) =====
         async function baixarPlanilha() {
             const btn = event.target;
             const textoOriginal = btn.innerText;
@@ -657,12 +657,10 @@
                 if (!dadosCarregados) await carregarDados();
 
                 const modelosUnicos = [...new Set(combinacoesUnicas.map(c => c.modelo))].sort((a,b) => a.localeCompare(b));
-                
                 const capsPorModelo = {};
                 modelosUnicos.forEach(m => {
                     capsPorModelo[m] = [...new Set(combinacoesUnicas.filter(c => c.modelo === m).map(c => c.capacidade))].sort((a,b) => a.localeCompare(b));
                 });
-
                 const coresPorModeloCap = {};
                 combinacoesUnicas.forEach(c => {
                     const key = `${c.modelo}_${c.capacidade}`;
@@ -674,9 +672,16 @@
                 });
 
                 const workbook = new ExcelJS.Workbook();
-                const baseSheet = workbook.addWorksheet('BaseDB', { state: 'hidden' });
                 
-                // Helper para transformar numero de coluna em letra (1 -> A, 27 -> AA)
+                // 1. ABA PRINCIPAL PRIMEIRO (Para ser a primeira exibida ao abrir)
+                const lanceSheet = workbook.addWorksheet('LANÇE AQUI');
+                lanceSheet.properties.tabColor = { argb: 'FF0071E3' };
+                lanceSheet.columns = HEADERS_ESPERADOS.map(h => ({ header: h, key: h, width: 20 }));
+
+                // 2. ABA BASE OCULTA E PROTEGIDA
+                const baseSheet = workbook.addWorksheet('BaseDB', { state: 'hidden' });
+                await baseSheet.protect('ifipe2026', { selectLockedCells: false, selectUnlockedCells: false });
+                
                 function getColL(col) {
                     let letter = '';
                     while (col > 0) {
@@ -689,13 +694,11 @@
 
                 let currentCol = 1;
 
-                // 1. Modelos
                 let colM = getColL(currentCol);
                 baseSheet.getColumn(currentCol).values = ['Modelos', ...modelosUnicos];
                 workbook.definedNames.add(`BaseDB!$${colM}$2:$${colM}$${modelosUnicos.length + 1}`, 'ListaModelos');
                 currentCol++;
 
-                // 2. Capacidades
                 Object.keys(capsPorModelo).forEach(modelo => {
                     const nomeDef = modelo.replace(/[\s-]/g, '_');
                     const caps = capsPorModelo[modelo];
@@ -705,7 +708,6 @@
                     currentCol++;
                 });
 
-                // 3. Cores
                 Object.keys(coresPorModeloCap).forEach(chave => {
                     const nomeDef = chave.replace(/[\s-]/g, '_');
                     const cores = coresPorModeloCap[chave];
@@ -715,10 +717,8 @@
                     currentCol++;
                 });
 
-                // 4. Origens, Condições, etc.
                 const { data: regioesDB } = await _s.from('regioes').select('nome');
                 let origens = regioesDB ? regioesDB.map(r => r.nome).sort() : ['BRASIL ANATEL', 'EUA', 'JAPÃO', 'CHINA', 'ÍNDIA', 'CANADÁ'];
-                
                 let colO = getColL(currentCol);
                 baseSheet.getColumn(currentCol).values = ['Origens', ...origens];
                 workbook.definedNames.add(`BaseDB!$${colO}$2:$${colO}$${origens.length + 1}`, 'ListaOrigens');
@@ -740,13 +740,19 @@
                 let colBat = getColL(currentCol);
                 baseSheet.getColumn(currentCol).values = ['Baterias', ...baterias];
                 workbook.definedNames.add(`BaseDB!$${colBat}$2:$${colBat}$${baterias.length + 1}`, 'ListaBaterias');
+                currentCol++;
 
-                // Aba principal
-                const lanceSheet = workbook.addWorksheet('LANÇE AQUI');
-                lanceSheet.properties.tabColor = { argb: 'FF0071E3' };
-                lanceSheet.columns = HEADERS_ESPERADOS.map(h => ({ header: h, key: h, width: 20 }));
+                // 3. AUXILIARES PARA TRAVAS DINÂMICAS (NOVO E CPO)
+                let colAux = getColL(currentCol);
+                baseSheet.getColumn(currentCol).values = ['GarantiaNova', '1 ANO APPLE'];
+                workbook.definedNames.add(`BaseDB!$${colAux}$2:$${colAux}$2`, 'ListaGarantiaNova');
+                currentCol++;
 
-                // O Segredo: Fórmulas Nativas em Inglês com CHAR() para evitar erro de aspas duplas no OOXML
+                let colAux2 = getColL(currentCol);
+                baseSheet.getColumn(currentCol).values = ['Vazia', ' ']; // Espaço vazio para bloquear dropdown
+                workbook.definedNames.add(`BaseDB!$${colAux2}$2:$${colAux2}$2`, 'ListaVazia');
+
+                // 4. APLICAR VALIDAÇÕES INTELIGENTES
                 for (let i = 2; i <= 101; i++) {
                     lanceSheet.getCell(`A${i}`).dataValidation = { type: 'list', allowBlank: false, formulae: ['ListaModelos'] };
                     
@@ -761,8 +767,18 @@
                     };
                     
                     lanceSheet.getCell(`D${i}`).dataValidation = { type: 'list', allowBlank: false, formulae: ['ListaCondicoes'] };
-                    lanceSheet.getCell(`E${i}`).dataValidation = { type: 'list', allowBlank: true, formulae: ['ListaGarantias'] };
-                    lanceSheet.getCell(`F${i}`).dataValidation = { type: 'list', allowBlank: true, formulae: ['ListaBaterias'] };
+                    
+                    // TRAVAS DINÂMICAS: Garantia e Bateria dependem da Condição
+                    lanceSheet.getCell(`E${i}`).dataValidation = { 
+                        type: 'list', allowBlank: true, 
+                        formulae: [`IF(OR(D${i}="Novo",D${i}="CPO"),ListaGarantiaNova,ListaGarantias)`] 
+                    };
+                    
+                    lanceSheet.getCell(`F${i}`).dataValidation = { 
+                        type: 'list', allowBlank: true, 
+                        formulae: [`IF(OR(D${i}="Novo",D${i}="CPO"),ListaVazia,ListaBaterias)`] 
+                    };
+                    
                     lanceSheet.getCell(`G${i}`).dataValidation = { type: 'list', allowBlank: false, formulae: ['ListaOrigens'] };
                     lanceSheet.getCell(`H${i}`).dataValidation = { type: 'whole', allowBlank: false, operator: 'greaterThanOrEqual', formulae: [0] };
                     lanceSheet.getCell(`I${i}`).dataValidation = { type: 'decimal', allowBlank: true, operator: 'greaterThanOrEqual', formulae: [0] };
@@ -770,7 +786,7 @@
                 }
 
                 const buffer = await workbook.xlsx.writeBuffer();
-                saveAs(new Blob([buffer]), 'iFipe_Anuncio_Em_Massa.xlsx');
+                saveAs(new Blob([buffer]), 'iFipe_Anuncios_Em_Massa.xlsx');
             } catch (err) {
                 alert('Erro ao gerar planilha: ' + err.message);
             } finally {
