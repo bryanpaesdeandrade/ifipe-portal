@@ -67,6 +67,12 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
         const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // Função Master para limpar e normalizar strings (Ignora Espaços, Traços, Acentos e Maiúsculas)
+        function normalizar(str) {
+            if (!str) return '';
+            return str.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        }
+
         // ==================== BASE ABSOLUTA (ANEXO) ====================
         const baseAbsoluta = [
             { modelo: "iPhone 11", capacidade: "64GB", cor: "Preto" },
@@ -492,6 +498,7 @@
             { modelo: "iPhone 17 Air", capacidade: "1TB", cor: "Branco-nuvem" },
             { modelo: "iPhone 17 Air", capacidade: "1TB", cor: "Dourado-claro" },
             { modelo: "iPhone 17 Air", capacidade: "1TB", cor: "Azul-céu" },
+            // MIX COLORS - algumas entradas
             { modelo: "iPhone 11", capacidade: "64GB", cor: "MIX COLORS" },
             { modelo: "iPhone 11", capacidade: "128GB", cor: "MIX COLORS" },
             { modelo: "iPhone 11", capacidade: "256GB", cor: "MIX COLORS" },
@@ -848,7 +855,7 @@
                 let sucessos = 0;
                 let erros = 0;
 
-                const combinacoesValidas = new Set(combinacoesUnicas.map(item => `${item.modelo}|${item.capacidade}|${item.cor}`));
+                const combinacoesValidas = new Set(combinacoesUnicas.map(item => `${normalizar(item.modelo)}|${normalizar(item.capacidade)}|${normalizar(item.cor)}`));
 
                 for (const [idx, row] of rows.entries()) {
                     if (!row.modelo && !row.preco_brl && !row.preco_usd) {
@@ -857,19 +864,20 @@
                     }
 
                     try {
-                        const key = `${row.modelo}|${row.capacidade}|${row.cor}`;
+                        const key = `${normalizar(row.modelo)}|${normalizar(row.capacidade)}|${normalizar(row.cor)}`;
                         if (!combinacoesValidas.has(key)) {
                             throw new Error(`Combinação inválida: ${row.modelo} ${row.capacidade} ${row.cor}`);
                         }
 
                         const variacao = variacoes.find(v => 
-                            v.produtos_mestre?.nome?.toUpperCase() === row.modelo.toUpperCase() &&
-                            v.capacidade?.toUpperCase() === row.capacidade.toUpperCase() &&
-                            v.cor?.toUpperCase() === row.cor.toUpperCase()
+                            normalizar(v.produtos_mestre?.nome) === normalizar(row.modelo) &&
+                            normalizar(v.capacidade) === normalizar(row.capacidade) &&
+                            normalizar(v.cor) === normalizar(row.cor)
                         );
+                        
                         if (!variacao) throw new Error(`Variação não encontrada no banco: ${row.modelo} ${row.capacidade} ${row.cor}`);
 
-                        const regiao = regioes.find(r => r.nome.toUpperCase() === row.origem.toUpperCase());
+                        const regiao = regioes.find(r => normalizar(r.nome) === normalizar(row.origem));
                         if (!regiao) throw new Error(`Origem não encontrada: ${row.origem}`);
 
                         let preco = 0, moeda = '';
@@ -934,11 +942,10 @@
                 log(`Processamento concluído. Sucessos: ${sucessos}, Erros: ${erros}.`, sucessos > 0 ? 'ok' : 'erro');
                 document.getElementById('fileInput').value = '';
 
-                // === CONFIRMAÇÃO FINAL E FECHAMENTO DA ABA ===
                 setTimeout(() => {
                     if (sucessos > 0 && erros === 0) {
                         alert("✅ Upload 100% processado com sucesso! A janela será fechada.");
-                        window.close(); // Fecha a aba atual
+                        window.close();
                     } else if (erros > 0) {
                         alert(`⚠️ Upload finalizado com ${erros} erro(s). Verifique o log em vermelho antes de fechar.`);
                     }
