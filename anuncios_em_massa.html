@@ -643,7 +643,7 @@
             area.scrollTop = area.scrollHeight;
         }
 
-// ===== FUNÇÃO BAIXAR PLANILHA (COM TRAVAS DE GARANTIA E BATERIA) =====
+        // ===== FUNÇÃO BAIXAR PLANILHA (COM TRAVAS DE GARANTIA E BATERIA) =====
         async function baixarPlanilha() {
             const btn = event.target;
             const textoOriginal = btn.innerText;
@@ -794,7 +794,7 @@
             }
         }
 
-        // ===== PROCESSAMENTO DO UPLOAD (mantido inalterado) =====
+        // ===== PROCESSAMENTO DO UPLOAD =====
         async function processarUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -855,7 +855,6 @@
                 let sucessos = 0;
                 let erros = 0;
 
-                // Criar um Set de combinações válidas a partir da baseAbsoluta (combinacoesUnicas)
                 const combinacoesValidas = new Set(combinacoesUnicas.map(item => `${item.modelo}|${item.capacidade}|${item.cor}`));
 
                 for (const [idx, row] of rows.entries()) {
@@ -912,10 +911,22 @@
                             atualizado_em: new Date().toISOString()
                         };
 
-                        const { error } = await _s.from('ofertas').upsert(payload, {
-                            onConflict: 'fornecedor_id, variacao_id, regiao_id, condicao'
-                        });
-                        if (error) throw error;
+                        // Lógica para contornar a falta de constraint UNIQUE no Supabase
+                        const { data: existing, error: errBusca } = await _s.from('ofertas')
+                            .select('id')
+                            .eq('fornecedor_id', payload.fornecedor_id)
+                            .eq('variacao_id', payload.variacao_id)
+                            .eq('regiao_id', payload.regiao_id)
+                            .eq('condicao', payload.condicao)
+                            .maybeSingle();
+
+                        if (existing) {
+                            const { error } = await _s.from('ofertas').update(payload).eq('id', existing.id);
+                            if (error) throw error;
+                        } else {
+                            const { error } = await _s.from('ofertas').insert([payload]);
+                            if (error) throw error;
+                        }
 
                         sucessos++;
                         log(`OK: ${row.modelo} ${row.capacidade} ${row.cor} (${moeda} ${preco.toFixed(2)})`, 'ok');
