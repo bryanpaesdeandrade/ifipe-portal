@@ -246,7 +246,7 @@
 
 
 
-    <!-- NAVBAR ATUALIZADA COM DOIS NOVOS BOTÕES -->
+    <!-- NAVBAR ATUALIZADA COM DOIS NOVOS BOTÕES (TEXTO CORRIGIDO) -->
 
     <nav class="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-[#38383a] px-4 py-3 flex justify-between items-center z-50">
 
@@ -280,11 +280,11 @@
 
             </button>
 
-            <!-- NOVOS BOTÕES: UPLOAD EM MASSA E GESTOR SETH -->
+            <!-- BOTÕES: ANUNCIAR EM MASSA E GESTOR SETH -->
 
             <button onclick="window.open('anuncios_em_massa.html', '_blank')" class="bg-zinc-800 text-white border border-[#38383a] px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-zinc-700 flex items-center gap-1" title="Subir estoque via planilha">
 
-                🚀 UPLOAD EM MASSA
+                🚀 ANUNCIAR EM MASSA
 
             </button>
 
@@ -3014,77 +3014,6 @@
 
 
 
-        // === MOTOR DE IMPORTAÇÃO (GESTOR SETH) ===
-        function baixarPlanilha() {
-            alert("Gerando planilha matriz... Preencha e salve.");
-            window.open('https://docs.google.com/spreadsheets/d/1Xy_SEUaVq19z9W-M1_U5M0FjDEx9oG9x6-pBq3Nl44M/export?format=xlsx'); 
-        }
-
-        async function processarPlanilha(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-
-            document.getElementById('modalSeth').classList.remove('hidden');
-            document.getElementById('btnFecharSeth').classList.add('hidden');
-            document.getElementById('logAreaSeth').innerHTML = '';
-            document.getElementById('progressBarSeth').style.width = '0%';
-            
-            const logS = (msg, cor) => {
-                const area = document.getElementById('logAreaSeth');
-                area.innerHTML += `<div class="text-${cor}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
-                area.scrollTop = area.scrollHeight;
-            };
-
-            logS("Lendo " + file.name + "...", "blue-400");
-
-            reader.onload = async (e) => {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(worksheet);
-
-                logS(`Detectadas ${rows.length} linhas. A cruzar dados...`, "yellow-400");
-                const [{data: v}, {data: r}] = await Promise.all([
-                    _s.from('variacoes').select('id, capacidade, cor, produtos_mestre(nome)'),
-                    _s.from('regioes').select('id, nome')
-                ]);
-
-                let processados = 0;
-                for (let i = 0; i < rows.length; i++) {
-                    const row = rows[i];
-                    try {
-                        const varEncontrada = v.find(item => item.produtos_mestre.nome.toUpperCase() === String(row.Modelo).toUpperCase() && item.capacidade.toUpperCase() === String(row.Capacidade).toUpperCase() && item.cor.toUpperCase() === String(row.Cor).toUpperCase());
-                        const regEncontrada = r.find(item => item.nome.toUpperCase() === String(row.Origem).toUpperCase());
-
-                        if (!varEncontrada || !regEncontrada) { logS(`Erro: ${row.Modelo} ou Origem desconhecidos.`, "red-500"); continue; }
-
-                        const pFinal = parseFloat(row["PREÇO DO ANÚNCIO (R$)"]);
-                        if (isNaN(pFinal) || pFinal <= 0) continue;
-
-                        const payload = { 
-                            fornecedor_id: loja.id, variacao_id: varEncontrada.id, regiao_id: regEncontrada.id, 
-                            condicao: row.Condição, preco: pFinal, moeda: "BRL", quantidade: parseInt(row.Estoque) || 0, 
-                            saude_bateria: row.Bateria || null, garantia: row.Garantia || "1 ANO APPLE", 
-                            status_aprovacao: 'aprovado', atualizado_em: new Date().toISOString() 
-                        };
-                        const { error } = await _s.from('ofertas').upsert(payload, { onConflict: 'fornecedor_id, variacao_id, regiao_id, condicao' });
-                        if (error) throw error;
-                        
-                        processados++;
-                        document.getElementById('progressBarSeth').style.width = ((processados / rows.length) * 100) + "%";
-                        logS(`OK: ${row.Modelo} sincronizado!`, "green-500");
-                    } catch (err) { logS(`Erro: ${err.message}`, "red-500"); }
-                }
-                logS(`FINALIZADO: ${processados} lançamentos!`, "white");
-                document.getElementById('btnFecharSeth').classList.remove('hidden');
-                document.getElementById('inputPlanilha').value = ''; 
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-
-
         // Expor funções globais
 
         window.abrirSugestao = abrirSugestao;
@@ -3204,10 +3133,6 @@
         window.toggleCondicaoModal = toggleCondicaoModal;
 
         window.carregarCidadesDinamico = carregarCidadesDinamico;
-
-        window.baixarPlanilha = baixarPlanilha;
-
-        window.processarPlanilha = processarPlanilha;
 
     </script>
 
