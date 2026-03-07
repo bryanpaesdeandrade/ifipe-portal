@@ -492,7 +492,6 @@
             { modelo: "iPhone 17 Air", capacidade: "1TB", cor: "Branco-nuvem" },
             { modelo: "iPhone 17 Air", capacidade: "1TB", cor: "Dourado-claro" },
             { modelo: "iPhone 17 Air", capacidade: "1TB", cor: "Azul-céu" },
-            // MIX COLORS - algumas entradas
             { modelo: "iPhone 11", capacidade: "64GB", cor: "MIX COLORS" },
             { modelo: "iPhone 11", capacidade: "128GB", cor: "MIX COLORS" },
             { modelo: "iPhone 11", capacidade: "256GB", cor: "MIX COLORS" },
@@ -588,7 +587,6 @@
             { modelo: "iPhone 17 Air", capacidade: "1TB", cor: "MIX COLORS" }
         ];
 
-        // Função para extrair combinações únicas
         function getUniqueCombinations(data) {
             const seen = new Set();
             const unique = [];
@@ -604,16 +602,13 @@
 
         const combinacoesUnicas = getUniqueCombinations(baseAbsoluta);
 
-        // Variáveis globais (cache)
         let fornecedorId = null;
         let variacoes = [];
         let regioes = [];
         let dadosCarregados = false;
 
-        // Cabeçalhos esperados
         const HEADERS_ESPERADOS = ['Modelo', 'Capacidade', 'Cor', 'Condição', 'Garantia', 'Bateria', 'Origem', 'Quantidade', 'Preço (BRL)', 'Preço (USD)'];
 
-        // Verificação de login e carregamento inicial
         (async function init() {
             const token = localStorage.getItem('iFipe_Anunciante');
             const masterAuth = localStorage.getItem('iFipe_Master_Auth');
@@ -816,7 +811,6 @@
                     return;
                 }
 
-                // Validar cabeçalhos
                 const headers = [];
                 worksheet.getRow(1).eachCell({ includeEmpty: false }, (cell, colNumber) => {
                     headers[colNumber-1] = cell.value ? cell.value.toString().trim() : '';
@@ -828,7 +822,6 @@
                     return;
                 }
 
-                // Coletar linhas (ignorar cabeçalho)
                 const rows = [];
                 worksheet.eachRow((row, rowNumber) => {
                     if (rowNumber === 1) return;
@@ -911,7 +904,6 @@
                             atualizado_em: new Date().toISOString()
                         };
 
-                        // Lógica para contornar a falta de constraint UNIQUE no Supabase
                         const { data: existing, error: errBusca } = await _s.from('ofertas')
                             .select('id')
                             .eq('fornecedor_id', payload.fornecedor_id)
@@ -942,12 +934,21 @@
                 log(`Processamento concluído. Sucessos: ${sucessos}, Erros: ${erros}.`, sucessos > 0 ? 'ok' : 'erro');
                 document.getElementById('fileInput').value = '';
 
+                // === CONFIRMAÇÃO FINAL E FECHAMENTO DA ABA ===
+                setTimeout(() => {
+                    if (sucessos > 0 && erros === 0) {
+                        alert("✅ Upload 100% processado com sucesso! A janela será fechada.");
+                        window.close(); // Fecha a aba atual
+                    } else if (erros > 0) {
+                        alert(`⚠️ Upload finalizado com ${erros} erro(s). Verifique o log em vermelho antes de fechar.`);
+                    }
+                }, 500);
+
             } catch (err) {
                 log('Erro fatal: ' + err.message, 'erro');
             }
         }
 
-        // Expor funções globalmente
         window.baixarPlanilha = baixarPlanilha;
         window.processarUpload = processarUpload;
     </script>
