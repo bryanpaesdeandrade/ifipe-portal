@@ -73,10 +73,7 @@
                 <div class="flex gap-6 border-l border-zinc-800 pl-6 items-center">
                     <div><span class="text-[7px] text-zinc-500 font-black block">BINANCE REAL</span><span id="tBin" class="text-xs font-mono font-black text-white">R$ --</span></div>
                     <div><span class="text-[7px] text-green-500 font-black block">USDT ORÁCULO (+ R$ 0,06)</span><span id="tUsdt" class="text-xs font-mono font-black text-green-400">R$ --</span></div>
-                    <div class="border-l border-zinc-800 pl-4 flex gap-4">
-                        <div><span class="text-[7px] text-blue-400 font-black block">ANUNCIANTES ONLINE</span><span id="onlineAta" class="text-xs font-mono font-black text-white">0</span></div>
-                        <div><span class="text-[7px] text-blue-400 font-black block">BUSCADORES ONLINE</span><span id="onlineCli" class="text-xs font-mono font-black text-white">0</span></div>
-                    </div>
+                    <!-- DIV DE ONLINE REMOVIDA -->
                     <div class="relative master-only" id="maintenanceDropdownContainer">
                         <button id="maintenanceBtn" onclick="toggleMaintenanceDropdown()" class="btn-master bg-green-600 px-3 py-1 text-[9px] ml-2">SISTEMA: ON</button>
                         <div id="maintenanceMenu" class="absolute right-0 mt-2 w-64 bg-[#1c1c1e] border border-zinc-700 rounded-lg shadow-lg z-50 hidden">
@@ -124,7 +121,7 @@
                     <h2 class="text-sm font-black text-white">ATACADISTAS</h2>
                     <div class="flex gap-2 w-2/3 justify-end items-center">
                         <input type="text" placeholder="🔍 BUSCAR NOME, CIDADE, STATUS, WHATSAPP..." class="apple-input !w-1/2 !py-2" onkeyup="filterTable('listAta', this.value)">
-                        <label class="text-[9px] text-green-500 font-black whitespace-nowrap"><input type="checkbox" id="filtroOnlineAta" onchange="renderAta()" class="mr-1"> SÓ ONLINE</label>
+                        <!-- FILTRO ONLINE REMOVIDO -->
                         <button onclick="abrirModalAta()" class="btn-master bg-white text-black hover:bg-zinc-300">+ NOVO</button>
                         <button onclick="bulkAtaModal()" class="btn-master bg-zinc-800 text-white">⚙️ EM MASSA</button>
                     </div>
@@ -145,7 +142,7 @@
                     <h2 class="text-sm font-black text-white">BUSCADORES</h2>
                     <div class="flex gap-2 w-2/3 justify-end items-center">
                         <input type="text" placeholder="🔍 BUSCAR NOME, CIDADE, EMAIL, WHATSAPP..." class="apple-input !w-1/2 !py-2" onkeyup="filterTable('listCli', this.value)">
-                        <label class="text-[9px] text-green-500 font-black whitespace-nowrap"><input type="checkbox" id="filtroOnlineCli" onchange="renderCli()" class="mr-1"> SÓ ONLINE</label>
+                        <!-- FILTRO ONLINE REMOVIDO -->
                         <button onclick="abrirModalCliNovo()" class="btn-master bg-white text-black hover:bg-zinc-300">+ NOVO</button>
                         <button onclick="bulkCliModal()" class="btn-master bg-zinc-800 text-white">⚙️ EM MASSA</button>
                     </div>
@@ -467,6 +464,7 @@
                         <option value="Grade A">GRADE A</option>
                         <option value="Grade B">GRADE B</option>
                         <option value="Grade C">GRADE C</option>
+                        <option value="CPO">CPO</option>
                     </select>
                     <select id="f_bat_m" class="apple-input">
                         <option value="">BATERIA...</option>
@@ -685,13 +683,6 @@
 
         const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
-
-        function isOnline(updatedAt) {
-            if (!updatedAt) return false;
-            const data = new Date(updatedAt);
-            const agora = new Date();
-            return (agora - data) < 5 * 60 * 1000;
-        }
 
         function updateMasterProfile(e) {
             e.preventDefault();
@@ -914,9 +905,24 @@
         }
 
         async function renderSystemStatus() {
-            const { data } = await _s.from('sistema_config').select('*').eq('id', 1).single();
+            let { data, error } = await _s.from('sistema_config').select('*').eq('id', 1).maybeSingle();
+            if (error || !data) {
+                const defaultConfig = {
+                    id: 1,
+                    status_geral: 'on',
+                    status_atacadista: 'on',
+                    status_buscador: 'on'
+                };
+                const { error: insertError } = await _s.from('sistema_config').insert([defaultConfig]);
+                if (insertError) {
+                    console.warn('Não foi possível criar configuração padrão:', insertError);
+                    data = defaultConfig;
+                } else {
+                    data = defaultConfig;
+                }
+            }
             const btn = document.getElementById('maintenanceBtn');
-            if (!data || (data.status_geral === 'on' && data.status_atacadista === 'on' && data.status_buscador === 'on')) {
+            if (data.status_geral === 'on' && data.status_atacadista === 'on' && data.status_buscador === 'on') {
                 btn.className = "btn-master bg-green-600 px-3 py-1 text-[9px] ml-2";
                 btn.innerText = "SISTEMA: ON";
             } else {
@@ -1007,7 +1013,7 @@
         async function abrirNotificacoes() {
             document.getElementById('modalNotificacoes').classList.remove('hidden');
             document.getElementById('notificacoesList').innerHTML = 'Buscando sugestões...';
-            const { data, error } = await _s.from('sugestoes').select('*').order('criado_em', { ascending: false }).limit(30);
+            const { data, error } = await _s.from('sugestoes').select('*').order('created_at', { ascending: false }).limit(30);
             if (error) {
                 document.getElementById('notificacoesList').innerHTML = `<p class="text-red-500">Nenhuma sugestão encontrada ou tabela "sugestoes" não existe.</p>`;
                 return;
@@ -1018,7 +1024,9 @@
             }
             document.getElementById('notificacoesList').innerHTML = data.map(n => `
                 <div class="p-3 bg-[#141415] border border-zinc-800 rounded">
-                    <span class="text-blue-400 font-bold">${n.nome || n.usuario || 'Usuário Anônimo'}</span> - <span class="text-[8px] text-zinc-500">${n.criado_em ? new Date(n.criado_em).toLocaleString() : ''}</span>
+                    <span class="text-blue-400 font-bold">${n.remetente_nome || n.nome || 'Anônimo'}</span> 
+                    <span class="text-[8px] text-zinc-500">(${n.remetente_tipo || 'User'})</span> - 
+                    <span class="text-[8px] text-zinc-500">${n.created_at ? new Date(n.created_at).toLocaleString() : n.criado_em ? new Date(n.criado_em).toLocaleString() : ''}</span>
                     <p class="mt-2 text-white text-[11px]">${n.mensagem || n.sugestao || n.texto || '(Sem conteúdo)'}</p>
                 </div>
             `).join('');
@@ -1070,40 +1078,6 @@
             dbVar = v.data || [];
             dbReg = r.data || [];
             dbFunc = fn.data || [];
-
-            const cincoMinAtras = new Date(Date.now() - 5 * 60000).toISOString();
-            let onlineAta = 0;
-            try {
-                const { data: onlineAtaData, error } = await _s.from('fornecedores').select('id').gte('updated_at', cincoMinAtras);
-                if (!error) onlineAta = onlineAtaData.length;
-                else onlineAta = dbAta.filter(a => a.ativo === true).length;
-            } catch (e) {
-                onlineAta = dbAta.filter(a => a.ativo === true).length;
-            }
-            let onlineCli = 0;
-            try {
-                const { data: onlineCliData, error } = await _s.from('clientes_buscador').select('id').gte('updated_at', cincoMinAtras);
-                if (!error) onlineCli = onlineCliData.length;
-                else {
-                    const colInfo = getStatusCol('clientes_buscador');
-                    onlineCli = dbCli.filter(c => {
-                        if (colInfo.name === 'ativo' || colInfo.name === 'is_active') return c[colInfo.name] !== false;
-                        if (colInfo.name === 'status') return c.status === 'ativo';
-                        if (colInfo.name === 'bloqueado') return c.bloqueado !== true;
-                        return true;
-                    }).length;
-                }
-            } catch (e) {
-                const colInfo = getStatusCol('clientes_buscador');
-                onlineCli = dbCli.filter(c => {
-                    if (colInfo.name === 'ativo' || colInfo.name === 'is_active') return c[colInfo.name] !== false;
-                    if (colInfo.name === 'status') return c.status === 'ativo';
-                    if (colInfo.name === 'bloqueado') return c.bloqueado !== true;
-                    return true;
-                }).length;
-            }
-            document.getElementById('onlineAta').innerText = onlineAta;
-            document.getElementById('onlineCli').innerText = onlineCli;
 
             renderAta(); 
             renderCli(); 
@@ -1215,12 +1189,12 @@
             document.getElementById('f_tipo_m').value = t;
             document.getElementById('btNM').classList.toggle('active', t==='Novo'); 
             document.getElementById('btSM').classList.toggle('active', t==='Seminovo');
-            document.getElementById('z_semi_m').classList.toggle('hidden', t==='Novo');
-            if(t==='Novo' || t==='CPO') { 
-                document.getElementById('f_bat_m').value = ''; 
-                document.getElementById('f_gar_m').style.display = 'none'; 
-            } else { 
-                document.getElementById('f_gar_m').style.display = 'block'; 
+            if (t === 'Novo') {
+                document.getElementById('z_semi_m').classList.add('hidden');
+                document.getElementById('f_gar_m').classList.add('hidden');
+            } else {
+                document.getElementById('z_semi_m').classList.remove('hidden');
+                document.getElementById('f_gar_m').classList.remove('hidden');
             }
             document.getElementById('f_mod_m').disabled = false; 
         }
@@ -1236,8 +1210,23 @@
             let tipo = document.getElementById('f_tipo_m').value;
             let isBrl = document.getElementById('f_brl_m').value.length > 0;
             let precoFinal = isBrl ? parseP(document.getElementById('f_brl_m').value) : parseP(document.getElementById('f_usd_m').value);
-            let g = (tipo === 'Novo' || tipo === 'CPO') ? '1 ANO APPLE' : document.getElementById('f_gar_m').value;
-            let b = (tipo === 'Novo' || tipo === 'CPO') ? '' : document.getElementById('f_bat_m').value;
+            
+            let condicaoFinal;
+            if (tipo === 'Novo') {
+                condicaoFinal = 'Novo';
+            } else {
+                condicaoFinal = document.getElementById('f_cond_m').value; // Seminovo, Grade A, Grade B, Grade C, CPO
+            }
+            
+            let garantiaFinal, bateriaFinal;
+            if (condicaoFinal === 'Novo' || condicaoFinal === 'CPO') {
+                garantiaFinal = '1 ANO APPLE';
+                bateriaFinal = null;
+            } else {
+                garantiaFinal = document.getElementById('f_gar_m').value;
+                bateriaFinal = document.getElementById('f_bat_m').value;
+            }
+            
             let q = parseInt(document.getElementById('f_qtd_m').value);
             if (isNaN(q) || q < 0) q = 0;
 
@@ -1251,8 +1240,8 @@
             const payload = { 
                 fornecedor_id: lojaId, variacao_id: v.id, regiao_id: document.getElementById('f_orig_m').value,
                 preco: precoFinal, moeda: isBrl ? 'BRL' : 'USD', quantidade: q,
-                condicao: tipo==='Novo'?'Novo':(tipo==='CPO'?'CPO':document.getElementById('f_cond_m').value),
-                saude_bateria: b, garantia: g,
+                condicao: condicaoFinal,
+                saude_bateria: bateriaFinal, garantia: garantiaFinal,
                 aceita_pix: document.getElementById('m_pix_m').checked, aceita_usdt: document.getElementById('m_usdt_m').checked, 
                 emite_nota: document.getElementById('m_nota_m').checked, faz_envio: document.getElementById('m_envi_m').checked, 
                 aceita_coleta: document.getElementById('m_cole_m').checked, aceita_proposta: document.getElementById('m_neg_m').checked, 
@@ -1271,8 +1260,6 @@
             const capacidade = document.getElementById('editCapacidade').value;
             const cor = document.getElementById('editCor').value;
             const condicao = document.getElementById('editCondicao').value;
-            const bateria = document.getElementById('editBateria').value;
-            const garantia = document.getElementById('editGarantia').value;
             const origem = document.getElementById('editOrigem').value;
             const qtd = parseInt(document.getElementById('editQuantidade').value);
             const precoUsd = document.getElementById('editPrecoUsd').value;
@@ -1282,6 +1269,15 @@
             const moeda = isBrl ? 'BRL' : 'USD';
             const variacao = dbVar.find(v => v.produtos_mestre?.id == modelo && v.capacidade == capacidade && v.cor == cor);
             if (!variacao) { alert('Variação não encontrada.'); return; }
+
+            let bateria, garantia;
+            if (condicao === 'Novo' || condicao === 'CPO') {
+                bateria = null;
+                garantia = '1 ANO APPLE';
+            } else {
+                bateria = document.getElementById('editBateria').value;
+                garantia = document.getElementById('editGarantia').value;
+            }
 
             let cidadeAparelho = null, estadoAparelho = null;
             if (!document.getElementById('editLocalOrigem').checked) {
@@ -1509,7 +1505,6 @@
             loadAll();
         }
 
-        // Função renderAnu ATUALIZADA (sem alerta de preço, com localização)
         function renderAnu() { 
             const tbody = document.getElementById('listAnu'); 
             if(!dbAnu.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4">Vazio.</td></tr>'; return; } 
@@ -1662,12 +1657,7 @@
         }
 
         function renderAta() { 
-            const filtroOnline = document.getElementById('filtroOnlineAta')?.checked || false;
             document.getElementById('listAta').innerHTML = dbAta
-                .filter(a => {
-                    if (!filtroOnline) return true;
-                    return isOnline(a.updated_at || a.ultimo_login || a.atualizado_em);
-                })
                 .map(a => { 
                     let l = a.pais === 'Brasil' ? `${a.cidade||'-'} / ${a.estado||'-'}` : (a.pais || '-'); 
                     let insig = [];
@@ -1676,10 +1666,9 @@
                         else if (typeof a.insignia_manual === 'string') insig = JSON.parse(a.insignia_manual || '[]');
                     } catch(e) { insig = []; }
                     let b = insig.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 mt-1 text-[7px]">${i}</span>`).join(''); 
-                    let statusIcon = isOnline(a.updated_at || a.ultimo_login || a.atualizado_em) ? '<span title="Online">🟢</span>' : '<span title="Offline">🔴</span>';
                     return `<tr>
                         <td><input type="checkbox" class="chk-ata" value="${a.id}"></td>
-                        <td><span class="font-black text-white text-xs">${a.nome} ${statusIcon}</span><br><span class="text-[8px] text-zinc-500">${l}</span></td>
+                        <td><span class="font-black text-white text-xs">${a.nome}</span><br><span class="text-[8px] text-zinc-500">${l}</span></td>
                         <td class="font-mono text-[9px] text-zinc-400">${a.whatsapp||'--'}</td>
                         <td class="font-mono text-red-400 text-[10px]">${a.senha||'--'}</td>
                         <td class="max-w-[150px] leading-tight">${b||'-'}</td>
@@ -1697,12 +1686,7 @@
 
         function renderCli() { 
             const colInfo = getStatusCol('clientes_buscador');
-            const filtroOnline = document.getElementById('filtroOnlineCli')?.checked || false;
             document.getElementById('listCli').innerHTML = dbCli
-                .filter(c => {
-                    if (!filtroOnline) return true;
-                    return isOnline(c.updated_at || c.ultimo_login || c.atualizado_em);
-                })
                 .map(c => { 
                     let n = c.nome || c.email || c.whatsapp || 'SEM NOME'; 
                     let local = c.pais === 'Brasil' ? `${c.cidade||'-'} / ${c.estado||'-'}` : (c.pais || 'Não definido'); 
@@ -1717,10 +1701,9 @@
                     else if(colInfo.name === 'status') isAtivo = c.status === 'ativo';
                     else if(colInfo.name === 'bloqueado') isAtivo = c.bloqueado !== true;
                     let statusBadge = isAtivo ? `<span class="badge b-green">ATIVO</span>` : `<span class="badge b-red">BLOQUEADO</span>`;
-                    let statusIcon = isOnline(c.updated_at || c.ultimo_login || c.atualizado_em) ? '<span title="Online">🟢</span>' : '<span title="Offline">🔴</span>';
                     return `<tr>
                         <td><input type="checkbox" class="chk-cli" value="${c.id}"></td>
-                        <td><span class="font-black text-white text-xs">${n} ${statusIcon}</span><br><span class="text-[8px] text-zinc-500 font-mono">ID #${c.id}</span></td>
+                        <td><span class="font-black text-white text-xs">${n}</span><br><span class="text-[8px] text-zinc-500 font-mono">ID #${c.id}</span></td>
                         <td class="text-[9px] text-zinc-400">${local}</td>
                         <td class="font-mono text-[9px] text-zinc-400">${c.whatsapp||c.email||'--'}</td>
                         <td class="font-mono text-red-400 text-[10px]">${c.senha||'--'}</td>
