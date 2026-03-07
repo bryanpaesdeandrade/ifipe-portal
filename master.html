@@ -1014,7 +1014,7 @@
         async function abrirNotificacoes() {
             document.getElementById('modalNotificacoes').classList.remove('hidden');
             document.getElementById('notificacoesList').innerHTML = 'Buscando sugestões...';
-            const { data, error } = await _s.from('feedbacks').select('*').order('created_at', { ascending: false }).limit(30);
+            const { data, error } = await _s.from('feedbacks').select('*').order('criado_em', { ascending: false }).limit(30);
             if (error) {
                 document.getElementById('notificacoesList').innerHTML = `<p class="text-red-500">Erro ao carregar feedbacks: ${error.message}</p>`;
                 return;
@@ -1027,7 +1027,7 @@
                 <div class="p-3 bg-[#141415] border border-zinc-800 rounded">
                     <span class="text-blue-400 font-bold">${n.usuario_nome || 'Anônimo'}</span> 
                     <span class="text-[8px] text-zinc-500">(${n.usuario_tipo || 'Desconhecido'})</span> - 
-                    <span class="text-[8px] text-zinc-500">${n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : ''}</span>
+                    <span class="text-[8px] text-zinc-500">${n.criado_em ? new Date(n.criado_em).toLocaleString('pt-BR') : ''}</span>
                     <p class="mt-2 text-white text-[11px]">${n.mensagem || '(Sem conteúdo)'}</p>
                 </div>
             `).join('');
@@ -1326,11 +1326,22 @@
                 return;
             }
             const condicao = document.getElementById('bulkCondicao').value;
-            if (condicao) updates.condicao = condicao;
+            if (condicao) {
+                updates.condicao = condicao;
+                // Se a nova condição for Novo ou CPO, forçar garantia e bateria padrão
+                if (condicao === 'Novo' || condicao === 'CPO') {
+                    updates.garantia = '1 ANO APPLE';
+                    updates.saude_bateria = null;
+                }
+            }
+            // Só aplica bateria/garantia se a condição não for Novo/CPO (ou se não foi alterada)
             const bateria = document.getElementById('bulkBateria').value;
-            if (bateria) updates.saude_bateria = bateria;
             const garantia = document.getElementById('bulkGarantia').value;
-            if (garantia) updates.garantia = garantia;
+            if (!updates.condicao || (updates.condicao !== 'Novo' && updates.condicao !== 'CPO')) {
+                if (bateria) updates.saude_bateria = bateria;
+                if (garantia) updates.garantia = garantia;
+            }
+
             const origem = document.getElementById('bulkOrigem').value;
             if (origem) updates.regiao_id = origem;
             const qtd = document.getElementById('bulkQuantidade').value;
