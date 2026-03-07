@@ -89,7 +89,10 @@
                 <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 master-only text-[9px] px-3 py-1 flex items-center gap-2">
                     👁️‍🗨️ HORUS O OLHO QUE MENOR PREÇO VÊ
                 </button>
-                <span onclick="abrirNotificacoes()" class="cursor-pointer text-lg hover:opacity-80 master-only" title="Sugestões e Alertas">🔔</span>
+                <div class="relative master-only">
+                    <span onclick="abrirNotificacoes()" class="cursor-pointer text-lg hover:opacity-80" title="Sugestões e Alertas">🔔</span>
+                    <span id="badgeNotif" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full pointer-events-none">0</span>
+                </div>
                 <span id="headerMasterName" class="text-[10px] font-black text-blue-500 tracking-widest">MASTER</span>
                 <button id="minhaContaBtn" onclick="abrirConta()" class="btn-header" style="background: var(--input); color: #fff; border-color: #38383a;">
                     <span>⚙️ MINHA CONTA</span>
@@ -977,6 +980,25 @@
             });
         }
 
+        // --- SISTEMA DE NOTIFICAÇÕES INTELIGENTES ---
+        async function checarNotificacoes() {
+            const { count } = await _s.from('feedbacks').select('*', { count: 'exact', head: true });
+            const badge = document.getElementById('badgeNotif');
+            if (count && count > 0) {
+                badge.innerText = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        async function deletarFeedback(id) {
+            if(!confirm("Excluir esta mensagem definitivamente?")) return;
+            await _s.from('feedbacks').delete().eq('id', id);
+            abrirNotificacoes();
+            checarNotificacoes();
+        }
+
         async function abrirNotificacoes() {
             document.getElementById('modalNotificacoes').classList.remove('hidden');
             document.getElementById('notificacoesList').innerHTML = 'Buscando sugestões...';
@@ -989,14 +1011,35 @@
                 document.getElementById('notificacoesList').innerHTML = '<p>Nenhuma notificação no momento.</p>';
                 return;
             }
-            document.getElementById('notificacoesList').innerHTML = data.map(n => `
-                <div class="p-3 bg-[#141415] border border-zinc-800 rounded">
-                    <span class="text-blue-400 font-bold">${n.usuario_nome || 'Anônimo'}</span> 
-                    <span class="text-[8px] text-zinc-500">(${n.usuario_tipo || 'Desconhecido'})</span> - 
-                    <span class="text-[8px] text-zinc-500">${n.criado_em ? new Date(n.criado_em).toLocaleString('pt-BR') : ''}</span>
-                    <p class="mt-2 text-white text-[11px]">${n.mensagem || '(Sem conteúdo)'}</p>
+            document.getElementById('notificacoesList').innerHTML = data.map(n => {
+                // Tenta achar o WhatsApp do usuário para criar o botão Responder
+                let zap = '';
+                if(n.usuario_tipo === 'ATACADISTA') {
+                    let achei = dbAta.find(x => x.nome === n.usuario_nome);
+                    if(achei && achei.whatsapp) zap = achei.whatsapp.replace(/\D/g, '');
+                } else if (n.usuario_tipo === 'BUSCADOR') {
+                    let achei = dbCli.find(x => x.nome === n.usuario_nome);
+                    if(achei && achei.whatsapp) zap = achei.whatsapp.replace(/\D/g, '');
+                }
+                
+                let btnResponder = zap ? `<a href="https://wa.me/55${zap}?text=Olá, referente a sua sugestão no iFipe: " target="_blank" class="bg-green-600 text-white px-2 py-1 rounded text-[8px] font-black hover:opacity-80">WHATSAPP</a>` : `<span class="text-[8px] text-zinc-600 self-center">Sem Contato</span>`;
+
+                return `
+                <div class="p-3 bg-[#141415] border border-zinc-800 rounded relative">
+                    <div class="flex justify-between items-start mb-2 border-b border-zinc-800 pb-2">
+                        <div>
+                            <span class="text-blue-400 font-bold">${n.usuario_nome || 'Anônimo'}</span> 
+                            <span class="text-[8px] text-zinc-500">(${n.usuario_tipo || 'Desconhecido'})</span>
+                        </div>
+                        <div class="flex gap-2">
+                            ${btnResponder}
+                            <button onclick="deletarFeedback(${n.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white">APAGAR</button>
+                        </div>
+                    </div>
+                    <span class="text-[8px] text-zinc-500 block mb-1">${n.criado_em ? new Date(n.criado_em).toLocaleString('pt-BR') : ''}</span>
+                    <p class="mt-1 text-white text-[11px]">${n.mensagem || '(Sem conteúdo)'}</p>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function selAll(el, selector) { document.querySelectorAll(selector).forEach(c => c.checked = el.checked); }
@@ -1035,6 +1078,7 @@
             } catch(e) { console.error("Erro WebSocket:", e); }
             await renderSystemStatus(); 
             await loadAll();
+            checarNotificacoes(); // Adicionado aqui para ligar o sino
         }
 
         async function loadAll() {
@@ -1122,7 +1166,6 @@
             }
         }
 
-        // NOVAS FUNÇÕES PARA BOTÕES DE CONDIÇÃO
         function setEditCondicao(cond) {
             document.getElementById('editCondicao').value = cond;
             document.getElementById('btEditNovo').classList.toggle('active', cond === 'Novo');
@@ -1236,7 +1279,6 @@
         async function salvarEdicaoCompleta(e) {
             e.preventDefault();
             
-            // TRAVA DE SEGURANÇA: Exige que clique num botão de condição
             let condicao = document.getElementById('editCondicao').value;
             if (!condicao) {
                 alert("Por favor, clique em um dos botões de Condição (Novo, Seminovo ou CPO) antes de salvar.");
@@ -1315,7 +1357,6 @@
                 return;
             }
             
-            // TRAVA DE SEGURANÇA NA EDIÇÃO EM MASSA
             const condicao = document.getElementById('bulkCondicao').value;
             if (condicao) {
                 updates.condicao = condicao;
