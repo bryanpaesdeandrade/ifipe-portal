@@ -3,412 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anúncios em Massa - iFipe</title>
+    <title>iFipe - Anúncios em Massa ⚡</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- ExcelJS e FileSaver para geração de planilha inteligente -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
     <style>
-        body { background: #000; color: #fff; font-family: 'Inter', sans-serif; }
-        .card { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; }
-        .btn-large { background: #0071e3; color: white; font-weight: 800; padding: 1.5rem; border-radius: 20px; font-size: 1.2rem; transition: 0.3s; border: none; cursor: pointer; width: 100%; }
-        .btn-large:hover { background: #005bb5; transform: scale(1.02); }
-        .btn-outline { background: transparent; border: 2px solid #38383a; color: white; font-weight: 700; padding: 0.75rem 1.5rem; border-radius: 50px; transition: 0.3s; cursor: pointer; }
-        .btn-outline:hover { border-color: #0071e3; color: #0071e3; }
-        .log-area { background: #111; border: 1px solid #2c2c2e; border-radius: 12px; padding: 1rem; font-family: monospace; font-size: 0.8rem; height: 200px; overflow-y: auto; white-space: pre-wrap; }
-        .progress-bar { height: 8px; background: #2c2c2e; border-radius: 4px; overflow: hidden; }
-        .progress-fill { height: 100%; background: #0071e3; width: 0%; transition: width 0.2s; }
+        body { background: #000; color: #fff; font-family: 'Inter', sans-serif; text-transform: uppercase; }
+        .card-seth { background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px; padding: 2rem; }
+        .stat-box { background: #0a0a0a; border: 1px solid #2c2c2e; padding: 1.5rem; border-radius: 16px; text-align: center; }
+        .btn-blue { background: #0071e3; color: #fff; font-weight: 900; transition: 0.3s; }
+        .btn-blue:hover { background: #0077ed; transform: scale(1.02); }
+        .log-matrix { background: #000; border: 1px solid #1a1a1a; border-radius: 12px; padding: 1rem; font-family: monospace; font-size: 10px; height: 150px; overflow-y: auto; color: #00ff41; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="p-4 md:p-8">
-    <div class="max-w-4xl mx-auto">
 
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-black italic">ANÚNCIOS EM MASSA <span class="text-blue-500">⚡</span></h1>
-            <button onclick="window.close()" class="btn-outline text-sm px-4 py-2">
-                <i class="fas fa-times mr-2"></i>FECHAR
-            </button>
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-8 border-b border-zinc-800 pb-6">
+            <div>
+                <h1 class="text-3xl font-black italic">ANÚNCIOS EM <span class="text-blue-500">MASSA ⚡</span></h1>
+                <p class="text-zinc-500 text-[10px] mt-1 tracking-widest">SISTEMA DE SINCRONIZAÇÃO BLINDADA</p>
+            </div>
+            <button onclick="window.close()" class="border border-zinc-700 px-5 py-2 rounded-full text-[10px] font-bold hover:bg-red-900 transition">FECHAR</button>
+        </header>
+
+        <div id="step-init" class="grid md:grid-cols-2 gap-6">
+            <div class="card-seth">
+                <h2 class="text-sm font-bold mb-2">1. PREPARAR ESTOQUE</h2>
+                <p class="text-zinc-400 text-[9px] mb-6 leading-relaxed">BAIXE A PLANILHA OFICIAL. ELA POSSUI LISTAS SUSPENSAS AMARRADAS AO NOSSO BANCO DE DADOS PARA EVITAR ERROS.</p>
+                <button onclick="baixarPlanilhaInteligente()" class="btn-blue w-full p-4 rounded-xl flex items-center justify-center gap-3">
+                    <i class="fas fa-file-excel text-xl"></i> BAIXAR PLANILHA BLINDADA
+                </button>
+            </div>
+            <div class="card-seth">
+                <h2 class="text-sm font-bold mb-2">2. ENVIAR ATUALIZAÇÃO</h2>
+                <p class="text-zinc-400 text-[9px] mb-6 leading-relaxed">APÓS PREENCHER, SUBIR O ARQUIVO PARA ANÁLISE. O SISTEMA VALIDARÁ CADA ITEM ANTES DE PUBLICAR.</p>
+                <input type="file" id="fileInput" class="hidden" accept=".xlsx" onchange="lerArquivoExcel(event)">
+                <button onclick="document.getElementById('fileInput').click()" class="bg-white text-black w-full p-4 rounded-xl font-black hover:bg-zinc-200 transition">
+                    <i class="fas fa-cloud-upload-alt mr-2"></i> SUBIR ESTOQUE PREENCHIDO
+                </button>
+            </div>
         </div>
 
-        <!-- Verificação de login silenciosa -->
-        <div id="auth-warning" class="hidden card !p-4 mb-6 text-red-500 border-red-500/30">
-            <i class="fas fa-exclamation-triangle mr-2"></i> Você não está logado como anunciante. Redirecionando...
-        </div>
+        <div id="dashboard-seth" class="mt-8 hidden space-y-6">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="stat-box">
+                    <span class="text-[8px] text-zinc-500 font-bold block">INVESTIMENTO</span>
+                    <span id="stat-invest" class="text-lg font-black text-white">R$ 0,00</span>
+                </div>
+                <div class="stat-box">
+                    <span class="text-[8px] text-green-500 font-bold block">LUCRO ESTIMADO</span>
+                    <span id="stat-lucro" class="text-lg font-black text-green-500">R$ 0,00</span>
+                </div>
+                <div class="stat-box">
+                    <span class="text-[8px] text-blue-400 font-bold block">MARKUP MÉDIO</span>
+                    <span id="stat-markup" class="text-lg font-black text-blue-400">0%</span>
+                </div>
+                <div class="stat-box">
+                    <span class="text-[8px] text-purple-400 font-bold block">ITENS VÁLIDOS</span>
+                    <span id="stat-count" class="text-lg font-black text-white">0</span>
+                </div>
+            </div>
 
-        <!-- Botões principais -->
-        <div class="grid md:grid-cols-2 gap-6 mb-10">
-            <button onclick="baixarPlanilha()" class="btn-large flex items-center justify-center gap-3">
-                <i class="fas fa-download text-2xl"></i> 1. BAIXAR PLANILHA DE ESTOQUE
-            </button>
-            <label class="btn-large flex items-center justify-center gap-3 cursor-pointer bg-white text-black hover:bg-gray-200">
-                <i class="fas fa-upload text-2xl"></i> 2. SUBIR ESTOQUE PREENCHIDO
-                <input type="file" id="fileInput" class="hidden" accept=".xlsx" onchange="processarUpload(event)">
-            </label>
-        </div>
+            <div class="card-seth">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xs font-black">REVISÃO DE PREÇOS E MARGENS</h3>
+                    <button onclick="sincronizarComBanco()" id="btnSync" class="bg-green-600 px-8 py-3 rounded-lg text-[10px] font-black hover:bg-green-500 transition">APLICAR NO iFIPE AGORA</button>
+                </div>
+                <div class="overflow-x-auto max-h-80 custom-scroll">
+                    <table class="w-full text-[10px]">
+                        <thead class="sticky top-0 bg-[#1c1c1e] text-zinc-500">
+                            <tr class="border-b border-zinc-800">
+                                <th class="py-2 text-left">PRODUTO</th>
+                                <th class="text-center">CUSTO</th>
+                                <th class="text-center">VENDA</th>
+                                <th class="text-center">LUCRO</th>
+                                <th class="text-right">LOCAL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="preview-table"></tbody>
+                    </table>
+                </div>
+            </div>
 
-        <!-- Área de log e progresso (inicialmente oculta) -->
-        <div id="logContainer" class="hidden card space-y-4">
-            <h3 class="text-sm font-bold flex items-center gap-2"><i class="fas fa-terminal text-green-500"></i> LOG DE PROCESSAMENTO</h3>
-            <div id="logArea" class="log-area"></div>
-            <div class="progress-bar">
-                <div id="progressFill" class="progress-fill"></div>
+            <div class="card-seth">
+                <h3 class="text-[10px] font-black text-zinc-500 mb-3 italic">PROCESSAMENTO EM TEMPO REAL</h3>
+                <div id="logArea" class="log-matrix"></div>
+                <div class="w-full bg-zinc-900 h-1.5 mt-4 rounded-full overflow-hidden">
+                    <div id="progressBar" class="bg-blue-600 h-full w-0 transition-all duration-300"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Configuração Supabase
-        const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
-        const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
+        const fId = localStorage.getItem('iFipe_Anunciante');
+        let dataToUpload = [], variacoes = [], regioes = [];
 
-        // Variáveis globais
-        let fornecedorId = null;
-        let dadosMestre = { modelos: [], capacidades: [], cores: [], origens: [], condicoes: [], baterias: [], garantias: [] };
-        let variacoes = [];
-        let regioes = [];
-
-        // Verificação de login
-        (async function() {
-            const token = localStorage.getItem('iFipe_Anunciante');
-            const masterAuth = localStorage.getItem('iFipe_Master_Auth');
-            if (!token && masterAuth !== 'gov_absoluto') {
-                document.getElementById('auth-warning').classList.remove('hidden');
-                setTimeout(() => window.location.href = 'index.html', 2000);
-                return;
-            }
-            fornecedorId = token || (masterAuth === 'gov_absoluto' ? 1 : null);
-            await carregarDados();
-        })();
-
-        async function carregarDados() {
-            // Busca variações com produtos_mestre
-            const { data: vars, error: errV } = await _s
-                .from('variacoes')
-                .select('id, capacidade, cor, produtos_mestre!inner(nome)');
-            if (errV) console.error(errV);
-            variacoes = vars || [];
-
-            // Extrai listas únicas ordenadas
-            const modelosSet = new Set();
-            const capacidadesSet = new Set();
-            const coresSet = new Set();
-            variacoes.forEach(v => {
-                if (v.produtos_mestre?.nome) modelosSet.add(v.produtos_mestre.nome);
-                if (v.capacidade) capacidadesSet.add(v.capacidade);
-                if (v.cor) coresSet.add(v.cor);
-            });
-            dadosMestre.modelos = Array.from(modelosSet).sort((a,b) => a.localeCompare(b));
-            dadosMestre.capacidades = Array.from(capacidadesSet).sort((a,b) => a.localeCompare(b));
-            dadosMestre.cores = Array.from(coresSet).sort((a,b) => a.localeCompare(b));
-
-            // Busca regiões
-            const { data: regs } = await _s.from('regioes').select('nome');
-            regioes = regs || [];
-            dadosMestre.origens = regioes.map(r => r.nome).sort((a,b) => a.localeCompare(b));
-
-            // Listas fixas
-            dadosMestre.condicoes = ['Novo', 'Seminovo', 'CPO', 'Grade A', 'Grade B', 'Grade C'];
-            dadosMestre.baterias = ['Abaixo de 85%', 'Acima de 85%', 'Acima de 90%', 'Acima de 95%', 'Bateria em 100%'];
-            dadosMestre.garantias = ['Sem garantia', '1 Mês', '2 Meses', '3 Meses', '6 Meses', '12 Meses'];
-        }
-
-        // Função para gerar planilha com validação de dados
-        async function baixarPlanilha() {
-            if (!dadosMestre.modelos.length) await carregarDados();
-
-            const workbook = new ExcelJS.Workbook();
+        // 1. GERAÇÃO DE PLANILHA COM DROPDOWNS (AMARRADA AO BANCO)
+        async function baixarPlanilhaInteligente() {
+            const btn = event.target;
+            btn.innerText = "SINCROZINANDO BANCO...";
             
-            // Aba BaseDB (oculta)
-            const baseSheet = workbook.addWorksheet('BaseDB', { state: 'hidden' });
-            baseSheet.columns = [
-                { header: 'Modelos', key: 'modelos' },
-                { header: 'Capacidades', key: 'capacidades' },
-                { header: 'Cores', key: 'cores' },
-                { header: 'Origens', key: 'origens' },
-                { header: 'Condições', key: 'condicoes' },
-                { header: 'Baterias', key: 'baterias' },
-                { header: 'Garantias', key: 'garantias' }
-            ];
-            // Preencher com as listas (até 100 linhas)
-            const maxLinhas = Math.max(
-                dadosMestre.modelos.length,
-                dadosMestre.capacidades.length,
-                dadosMestre.cores.length,
-                dadosMestre.origens.length,
-                dadosMestre.condicoes.length,
-                dadosMestre.baterias.length,
-                dadosMestre.garantias.length
-            );
-            for (let i = 0; i < maxLinhas; i++) {
-                baseSheet.addRow({
-                    modelos: dadosMestre.modelos[i] || '',
-                    capacidades: dadosMestre.capacidades[i] || '',
-                    cores: dadosMestre.cores[i] || '',
-                    origens: dadosMestre.origens[i] || '',
-                    condicoes: dadosMestre.condicoes[i] || '',
-                    baterias: dadosMestre.baterias[i] || '',
-                    garantias: dadosMestre.garantias[i] || ''
-                });
-            }
+            const [v, r] = await Promise.all([
+                _s.from('variacoes').select('capacidade, cor, produtos_mestre(nome)'),
+                _s.from('regioes').select('nome')
+            ]);
 
-            // Aba Estoque
-            const estoqueSheet = workbook.addWorksheet('Estoque');
-            estoqueSheet.columns = [
-                { header: 'Modelo', key: 'modelo', width: 20 },
-                { header: 'Capacidade', key: 'capacidade', width: 15 },
-                { header: 'Cor', key: 'cor', width: 15 },
-                { header: 'Condição', key: 'condicao', width: 15 },
-                { header: 'Bateria', key: 'bateria', width: 20 },
-                { header: 'Garantia', key: 'garantia', width: 15 },
-                { header: 'Origem', key: 'origem', width: 20 },
-                { header: 'Quantidade', key: 'quantidade', width: 12 },
-                { header: 'Preço (BRL)', key: 'preco_brl', width: 15 },
-                { header: 'Preço (USD)', key: 'preco_usd', width: 15 }
+            const wb = new ExcelJS.Workbook();
+            const wsBase = wb.addWorksheet('BaseDB', { state: 'hidden' });
+            const wsApp = wb.addWorksheet('Estoque');
+
+            // Listas únicas
+            const modelos = [...new Set(v.data.map(i => i.produtos_mestre.nome))].sort();
+            const capacidades = [...new Set(v.data.map(i => i.capacidade))].sort();
+            const cores = [...new Set(v.data.map(i => i.cor))].sort();
+            const origens = r.data.map(i => i.nome).sort();
+            const condicoes = ['Novo', 'Seminovo', 'CPO', 'Grade A', 'Grade B', 'Grade C'];
+            const ufs = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+
+            // Popula aba oculta para validação
+            modelos.forEach((m, i) => wsBase.getCell(`A${i+1}`).value = m);
+            capacidades.forEach((c, i) => wsBase.getCell(`B${i+1}`).value = c);
+            cores.forEach((co, i) => wsBase.getCell(`C${i+1}`).value = co);
+            origens.forEach((o, i) => wsBase.getCell(`D${i+1}`).value = o);
+            condicoes.forEach((con, i) => wsBase.getCell(`E${i+1}`).value = con);
+            ufs.forEach((uf, i) => wsBase.getCell(`F${i+1}`).value = uf);
+
+            // Cabeçalho da Planilha principal
+            wsApp.columns = [
+                { header: 'Modelo', key: 'm', width: 25 },
+                { header: 'Capacidade', key: 'ca', width: 15 },
+                { header: 'Cor', key: 'co', width: 15 },
+                { header: 'Condição', key: 'con', width: 15 },
+                { header: 'Origem', key: 'o', width: 20 },
+                { header: 'Quantidade', key: 'q', width: 10 },
+                { header: 'Custo (R$)', key: 'custo', width: 15 },
+                { header: 'Preço Venda (R$)', key: 'venda', width: 15 },
+                { header: 'Bateria', key: 'bat', width: 15 },
+                { header: 'Garantia', key: 'gar', width: 15 },
+                { header: 'Estado (UF)', key: 'uf', width: 10 },
+                { header: 'Cidade', key: 'cid', width: 20 }
             ];
 
-            // Aplicar data validation nas primeiras 100 linhas
-            for (let i = 2; i <= 101; i++) { // linha 1 é cabeçalho
-                // Modelo
-                estoqueSheet.getCell(`A${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: false,
-                    formulae: [`=BaseDB!$A$2:$A$${dadosMestre.modelos.length+1}`]
-                };
-                // Capacidade
-                estoqueSheet.getCell(`B${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: false,
-                    formulae: [`=BaseDB!$B$2:$B$${dadosMestre.capacidades.length+1}`]
-                };
-                // Cor
-                estoqueSheet.getCell(`C${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: false,
-                    formulae: [`=BaseDB!$C$2:$C$${dadosMestre.cores.length+1}`]
-                };
-                // Condição
-                estoqueSheet.getCell(`D${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: false,
-                    formulae: [`=BaseDB!$E$2:$E$${dadosMestre.condicoes.length+1}`]
-                };
-                // Bateria
-                estoqueSheet.getCell(`E${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: true,
-                    formulae: [`=BaseDB!$F$2:$F$${dadosMestre.baterias.length+1}`]
-                };
-                // Garantia
-                estoqueSheet.getCell(`F${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: true,
-                    formulae: [`=BaseDB!$G$2:$G$${dadosMestre.garantias.length+1}`]
-                };
-                // Origem
-                estoqueSheet.getCell(`G${i}`).dataValidation = {
-                    type: 'list',
-                    allowBlank: false,
-                    formulae: [`=BaseDB!$D$2:$D$${dadosMestre.origens.length+1}`]
-                };
-                // Quantidade (número inteiro)
-                estoqueSheet.getCell(`H${i}`).dataValidation = {
-                    type: 'whole',
-                    allowBlank: false,
-                    operator: 'greaterThan',
-                    formulae: [0]
-                };
-                // Preço BRL (decimal)
-                estoqueSheet.getCell(`I${i}`).dataValidation = {
-                    type: 'decimal',
-                    allowBlank: true,
-                    operator: 'greaterThan',
-                    formulae: [0]
-                };
-                // Preço USD (decimal)
-                estoqueSheet.getCell(`J${i}`).dataValidation = {
-                    type: 'decimal',
-                    allowBlank: true,
-                    operator: 'greaterThan',
-                    formulae: [0]
-                };
+            // Formatação e Validação (Dropdowns) nas primeiras 100 linhas
+            for (let i = 2; i <= 101; i++) {
+                wsApp.getCell(`A${i}`).dataValidation = { type: 'list', formulae: [`BaseDB!$A$1:$A$${modelos.length}`] };
+                wsApp.getCell(`B${i}`).dataValidation = { type: 'list', formulae: [`BaseDB!$B$1:$B$${capacidades.length}`] };
+                wsApp.getCell(`C${i}`).dataValidation = { type: 'list', formulae: [`BaseDB!$C$1:$C$${cores.length}`] };
+                wsApp.getCell(`D${i}`).dataValidation = { type: 'list', formulae: [`BaseDB!$E$1:$E$${condicoes.length}`] };
+                wsApp.getCell(`E${i}`).dataValidation = { type: 'list', formulae: [`BaseDB!$D$1:$D$${origens.length}`] };
+                wsApp.getCell(`K${i}`).dataValidation = { type: 'list', formulae: [`BaseDB!$F$1:$F$${ufs.length}`] };
             }
 
-            // Adicionar uma linha de exemplo (opcional)
-            estoqueSheet.addRow({
-                modelo: dadosMestre.modelos[0] || '',
-                capacidade: dadosMestre.capacidades[0] || '',
-                cor: dadosMestre.cores[0] || '',
-                condicao: 'Novo',
-                bateria: '',
-                garantia: '1 ANO APPLE',
-                origem: dadosMestre.origens[0] || '',
-                quantidade: 10,
-                preco_brl: 5299.00,
-                preco_usd: ''
-            });
-
-            // Gerar arquivo
-            const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            saveAs(blob, 'estoque_ifipe.xlsx');
+            const buffer = await wb.xlsx.writeBuffer();
+            saveAs(new Blob([buffer]), 'iFipe_Anuncio_Em_Massa.xlsx');
+            btn.innerText = "1. BAIXAR PLANILHA BLINDADA";
         }
 
-        // Processar upload
-        async function processarUpload(event) {
+        // 2. LEITURA E ANÁLISE FINANCEIRA
+        async function lerArquivoExcel(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            const wb = new ExcelJS.Workbook();
+            await wb.xlsx.load(await file.arrayBuffer());
+            const ws = wb.getWorksheet('Estoque');
+            
+            dataToUpload = [];
+            let invest = 0, lucro = 0, mkp = 0, count = 0;
+            const table = document.getElementById('preview-table');
+            table.innerHTML = '';
 
-            // Mostrar container de log
-            document.getElementById('logContainer').classList.remove('hidden');
-            const logArea = document.getElementById('logArea');
-            const progressFill = document.getElementById('progressFill');
-            logArea.innerHTML = '';
-            progressFill.style.width = '0%';
+            ws.eachRow((row, i) => {
+                if (i === 1) return; // pula header
+                const r = {
+                    m: row.getCell(1).value, ca: row.getCell(2).value, co: row.getCell(3).value,
+                    con: row.getCell(4).value, o: row.getCell(5).value, q: parseInt(row.getCell(6).value) || 0,
+                    custo: parseFloat(row.getCell(7).value) || 0, venda: parseFloat(row.getCell(8).value) || 0,
+                    bat: row.getCell(9).value, gar: row.getCell(10).value,
+                    uf: row.getCell(11).value, cid: row.getCell(12).value
+                };
 
-            function log(msg, tipo = 'info') {
-                const cor = tipo === 'erro' ? 'text-red-400' : (tipo === 'ok' ? 'text-green-400' : 'text-blue-400');
-                logArea.innerHTML += `<div class="${cor}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
-                logArea.scrollTop = logArea.scrollHeight;
-            }
+                if (r.m && r.venda > 0) {
+                    dataToUpload.push(r);
+                    const l = (r.venda - r.custo) * r.q;
+                    invest += r.custo * r.q;
+                    lucro += l;
+                    mkp += r.custo > 0 ? ((r.venda/r.custo)-1)*100 : 0;
+                    count++;
 
-            log('Lendo arquivo...');
-
-            try {
-                const workbook = new ExcelJS.Workbook();
-                await workbook.xlsx.load(await file.arrayBuffer());
-                const worksheet = workbook.getWorksheet('Estoque');
-                if (!worksheet) {
-                    log('Aba "Estoque" não encontrada.', 'erro');
-                    return;
+                    table.innerHTML += `
+                        <tr class="border-b border-zinc-900">
+                            <td class="py-3 font-bold">${r.m} ${r.ca}<br><span class="text-zinc-500">${r.co}</span></td>
+                            <td class="text-center font-mono">R$ ${r.custo.toLocaleString()}</td>
+                            <td class="text-center font-mono text-blue-400">R$ ${r.venda.toLocaleString()}</td>
+                            <td class="text-center font-mono text-green-500">+R$ ${l.toLocaleString()}</td>
+                            <td class="text-right text-[8px] text-zinc-500">${r.cid||'SEDE'}/${r.uf||''}</td>
+                        </tr>`;
                 }
+            });
 
-                // Extrair linhas (pular cabeçalho)
-                const rows = [];
-                worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-                    if (rowNumber === 1) return; // cabeçalho
-                    const values = row.values; // array com índice 1-based
-                    rows.push({
-                        modelo: values[1] || '',
-                        capacidade: values[2] || '',
-                        cor: values[3] || '',
-                        condicao: values[4] || '',
-                        bateria: values[5] || '',
-                        garantia: values[6] || '',
-                        origem: values[7] || '',
-                        quantidade: values[8] || 0,
-                        preco_brl: values[9] || 0,
-                        preco_usd: values[10] || 0
-                    });
-                });
+            document.getElementById('stat-invest').innerText = `R$ ${invest.toLocaleString()}`;
+            document.getElementById('stat-lucro').innerText = `R$ ${lucro.toLocaleString()}`;
+            document.getElementById('stat-markup').innerText = `${(mkp/count || 0).toFixed(1)}%`;
+            document.getElementById('stat-count').innerText = count;
+            document.getElementById('dashboard-seth').classList.remove('hidden');
+        }
 
-                log(`${rows.length} linhas encontradas. Iniciando processamento...`);
+        // 3. SINCRONIZAÇÃO FINAL (UPSERT COM REGRAS DE NEGÓCIO)
+        async function sincronizarComBanco() {
+            if (!confirm("CONFIRMA A PUBLICAÇÃO DOS ITENS?")) return;
+            const logArea = document.getElementById('logArea');
+            logArea.innerHTML = '';
+            
+            const [v, r] = await Promise.all([
+                _s.from('variacoes').select('id, capacidade, cor, produtos_mestre(nome)'),
+                _s.from('regioes').select('id, nome')
+            ]);
 
-                // Buscar dados atualizados do banco (garantir que temos as listas)
-                await carregarDados();
+            let sucessos = 0;
+            for (let i = 0; i < dataToUpload.length; i++) {
+                const row = dataToUpload[i];
+                try {
+                    const varMatch = v.data.find(x => x.produtos_mestre.nome === row.m && x.capacidade === row.ca && x.cor === row.co);
+                    const regMatch = r.data.find(x => x.nome === row.o);
 
-                let processados = 0;
-                let sucessos = 0;
-                let erros = 0;
+                    if (!varMatch || !regMatch) throw new Error("DADOS NÃO MAPEADOS NO BANCO");
 
-                for (const [index, row] of rows.entries()) {
-                    // Pular linhas totalmente vazias
-                    if (!row.modelo && !row.capacidade && !row.cor && !row.condicao && !row.quantidade) {
-                        continue;
-                    }
-
-                    // Encontrar variação
-                    const variacao = variacoes.find(v => 
-                        v.produtos_mestre?.nome?.toUpperCase() === String(row.modelo).toUpperCase().trim() &&
-                        v.capacidade?.toUpperCase() === String(row.capacidade).toUpperCase().trim() &&
-                        v.cor?.toUpperCase() === String(row.cor).toUpperCase().trim()
-                    );
-
-                    // Encontrar região
-                    const regiao = regioes.find(r => 
-                        r.nome?.toUpperCase() === String(row.origem).toUpperCase().trim()
-                    );
-
-                    if (!variacao || !regiao) {
-                        log(`Linha ${index+2}: Modelo/Origem não reconhecido.`, 'erro');
-                        erros++;
-                        processados++;
-                        progressFill.style.width = (processados / rows.length * 100) + '%';
-                        continue;
-                    }
-
-                    // Validar condição
-                    if (!row.condicao) {
-                        log(`Linha ${index+2}: Condição não preenchida.`, 'erro');
-                        erros++;
-                        processados++;
-                        progressFill.style.width = (processados / rows.length * 100) + '%';
-                        continue;
-                    }
-
-                    // Determinar preço e moeda
-                    let preco = 0, moeda = 'BRL';
-                    if (parseFloat(row.preco_brl) > 0) {
-                        preco = parseFloat(row.preco_brl);
-                        moeda = 'BRL';
-                    } else if (parseFloat(row.preco_usd) > 0) {
-                        preco = parseFloat(row.preco_usd);
-                        moeda = 'USD';
-                    } else {
-                        log(`Linha ${index+2}: Preço não informado.`, 'erro');
-                        erros++;
-                        processados++;
-                        progressFill.style.width = (processados / rows.length * 100) + '%';
-                        continue;
-                    }
-
-                    // Regras de negócio para Novo/CPO
-                    let bateriaFinal = row.bateria || null;
-                    let garantiaFinal = row.garantia || '1 ANO APPLE';
-                    if (row.condicao === 'Novo' || row.condicao === 'CPO') {
-                        bateriaFinal = null;
-                        garantiaFinal = '1 ANO APPLE';
+                    // REGRAS DE OURO: NOVO/CPO
+                    let bateria = row.bat;
+                    let garantia = row.gar;
+                    if (row.con === 'Novo' || row.con === 'CPO') {
+                        bateria = null;
+                        garantia = '1 ANO APPLE';
                     }
 
                     const payload = {
-                        fornecedor_id: fornecedorId,
-                        variacao_id: variacao.id,
-                        regiao_id: regiao.id,
-                        condicao: row.condicao,
-                        preco: preco,
-                        moeda: moeda,
-                        quantidade: parseInt(row.quantidade) || 0,
-                        saude_bateria: bateriaFinal,
-                        garantia: garantiaFinal,
+                        fornecedor_id: fId,
+                        variacao_id: varMatch.id,
+                        regiao_id: regMatch.id,
+                        condicao: row.con,
+                        preco: row.venda,
+                        moeda: 'BRL',
+                        quantidade: row.q,
+                        saude_bateria: bateria,
+                        garantia: garantia,
+                        cidade_aparelho: row.cid || null,
+                        estado_aparelho: row.uf || null,
                         status_aprovacao: 'aprovado',
                         atualizado_em: new Date().toISOString()
                     };
 
-                    try {
-                        const { error } = await _s.from('ofertas').upsert(payload, {
-                            onConflict: 'fornecedor_id, variacao_id, regiao_id, condicao'
-                        });
-                        if (error) throw error;
-                        sucessos++;
-                        log(`OK: ${row.modelo} ${row.capacidade} ${row.cor} - ${moeda} ${preco.toFixed(2)}`, 'ok');
-                    } catch (err) {
-                        erros++;
-                        log(`ERRO: ${row.modelo} - ${err.message}`, 'erro');
-                    }
+                    const { error } = await _s.from('ofertas').upsert(payload, { onConflict: 'fornecedor_id, variacao_id, regiao_id, condicao' });
+                    if (error) throw error;
 
-                    processados++;
-                    progressFill.style.width = (processados / rows.length * 100) + '%';
+                    sucessos++;
+                    logArea.innerHTML += `<div>[OK] ${row.m} ${row.ca} ATUALIZADO.</div>`;
+                    document.getElementById('progressBar').style.width = `${(sucessos/dataToUpload.length)*100}%`;
+                } catch (err) {
+                    logArea.innerHTML += `<div class="text-red-500">[ERRO] ${row.m}: ${err.message}</div>`;
                 }
-
-                log(`Processamento concluído. Sucessos: ${sucessos}, Erros: ${erros}.`, sucessos > 0 ? 'ok' : 'erro');
-                document.getElementById('fileInput').value = '';
-
-            } catch (err) {
-                log('Erro ao processar arquivo: ' + err.message, 'erro');
+                logArea.scrollTop = logArea.scrollHeight;
             }
+            alert("SINCRONIZAÇÃO CONCLUÍDA!");
         }
     </script>
 </body>
