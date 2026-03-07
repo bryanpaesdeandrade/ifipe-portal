@@ -246,9 +246,42 @@
 
         .uppercase-input { text-transform: uppercase; }
         .uppercase-input::placeholder { text-transform: none; }
+
+        /* Tela de manutenção */
+        #telaManutencao {
+            position: fixed;
+            inset: 0;
+            background: black;
+            z-index: 999999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
+
+        /* Alerta de versão */
+        .version-alert {
+            background: #ff3b30;
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            position: sticky;
+            top: 60px;
+            z-index: 100;
+        }
     </style>
 </head>
 <body class="dark-mode">
+
+    <!-- TELA DE MANUTENÇÃO -->
+    <div id="telaManutencao" class="hidden">
+        <h1 class="text-4xl font-black text-red-600 mb-2">🚧 SISTEMA EM MANUTENÇÃO 🚧</h1>
+        <p class="text-zinc-400 text-sm font-bold tracking-widest">O iFipe está recebendo melhorias. Retornamos em breve.</p>
+    </div>
 
     <!-- DRAWER (menu lateral) -->
     <div id="drawerOverlay" class="drawer-overlay" onclick="fecharDrawer()"></div>
@@ -317,6 +350,10 @@
             <button class="header-btn ml-2 hidden lg:flex" onclick="abrirSugestao()">
                 <i class="fas fa-lightbulb"></i> Sugerir Melhoria
             </button>
+            <!-- Horus desktop -->
+            <button class="header-btn ml-2 hidden lg:flex" onclick="abrirModalHorus()">
+                👁️‍🗨️ Horus
+            </button>
         </div>
         
         <div class="flex items-center gap-2 lg:gap-4">
@@ -345,6 +382,9 @@
             </div>
         </div>
     </nav>
+
+    <!-- ALERTA DE VERSÃO DESATUALIZADA -->
+    <div id="versionAlert" class="version-alert hidden">⚠️ VERSÃO DESATUALIZADA. SAIA E LOGUE NOVAMENTE PARA CARREGAR AS MELHORIAS.</div>
 
     <!-- MODAL LEGENDA INSÍGNIAS -->
     <div id="legendaInsigniasModal" class="modal hidden">
@@ -396,6 +436,18 @@
         </div>
     </div>
 
+    <!-- MODAL HORUS -->
+    <div id="modalHorus" class="modal hidden">
+        <div class="modal-content max-w-3xl w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold flex items-center gap-2">👁️‍🗨️ HORUS – MENOR PREÇO</h3>
+                <button onclick="fecharModalHorus()" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
+            </div>
+            <input type="text" id="buscaHorus" placeholder="🔍 Buscar modelo, cor, novo, seminovo..." class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-4 text-white" onkeyup="filtrarHorus(this.value)">
+            <div id="horusList" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
+        </div>
+    </div>
+
     <!-- MODAL CRIAR ALERTA -->
     <div id="criarAlertaModal" class="modal hidden">
         <div class="modal-content">
@@ -438,13 +490,13 @@
         </div>
     </div>
 
-    <!-- MODAL HISTÓRICO GERAL -->
+    <!-- MODAL HISTÓRICO GERAL (CÉREBRO ATUALIZADO) -->
     <div id="historicoGeralModal" class="modal hidden">
-        <div class="modal-content">
+        <div class="modal-content max-w-3xl w-full">
             <span class="close-modal" onclick="fecharHistoricoGeral()">&times;</span>
-            <h2 class="text-2xl font-bold mb-4">Histórico de Mercado</h2>
-            <p class="text-sm text-gray-400 mb-4">Custo médio dos últimos 10 dias por cidade</p>
-            <div id="listaHistorico" class="space-y-3 max-h-96 overflow-y-auto"></div>
+            <h2 class="text-2xl font-bold mb-4">Histórico de Mercado (últimos 10 dias)</h2>
+            <p class="text-sm text-gray-400 mb-4">Média de preços por combinação exata (Modelo + Capacidade + Cor + Origem + Condição + Moeda)</p>
+            <div id="listaHistorico" class="space-y-6 max-h-96 overflow-y-auto pr-2"></div>
         </div>
     </div>
 
@@ -492,13 +544,24 @@
         </div>
     </div>
 
-    <!-- MODAL RESPOSTAS RECEBIDAS -->
+    <!-- MODAL RESPOSTAS RECEBIDAS (AGORA COM ABAS E LIXEIRA) -->
     <div id="respostasModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close-modal" onclick="fecharRespostas()">&times;</span>
-            <h2 class="text-2xl font-bold mb-4">Respostas dos Lojistas</h2>
-            <div id="listaRespostas" class="space-y-3 max-h-96 overflow-y-auto"></div>
-            <button onclick="fecharRespostas()" class="btn-apple w-full mt-6">Fechar</button>
+        <div class="modal-content max-w-2xl w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Respostas e Mensagens</h2>
+                <button onclick="fecharRespostas()" class="text-gray-400 hover:text-white text-3xl font-bold">&times;</button>
+            </div>
+            <!-- Lixeira geral -->
+            <div class="mb-4 flex justify-end">
+                <button onclick="apagarTudoMensagens()" class="bg-red-600 text-white font-black text-[9px] px-3 py-2 rounded hover:bg-red-500">🗑️ ESVAZIAR TODAS</button>
+            </div>
+            <!-- Abas -->
+            <div class="flex border-b border-[#38383a] mb-4">
+                <button id="tabRespostas" class="flex-1 py-2 text-center text-xs font-bold text-yellow-500 border-b-2 border-yellow-500" onclick="mostrarAbaRespostas('respostas')">RESPOSTAS</button>
+                <button id="tabMensagens" class="flex-1 py-2 text-center text-xs font-bold text-gray-500" onclick="mostrarAbaRespostas('mensagens')">MENSAGENS SISTEMA</button>
+            </div>
+            <div id="listaRespostas" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
+            <div id="listaMensagens" class="space-y-3 max-h-80 overflow-y-auto pr-2 hidden"></div>
         </div>
     </div>
 
@@ -580,6 +643,13 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
         const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // CONTROLE DE VERSÃO
+        const VERSAO_ATUAL = "1.1";
+        const versaoArmazenada = localStorage.getItem('iFipe_Versao') || "0.0";
+        if (versaoArmazenada < VERSAO_ATUAL) {
+            document.getElementById('versionAlert').classList.remove('hidden');
+        }
+
         let rateBinance = 5.2907;
         let rateOraculo = rateBinance + 0.06;
         let currentUser = null;
@@ -587,6 +657,8 @@
         let minhasCurtidas = new Set(); 
         let meusAlertas = [];
         let filtroOportunidadeAtivo = false;
+        let mensagensSistema = []; // para armazenar mensagens internas
+        let respostasNaoLidas = [];
 
         let DADOS_PROCESSADOS = { menorPrecoPorProdutoGrupo: {} };
 
@@ -656,6 +728,22 @@
 
         // Inicialização
         window.onload = async () => {
+            // Verificação de manutenção
+            try {
+                const { data: config, error } = await _s
+                    .from('sistema_config')
+                    .select('status_geral, status_buscador')
+                    .eq('id', 1)
+                    .maybeSingle();
+
+                if (config && (config.status_geral === 'off' || config.status_buscador === 'off')) {
+                    document.getElementById('telaManutencao').classList.remove('hidden');
+                    return;
+                }
+            } catch (e) {
+                console.warn("Erro ao verificar sistema_config, prosseguindo normalmente.");
+            }
+
             const token = localStorage.getItem('iFipe_Token');
             const masterAuth = localStorage.getItem('iFipe_Master_Auth');
             if (!token && masterAuth !== 'gov_absoluto') {
@@ -665,11 +753,18 @@
             
             if (masterAuth === 'gov_absoluto') {
                 currentUser = { id: 0, nome: 'MASTER', whatsapp: '', insignia_manual: [], logins_count: 0 };
+                document.getElementById('nomeLojaHeader')?.remove(); // não precisa, mas mantemos
             } else {
                 try {
                     const { data, error } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
                     if (error || !data) { logout(); return; }
                     currentUser = data;
+                    // Atualiza nome na navbar
+                    const nomeSpan = document.createElement('span');
+                    nomeSpan.className = "text-xs text-blue-400 font-bold border-l border-[#38383a] pl-2";
+                    nomeSpan.innerText = currentUser.nome;
+                    document.querySelector('.nav-blur .flex.items-center.gap-2.lg\\:gap-3').appendChild(nomeSpan);
+
                     const { data: curtidas } = await _s.from('curtidas').select('oferta_id').eq('cliente_id', currentUser.id);
                     minhasCurtidas = new Set(curtidas?.map(c => c.oferta_id) || []);
                 } catch (err) { logout(); return; }
@@ -681,6 +776,7 @@
             await carregarDados();
             initTicker();
             await checarNotificacoes();
+            await carregarMensagensSistema();
         };
 
         function initTicker() {
@@ -730,6 +826,17 @@
             } catch (err) { console.error('Erro ao carregar dados:', err); }
         }
 
+        async function carregarMensagensSistema() {
+            if (!currentUser || currentUser.id === 0) return;
+            const { data } = await _s
+                .from('mensagens_internas')
+                .select('*')
+                .eq('destinatario_nome', currentUser.nome)
+                .order('criado_em', { ascending: false });
+            mensagensSistema = data || [];
+            atualizarBadgeNotificacoes();
+        }
+
         async function carregarAlertas() {
             const { data } = await _s.from('alertas_preco').select('*').eq('cliente_id', currentUser.id);
             meusAlertas = data || [];
@@ -751,6 +858,17 @@
             });
             if (count > 0) { badge.innerText = count; badge.classList.remove('hidden'); } 
             else { badge.classList.add('hidden'); }
+        }
+
+        function atualizarBadgeNotificacoes() {
+            const total = (respostasNaoLidas?.length || 0) + mensagensSistema.filter(m => !m.lida).length;
+            const badge = document.getElementById('notificacaoBadge');
+            if (total > 0) {
+                badge.innerText = total;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
         }
 
         function processarMenorPrecoGlobal() {
@@ -998,6 +1116,18 @@
                     badgeEstoque = `<span class="badge-condicao bg-green-600">🆙 ALTO ESTOQUE: ${o.quantidade} UN</span>`;
                 }
 
+                // Localização real: prioridade cidade_aparelho, senão cidade do fornecedor
+                let localizacaoTexto = '';
+                if (o.cidade_aparelho && o.estado_aparelho) {
+                    localizacaoTexto = `📍 ${o.cidade_aparelho}/${o.estado_aparelho}`;
+                } else if (f.cidade && f.estado) {
+                    localizacaoTexto = `📍 ${f.cidade}/${f.estado}`;
+                } else if (f.pais) {
+                    localizacaoTexto = `📍 ${f.pais}`;
+                } else {
+                    localizacaoTexto = '';
+                }
+
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
@@ -1020,7 +1150,7 @@
                         ${f.verificado ? '<span class="verified-badge bg-blue-600 text-white rounded-full w-3.5 h-3.5 text-[8px] flex items-center justify-center ml-1">✓</span>' : ''}
                         ${insigniaHTML}
                     </div>
-                    <p class="text-xs text-gray-400 mb-1">📍 ${f.cidade || ''} - ${f.pais || 'BR'}</p>
+                    <p class="text-xs text-gray-400 mb-1">${localizacaoTexto}</p>
                     <div class="flex justify-between items-center mb-2">
                         <span class="price text-blue-500 text-base font-bold">${simbolo} ${preco.toFixed(2)}</span>
                         <span class="text-[9px] text-gray-500">${new Date(o.criado_em).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</span>
@@ -1041,7 +1171,7 @@
                 return card;
             };
 
-            // Construir com fragment unificado (Corrigido)
+            // Construir com fragment unificado
             container.innerHTML = '<div id="grid-unico" class="grid-cards"></div>';
             const grid = document.getElementById('grid-unico');
             const fragment = document.createDocumentFragment();
@@ -1155,31 +1285,101 @@
                 .not('resposta', 'is', null)
                 .eq('lida_cliente', false);
             if (error) return;
-            const count = data?.length || 0;
-            const badge = document.getElementById('notificacaoBadge');
-            if (count > 0) { badge.innerText = count; badge.classList.remove('hidden'); window.respostasNaoLidas = data; } 
-            else { badge.classList.add('hidden'); window.respostasNaoLidas = []; }
+            respostasNaoLidas = data || [];
+            atualizarBadgeNotificacoes();
         }
+
         async function abrirRespostasRecebidas() {
-            if (!window.respostasNaoLidas || window.respostasNaoLidas.length === 0) return alert('Nenhuma resposta nova.');
-            const ids = window.respostasNaoLidas.map(r => r.id);
-            await _s.from('comentarios').update({ lida_cliente: true }).in('id', ids).eq('cliente_id', currentUser.id);
-            document.getElementById('notificacaoBadge').classList.add('hidden');
-            const lista = document.getElementById('listaRespostas');
-            lista.innerHTML = window.respostasNaoLidas.map(r => `
-                <div class="border-b border-[#38383a] pb-2 mb-2">
+            if (!currentUser || currentUser.id === 0) {
+                alert('Nenhuma notificação no modo master.');
+                return;
+            }
+            // Marcar respostas como lidas
+            if (respostasNaoLidas.length > 0) {
+                const ids = respostasNaoLidas.map(r => r.id);
+                await _s.from('comentarios').update({ lida_cliente: true }).in('id', ids).eq('cliente_id', currentUser.id);
+                respostasNaoLidas = [];
+            }
+            // Recarregar mensagens do sistema
+            await carregarMensagensSistema();
+            // Montar listas
+            const listaRespostas = document.getElementById('listaRespostas');
+            const listaMensagens = document.getElementById('listaMensagens');
+            
+            // Buscar todas as respostas (já lidas agora)
+            const { data: todasRespostas } = await _s
+                .from('comentarios')
+                .select('*, clientes_buscador(nome, whatsapp)')
+                .eq('cliente_id', currentUser.id)
+                .not('resposta', 'is', null)
+                .order('criado_em', { ascending: false });
+            
+            listaRespostas.innerHTML = (todasRespostas || []).map(p => {
+                const w = p.clientes_buscador?.whatsapp ? p.clientes_buscador.whatsapp.replace(/\D/g, '') : '';
+                const btnZap = w ? `<a href="https://wa.me/55${w}" target="_blank" class="bg-green-600 text-white text-[9px] px-3 py-1.5 rounded font-black hover:bg-green-500 ml-2">ZAP</a>` : '';
+                return `
+                <div class="border border-[#38383a] rounded-lg p-3">
                     <div class="flex justify-between items-start">
-                        <span class="font-bold text-xs">${r.autor_nome}</span>
-                        <span class="text-[8px] text-gray-500">${new Date(r.criado_em).toLocaleString()}</span>
+                        <span class="font-bold text-xs">${p.autor_nome}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[8px] text-gray-500">${new Date(p.criado_em).toLocaleString()}</span>
+                            ${btnZap}
+                            <button onclick="apagarResposta(${p.id})" class="bg-red-900/30 text-red-500 text-[9px] px-2 py-1 rounded font-black hover:bg-red-500 hover:text-white">🗑️</button>
+                        </div>
                     </div>
-                    <p class="text-sm mt-1">${r.pergunta}</p>
-                    <p class="text-xs text-green-400 mt-1">✅ Lojista: ${r.resposta}</p>
+                    <p class="text-sm mt-1">${p.pergunta}</p>
+                    <p class="text-xs text-green-400 mt-1">✅ Lojista: ${p.resposta}</p>
                 </div>
-            `).join('');
+            `}).join('');
+
+            listaMensagens.innerHTML = mensagensSistema.map(m => `
+                <div class="border border-[#38383a] rounded-lg p-3 ${!m.lida ? 'border-l-4 border-l-blue-500' : ''}">
+                    <div class="flex justify-between items-start">
+                        <span class="text-xs font-bold"><i class="fas fa-envelope text-blue-400 mr-1"></i> Sistema</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[8px] text-gray-500">${new Date(m.criado_em || m.created_at).toLocaleString()}</span>
+                            <button onclick="apagarMensagem(${m.id})" class="bg-red-900/30 text-red-500 text-[9px] px-2 py-1 rounded font-black hover:bg-red-500 hover:text-white">🗑️</button>
+                        </div>
+                    </div>
+                    <p class="text-sm mt-1 whitespace-pre-wrap">${m.mensagem}</p>
+                </div>
+            `).join('') || '<p class="text-center text-gray-400">Nenhuma mensagem do sistema.</p>';
+
             document.getElementById('respostasModal').classList.remove('hidden');
-            window.respostasNaoLidas = [];
+            // Marcar mensagens do sistema como lidas
+            if (mensagensSistema.filter(m => !m.lida).length > 0) {
+                const idsNaoLidas = mensagensSistema.filter(m => !m.lida).map(m => m.id);
+                await _s.from('mensagens_internas').update({ lida: true }).in('id', idsNaoLidas);
+                mensagensSistema.forEach(m => m.lida = true);
+            }
+            atualizarBadgeNotificacoes();
         }
+
         function fecharRespostas() { document.getElementById('respostasModal').classList.add('hidden'); }
+
+        async function apagarResposta(id) {
+            if (!confirm('Apagar esta resposta?')) return;
+            await _s.from('comentarios').delete().eq('id', id);
+            abrirRespostasRecebidas(); // recarrega
+        }
+
+        async function apagarMensagem(id) {
+            if (!confirm('Apagar esta mensagem?')) return;
+            await _s.from('mensagens_internas').delete().eq('id', id);
+            await carregarMensagensSistema();
+            abrirRespostasRecebidas();
+        }
+
+        async function apagarTudoMensagens() {
+            if (!confirm('ATENÇÃO: Deseja apagar TODAS as respostas e mensagens do sistema? Esta ação é irreversível.')) return;
+            if (currentUser.id === 0) return alert('Modo master não pode apagar.');
+            // Apagar todas as respostas (comentários onde cliente_id = currentUser.id)
+            await _s.from('comentarios').delete().eq('cliente_id', currentUser.id);
+            // Apagar todas as mensagens internas com destinatario_nome = currentUser.nome
+            await _s.from('mensagens_internas').delete().eq('destinatario_nome', currentUser.nome);
+            await carregarMensagensSistema();
+            abrirRespostasRecebidas();
+        }
 
         // ===== MINHA CONTA =====
         function abrirConta() {
@@ -1206,31 +1406,61 @@
             } catch (err) { alert('Erro: ' + err.message); }
         }
 
-        // ===== HISTÓRICO GERAL =====
+        // ===== HISTÓRICO GERAL (CÉREBRO) =====
         async function abrirHistoricoGeral() {
             document.getElementById('historicoGeralModal').classList.remove('hidden');
             const lista = document.getElementById('listaHistorico');
             lista.innerHTML = '<p class="text-center text-gray-400">Calculando mercado...</p>';
             const dezDiasAtras = new Date(); dezDiasAtras.setDate(dezDiasAtras.getDate() - 10);
-            const historico = {};
+            const grupos = {}; // chave composta
             ofertas.forEach(o => {
-                const pId = o.variacoes?.produto_id;
-                if (!pId) return;
-                const cidade = o.fornecedores?.cidade || 'GERAL';
-                const key = `${pId}_${cidade}`;
                 if (new Date(o.criado_em) < dezDiasAtras) return;
-                const preco = o.moeda === 'USD' ? o.preco : o.preco;
-                if (!historico[key]) historico[key] = { nome: o.variacoes?.produtos_mestre?.nome || 'Produto', capacidade: o.variacoes?.capacidade || '', cidade, precos: [] };
-                historico[key].precos.push(preco);
+                const p = o.variacoes?.produtos_mestre;
+                const v = o.variacoes;
+                const regiao = regioes.find(r => r.id == o.regiao_id);
+                const origem = regiao?.nome || 'Desconhecido';
+                if (!p || !v) return;
+                const key = `${p.id}|${v.capacidade}|${v.cor}|${origem}|${o.condicao}|${o.moeda}`;
+                if (!grupos[key]) {
+                    grupos[key] = {
+                        produto: p.nome,
+                        capacidade: v.capacidade,
+                        cor: v.cor,
+                        origem: origem,
+                        bandeira: regiao?.bandeira || '',
+                        condicao: o.condicao,
+                        moeda: o.moeda,
+                        precos: [],
+                        precosNum: []
+                    };
+                }
+                grupos[key].precos.push(o.preco);
+                grupos[key].precosNum.push(o.preco);
             });
-            if (Object.keys(historico).length === 0) { lista.innerHTML = '<p class="text-center text-gray-400">Sem dados.</p>'; return; }
+
+            // Agrupar por origem para exibição
+            const porOrigem = {};
+            Object.values(grupos).forEach(g => {
+                if (!porOrigem[g.origem]) porOrigem[g.origem] = [];
+                porOrigem[g.origem].push(g);
+            });
+
             let html = '';
-            for (const key in historico) {
-                const item = historico[key];
-                if (item.precos.length === 0) continue;
-                const media = item.precos.reduce((a,b)=>a+b,0)/item.precos.length;
-                html += `<div class="border-b border-[#38383a] pb-2 mb-2"><div class="flex justify-between"><span class="font-medium">${item.nome} ${item.capacidade}</span><span class="font-bold text-blue-500">R$ ${media.toFixed(2)}</span></div><div class="flex justify-between text-xs text-gray-400"><span>📍 ${item.cidade}</span><span>📊 ${item.precos.length} ofertas</span></div></div>`;
+            for (const origem in porOrigem) {
+                const items = porOrigem[origem];
+                html += `<h3 class="text-md font-bold mt-4 mb-2 border-b border-[#38383a] pb-1">📍 ${origem} ${items[0].bandeira}</h3>`;
+                items.forEach(g => {
+                    const media = g.precosNum.reduce((a,b)=>a+b,0) / g.precosNum.length;
+                    html += `<div class="border-b border-[#38383a] pb-2 mb-2">
+                        <div class="flex justify-between flex-wrap">
+                            <span class="font-medium">${g.produto} ${g.capacidade} ${g.cor} (${g.condicao})</span>
+                            <span class="font-bold text-blue-500">${g.moeda === 'BRL' ? 'R$' : 'US$'} ${media.toFixed(2)}</span>
+                        </div>
+                        <div class="text-[9px] text-gray-400">📊 ${g.precos.length} ofertas</div>
+                    </div>`;
+                });
             }
+            if (html === '') html = '<p class="text-center text-gray-400">Sem dados nos últimos 10 dias.</p>';
             lista.innerHTML = html;
         }
         function fecharHistoricoGeral() { document.getElementById('historicoGeralModal').classList.add('hidden'); }
@@ -1323,6 +1553,68 @@
         function abrirLegendaInsignias() { document.getElementById('legendaInsigniasModal').classList.remove('hidden'); }
         function fecharLegendaInsignias() { document.getElementById('legendaInsigniasModal').classList.add('hidden'); }
 
+        // ===== HORUS =====
+        async function abrirModalHorus() {
+            const { data: globalOfertas, error } = await _s
+                .from('ofertas')
+                .select('*, fornecedores!inner(nome, whatsapp), variacoes!inner(produtos_mestre!inner(nome), capacidade, cor), regioes!inner(nome, bandeira)')
+                .gt('quantidade', 0);
+            
+            if (error) return alert('Erro ao carregar Horus: ' + error.message);
+
+            const grupos = {};
+            globalOfertas.forEach(o => {
+                const key = `${o.variacoes.produto_id}-${o.variacoes.capacidade}-${o.variacoes.cor}-${o.regiao_id}-${o.moeda}-${o.condicao}`;
+                if (!grupos[key] || o.preco < grupos[key].preco) {
+                    grupos[key] = {
+                        produto: o.variacoes.produtos_mestre.nome,
+                        capacidade: o.variacoes.capacidade,
+                        cor: o.variacoes.cor,
+                        regiao: o.regioes.nome,
+                        bandeira: o.regioes.bandeira,
+                        preco: o.preco,
+                        moeda: o.moeda,
+                        fornecedor: o.fornecedores.nome,
+                        whatsapp: o.fornecedores.whatsapp,
+                        condicao: o.condicao
+                    };
+                }
+            });
+
+            const lista = document.getElementById('horusList');
+            lista.innerHTML = '';
+            
+            Object.values(grupos).sort((a, b) => a.preco - b.preco).forEach(g => {
+                const pFmt = g.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                const msg = encodeURIComponent(`Olá, vi no iFipe que você tem o menor preço do ${g.produto} ${g.capacidade} ${g.cor} ${g.condicao}. Ainda disponível?`);
+                
+                let condBadge = '';
+                if (g.condicao === 'Novo') condBadge = '<span class="bg-green-600 text-white px-2 py-0.5 rounded text-[8px] ml-2">NOVO</span>';
+                else if (g.condicao === 'CPO') condBadge = '<span class="bg-blue-600 text-white px-2 py-0.5 rounded text-[8px] ml-2">CPO</span>';
+                else condBadge = '<span class="bg-yellow-600 text-white px-2 py-0.5 rounded text-[8px] ml-2 uppercase">SEMINOVO</span>';
+
+                lista.innerHTML += `
+                    <div class="horus-item border border-[#38383a] rounded-lg p-3 bg-[#141415] flex justify-between items-center mb-2">
+                        <div>
+                            <span class="font-bold text-white">${g.produto} ${g.capacidade} ${g.cor}</span> ${condBadge}<br>
+                            <span class="text-gray-400">${g.regiao} ${g.bandeira} - R$ ${pFmt} (${g.moeda}) - ${g.fornecedor}</span>
+                        </div>
+                        <a href="https://wa.me/55${g.whatsapp.replace(/\D/g, '')}?text=${msg}" target="_blank" class="bg-green-600 text-white text-[9px] px-3 py-1 rounded-full font-bold">WHATSAPP</a>
+                    </div>`;
+            });
+            document.getElementById('buscaHorus').value = '';
+            document.getElementById('modalHorus').classList.remove('hidden');
+        }
+
+        function fecharModalHorus() { document.getElementById('modalHorus').classList.add('hidden'); }
+
+        function filtrarHorus(query) {
+            const q = query.toLowerCase();
+            document.querySelectorAll('.horus-item').forEach(el => {
+                el.style.display = el.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+            });
+        }
+
         // ===== DRAWER E NAVEGAÇÃO =====
         function abrirDrawer() { document.getElementById('drawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('open'); }
         function fecharDrawer() { document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); }
@@ -1331,12 +1623,8 @@
         function abrirFavoritos() { alert("Favoritos em breve."); }
 
         // ===== SUGESTÕES =====
-        function abrirSugestao() {
-            document.getElementById('modalSugestao').classList.remove('hidden');
-        }
-        function fecharSugestao() {
-            document.getElementById('modalSugestao').classList.add('hidden');
-        }
+        function abrirSugestao() { document.getElementById('modalSugestao').classList.remove('hidden'); }
+        function fecharSugestao() { document.getElementById('modalSugestao').classList.add('hidden'); }
         async function enviarSugestao() {
             const mensagem = document.getElementById('sugestaoMensagem').value.trim();
             if (!mensagem) return alert('Escreva algo.');
@@ -1345,6 +1633,30 @@
             alert('Obrigado pela sugestão!');
             fecharSugestao();
             document.getElementById('sugestaoMensagem').value = '';
+        }
+
+        // ===== CONTROLE DE ABAS NO MODAL DE RESPOSTAS =====
+        function mostrarAbaRespostas(aba) {
+            const tabRespostas = document.getElementById('tabRespostas');
+            const tabMensagens = document.getElementById('tabMensagens');
+            const listaRespostas = document.getElementById('listaRespostas');
+            const listaMensagens = document.getElementById('listaMensagens');
+
+            if (aba === 'respostas') {
+                tabRespostas.classList.add('border-yellow-500', 'text-yellow-500');
+                tabRespostas.classList.remove('text-gray-500');
+                tabMensagens.classList.remove('border-yellow-500', 'text-yellow-500');
+                tabMensagens.classList.add('text-gray-500');
+                listaRespostas.classList.remove('hidden');
+                listaMensagens.classList.add('hidden');
+            } else {
+                tabMensagens.classList.add('border-yellow-500', 'text-yellow-500');
+                tabMensagens.classList.remove('text-gray-500');
+                tabRespostas.classList.remove('border-yellow-500', 'text-yellow-500');
+                tabRespostas.classList.add('text-gray-500');
+                listaMensagens.classList.remove('hidden');
+                listaRespostas.classList.add('hidden');
+            }
         }
 
         // EXPOR FUNÇÕES GLOBAIS
@@ -1381,6 +1693,13 @@
         window.abrirSugestao = abrirSugestao;
         window.fecharSugestao = fecharSugestao;
         window.enviarSugestao = enviarSugestao;
+        window.abrirModalHorus = abrirModalHorus;
+        window.fecharModalHorus = fecharModalHorus;
+        window.filtrarHorus = filtrarHorus;
+        window.mostrarAbaRespostas = mostrarAbaRespostas;
+        window.apagarResposta = apagarResposta;
+        window.apagarMensagem = apagarMensagem;
+        window.apagarTudoMensagens = apagarTudoMensagens;
     </script>
 </body>
 </html>
