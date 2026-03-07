@@ -448,9 +448,10 @@
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2">➕ LANÇAR ANÚNCIO (GLOBAL)</h3>
             <form onsubmit="gestaoAddAnuncioM(event)" class="space-y-4">
                 <select id="gLoja" class="apple-input" required></select>
-                <div class="grid grid-cols-2 gap-2 mb-2">
+                <div class="grid grid-cols-3 gap-2 mb-2">
                     <button type="button" id="btNM" class="btn-tipo" onclick="selTipoM('Novo')">📦 NOVO</button>
                     <button type="button" id="btSM" class="btn-tipo" onclick="selTipoM('Seminovo')">♻️ SEMINOVO</button>
+                    <button type="button" id="btCPO" class="btn-tipo" onclick="selTipoM('CPO')">🌟 CPO</button>
                 </div>
                 <input type="hidden" id="f_tipo_m">
                 <div class="grid grid-cols-3 gap-2">
@@ -1013,9 +1014,9 @@
         async function abrirNotificacoes() {
             document.getElementById('modalNotificacoes').classList.remove('hidden');
             document.getElementById('notificacoesList').innerHTML = 'Buscando sugestões...';
-            const { data, error } = await _s.from('sugestoes').select('*').order('created_at', { ascending: false }).limit(30);
+            const { data, error } = await _s.from('feedbacks').select('*').order('created_at', { ascending: false }).limit(30);
             if (error) {
-                document.getElementById('notificacoesList').innerHTML = `<p class="text-red-500">Nenhuma sugestão encontrada ou tabela "sugestoes" não existe.</p>`;
+                document.getElementById('notificacoesList').innerHTML = `<p class="text-red-500">Erro ao carregar feedbacks: ${error.message}</p>`;
                 return;
             }
             if (!data || data.length === 0) {
@@ -1024,10 +1025,10 @@
             }
             document.getElementById('notificacoesList').innerHTML = data.map(n => `
                 <div class="p-3 bg-[#141415] border border-zinc-800 rounded">
-                    <span class="text-blue-400 font-bold">${n.remetente_nome || n.nome || 'Anônimo'}</span> 
-                    <span class="text-[8px] text-zinc-500">(${n.remetente_tipo || 'User'})</span> - 
-                    <span class="text-[8px] text-zinc-500">${n.created_at ? new Date(n.created_at).toLocaleString() : n.criado_em ? new Date(n.criado_em).toLocaleString() : ''}</span>
-                    <p class="mt-2 text-white text-[11px]">${n.mensagem || n.sugestao || n.texto || '(Sem conteúdo)'}</p>
+                    <span class="text-blue-400 font-bold">${n.usuario_nome || 'Anônimo'}</span> 
+                    <span class="text-[8px] text-zinc-500">(${n.usuario_tipo || 'Desconhecido'})</span> - 
+                    <span class="text-[8px] text-zinc-500">${n.created_at ? new Date(n.created_at).toLocaleString('pt-BR') : ''}</span>
+                    <p class="mt-2 text-white text-[11px]">${n.mensagem || '(Sem conteúdo)'}</p>
                 </div>
             `).join('');
         }
@@ -1054,11 +1055,18 @@
 
         async function initMaster() {
             renderMasterInfo();
-            new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
-                let bin = parseFloat(JSON.parse(e.data).c); currentOracleUsdt = bin + 0.06;
-                document.getElementById('tBin').innerText = `R$ ${bin.toFixed(4)}`; 
-                document.getElementById('tUsdt').innerText = `R$ ${currentOracleUsdt.toFixed(4)}`;
-            };
+            try {
+                const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    const precoAtual = parseFloat(data.c);
+                    currentOracleUsdt = precoAtual + 0.06;
+                    const eBin = document.getElementById('tBin');
+                    const eUsdt = document.getElementById('tUsdt');
+                    if(eBin) eBin.innerText = `R$ ${precoAtual.toFixed(4)}`;
+                    if(eUsdt) eUsdt.innerText = `R$ ${currentOracleUsdt.toFixed(4)}`;
+                };
+            } catch(e) { console.error("Erro WebSocket:", e); }
             await renderSystemStatus(); 
             await loadAll();
         }
@@ -1189,7 +1197,9 @@
             document.getElementById('f_tipo_m').value = t;
             document.getElementById('btNM').classList.toggle('active', t==='Novo'); 
             document.getElementById('btSM').classList.toggle('active', t==='Seminovo');
-            if (t === 'Novo') {
+            document.getElementById('btCPO').classList.toggle('active', t==='CPO');
+            
+            if (t === 'Novo' || t === 'CPO') {
                 document.getElementById('z_semi_m').classList.add('hidden');
                 document.getElementById('f_gar_m').classList.add('hidden');
             } else {
@@ -1211,21 +1221,9 @@
             let isBrl = document.getElementById('f_brl_m').value.length > 0;
             let precoFinal = isBrl ? parseP(document.getElementById('f_brl_m').value) : parseP(document.getElementById('f_usd_m').value);
             
-            let condicaoFinal;
-            if (tipo === 'Novo') {
-                condicaoFinal = 'Novo';
-            } else {
-                condicaoFinal = document.getElementById('f_cond_m').value; // Seminovo, Grade A, Grade B, Grade C, CPO
-            }
-            
-            let garantiaFinal, bateriaFinal;
-            if (condicaoFinal === 'Novo' || condicaoFinal === 'CPO') {
-                garantiaFinal = '1 ANO APPLE';
-                bateriaFinal = null;
-            } else {
-                garantiaFinal = document.getElementById('f_gar_m').value;
-                bateriaFinal = document.getElementById('f_bat_m').value;
-            }
+            let condicaoFinal = (tipo === 'Novo' || tipo === 'CPO') ? tipo : document.getElementById('f_cond_m').value;
+            let garantiaFinal = (tipo === 'Novo' || tipo === 'CPO') ? '1 ANO APPLE' : document.getElementById('f_gar_m').value;
+            let bateriaFinal = (tipo === 'Novo' || tipo === 'CPO') ? null : document.getElementById('f_bat_m').value;
             
             let q = parseInt(document.getElementById('f_qtd_m').value);
             if (isNaN(q) || q < 0) q = 0;
@@ -1270,14 +1268,8 @@
             const variacao = dbVar.find(v => v.produtos_mestre?.id == modelo && v.capacidade == capacidade && v.cor == cor);
             if (!variacao) { alert('Variação não encontrada.'); return; }
 
-            let bateria, garantia;
-            if (condicao === 'Novo' || condicao === 'CPO') {
-                bateria = null;
-                garantia = '1 ANO APPLE';
-            } else {
-                bateria = document.getElementById('editBateria').value;
-                garantia = document.getElementById('editGarantia').value;
-            }
+            const bateria = (condicao === 'Novo' || condicao === 'CPO') ? null : document.getElementById('editBateria').value;
+            const garantia = (condicao === 'Novo' || condicao === 'CPO') ? '1 ANO APPLE' : document.getElementById('editGarantia').value;
 
             let cidadeAparelho = null, estadoAparelho = null;
             if (!document.getElementById('editLocalOrigem').checked) {
