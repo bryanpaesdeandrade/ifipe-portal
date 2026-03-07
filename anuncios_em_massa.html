@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GESTOR SETH 7️⃣ - ANUNCIAR EM MASSA</title>
+    <title>Anúncios em Massa - iFipe</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- ExcelJS e FileSaver para geração de planilha inteligente -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body { background: #000; color: #fff; font-family: 'Inter', sans-serif; }
@@ -15,25 +17,23 @@
         .btn-large:hover { background: #005bb5; transform: scale(1.02); }
         .btn-outline { background: transparent; border: 2px solid #38383a; color: white; font-weight: 700; padding: 0.75rem 1.5rem; border-radius: 50px; transition: 0.3s; cursor: pointer; }
         .btn-outline:hover { border-color: #0071e3; color: #0071e3; }
-        .metric-card { background: #2c2c2e; border-radius: 16px; padding: 1.5rem; text-align: center; }
-        .metric-value { font-size: 2rem; font-weight: 800; color: #0071e3; }
         .log-area { background: #111; border: 1px solid #2c2c2e; border-radius: 12px; padding: 1rem; font-family: monospace; font-size: 0.8rem; height: 200px; overflow-y: auto; white-space: pre-wrap; }
         .progress-bar { height: 8px; background: #2c2c2e; border-radius: 4px; overflow: hidden; }
         .progress-fill { height: 100%; background: #0071e3; width: 0%; transition: width 0.2s; }
     </style>
 </head>
 <body class="p-4 md:p-8">
-    <div class="max-w-5xl mx-auto">
+    <div class="max-w-4xl mx-auto">
 
         <!-- Header -->
         <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-black italic">GESTOR SETH <span class="text-blue-500">7️⃣</span></h1>
+            <h1 class="text-3xl md:text-4xl font-black italic">ANÚNCIOS EM MASSA <span class="text-blue-500">⚡</span></h1>
             <button onclick="window.close()" class="btn-outline text-sm px-4 py-2">
                 <i class="fas fa-times mr-2"></i>FECHAR
             </button>
         </div>
 
-        <!-- Área de login (verificação silenciosa) -->
+        <!-- Verificação de login silenciosa -->
         <div id="auth-warning" class="hidden card !p-4 mb-6 text-red-500 border-red-500/30">
             <i class="fas fa-exclamation-triangle mr-2"></i> Você não está logado como anunciante. Redirecionando...
         </div>
@@ -41,68 +41,20 @@
         <!-- Botões principais -->
         <div class="grid md:grid-cols-2 gap-6 mb-10">
             <button onclick="baixarPlanilha()" class="btn-large flex items-center justify-center gap-3">
-                <i class="fas fa-download text-2xl"></i> BAIXAR PLANILHA PADRÃO
+                <i class="fas fa-download text-2xl"></i> 1. BAIXAR PLANILHA DE ESTOQUE
             </button>
             <label class="btn-large flex items-center justify-center gap-3 cursor-pointer bg-white text-black hover:bg-gray-200">
-                <i class="fas fa-upload text-2xl"></i> SUBIR PLANILHA PREENCHIDA
-                <input type="file" id="fileInput" class="hidden" accept=".xlsx,.xls" onchange="processarUpload(event)">
+                <i class="fas fa-upload text-2xl"></i> 2. SUBIR ESTOQUE PREENCHIDO
+                <input type="file" id="fileInput" class="hidden" accept=".xlsx" onchange="processarUpload(event)">
             </label>
         </div>
 
-        <!-- Dashboard (invisível até upload válido) -->
-        <div id="dashboard" class="hidden space-y-6">
-            <!-- Métricas -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="metric-card">
-                    <div class="text-sm text-gray-400 mb-1">INVESTIMENTO TOTAL</div>
-                    <div class="metric-value" id="investTotal">R$ 0,00</div>
-                </div>
-                <div class="metric-card">
-                    <div class="text-sm text-gray-400 mb-1">LUCRO BRUTO ESTIMADO</div>
-                    <div class="metric-value" id="lucroTotal">R$ 0,00</div>
-                </div>
-                <div class="metric-card">
-                    <div class="text-sm text-gray-400 mb-1">MARKUP MÉDIO</div>
-                    <div class="metric-value" id="markupMedio">0%</div>
-                </div>
-            </div>
-
-            <!-- Tabela de revisão -->
-            <div class="card overflow-x-auto">
-                <h2 class="text-xl font-bold mb-4">📋 Revisão dos Itens</h2>
-                <table class="w-full text-xs">
-                    <thead class="text-gray-400 border-b border-[#38383a]">
-                        <tr>
-                            <th class="text-left py-2">Modelo</th>
-                            <th class="text-left">Capacidade</th>
-                            <th class="text-left">Cor</th>
-                            <th class="text-left">Condição</th>
-                            <th class="text-left">Origem</th>
-                            <th class="text-right">Custo (R$)</th>
-                            <th class="text-right">Preço (R$)</th>
-                            <th class="text-right">Estoque</th>
-                            <th class="text-right">Lucro (R$)</th>
-                            <th class="text-right">Markup</th>
-                        </tr>
-                    </thead>
-                    <tbody id="previewTable"></tbody>
-                </table>
-            </div>
-
-            <!-- Botão de sincronização -->
-            <div class="flex justify-end">
-                <button onclick="sincronizar()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-full text-sm flex items-center gap-2">
-                    <i class="fas fa-cloud-upload-alt"></i> APLICAR PREÇOS NO iFipe
-                </button>
-            </div>
-
-            <!-- Log de processamento -->
-            <div class="card">
-                <h3 class="text-sm font-bold mb-2 flex items-center gap-2"><i class="fas fa-terminal text-green-500"></i> LOG DE PROCESSAMENTO</h3>
-                <div id="logArea" class="log-area"></div>
-                <div class="progress-bar mt-4">
-                    <div id="progressFill" class="progress-fill"></div>
-                </div>
+        <!-- Área de log e progresso (inicialmente oculta) -->
+        <div id="logContainer" class="hidden card space-y-4">
+            <h3 class="text-sm font-bold flex items-center gap-2"><i class="fas fa-terminal text-green-500"></i> LOG DE PROCESSAMENTO</h3>
+            <div id="logArea" class="log-area"></div>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
             </div>
         </div>
     </div>
@@ -115,7 +67,7 @@
 
         // Variáveis globais
         let fornecedorId = null;
-        let dadosPlanilha = []; // array de objetos com os dados da planilha (já mapeados)
+        let dadosMestre = { modelos: [], capacidades: [], cores: [], origens: [], condicoes: [], baterias: [], garantias: [] };
         let variacoes = [];
         let regioes = [];
 
@@ -129,33 +81,180 @@
                 return;
             }
             fornecedorId = token || (masterAuth === 'gov_absoluto' ? 1 : null);
-            // Carregar dados auxiliares
             await carregarDados();
         })();
 
         async function carregarDados() {
-            const [v, r] = await Promise.all([
-                _s.from('variacoes').select('id, capacidade, cor, produtos_mestre(nome)'),
-                _s.from('regioes').select('id, nome')
-            ]);
-            variacoes = v.data || [];
-            regioes = r.data || [];
+            // Busca variações com produtos_mestre
+            const { data: vars, error: errV } = await _s
+                .from('variacoes')
+                .select('id, capacidade, cor, produtos_mestre!inner(nome)');
+            if (errV) console.error(errV);
+            variacoes = vars || [];
+
+            // Extrai listas únicas ordenadas
+            const modelosSet = new Set();
+            const capacidadesSet = new Set();
+            const coresSet = new Set();
+            variacoes.forEach(v => {
+                if (v.produtos_mestre?.nome) modelosSet.add(v.produtos_mestre.nome);
+                if (v.capacidade) capacidadesSet.add(v.capacidade);
+                if (v.cor) coresSet.add(v.cor);
+            });
+            dadosMestre.modelos = Array.from(modelosSet).sort((a,b) => a.localeCompare(b));
+            dadosMestre.capacidades = Array.from(capacidadesSet).sort((a,b) => a.localeCompare(b));
+            dadosMestre.cores = Array.from(coresSet).sort((a,b) => a.localeCompare(b));
+
+            // Busca regiões
+            const { data: regs } = await _s.from('regioes').select('nome');
+            regioes = regs || [];
+            dadosMestre.origens = regioes.map(r => r.nome).sort((a,b) => a.localeCompare(b));
+
+            // Listas fixas
+            dadosMestre.condicoes = ['Novo', 'Seminovo', 'CPO', 'Grade A', 'Grade B', 'Grade C'];
+            dadosMestre.baterias = ['Abaixo de 85%', 'Acima de 85%', 'Acima de 90%', 'Acima de 95%', 'Bateria em 100%'];
+            dadosMestre.garantias = ['Sem garantia', '1 Mês', '2 Meses', '3 Meses', '6 Meses', '12 Meses'];
         }
 
-        // Gerar planilha modelo
-        function baixarPlanilha() {
-            const headers = [
-                'Modelo', 'Capacidade', 'Cor', 'Condição', 'Origem',
-                'Custo (R$)', 'PREÇO DO ANÚNCIO (R$)', 'Estoque', 'Bateria', 'Garantia'
+        // Função para gerar planilha com validação de dados
+        async function baixarPlanilha() {
+            if (!dadosMestre.modelos.length) await carregarDados();
+
+            const workbook = new ExcelJS.Workbook();
+            
+            // Aba BaseDB (oculta)
+            const baseSheet = workbook.addWorksheet('BaseDB', { state: 'hidden' });
+            baseSheet.columns = [
+                { header: 'Modelos', key: 'modelos' },
+                { header: 'Capacidades', key: 'capacidades' },
+                { header: 'Cores', key: 'cores' },
+                { header: 'Origens', key: 'origens' },
+                { header: 'Condições', key: 'condicoes' },
+                { header: 'Baterias', key: 'baterias' },
+                { header: 'Garantias', key: 'garantias' }
             ];
-            const example = [
-                'iPhone 15', '128GB', 'Preto', 'Novo', 'BRASIL ANATEL',
-                '4500,00', '5299,00', '10', '', '1 ANO APPLE'
+            // Preencher com as listas (até 100 linhas)
+            const maxLinhas = Math.max(
+                dadosMestre.modelos.length,
+                dadosMestre.capacidades.length,
+                dadosMestre.cores.length,
+                dadosMestre.origens.length,
+                dadosMestre.condicoes.length,
+                dadosMestre.baterias.length,
+                dadosMestre.garantias.length
+            );
+            for (let i = 0; i < maxLinhas; i++) {
+                baseSheet.addRow({
+                    modelos: dadosMestre.modelos[i] || '',
+                    capacidades: dadosMestre.capacidades[i] || '',
+                    cores: dadosMestre.cores[i] || '',
+                    origens: dadosMestre.origens[i] || '',
+                    condicoes: dadosMestre.condicoes[i] || '',
+                    baterias: dadosMestre.baterias[i] || '',
+                    garantias: dadosMestre.garantias[i] || ''
+                });
+            }
+
+            // Aba Estoque
+            const estoqueSheet = workbook.addWorksheet('Estoque');
+            estoqueSheet.columns = [
+                { header: 'Modelo', key: 'modelo', width: 20 },
+                { header: 'Capacidade', key: 'capacidade', width: 15 },
+                { header: 'Cor', key: 'cor', width: 15 },
+                { header: 'Condição', key: 'condicao', width: 15 },
+                { header: 'Bateria', key: 'bateria', width: 20 },
+                { header: 'Garantia', key: 'garantia', width: 15 },
+                { header: 'Origem', key: 'origem', width: 20 },
+                { header: 'Quantidade', key: 'quantidade', width: 12 },
+                { header: 'Preço (BRL)', key: 'preco_brl', width: 15 },
+                { header: 'Preço (USD)', key: 'preco_usd', width: 15 }
             ];
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet([headers, example]);
-            XLSX.utils.book_append_sheet(wb, ws, 'Modelo');
-            XLSX.writeFile(wb, 'planilha_padrao_ifipe.xlsx');
+
+            // Aplicar data validation nas primeiras 100 linhas
+            for (let i = 2; i <= 101; i++) { // linha 1 é cabeçalho
+                // Modelo
+                estoqueSheet.getCell(`A${i}`).dataValidation = {
+                    type: 'list',
+                    allowBlank: false,
+                    formulae: [`=BaseDB!$A$2:$A$${dadosMestre.modelos.length+1}`]
+                };
+                // Capacidade
+                estoqueSheet.getCell(`B${i}`).dataValidation = {
+                    type: 'list',
+                    allowBlank: false,
+                    formulae: [`=BaseDB!$B$2:$B$${dadosMestre.capacidades.length+1}`]
+                };
+                // Cor
+                estoqueSheet.getCell(`C${i}`).dataValidation = {
+                    type: 'list',
+                    allowBlank: false,
+                    formulae: [`=BaseDB!$C$2:$C$${dadosMestre.cores.length+1}`]
+                };
+                // Condição
+                estoqueSheet.getCell(`D${i}`).dataValidation = {
+                    type: 'list',
+                    allowBlank: false,
+                    formulae: [`=BaseDB!$E$2:$E$${dadosMestre.condicoes.length+1}`]
+                };
+                // Bateria
+                estoqueSheet.getCell(`E${i}`).dataValidation = {
+                    type: 'list',
+                    allowBlank: true,
+                    formulae: [`=BaseDB!$F$2:$F$${dadosMestre.baterias.length+1}`]
+                };
+                // Garantia
+                estoqueSheet.getCell(`F${i}`).dataValidation = {
+                    type: 'list',
+                    allowBlank: true,
+                    formulae: [`=BaseDB!$G$2:$G$${dadosMestre.garantias.length+1}`]
+                };
+                // Origem
+                estoqueSheet.getCell(`G${i}`).dataValidation = {
+                    type: 'list',
+                    allowBlank: false,
+                    formulae: [`=BaseDB!$D$2:$D$${dadosMestre.origens.length+1}`]
+                };
+                // Quantidade (número inteiro)
+                estoqueSheet.getCell(`H${i}`).dataValidation = {
+                    type: 'whole',
+                    allowBlank: false,
+                    operator: 'greaterThan',
+                    formulae: [0]
+                };
+                // Preço BRL (decimal)
+                estoqueSheet.getCell(`I${i}`).dataValidation = {
+                    type: 'decimal',
+                    allowBlank: true,
+                    operator: 'greaterThan',
+                    formulae: [0]
+                };
+                // Preço USD (decimal)
+                estoqueSheet.getCell(`J${i}`).dataValidation = {
+                    type: 'decimal',
+                    allowBlank: true,
+                    operator: 'greaterThan',
+                    formulae: [0]
+                };
+            }
+
+            // Adicionar uma linha de exemplo (opcional)
+            estoqueSheet.addRow({
+                modelo: dadosMestre.modelos[0] || '',
+                capacidade: dadosMestre.capacidades[0] || '',
+                cor: dadosMestre.cores[0] || '',
+                condicao: 'Novo',
+                bateria: '',
+                garantia: '1 ANO APPLE',
+                origem: dadosMestre.origens[0] || '',
+                quantidade: 10,
+                preco_brl: 5299.00,
+                preco_usd: ''
+            });
+
+            // Gerar arquivo
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, 'estoque_ifipe.xlsx');
         }
 
         // Processar upload
@@ -163,209 +262,153 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const sheetName = workbook.SheetNames[0];
-                    const sheet = workbook.Sheets[sheetName];
-                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            // Mostrar container de log
+            document.getElementById('logContainer').classList.remove('hidden');
+            const logArea = document.getElementById('logArea');
+            const progressFill = document.getElementById('progressFill');
+            logArea.innerHTML = '';
+            progressFill.style.width = '0%';
 
-                    if (rows.length < 2) throw new Error('Planilha vazia');
+            function log(msg, tipo = 'info') {
+                const cor = tipo === 'erro' ? 'text-red-400' : (tipo === 'ok' ? 'text-green-400' : 'text-blue-400');
+                logArea.innerHTML += `<div class="${cor}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+                logArea.scrollTop = logArea.scrollHeight;
+            }
 
-                    const headers = rows[0].map(h => String(h).trim());
-                    const required = ['Modelo', 'Capacidade', 'Cor', 'Condição', 'Origem', 'PREÇO DO ANÚNCIO (R$)'];
-                    const missing = required.filter(r => !headers.includes(r));
-                    if (missing.length > 0) {
-                        alert('ARQUIVO INVÁLIDO: Use apenas a planilha padrão do iFipe.\nCampos faltando: ' + missing.join(', '));
-                        document.getElementById('fileInput').value = '';
-                        return;
+            log('Lendo arquivo...');
+
+            try {
+                const workbook = new ExcelJS.Workbook();
+                await workbook.xlsx.load(await file.arrayBuffer());
+                const worksheet = workbook.getWorksheet('Estoque');
+                if (!worksheet) {
+                    log('Aba "Estoque" não encontrada.', 'erro');
+                    return;
+                }
+
+                // Extrair linhas (pular cabeçalho)
+                const rows = [];
+                worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+                    if (rowNumber === 1) return; // cabeçalho
+                    const values = row.values; // array com índice 1-based
+                    rows.push({
+                        modelo: values[1] || '',
+                        capacidade: values[2] || '',
+                        cor: values[3] || '',
+                        condicao: values[4] || '',
+                        bateria: values[5] || '',
+                        garantia: values[6] || '',
+                        origem: values[7] || '',
+                        quantidade: values[8] || 0,
+                        preco_brl: values[9] || 0,
+                        preco_usd: values[10] || 0
+                    });
+                });
+
+                log(`${rows.length} linhas encontradas. Iniciando processamento...`);
+
+                // Buscar dados atualizados do banco (garantir que temos as listas)
+                await carregarDados();
+
+                let processados = 0;
+                let sucessos = 0;
+                let erros = 0;
+
+                for (const [index, row] of rows.entries()) {
+                    // Pular linhas totalmente vazias
+                    if (!row.modelo && !row.capacidade && !row.cor && !row.condicao && !row.quantidade) {
+                        continue;
                     }
 
-                    // Extrair dados das linhas (pular cabeçalho)
-                    const dataRows = rows.slice(1).filter(row => row.length > 0 && row.some(cell => cell !== null && cell !== ''));
-                    
-                    // Converter para objetos
-                    dadosPlanilha = dataRows.map(row => {
-                        let obj = {};
-                        headers.forEach((h, idx) => { obj[h] = row[idx]; });
-                        return obj;
-                    });
+                    // Encontrar variação
+                    const variacao = variacoes.find(v => 
+                        v.produtos_mestre?.nome?.toUpperCase() === String(row.modelo).toUpperCase().trim() &&
+                        v.capacidade?.toUpperCase() === String(row.capacidade).toUpperCase().trim() &&
+                        v.cor?.toUpperCase() === String(row.cor).toUpperCase().trim()
+                    );
 
-                    // Validar e mapear IDs
-                    await mapearEValidar();
+                    // Encontrar região
+                    const regiao = regioes.find(r => 
+                        r.nome?.toUpperCase() === String(row.origem).toUpperCase().trim()
+                    );
 
-                    // Calcular métricas e mostrar dashboard
-                    calcularMetricas();
-                    renderPreview();
-                    document.getElementById('dashboard').classList.remove('hidden');
-                } catch (err) {
-                    alert('Erro ao ler planilha: ' + err.message);
+                    if (!variacao || !regiao) {
+                        log(`Linha ${index+2}: Modelo/Origem não reconhecido.`, 'erro');
+                        erros++;
+                        processados++;
+                        progressFill.style.width = (processados / rows.length * 100) + '%';
+                        continue;
+                    }
+
+                    // Validar condição
+                    if (!row.condicao) {
+                        log(`Linha ${index+2}: Condição não preenchida.`, 'erro');
+                        erros++;
+                        processados++;
+                        progressFill.style.width = (processados / rows.length * 100) + '%';
+                        continue;
+                    }
+
+                    // Determinar preço e moeda
+                    let preco = 0, moeda = 'BRL';
+                    if (parseFloat(row.preco_brl) > 0) {
+                        preco = parseFloat(row.preco_brl);
+                        moeda = 'BRL';
+                    } else if (parseFloat(row.preco_usd) > 0) {
+                        preco = parseFloat(row.preco_usd);
+                        moeda = 'USD';
+                    } else {
+                        log(`Linha ${index+2}: Preço não informado.`, 'erro');
+                        erros++;
+                        processados++;
+                        progressFill.style.width = (processados / rows.length * 100) + '%';
+                        continue;
+                    }
+
+                    // Regras de negócio para Novo/CPO
+                    let bateriaFinal = row.bateria || null;
+                    let garantiaFinal = row.garantia || '1 ANO APPLE';
+                    if (row.condicao === 'Novo' || row.condicao === 'CPO') {
+                        bateriaFinal = null;
+                        garantiaFinal = '1 ANO APPLE';
+                    }
+
+                    const payload = {
+                        fornecedor_id: fornecedorId,
+                        variacao_id: variacao.id,
+                        regiao_id: regiao.id,
+                        condicao: row.condicao,
+                        preco: preco,
+                        moeda: moeda,
+                        quantidade: parseInt(row.quantidade) || 0,
+                        saude_bateria: bateriaFinal,
+                        garantia: garantiaFinal,
+                        status_aprovacao: 'aprovado',
+                        atualizado_em: new Date().toISOString()
+                    };
+
+                    try {
+                        const { error } = await _s.from('ofertas').upsert(payload, {
+                            onConflict: 'fornecedor_id, variacao_id, regiao_id, condicao'
+                        });
+                        if (error) throw error;
+                        sucessos++;
+                        log(`OK: ${row.modelo} ${row.capacidade} ${row.cor} - ${moeda} ${preco.toFixed(2)}`, 'ok');
+                    } catch (err) {
+                        erros++;
+                        log(`ERRO: ${row.modelo} - ${err.message}`, 'erro');
+                    }
+
+                    processados++;
+                    progressFill.style.width = (processados / rows.length * 100) + '%';
                 }
-            };
-            reader.readAsArrayBuffer(file);
-        }
 
-        // Função para mapear Modelo+Capacidade+Cor para variacao_id e Origem para regiao_id
-        async function mapearEValidar() {
-            // Garantir que variacoes e regioes estão carregadas
-            if (variacoes.length === 0 || regioes.length === 0) await carregarDados();
+                log(`Processamento concluído. Sucessos: ${sucessos}, Erros: ${erros}.`, sucessos > 0 ? 'ok' : 'erro');
+                document.getElementById('fileInput').value = '';
 
-            dadosPlanilha = dadosPlanilha.map(item => {
-                const modelo = String(item['Modelo'] || '').trim().toUpperCase();
-                const capacidade = String(item['Capacidade'] || '').trim().toUpperCase();
-                const cor = String(item['Cor'] || '').trim().toUpperCase();
-                const origem = String(item['Origem'] || '').trim().toUpperCase();
-
-                // Encontrar variação
-                const variacao = variacoes.find(v => 
-                    v.produtos_mestre?.nome?.toUpperCase() === modelo &&
-                    v.capacidade?.toUpperCase() === capacidade &&
-                    v.cor?.toUpperCase() === cor
-                );
-
-                // Encontrar região
-                const regiao = regioes.find(r => r.nome?.toUpperCase() === origem);
-
-                item._variacao_id = variacao ? variacao.id : null;
-                item._regiao_id = regiao ? regiao.id : null;
-
-                // Converter valores numéricos
-                const parseBrl = (val) => {
-                    if (!val) return 0;
-                    let str = String(val).replace(/\./g, '').replace(',', '.');
-                    return parseFloat(str) || 0;
-                };
-
-                item._custo = parseBrl(item['Custo (R$)']);
-                item._preco = parseBrl(item['PREÇO DO ANÚNCIO (R$)']);
-                item._estoque = parseInt(item['Estoque']) || 0;
-
-                return item;
-            });
-
-            // Alertar sobre linhas com variação ou região não encontrada
-            const erros = dadosPlanilha.filter(d => !d._variacao_id || !d._regiao_id);
-            if (erros.length > 0) {
-                console.warn('Linhas com problemas:', erros);
-                // Podemos exibir um alerta, mas não bloqueamos
+            } catch (err) {
+                log('Erro ao processar arquivo: ' + err.message, 'erro');
             }
-        }
-
-        function calcularMetricas() {
-            let investTotal = 0, lucroTotal = 0, markupSum = 0, count = 0;
-            dadosPlanilha.forEach(d => {
-                const custo = d._custo || 0;
-                const preco = d._preco || 0;
-                const qtd = d._estoque || 0;
-                investTotal += custo * qtd;
-                const lucro = (preco - custo) * qtd;
-                lucroTotal += lucro;
-                if (custo > 0) {
-                    markupSum += (preco / custo - 1) * 100;
-                    count++;
-                }
-            });
-            document.getElementById('investTotal').innerText = `R$ ${investTotal.toFixed(2)}`;
-            document.getElementById('lucroTotal').innerText = `R$ ${lucroTotal.toFixed(2)}`;
-            const markupMedio = count > 0 ? (markupSum / count).toFixed(1) : '0';
-            document.getElementById('markupMedio').innerText = markupMedio + '%';
-        }
-
-        function renderPreview() {
-            const tbody = document.getElementById('previewTable');
-            tbody.innerHTML = '';
-            dadosPlanilha.forEach(d => {
-                const custo = d._custo || 0;
-                const preco = d._preco || 0;
-                const qtd = d._estoque || 0;
-                const lucro = (preco - custo) * qtd;
-                const markup = custo > 0 ? ((preco / custo - 1) * 100).toFixed(1) : '-';
-                tbody.innerHTML += `<tr class="border-b border-[#2c2c2e]">
-                    <td class="py-2">${d.Modelo}</td>
-                    <td>${d.Capacidade}</td>
-                    <td>${d.Cor}</td>
-                    <td>${d.Condição}</td>
-                    <td>${d.Origem}</td>
-                    <td class="text-right">R$ ${custo.toFixed(2)}</td>
-                    <td class="text-right">R$ ${preco.toFixed(2)}</td>
-                    <td class="text-right">${qtd}</td>
-                    <td class="text-right">R$ ${lucro.toFixed(2)}</td>
-                    <td class="text-right">${markup}%</td>
-                </tr>`;
-            });
-        }
-
-        // Função de log
-        function log(msg, type = 'info') {
-            const area = document.getElementById('logArea');
-            const color = type === 'error' ? 'text-red-400' : (type === 'success' ? 'text-green-400' : 'text-blue-400');
-            area.innerHTML += `<div class="${color}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
-            area.scrollTop = area.scrollHeight;
-        }
-
-        function updateProgress(percent) {
-            document.getElementById('progressFill').style.width = percent + '%';
-        }
-
-        // Sincronização com Supabase
-        async function sincronizar() {
-            if (!fornecedorId) {
-                alert('Você precisa estar logado como anunciante.');
-                return;
-            }
-
-            // Limpar logs
-            document.getElementById('logArea').innerHTML = '';
-            updateProgress(0);
-
-            log('Iniciando sincronização...', 'info');
-
-            let sucessos = 0, erros = 0;
-            const total = dadosPlanilha.length;
-
-            for (let i = 0; i < total; i++) {
-                const item = dadosPlanilha[i];
-                const variacao_id = item._variacao_id;
-                const regiao_id = item._regiao_id;
-
-                if (!variacao_id || !regiao_id) {
-                    log(`Linha ${i+2}: Modelo/Origem não reconhecido. Pulando.`, 'error');
-                    erros++;
-                    updateProgress(((i+1)/total)*100);
-                    continue;
-                }
-
-                const payload = {
-                    fornecedor_id: fornecedorId,
-                    variacao_id,
-                    regiao_id,
-                    condicao: item.Condição,
-                    preco: item._preco,
-                    moeda: 'BRL',
-                    quantidade: item._estoque || 0,
-                    saude_bateria: item.Bateria || null,
-                    garantia: item.Garantia || '1 ANO APPLE',
-                    status_aprovacao: 'aprovado',
-                    atualizado_em: new Date().toISOString()
-                };
-
-                try {
-                    const { error } = await _s.from('ofertas').upsert(payload, {
-                        onConflict: 'fornecedor_id, variacao_id, regiao_id, condicao'
-                    });
-                    if (error) throw error;
-                    sucessos++;
-                    log(`OK: ${item.Modelo} ${item.Capacidade} (${item.Cor})`, 'success');
-                } catch (err) {
-                    erros++;
-                    log(`ERRO: ${item.Modelo} - ${err.message}`, 'error');
-                }
-                updateProgress(((i+1)/total)*100);
-            }
-
-            log(`Finalizado! ${sucessos} sucessos, ${erros} falhas.`, sucessos > 0 ? 'success' : 'error');
         }
     </script>
 </body>
