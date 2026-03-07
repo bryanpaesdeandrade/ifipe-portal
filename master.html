@@ -335,6 +335,29 @@
         </div>
     </div>
 
+    <!-- NOVO MODAL DE RESPOSTA INTERNA -->
+    <div id="modalResponderFeedback" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a] relative">
+            <button onclick="fecharModalResposta()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">📬 RESPONDER SUGESTÃO</h3>
+            <form id="formResposta" onsubmit="enviarRespostaInterna(event)">
+                <input type="hidden" id="respostaFeedbackId">
+                <div class="mb-4">
+                    <label class="text-[9px] text-gray-400 font-black block mb-1">DESTINATÁRIO</label>
+                    <input type="text" id="respostaDestinatario" class="apple-input bg-[#2c2c2e] text-gray-300" readonly>
+                </div>
+                <div class="mb-4">
+                    <label class="text-[9px] text-gray-400 font-black block mb-1">MENSAGEM</label>
+                    <textarea id="respostaMensagem" rows="4" class="apple-input resize-none" placeholder="Digite sua resposta..." required></textarea>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="fecharModalResposta()" class="btn-master w-1/2 bg-zinc-700 hover:bg-zinc-600">CANCELAR</button>
+                    <button type="submit" class="btn-master w-1/2 !bg-green-600 hover:bg-green-500">ENVIAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="modalGuru" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a] relative">
             <button onclick="fecharGuruModal()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
@@ -879,15 +902,14 @@
             document.getElementById('maintenanceMenu').classList.toggle('hidden');
         }
 
+        // Função setMaintenance corrigida: faz update real e chama renderSystemStatus
         async function setMaintenance(campo, acao) {
             const payload = {};
             payload[campo] = acao;
             
-            // O botão força o Supabase a aceitar e recalcula a tela na marra
             const { error } = await _s.from('sistema_config').update(payload).eq('id', 1);
             if (error) {
                 alert('ALERTA: Banco recusou o comando. ' + error.message);
-                await renderSystemStatus(); 
             } else {
                 await renderSystemStatus();
             }
@@ -911,7 +933,6 @@
             if(chkAta) chkAta.checked = (data.status_atacadista === 'on');
             if(chkBusca) chkBusca.checked = (data.status_buscador === 'on');
 
-            // A Lógica Central do Botão: Vermelho se QUALQUER coisa estiver em OFF
             const btn = document.getElementById('maintenanceBtn');
             if (data.status_geral === 'on' && data.status_atacadista === 'on' && data.status_buscador === 'on') {
                 btn.className = "btn-master bg-green-600 px-3 py-1 text-[9px] ml-2";
@@ -1030,8 +1051,47 @@
             checarNotificacoes();
         }
 
-        function responderFeedbackInterno(id, nome) {
-            alert(`Módulo de mensagem interna para ${nome} será ativado na próxima versão do sistema!`);
+        // Função que abre o modal de resposta
+        function abrirModalResposta(id, nome, tipo) {
+            document.getElementById('respostaFeedbackId').value = id;
+            document.getElementById('respostaDestinatario').value = `${nome} (${tipo})`;
+            document.getElementById('respostaMensagem').value = '';
+            document.getElementById('modalResponderFeedback').classList.remove('hidden');
+        }
+
+        function fecharModalResposta() {
+            document.getElementById('modalResponderFeedback').classList.add('hidden');
+        }
+
+        // Função que envia a resposta para a tabela mensagens_internas
+        async function enviarRespostaInterna(e) {
+            e.preventDefault();
+            const feedbackId = document.getElementById('respostaFeedbackId').value;
+            const destinatario = document.getElementById('respostaDestinatario').value;
+            const mensagem = document.getElementById('respostaMensagem').value.trim();
+
+            if (!mensagem) return alert('Digite uma mensagem.');
+
+            // Extrai nome e tipo (formato "Nome (TIPO)")
+            const partes = destinatario.split(' (');
+            const nome = partes[0];
+            const tipo = partes[1] ? partes[1].replace(')', '') : 'Desconhecido';
+
+            const { error } = await _s.from('mensagens_internas').insert([{
+                feedback_id: feedbackId,
+                destinatario_nome: nome,
+                destinatario_tipo: tipo,
+                mensagem: mensagem,
+                lida: false
+            }]);
+
+            if (error) {
+                alert('Erro ao enviar resposta: ' + error.message);
+            } else {
+                alert('Resposta enviada com sucesso!');
+                fecharModalResposta();
+                abrirNotificacoes(); // atualiza a lista de notificações
+            }
         }
 
         async function abrirNotificacoes() {
@@ -1059,7 +1119,7 @@
                 }
                 
                 let btnResponderZap = zap ? `<a href="https://wa.me/55${zap}?text=Olá, referente a sua sugestão no iFipe: " target="_blank" class="bg-green-600 text-white px-2 py-1 rounded text-[8px] font-black hover:opacity-80">WHATSAPP</a>` : '';
-                let btnResponderSys = `<button onclick="responderFeedbackInterno(${n.id}, '${n.usuario_nome}')" class="bg-blue-900/30 text-blue-500 px-2 py-1 rounded text-[8px] font-black hover:bg-blue-500 hover:text-white">SISTEMA</button>`;
+                let btnResponderSys = `<button onclick="abrirModalResposta(${n.id}, '${n.usuario_nome}', '${n.usuario_tipo}')" class="bg-blue-900/30 text-blue-500 px-2 py-1 rounded text-[8px] font-black hover:bg-blue-500 hover:text-white">SISTEMA</button>`;
 
                 return `
                 <div class="p-3 bg-[#141415] border border-zinc-800 rounded relative">
@@ -1890,6 +1950,9 @@
         window.toggleCondicaoModalMaster = toggleCondicaoModalMaster;
         window.setEditCondicao = setEditCondicao;
         window.setBulkCondicao = setBulkCondicao;
+        window.abrirModalResposta = abrirModalResposta;
+        window.fecharModalResposta = fecharModalResposta;
+        window.enviarRespostaInterna = enviarRespostaInterna;
 
         checkAuth();
     </script>
