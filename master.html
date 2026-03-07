@@ -328,7 +328,8 @@
                 <h3 class="text-sm font-black text-white">🔔 SUGESTÕES E ALERTAS</h3>
                 <button onclick="fecharModais()" class="text-red-500 font-black text-lg hover:opacity-80">X</button>
             </div>
-            <div class="mb-4 flex justify-end">
+            <div class="mb-4 flex justify-end gap-2">
+                <button onclick="deletarFeedbacksSelecionados()" class="bg-orange-600 text-white font-black text-[9px] px-3 py-1 rounded hover:opacity-80">APAGAR SELECIONADAS</button>
                 <button onclick="deletarTodosFeedbacks()" class="bg-red-600 text-white font-black text-[9px] px-3 py-1 rounded hover:opacity-80">APAGAR TODAS AS MENSAGENS</button>
             </div>
             <div id="notificacoesList" class="space-y-3 text-[10px] text-zinc-300">Carregando...</div>
@@ -902,17 +903,18 @@
             document.getElementById('maintenanceMenu').classList.toggle('hidden');
         }
 
-        // Função setMaintenance corrigida: faz update real e chama renderSystemStatus
+        // Função setMaintenance corrigida com upsert e renderSystemStatus
         async function setMaintenance(campo, acao) {
-            const payload = {};
-            payload[campo] = acao;
-            
-            const { error } = await _s.from('sistema_config').update(payload).eq('id', 1);
+            let { data: atual } = await _s.from('sistema_config').select('*').eq('id', 1).maybeSingle();
+            if (!atual) atual = { id: 1, status_geral: 'on', status_atacadista: 'on', status_buscador: 'on' };
+            atual[campo] = acao;
+            const { error } = await _s.from('sistema_config').upsert(atual);
             if (error) {
-                alert('ALERTA: Banco recusou o comando. ' + error.message);
+                alert('Erro no banco: ' + error.message);
             } else {
                 await renderSystemStatus();
             }
+            document.getElementById('maintenanceMenu').classList.add('hidden');
         }
 
         async function renderSystemStatus() {
@@ -924,7 +926,7 @@
                 data = defaultConfig;
             }
 
-            // Atualiza o estado dos checkboxes baseados no banco real
+            // Atualiza os checkboxes
             const chkGeral = document.getElementById('chk_status_geral');
             const chkAta = document.getElementById('chk_status_atacadista');
             const chkBusca = document.getElementById('chk_status_buscador');
@@ -1051,6 +1053,21 @@
             checarNotificacoes();
         }
 
+        // Nova função para apagar múltiplos feedbacks selecionados
+        async function deletarFeedbacksSelecionados() {
+            const checkboxes = document.querySelectorAll('.chk-feedback:checked');
+            if (checkboxes.length === 0) return alert('Selecione pelo menos uma mensagem.');
+            const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            if (!confirm(`Apagar ${ids.length} mensagem(ns) selecionada(s)?`)) return;
+            const { error } = await _s.from('feedbacks').delete().in('id', ids);
+            if (error) alert('Erro: ' + error.message);
+            else {
+                alert('Mensagens apagadas com sucesso!');
+                abrirNotificacoes();
+                checarNotificacoes();
+            }
+        }
+
         // Função que abre o modal de resposta
         function abrirModalResposta(id, nome, tipo) {
             document.getElementById('respostaFeedbackId').value = id;
@@ -1123,19 +1140,22 @@
 
                 return `
                 <div class="p-3 bg-[#141415] border border-zinc-800 rounded relative">
-                    <div class="flex justify-between items-start mb-2 border-b border-zinc-800 pb-2">
-                        <div>
-                            <span class="text-blue-400 font-bold">${n.usuario_nome || 'Anônimo'}</span> 
-                            <span class="text-[8px] text-zinc-500">(${n.usuario_tipo || 'Desconhecido'})</span>
-                        </div>
-                        <div class="flex gap-2">
-                            ${btnResponderSys}
-                            ${btnResponderZap}
-                            <button onclick="deletarFeedback(${n.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white">APAGAR</button>
+                    <div class="flex items-start gap-2 mb-2 border-b border-zinc-800 pb-2">
+                        <input type="checkbox" class="chk-feedback w-4 h-4 mt-1" value="${n.id}">
+                        <div class="flex-1 flex justify-between items-start">
+                            <div>
+                                <span class="text-blue-400 font-bold">${n.usuario_nome || 'Anônimo'}</span> 
+                                <span class="text-[8px] text-zinc-500">(${n.usuario_tipo || 'Desconhecido'})</span>
+                            </div>
+                            <div class="flex gap-2">
+                                ${btnResponderSys}
+                                ${btnResponderZap}
+                                <button onclick="deletarFeedback(${n.id})" class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-[8px] font-black hover:bg-red-500 hover:text-white">APAGAR</button>
+                            </div>
                         </div>
                     </div>
-                    <span class="text-[8px] text-zinc-500 block mb-1">${n.criado_em ? new Date(n.criado_em).toLocaleString('pt-BR') : ''}</span>
-                    <p class="mt-1 text-white text-[11px]">${n.mensagem || '(Sem conteúdo)'}</p>
+                    <span class="text-[8px] text-zinc-500 block mb-1 ml-6">${n.criado_em ? new Date(n.criado_em).toLocaleString('pt-BR') : ''}</span>
+                    <p class="mt-1 text-white text-[11px] ml-6">${n.mensagem || '(Sem conteúdo)'}</p>
                 </div>
             `}).join('');
         }
@@ -1953,6 +1973,7 @@
         window.abrirModalResposta = abrirModalResposta;
         window.fecharModalResposta = fecharModalResposta;
         window.enviarRespostaInterna = enviarRespostaInterna;
+        window.deletarFeedbacksSelecionados = deletarFeedbacksSelecionados;
 
         checkAuth();
     </script>
