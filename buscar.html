@@ -279,6 +279,11 @@
             <button onclick="fecharDrawer()" class="text-2xl text-gray-400 hover:text-white">&times;</button>
         </div>
         
+        <!-- Saudação personalizada com nome do usuário -->
+        <div class="text-blue-400 font-bold text-lg mb-4 border-b border-zinc-800 pb-2">
+            Olá, <span id="drawerUserName"></span> 👑
+        </div>
+
         <!-- Status do usuário no drawer -->
         <div class="bg-[#2c2c2e] p-4 rounded-xl mb-4">
             <h3 class="text-xs font-bold mb-2">Seu status no iFipe 🏆</h3>
@@ -337,8 +342,6 @@
             <button class="text-2xl mr-2 text-gray-400 hover:text-white transition" onclick="abrirDrawer()">☰</button>
             <h1 class="text-xl lg:text-2xl font-black tracking-tight">iFipe</h1>
             <span class="text-[10px] lg:text-sm text-gray-400 hidden sm:inline">A TABELA FIPE DO IPHONE</span>
-            <!-- Nome do usuário logado (visível apenas no desktop) - agora só primeiro nome -->
-            <span id="navbarUserName" class="text-[10px] text-blue-400 font-bold border-l border-[#38383a] pl-2 hidden lg:inline"></span>
             <!-- Botão Insígnias de Poder (desktop) -->
             <button class="header-btn btn-insignia ml-2 hidden lg:flex text-[10px]" onclick="abrirLegendaInsignias()">
                 <i class="fas fa-crown"></i> Insígnias de Poder
@@ -646,14 +649,11 @@
         // CONTROLE DE VERSÃO
         const VERSAO_ATUAL = "1.1";
         const versaoArmazenada = localStorage.getItem('iFipe_Versao') || "0.0";
-        if (versaoArmazenada < VERSAO_ATUAL) {
-            document.getElementById('versionAlert').classList.remove('hidden');
-        }
 
         // Função para fechar o alerta e salvar a versão atual
         window.fecharAlertaVersao = function() {
-            document.getElementById('versionAlert').classList.add('hidden');
-            localStorage.setItem('iFipe_Versao', VERSAO_ATUAL);
+            localStorage.setItem('iFipe_AvisoVisto', VERSAO_ATUAL);
+            document.getElementById('versionAlert').remove(); // remove o elemento do DOM
         };
 
         let rateBinance = 5.2907;
@@ -752,6 +752,11 @@
                 console.warn("Erro ao verificar sistema_config, prosseguindo normalmente.");
             }
 
+            // Verificação de versão com persistência do aviso
+            if (versaoArmazenada < VERSAO_ATUAL && localStorage.getItem('iFipe_AvisoVisto') !== VERSAO_ATUAL) {
+                document.getElementById('versionAlert').classList.remove('hidden');
+            }
+
             const token = localStorage.getItem('iFipe_Token');
             const masterAuth = localStorage.getItem('iFipe_Master_Auth');
             if (!token && masterAuth !== 'gov_absoluto') {
@@ -761,17 +766,18 @@
             
             if (masterAuth === 'gov_absoluto') {
                 currentUser = { id: 0, nome: 'MASTER', whatsapp: '', insignia_manual: [], logins_count: 0 };
-                // Não exibe nome na navbar
+                // Não exibe nome no drawer
+                const drawerNameSpan = document.getElementById('drawerUserName');
+                if (drawerNameSpan) drawerNameSpan.innerText = 'MASTER';
             } else {
                 try {
                     const { data, error } = await _s.from('clientes_buscador').select('*').eq('id', token).single();
                     if (error || !data) { logout(); return; }
                     currentUser = data;
-                    // Atualiza nome na navbar (span fixo) - apenas primeiro nome
-                    const nomeSpan = document.getElementById('navbarUserName');
-                    if (nomeSpan) {
-                        nomeSpan.innerText = currentUser.nome.split(' ')[0];
-                        nomeSpan.classList.remove('hidden');
+                    // Atualiza nome no drawer (apenas primeiro nome)
+                    const drawerNameSpan = document.getElementById('drawerUserName');
+                    if (drawerNameSpan) {
+                        drawerNameSpan.innerText = currentUser.nome.split(' ')[0];
                     }
 
                     const { data: curtidas } = await _s.from('curtidas').select('oferta_id').eq('cliente_id', currentUser.id);
@@ -1270,18 +1276,23 @@
                 return;
             }
             if (!currentUser) return alert('Faça login.');
-            const ofertaId = parseInt(document.getElementById('perguntaOfertaId').value);
-            const fornecedorId = parseInt(document.getElementById('perguntaFornecedorId').value);
+            const ofertaId = Number(document.getElementById('perguntaOfertaId').value);
+            const fornecedorId = Number(document.getElementById('perguntaFornecedorId').value);
             const pergunta = document.getElementById('perguntaTexto').value.trim();
             if (!pergunta || isNaN(ofertaId) || isNaN(fornecedorId)) {
                 alert('Dados inválidos.');
                 return;
             }
             const { error } = await _s.from('comentarios').insert({
-                oferta_id: ofertaId, cliente_id: currentUser.id, fornecedor_id: fornecedorId,
-                autor_nome: currentUser.nome || 'Buscador', pergunta: pergunta, lida_cliente: false
+                oferta_id: ofertaId,
+                cliente_id: currentUser.id,
+                fornecedor_id: fornecedorId,
+                autor_nome: currentUser.nome || 'Buscador',
+                pergunta: pergunta,
+                lida_cliente: false
             });
             if (error) { 
+                console.error('Erro ao enviar proposta:', error);
                 alert('Erro crítico ao enviar: ' + error.message); 
                 return; 
             }
@@ -1418,9 +1429,9 @@
                 if (error) throw error;
                 currentUser = { ...currentUser, ...updates };
                 alert('Conta atualizada!'); fecharConta();
-                // Atualiza nome na navbar (apenas primeiro nome)
-                const nomeSpan = document.getElementById('navbarUserName');
-                if (nomeSpan) nomeSpan.innerText = currentUser.nome.split(' ')[0];
+                // Atualiza nome no drawer (apenas primeiro nome)
+                const drawerNameSpan = document.getElementById('drawerUserName');
+                if (drawerNameSpan) drawerNameSpan.innerText = currentUser.nome.split(' ')[0];
             } catch (err) { alert('Erro: ' + err.message); }
         }
 
