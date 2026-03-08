@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iFipe - Gestor Seth</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Font Awesome (ícones) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: #fff;
+        }
+        .card-seth {
+            background: #1c1c1e;
+            border: 1px solid #38383a;
+            border-radius: 24px;
+            padding: 1.5rem;
+        }
+        .avatar-neon {
+            width: 60px;
+            height: 60px;
+            background: #0a2f44;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #00ccff;
+            font-size: 2rem;
+            box-shadow: 0 0 20px #00ccff;
+        }
+        .input-seth {
+            background: #2c2c2e;
+            border: 1px solid #38383a;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            color: #fff;
+            width: 100%;
+            outline: none;
+        }
+        .input-seth:focus {
+            border-color: #3b82f6;
+        }
+        .btn-seth {
+            background: #2c2c2e;
+            border: 1px solid #38383a;
+            border-radius: 12px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-seth:hover {
+            background: #3b82f6;
+            color: #fff;
+            border-color: #3b82f6;
+        }
+        .btn-seth.active {
+            background: #3b82f6;
+            color: #fff;
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-[#38383a] px-6 py-4 flex justify-between items-center z-50">
+        <h1 class="text-2xl font-black italic text-white">iFipe <span class="text-blue-500">SETH</span></h1>
+        <a href="atacadista.html" class="border border-[#38383a] hover:border-blue-500 px-4 py-2 rounded-full text-sm font-bold transition">
+            <i class="fas fa-arrow-left mr-2"></i>Voltar
+        </a>
+    </header>
+
+    <main class="pt-24 pb-10 px-4 max-w-7xl mx-auto">
+
+        <!-- Card de Boas-Vindas Seth -->
+        <div class="card-seth flex items-center gap-6 mb-8">
+            <div class="avatar-neon">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-blue-400">Olá, sou Seth.</h2>
+                <p class="text-gray-400 text-sm">Sua Inteligência Financeira. Analisando seus ativos em tempo real...</p>
+            </div>
+        </div>
+
+        <!-- Módulo Patrimônio -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="card-seth">
+                <div class="flex items-center gap-3 mb-3">
+                    <i class="fas fa-boxes text-2xl text-blue-400"></i>
+                    <h3 class="text-lg font-bold">Total de Aparelhos</h3>
+                </div>
+                <p class="text-4xl font-black text-white" id="totalAparelhos">0</p>
+                <p class="text-xs text-gray-500 mt-1">unidades em estoque</p>
+            </div>
+            <div class="card-seth">
+                <div class="flex items-center gap-3 mb-3">
+                    <i class="fas fa-coins text-2xl text-yellow-400"></i>
+                    <h3 class="text-lg font-bold">Capital Parado</h3>
+                </div>
+                <p class="text-4xl font-black text-white" id="capitalParado">R$ 0,00</p>
+                <p class="text-xs text-gray-500 mt-1">valor total em estoque</p>
+            </div>
+        </div>
+
+        <!-- Grid de duas colunas: Câmbio/Calculadora e ROI -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Módulo Câmbio + Calculadora -->
+            <div class="card-seth">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="fas fa-dollar-sign text-2xl text-green-400"></i>
+                    <h3 class="text-lg font-bold">Dólar Seth (oráculo)</h3>
+                </div>
+                <div class="bg-[#2c2c2e] p-4 rounded-xl text-center mb-6">
+                    <p class="text-3xl font-mono font-black text-green-400" id="dolarSeth">R$ 0,0000</p>
+                    <p class="text-xs text-gray-500">Binance + R$ 0,06</p>
+                </div>
+
+                <h4 class="font-bold mb-3">Calculadora de Importação</h4>
+                <div class="relative mb-4">
+                    <span class="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                    <input type="number" id="custoUsd" class="input-seth !pl-8" placeholder="Custo em USD" step="0.01" min="0" oninput="calcularPrecos()">
+                </div>
+
+                <div class="grid grid-cols-3 gap-2 text-center text-xs font-medium">
+                    <div class="bg-[#2c2c2e] p-2 rounded-lg">
+                        <span class="text-gray-400">Atacado</span>
+                        <div class="text-white font-bold" id="precoAtacado">R$ 0,00</div>
+                    </div>
+                    <div class="bg-[#2c2c2e] p-2 rounded-lg">
+                        <span class="text-gray-400">Atacarejo</span>
+                        <div class="text-white font-bold" id="precoAtacarejo">R$ 0,00</div>
+                    </div>
+                    <div class="bg-[#2c2c2e] p-2 rounded-lg">
+                        <span class="text-gray-400">Varejo</span>
+                        <div class="text-white font-bold" id="precoVarejo">R$ 0,00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Módulo ROI -->
+            <div class="card-seth">
+                <div class="flex items-center gap-3 mb-4">
+                    <i class="fas fa-chart-line text-2xl text-purple-400"></i>
+                    <h3 class="text-lg font-bold">Simulador de ROI</h3>
+                </div>
+                <p class="text-sm text-gray-400 mb-4">Lucro estimado se liquidar todo o estoque com margem:</p>
+
+                <div class="flex gap-2 mb-4">
+                    <button class="btn-seth flex-1" onclick="calcularROI(10)">10%</button>
+                    <button class="btn-seth flex-1" onclick="calcularROI(20)">20%</button>
+                    <button class="btn-seth flex-1" onclick="calcularROI(30)">30%</button>
+                </div>
+
+                <div class="bg-[#2c2c2e] p-4 rounded-xl">
+                    <p class="text-xs text-gray-400 mb-1">Lucro Líquido Estimado</p>
+                    <p class="text-3xl font-black text-green-400" id="lucroEstimado">R$ 0,00</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Config Supabase
+        const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
+        const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Variáveis globais
+        let fornecedorId = null;
+        let ofertas = [];
+        let totalAparelhos = 0;
+        let capitalParado = 0;
+        let dolarBinance = 5.2907; // valor inicial
+        let dolarSeth = dolarBinance + 0.06;
+
+        // Elementos DOM
+        const totalAparelhosEl = document.getElementById('totalAparelhos');
+        const capitalParadoEl = document.getElementById('capitalParado');
+        const dolarSethEl = document.getElementById('dolarSeth');
+        const precoAtacadoEl = document.getElementById('precoAtacado');
+        const precoAtacarejoEl = document.getElementById('precoAtacarejo');
+        const precoVarejoEl = document.getElementById('precoVarejo');
+        const lucroEstimadoEl = document.getElementById('lucroEstimado');
+
+        // ========== CARREGAR DADOS DO FORNECEDOR ==========
+        async function carregarOfertas() {
+            fornecedorId = localStorage.getItem('iFipe_Anunciante');
+            if (!fornecedorId) {
+                alert('Você não está logado como anunciante. Redirecionando...');
+                window.location.href = 'atacadista.html';
+                return;
+            }
+
+            const { data, error } = await _s
+                .from('ofertas')
+                .select('quantidade, preco')
+                .eq('fornecedor_id', fornecedorId);
+
+            if (error) {
+                console.error('Erro ao buscar ofertas:', error);
+                return;
+            }
+
+            ofertas = data || [];
+            totalAparelhos = ofertas.reduce((acc, o) => acc + (o.quantidade || 0), 0);
+            capitalParado = ofertas.reduce((acc, o) => acc + (o.quantidade || 0) * (o.preco || 0), 0);
+
+            totalAparelhosEl.innerText = totalAparelhos;
+            capitalParadoEl.innerText = `R$ ${capitalParado.toFixed(2).replace('.', ',')}`;
+        }
+
+        // ========== WEBSOCKET BINANCE ==========
+        function iniciarWebSocket() {
+            try {
+                const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
+                ws.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    dolarBinance = parseFloat(data.c);
+                    dolarSeth = dolarBinance + 0.06;
+                    dolarSethEl.innerText = `R$ ${dolarSeth.toFixed(4).replace('.', ',')}`;
+                    // recalcular a calculadora se houver valor no input
+                    calcularPrecos();
+                };
+            } catch (err) {
+                console.warn('Erro no WebSocket, usando valor fixo', err);
+                dolarSethEl.innerText = `R$ ${dolarSeth.toFixed(4).replace('.', ',')}`;
+            }
+        }
+
+        // ========== CALCULADORA DE PREÇOS ==========
+        function calcularPrecos() {
+            const usd = parseFloat(document.getElementById('custoUsd').value) || 0;
+            const custoBase = usd * dolarSeth * 1.06; // custo com impostos
+
+            let atacado, atacarejo, varejo;
+            if (usd <= 750) {
+                atacado = custoBase * 1.20;
+                atacarejo = custoBase * 1.40;
+                varejo = custoBase * 1.55;
+            } else {
+                atacado = custoBase + 350;
+                atacarejo = custoBase + 550;
+                varejo = custoBase + 1000;
+            }
+
+            precoAtacadoEl.innerText = `R$ ${atacado.toFixed(2).replace('.', ',')}`;
+            precoAtacarejoEl.innerText = `R$ ${atacarejo.toFixed(2).replace('.', ',')}`;
+            precoVarejoEl.innerText = `R$ ${varejo.toFixed(2).replace('.', ',')}`;
+        }
+
+        // ========== SIMULADOR ROI ==========
+        function calcularROI(percentual) {
+            if (!capitalParado) {
+                lucroEstimadoEl.innerText = 'R$ 0,00';
+                return;
+            }
+            const lucro = capitalParado * (percentual / 100);
+            lucroEstimadoEl.innerText = `R$ ${lucro.toFixed(2).replace('.', ',')}`;
+        }
+
+        // Inicialização
+        window.onload = async () => {
+            await carregarOfertas();
+            iniciarWebSocket();
+            // calcular ROI inicial (padrão 10%)
+            calcularROI(10);
+        };
+
+        // Expor funções globais para os botões
+        window.calcularPrecos = calcularPrecos;
+        window.calcularROI = calcularROI;
+    </script>
+</body>
+</html>
