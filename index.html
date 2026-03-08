@@ -198,6 +198,10 @@
             background: var(--blue);
             border-radius: 4px;
         }
+        /* Transição suave para o banner */
+        .banner-fade {
+            transition: opacity 0.5s ease-in-out;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -427,6 +431,7 @@
         let currentProfile = 'buscador';
         let rateBinance = 5.2907;
         let rateOraculo = rateBinance + 0.06;
+        let bannerInterval;
 
         function setProfile(profile) {
             currentProfile = profile;
@@ -442,31 +447,35 @@
             }
         }
 
-        // Função para carregar banner aleatório com estilo refinado
-        function carregarBannerRandomico() {
+        // Função para atualizar o banner com um item aleatório (com fade)
+        function atualizarBanner() {
             const container = document.getElementById('bannerContainer');
             if (!container) return;
             
-            // Escolhe um item aleatório do array
+            // Escolhe um índice aleatório
             const randomIndex = Math.floor(Math.random() * vitrineLinks.length);
             const item = vitrineLinks[randomIndex];
             
-            // Cria o HTML do banner com tag "Patrocinado" e texto fixo no rodapé (sem emojis)
-            container.innerHTML = `
-                <a href="${item.url}" target="_blank" class="block w-full h-full relative overflow-hidden rounded-2xl group">
-                    <img src="${item.img}" alt="Oferta especial" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                    <!-- Tag Patrocinado minimalista (canto superior direito) -->
-                    <div class="absolute top-2 right-2 bg-black/50 text-gray-300 text-[10px] px-2 py-1 rounded backdrop-blur-sm">
-                        Patrocinado
-                    </div>
-                    <!-- Texto fixo no rodapé com gradiente -->
-                    <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
-                        <span class="text-white text-xs font-semibold block text-center">
-                            COMPRE NO ATACADO COM MELHOR PREÇO DO BRASIL
-                        </span>
-                    </div>
-                </a>
-            `;
+            // Aplica fade out/in simples (opcional)
+            container.style.opacity = '0.5';
+            setTimeout(() => {
+                container.innerHTML = `
+                    <a href="${item.url}" target="_blank" class="block w-full h-full relative overflow-hidden rounded-2xl group">
+                        <img src="${item.img}" alt="Oferta especial" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                        <!-- Tag Patrocinado minimalista (canto superior direito) -->
+                        <div class="absolute top-2 right-2 bg-black/50 text-gray-300 text-[10px] px-2 py-1 rounded backdrop-blur-sm">
+                            Patrocinado
+                        </div>
+                        <!-- Texto fixo no rodapé com gradiente -->
+                        <div class="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+                            <span class="text-white text-xs font-semibold block text-center">
+                                COMPRE NO ATACADO COM MELHOR PREÇO DO BRASIL
+                            </span>
+                        </div>
+                    </a>
+                `;
+                container.style.opacity = '1';
+            }, 150);
         }
 
         // Ticker Binance e Lockdown
@@ -486,8 +495,11 @@
                 console.warn("Erro ao verificar sistema_config, prosseguindo normalmente.");
             }
 
-            // Carrega banner aleatório
-            carregarBannerRandomico();
+            // Inicia o banner com um item aleatório
+            atualizarBanner();
+
+            // Configura o intervalo para trocar a cada 5 segundos (5000 ms)
+            bannerInterval = setInterval(atualizarBanner, 5000);
 
             const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             ws.onmessage = (e) => {
@@ -497,6 +509,11 @@
                 document.getElementById('topRateTicker').innerText = rateBinance.toFixed(4);
                 calcularImportacao();
             };
+        };
+
+        // Opcional: limpar intervalo se a página for descarregada
+        window.onbeforeunload = function() {
+            if (bannerInterval) clearInterval(bannerInterval);
         };
 
         function calcularImportacao() {
