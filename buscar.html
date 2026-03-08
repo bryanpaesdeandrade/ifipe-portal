@@ -1299,7 +1299,7 @@
             `).join('');
         }
 
-        // ===== FUNÇÃO ENVIAR PERGUNTA (CORRIGIDA, SEM lida_fornecedor) =====
+        // ===== FUNÇÃO ENVIAR PERGUNTA (FINAL COM AS DUAS FLAGS) =====
         async function enviarPergunta(e) {
             e.preventDefault();
             const ofertaId = Number(document.getElementById('perguntaOfertaId').value);
@@ -1307,7 +1307,7 @@
             const pergunta = document.getElementById('perguntaTexto').value.trim();
             
             if (!pergunta || isNaN(ofertaId) || isNaN(fornecedorId)) {
-                alert('Dados inválidos para envio.');
+                alert('Dados inválidos.');
                 return;
             }
             const { error } = await _s.from('comentarios').insert({
@@ -1316,15 +1316,16 @@
                 fornecedor_id: fornecedorId,
                 autor_nome: currentUser.nome || 'Buscador',
                 pergunta: pergunta,
-                lida_cliente: false
+                lida_cliente: false,
+                lida_fornecedor: false // Agora a coluna existe no SQL!
             });
             if (error) { 
                 console.error('Erro ao enviar:', error);
-                alert('Erro crítico ao enviar: ' + error.message); 
+                alert('Erro ao enviar proposta: ' + error.message); 
                 return; 
             }
             document.getElementById('perguntaTexto').value = '';
-            alert('Proposta enviada com sucesso!');
+            alert('Proposta enviada! O anunciante será notificado.');
             fecharPerguntas();
         }
 
