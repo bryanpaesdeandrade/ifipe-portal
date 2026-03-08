@@ -1193,18 +1193,9 @@
 
         // ===== SISTEMA DE MENSAGENS BLINDADO =====
         async function carregarPropostas() {
-            // 1. Busca APENAS os comentários puros (sem joins que quebram o banco)
-            const { data: comentarios, error } = await _s
-                .from('comentarios')
-                .select('*')
-                .eq('fornecedor_id', loja.id)
-                .order('criado_em', { ascending: false });
-            if (error) {
-                console.error("Erro ao puxar propostas:", error);
-                return;
-            }
+            const { data: comentarios, error } = await _s.from('comentarios').select('*').eq('fornecedor_id', loja.id).order('criado_em', { ascending: false });
+            if (error) { console.error("Erro:", error); return; }
             let propostasBrutas = comentarios || [];
-            // 2. Busca os dados da oferta e do WhatsApp do cliente de forma separada (Anti-Falha)
             await Promise.all(propostasBrutas.map(async (p) => {
                 if (p.oferta_id) {
                     const { data: oferta } = await _s.from('ofertas').select('*, variacoes(produtos_mestre(nome), capacidade, cor)').eq('id', p.oferta_id).maybeSingle();
@@ -1217,11 +1208,7 @@
             }));
             propostasPend = propostasBrutas.filter(p => !p.resposta);
             propostasResp = propostasBrutas.filter(p => p.resposta);
-            const { data: mensagens } = await _s
-                .from('mensagens_internas')
-                .select('*')
-                .eq('destinatario_nome', loja.nome)
-                .order('criado_em', { ascending: false });
+            const { data: mensagens } = await _s.from('mensagens_internas').select('*').eq('destinatario_nome', loja.nome).order('criado_em', { ascending: false });
             mensagensInternas = mensagens || [];
             const badge = document.getElementById('badgeSino');
             if (badge) {
@@ -1234,17 +1221,14 @@
             renderizarPropostas();
             renderizarMensagens();
         }
-
         function renderizarPropostas() {
             document.getElementById('listaPendentes').innerHTML = propostasPend.map(p => {
                 let w = p.clientes_buscador?.whatsapp ? p.clientes_buscador.whatsapp.replace(/\D/g, '') : '';
                 let btnZap = w ? `<a href="https://wa.me/55${w}" target="_blank" class="bg-green-600 text-white text-[9px] px-3 py-1.5 rounded font-black hover:bg-green-500">📱 ZAP</a>` : '';
-                // Identificação do iPhone
-                let prodNome = p.ofertas?.variacoes?.produtos_mestre?.nome || 'Aparelho Indisponível/Excluído';
+                let prodNome = p.ofertas?.variacoes?.produtos_mestre?.nome || 'Aparelho Indisponível';
                 let prodCap = p.ofertas?.variacoes?.capacidade || '';
                 let prodCor = p.ofertas?.variacoes?.cor || '';
-                return `
-                <div class="border border-[#38383a] rounded-lg p-3">
+                return `<div class="border border-[#38383a] rounded-lg p-3">
                     <div class="flex justify-between text-[9px] text-gray-400"><span>👤 ${p.autor_nome || p.clientes_buscador?.nome || 'Buscador'}</span><span>${new Date(p.criado_em).toLocaleString()}</span></div>
                     <div class="text-[10px] font-bold text-blue-400 mt-1">📱 ${prodNome} ${prodCap} ${prodCor}</div>
                     <p class="text-xs mt-1 mb-2 font-medium">"${p.pergunta}"</p>
@@ -1254,17 +1238,15 @@
                         ${btnZap}
                         <button onclick="apagarProposta(${p.id})" class="bg-red-900/30 text-red-500 text-[9px] px-3 py-1 rounded font-black hover:bg-red-500 hover:text-white ml-auto">🗑️ APAGAR</button>
                     </div>
-                </div>
-            `}).join('') || '<p class="text-center text-gray-400 text-xs py-4">Nenhuma proposta pendente.</p>';
-
+                </div>`;
+            }).join('') || '<p class="text-center text-gray-400 text-xs py-4">Nenhuma proposta pendente.</p>';
             document.getElementById('listaRespondidas').innerHTML = propostasResp.map(p => {
                 let w = p.clientes_buscador?.whatsapp ? p.clientes_buscador.whatsapp.replace(/\D/g, '') : '';
                 let btnZap = w ? `<a href="https://wa.me/55${w}" target="_blank" class="bg-green-600 text-white text-[9px] px-3 py-1.5 rounded font-black hover:bg-green-500">📱 ZAP</a>` : '';
-                let prodNome = p.ofertas?.variacoes?.produtos_mestre?.nome || 'Aparelho Indisponível/Excluído';
+                let prodNome = p.ofertas?.variacoes?.produtos_mestre?.nome || 'Aparelho Indisponível';
                 let prodCap = p.ofertas?.variacoes?.capacidade || '';
                 let prodCor = p.ofertas?.variacoes?.cor || '';
-                return `
-                <div class="border border-[#38383a] rounded-lg p-3">
+                return `<div class="border border-[#38383a] rounded-lg p-3">
                     <div class="flex justify-between text-[9px] text-gray-400"><span>👤 ${p.autor_nome || p.clientes_buscador?.nome || 'Buscador'}</span><span>${new Date(p.criado_em).toLocaleString()}</span></div>
                     <div class="text-[10px] font-bold text-blue-400 mt-1">📱 ${prodNome} ${prodCap} ${prodCor}</div>
                     <p class="text-xs mt-1">"${p.pergunta}"</p>
@@ -1275,8 +1257,8 @@
                         ${btnZap}
                         <button onclick="apagarProposta(${p.id})" class="bg-red-900/30 text-red-500 text-[9px] px-3 py-1 rounded font-black hover:bg-red-500 hover:text-white ml-auto">🗑️ APAGAR</button>
                     </div>
-                </div>
-            `}).join('') || '<p class="text-center text-gray-400 text-xs py-4">Nenhuma proposta respondida.</p>';
+                </div>`;
+            }).join('') || '<p class="text-center text-gray-400 text-xs py-4">Nenhuma proposta respondida.</p>';
         }
 
         function renderizarMensagens() {
@@ -1348,9 +1330,7 @@
             document.getElementById('propostasModal').classList.remove('hidden'); 
             const ids = propostasPend.filter(p => p.lida_fornecedor === false || p.lida_fornecedor === undefined).map(p => p.id);
             if (ids.length > 0) {
-                try {
-                    await _s.from('comentarios').update({ lida_fornecedor: true }).in('id', ids);
-                } catch(e) { console.warn('Coluna lida_fornecedor ausente, ignorando update.'); }
+                try { await _s.from('comentarios').update({ lida_fornecedor: true }).in('id', ids); } catch(e) {}
                 carregarPropostas();
             }
         }
