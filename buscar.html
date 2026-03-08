@@ -1298,40 +1298,34 @@
                 </div>
             `).join('');
         }
+
+        // ===== FUNÇÃO ENVIAR PERGUNTA (CORRIGIDA, SEM lida_fornecedor) =====
         async function enviarPergunta(e) {
             e.preventDefault();
-            if (currentUser && currentUser.id === 0) {
-                alert('Proposta simulada! (Modo Master)');
-                document.getElementById('perguntaTexto').value = '';
-                fecharPerguntas();
-                return;
-            }
-            if (!currentUser) return alert('Faça login.');
             const ofertaId = Number(document.getElementById('perguntaOfertaId').value);
             const fornecedorId = Number(document.getElementById('perguntaFornecedorId').value);
             const pergunta = document.getElementById('perguntaTexto').value.trim();
+            
             if (!pergunta || isNaN(ofertaId) || isNaN(fornecedorId)) {
-                alert('Dados inválidos.');
+                alert('Dados inválidos para envio.');
                 return;
             }
-            // INSERÇÃO COM FLAG lida_fornecedor: false (obrigatória para notificar o lojista)
             const { error } = await _s.from('comentarios').insert({
                 oferta_id: ofertaId,
                 cliente_id: currentUser.id,
                 fornecedor_id: fornecedorId,
                 autor_nome: currentUser.nome || 'Buscador',
                 pergunta: pergunta,
-                lida_cliente: false,
-                lida_fornecedor: false
+                lida_cliente: false
             });
             if (error) { 
-                console.error('Erro ao enviar proposta:', error);
+                console.error('Erro ao enviar:', error);
                 alert('Erro crítico ao enviar: ' + error.message); 
                 return; 
             }
             document.getElementById('perguntaTexto').value = '';
-            alert('Proposta enviada!');
-            await carregarPerguntas(ofertaId);
+            alert('Proposta enviada com sucesso!');
+            fecharPerguntas();
         }
 
         // ===== NOTIFICAÇÕES =====
