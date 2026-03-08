@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>iFipe - Seth Gestão (ERP)</title>
+    <title>iFipe - Seth Gestão (ERP Completo)</title>
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase -->
@@ -15,12 +15,36 @@
     <style>
         * { font-family: 'Inter', sans-serif; }
         body { background: #000; color: #fff; }
-        /* Scrollbar customizada */
+        /* Scrollbar personalizada */
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: #2c2c2e; }
         ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
-        /* Sidebar mobile */
-        .sidebar {
+        /* Sidebar fixa desktop / drawer mobile */
+        .sidebar-desktop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background: #1c1c1e;
+            border-right: 1px solid #38383a;
+            padding: 2rem 1rem;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .main-content {
+            margin-left: 260px;
+        }
+        @media (max-width: 1023px) {
+            .sidebar-desktop {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        /* Drawer mobile (hamburguer) */
+        .drawer-mobile {
             position: fixed;
             top: 0;
             left: -280px;
@@ -33,15 +57,15 @@
             padding: 2rem 1rem;
             overflow-y: auto;
         }
-        .sidebar.open { left: 0; }
-        .sidebar-overlay {
+        .drawer-mobile.open { left: 0; }
+        .drawer-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5);
             z-index: 1999;
             display: none;
         }
-        .sidebar-overlay.open { display: block; }
+        .drawer-overlay.open { display: block; }
         .sidebar-item {
             padding: 12px 16px;
             border-radius: 12px;
@@ -49,6 +73,9 @@
             cursor: pointer;
             transition: 0.2s;
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         .sidebar-item:hover, .sidebar-item.active {
             background: #2c2c2e;
@@ -133,12 +160,7 @@
             display: flex;
             gap: 2rem;
             align-items: center;
-        }
-        .radio-group label {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            cursor: pointer;
+            flex-wrap: wrap;
         }
         .preview-box {
             background: #0f172a;
@@ -153,31 +175,42 @@
             font-weight: 800;
             color: #3b82f6;
         }
+        .aba { display: none; }
+        .aba.ativa { display: block; }
     </style>
 </head>
-<body class="antialiased">
+<body>
 
-    <!-- Sidebar (mobile) -->
-    <div id="sidebarOverlay" class="sidebar-overlay" onclick="fecharSidebar()"></div>
-    <div id="sidebar" class="sidebar">
+    <!-- DRAWER MOBILE -->
+    <div id="drawerOverlay" class="drawer-overlay" onclick="fecharDrawer()"></div>
+    <div id="drawerMobile" class="drawer-mobile">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold">Seth Gestão</h2>
-            <button onclick="fecharSidebar()" class="text-2xl text-gray-400 hover:text-white">&times;</button>
+            <button onclick="fecharDrawer()" class="text-2xl text-gray-400 hover:text-white">&times;</button>
         </div>
-        <div class="sidebar-item active" onclick="mudarAba('estoque')">
-            <i class="fas fa-boxes w-6"></i> Estoque
+        <div class="sidebar-item" data-aba="visaoGeral" onclick="mudarAba('visaoGeral'); fecharDrawer()">
+            <i class="fas fa-chart-pie w-5"></i> Visão Geral
         </div>
-        <div class="sidebar-item" onclick="mudarAba('dashboard')">
-            <i class="fas fa-chart-pie w-6"></i> Visão Geral
+        <div class="sidebar-item active" data-aba="estoque" onclick="mudarAba('estoque'); fecharDrawer()">
+            <i class="fas fa-boxes w-5"></i> Estoque
         </div>
-        <div class="sidebar-item" onclick="mudarAba('venda')">
-            <i class="fas fa-cart-plus w-6"></i> Nova Venda
+        <div class="sidebar-item" data-aba="cadastros" onclick="mudarAba('cadastros'); fecharDrawer()">
+            <i class="fas fa-address-card w-5"></i> Cadastros
         </div>
-        <div class="sidebar-item" onclick="mudarAba('financeiro')">
-            <i class="fas fa-dollar-sign w-6"></i> Financeiro
+        <div class="sidebar-item" data-aba="novaVenda" onclick="mudarAba('novaVenda'); fecharDrawer()">
+            <i class="fas fa-cart-plus w-5"></i> Nova Venda
         </div>
-        <div class="sidebar-item" onclick="mudarAba('relatorios')">
-            <i class="fas fa-file-invoice w-6"></i> Relatórios (DRE)
+        <div class="sidebar-item" data-aba="caixa" onclick="mudarAba('caixa'); fecharDrawer()">
+            <i class="fas fa-cash-register w-5"></i> Caixa
+        </div>
+        <div class="sidebar-item" data-aba="financeiro" onclick="mudarAba('financeiro'); fecharDrawer()">
+            <i class="fas fa-dollar-sign w-5"></i> Financeiro
+        </div>
+        <div class="sidebar-item" data-aba="relatorios" onclick="mudarAba('relatorios'); fecharDrawer()">
+            <i class="fas fa-file-invoice w-5"></i> Relatórios (DRE)
+        </div>
+        <div class="sidebar-item" data-aba="oraculo" onclick="mudarAba('oraculo'); fecharDrawer()">
+            <i class="fas fa-moon w-5"></i> Oráculo (Câmbio)
         </div>
         <div class="absolute bottom-8 left-0 w-full px-4">
             <a href="atacadista.html" class="block text-center text-red-500 border border-[#38383a] py-3 rounded-xl hover:bg-red-600 hover:text-white transition">
@@ -186,22 +219,59 @@
         </div>
     </div>
 
-    <!-- Header Desktop/Mobile -->
-    <header class="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-[#38383a] px-6 py-4 flex justify-between items-center z-50">
-        <div class="flex items-center gap-3">
-            <button class="text-2xl text-gray-400 lg:hidden" onclick="abrirSidebar()">☰</button>
-            <h1 class="text-2xl font-black italic">iFipe <span class="text-blue-500">SETH</span></h1>
+    <!-- SIDEBAR DESKTOP -->
+    <div class="sidebar-desktop hidden lg:block">
+        <h2 class="text-2xl font-black italic mb-8">iFipe <span class="text-blue-500">SETH</span></h2>
+        <div class="sidebar-item" data-aba="visaoGeral" onclick="mudarAba('visaoGeral')">
+            <i class="fas fa-chart-pie w-5"></i> Visão Geral
         </div>
-        <div class="flex items-center gap-4">
-            <span class="text-xs text-gray-400 hidden md:inline" id="nomeLojaHeader">CARREGANDO...</span>
-            <a href="atacadista.html" class="border border-[#38383a] hover:border-blue-500 px-4 py-2 rounded-full text-sm font-bold transition">
-                <i class="fas fa-arrow-left mr-2"></i>Voltar
+        <div class="sidebar-item active" data-aba="estoque" onclick="mudarAba('estoque')">
+            <i class="fas fa-boxes w-5"></i> Estoque
+        </div>
+        <div class="sidebar-item" data-aba="cadastros" onclick="mudarAba('cadastros')">
+            <i class="fas fa-address-card w-5"></i> Cadastros
+        </div>
+        <div class="sidebar-item" data-aba="novaVenda" onclick="mudarAba('novaVenda')">
+            <i class="fas fa-cart-plus w-5"></i> Nova Venda
+        </div>
+        <div class="sidebar-item" data-aba="caixa" onclick="mudarAba('caixa')">
+            <i class="fas fa-cash-register w-5"></i> Caixa
+        </div>
+        <div class="sidebar-item" data-aba="financeiro" onclick="mudarAba('financeiro')">
+            <i class="fas fa-dollar-sign w-5"></i> Financeiro
+        </div>
+        <div class="sidebar-item" data-aba="relatorios" onclick="mudarAba('relatorios')">
+            <i class="fas fa-file-invoice w-5"></i> Relatórios (DRE)
+        </div>
+        <div class="sidebar-item" data-aba="oraculo" onclick="mudarAba('oraculo')">
+            <i class="fas fa-moon w-5"></i> Oráculo (Câmbio)
+        </div>
+        <div class="absolute bottom-8 left-0 w-full px-4">
+            <a href="atacadista.html" class="block text-center text-red-500 border border-[#38383a] py-3 rounded-xl hover:bg-red-600 hover:text-white transition">
+                <i class="fas fa-sign-out-alt mr-2"></i> Sair
             </a>
         </div>
+    </div>
+
+    <!-- HEADER MOBILE -->
+    <header class="lg:hidden fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-[#38383a] px-4 py-3 flex justify-between items-center z-50">
+        <button class="text-2xl text-gray-400" onclick="abrirDrawer()">☰</button>
+        <h1 class="text-xl font-black italic">iFipe <span class="text-blue-500">SETH</span></h1>
+        <div class="w-8"></div>
     </header>
 
-    <main class="pt-20 pb-10 px-4 max-w-7xl mx-auto">
-        <!-- Conteúdo das abas -->
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content pt-0 lg:pt-0 px-4 pb-10 max-w-7xl mx-auto" style="margin-top: 70px;">
+
+        <!-- ABA VISÃO GERAL -->
+        <div id="abaVisaoGeral" class="aba">
+            <div class="card-seth">
+                <h3 class="text-lg font-bold mb-4">📊 Visão Geral</h3>
+                <p class="text-gray-400">Para operar com informações precisas, forneça os custos dos produtos.</p>
+            </div>
+        </div>
+
+        <!-- ABA ESTOQUE (ATIVA POR PADRÃO) -->
         <div id="abaEstoque" class="aba ativa">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-xl font-bold">📦 Estoque de Produtos</h2>
@@ -209,7 +279,6 @@
                     <i class="fas fa-plus"></i> Novo Produto
                 </button>
             </div>
-
             <div class="card-seth overflow-x-auto">
                 <table class="table-seth">
                     <thead>
@@ -231,84 +300,103 @@
             </div>
         </div>
 
-        <div id="abaDashboard" class="aba hidden">
+        <!-- ABA CADASTROS -->
+        <div id="abaCadastros" class="aba">
             <div class="card-seth">
-                <h3 class="text-lg font-bold mb-4">📊 Visão Geral</h3>
-                <p class="text-gray-400">Em breve: cards com total em estoque, valor, etc.</p>
+                <h3 class="text-lg font-bold mb-4">📋 Cadastros</h3>
+                <p class="text-gray-400">Clientes, Fornecedores Terceiros e Produtos (acesse pelo menu Estoque).</p>
             </div>
         </div>
 
-        <div id="abaVenda" class="aba hidden">
+        <!-- ABA NOVA VENDA -->
+        <div id="abaNovaVenda" class="aba">
             <div class="card-seth">
-                <h3 class="text-lg font-bold mb-4">🛒 Nova Venda</h3>
-                <p class="text-gray-400">Módulo em desenvolvimento.</p>
+                <h3 class="text-lg font-bold mb-4">🛒 Nova Venda (Pedido)</h3>
+                <p class="text-gray-400">Módulo em construção. Em breve: pedidos sequenciais, IMEI e recibo.</p>
             </div>
         </div>
 
-        <div id="abaFinanceiro" class="aba hidden">
+        <!-- ABA CAIXA -->
+        <div id="abaCaixa" class="aba">
             <div class="card-seth">
-                <h3 class="text-lg font-bold mb-4">💰 Contas a Pagar/Receber</h3>
-                <p class="text-gray-400">Em breve.</p>
+                <h3 class="text-lg font-bold mb-4">💰 Caixa Diário</h3>
+                <p class="text-gray-400">Trava de abertura/fechamento será implementada.</p>
             </div>
         </div>
 
-        <div id="abaRelatorios" class="aba hidden">
+        <!-- ABA FINANCEIRO -->
+        <div id="abaFinanceiro" class="aba">
             <div class="card-seth">
-                <h3 class="text-lg font-bold mb-4">📈 DRE</h3>
-                <p class="text-gray-400">Em construção.</p>
+                <h3 class="text-lg font-bold mb-4">📉 Contas a Pagar/Receber</h3>
+                <p class="text-gray-400">Em desenvolvimento.</p>
+            </div>
+        </div>
+
+        <!-- ABA RELATÓRIOS -->
+        <div id="abaRelatorios" class="aba">
+            <div class="card-seth">
+                <h3 class="text-lg font-bold mb-4">📈 DRE e Histórico</h3>
+                <p class="text-gray-400">Assim que houver dados suficientes, o DRE será gerado.</p>
+            </div>
+        </div>
+
+        <!-- ABA ORÁCULO -->
+        <div id="abaOraculo" class="aba">
+            <div class="card-seth">
+                <h3 class="text-lg font-bold mb-4">🌙 Oráculo (Câmbio)</h3>
+                <p class="text-gray-400">Índice Binance e calculadora de importação.</p>
             </div>
         </div>
     </main>
 
-    <!-- MODAL DE PRODUTO (CRIAÇÃO/EDIÇÃO) -->
+    <!-- MODAL DE PRODUTO -->
     <div id="modalProduto" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
         <div class="bg-[#1c1c1e] border border-[#38383a] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-bold" id="modalTitulo">Novo Produto</h3>
                 <button onclick="fecharModalProduto()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
             </div>
-
             <form id="formProduto" onsubmit="salvarProduto(event)">
                 <input type="hidden" id="produtoId">
 
-                <!-- RADIO: TIPO DE PRODUTO (ECOSSISTEMA) -->
+                <!-- RADIO TIPO PRODUTO -->
                 <div class="mb-6">
                     <label class="text-sm font-bold text-gray-300 block mb-2">Tipo de Produto *</label>
                     <div class="radio-group">
-                        <label>
+                        <label class="flex items-center gap-2">
                             <input type="radio" name="tipoProduto" value="ifipe" checked onchange="toggleTipoProduto()">
                             <span>📱 Produto iFipe (Buscador)</span>
                         </label>
-                        <label>
+                        <label class="flex items-center gap-2">
                             <input type="radio" name="tipoProduto" value="interno" onchange="toggleTipoProduto()">
                             <span>📦 Produto Próprio (Controle Interno)</span>
                         </label>
                     </div>
                 </div>
 
-                <!-- ALERTA DE PRODUTO PRÓPRIO -->
+                <!-- ALERTA INTERNO -->
                 <div id="alertaInterno" class="hidden bg-yellow-900/20 border border-yellow-600/30 text-yellow-400 p-3 rounded-lg mb-4 text-sm">
-                    ⚠️ Atenção: Produtos que não estão na base do iFipe NÃO serão anunciados no buscador. Uso exclusivo para controle interno.
+                    ⚠️ Produtos fora da base do iFipe NÃO serão anunciados no buscador. Controle interno apenas.
                 </div>
 
-                <!-- CAMPOS DINÂMICOS (iFipe vs Interno) -->
+                <!-- CAMPOS PARA PRODUTO iFipe -->
                 <div id="camposIfipe">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div>
                             <label class="text-xs text-gray-400 font-bold mb-1 block">Modelo *</label>
-                            <select id="modelo" class="input-seth" required>
+                            <select id="modelo" class="input-seth">
                                 <option value="">Selecione</option>
                             </select>
                         </div>
                         <div>
                             <label class="text-xs text-gray-400 font-bold mb-1 block">Memória *</label>
-                            <select id="memoria" class="input-seth" required>
+                            <select id="memoria" class="input-seth">
                                 <option value="">Selecione</option>
                             </select>
                         </div>
                         <div>
                             <label class="text-xs text-gray-400 font-bold mb-1 block">Cor *</label>
-                            <select id="cor" class="input-seth" required>
+                            <select id="cor" class="input-seth">
                                 <option value="">Selecione</option>
                             </select>
                         </div>
@@ -316,7 +404,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="text-xs text-gray-400 font-bold mb-1 block">Condição *</label>
-                            <select id="condicao" class="input-seth" required>
+                            <select id="condicao" class="input-seth">
                                 <option value="Novo">Novo</option>
                                 <option value="Seminovo">Seminovo</option>
                                 <option value="CPO">CPO</option>
@@ -324,21 +412,22 @@
                         </div>
                         <div>
                             <label class="text-xs text-gray-400 font-bold mb-1 block">Origem *</label>
-                            <select id="origem" class="input-seth" required>
+                            <select id="origem" class="input-seth">
                                 <option value="">Selecione</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
+                <!-- CAMPOS PARA PRODUTO PRÓPRIO -->
                 <div id="camposInterno" class="hidden">
                     <div class="mb-4">
                         <label class="text-xs text-gray-400 font-bold mb-1 block">Descrição do Produto *</label>
-                        <input type="text" id="descricaoInterna" class="input-seth uppercase-input" placeholder="EX: CAPA IPHONE 13" oninput="this.value = this.value.toUpperCase()">
+                        <input type="text" id="descricaoInterna" class="input-seth" placeholder="EX: CAPA IPHONE 13" oninput="this.value = this.value.toUpperCase()">
                     </div>
                 </div>
 
-                <!-- CAMPOS COMUNS (ESTOQUE, CUSTO) -->
+                <!-- CAMPOS COMUNS (ESTOQUE INICIAL, MÍNIMO, CUSTO) -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
                         <label class="text-xs text-gray-400 font-bold mb-1 block">Estoque Inicial</label>
@@ -354,7 +443,7 @@
                     </div>
                 </div>
 
-                <!-- MODO DE LANÇAMENTO (Direto/Completo) -->
+                <!-- RADIO MODO LANÇADOR -->
                 <div class="border-t border-[#38383a] pt-4 mt-2">
                     <h4 class="text-sm font-bold text-blue-400 mb-3">⚙️ Modo de Precificação</h4>
                     <div class="flex gap-4 mb-4">
@@ -368,7 +457,7 @@
                         </label>
                     </div>
 
-                    <!-- Lançador Direto (só preço de venda) -->
+                    <!-- LANÇADOR DIRETO -->
                     <div id="lancadorDireto">
                         <div class="mb-4">
                             <label class="text-xs text-gray-400 font-bold mb-1 block">Preço de Venda (R$) *</label>
@@ -376,52 +465,57 @@
                         </div>
                     </div>
 
-                    <!-- Lançador Completo (com cálculo) -->
+                    <!-- LANÇADOR COMPLETO -->
                     <div id="lancadorCompleto" class="hidden">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label class="text-xs text-gray-400 font-bold mb-1 block">Custo USD</label>
-                                <input type="number" id="custo_usd" class="input-seth" step="0.01" min="0">
+                                <input type="number" id="custoUsd" class="input-seth" step="0.01" min="0" oninput="calcularLancadorCompleto()">
                             </div>
                             <div>
-                                <label class="text-xs text-gray-400 font-bold mb-1 block">Taxa do dólar</label>
-                                <input type="number" id="taxa_dolar" class="input-seth" step="0.0001" min="0">
+                                <label class="text-xs text-gray-400 font-bold mb-1 block">Valor da Taxa do Dólar</label>
+                                <input type="number" id="taxaDolar" class="input-seth" step="0.0001" min="0" oninput="calcularLancadorCompleto()">
                             </div>
                             <div>
-                                <label class="text-xs text-gray-400 font-bold mb-1 block">% Frete</label>
-                                <input type="number" id="percentual_frete" class="input-seth" step="0.1" min="0" max="20">
+                                <label class="text-xs text-gray-400 font-bold mb-1 block">% do Freteiro</label>
+                                <input type="number" id="percFrete" class="input-seth" step="0.1" min="0" oninput="calcularLancadorCompleto()">
                             </div>
                             <div>
-                                <label class="text-xs text-gray-400 font-bold mb-1 block">Margem (R$ ou %)</label>
-                                <div class="flex gap-2">
-                                    <input type="number" id="margem_valor" class="input-seth" step="0.01" min="0" placeholder="Valor">
-                                    <select id="margem_tipo" class="input-seth w-24">
-                                        <option value="R$">R$</option>
-                                        <option value="%">%</option>
-                                    </select>
-                                </div>
+                                <label class="text-xs text-gray-400 font-bold mb-1 block">Tipo de Margem</label>
+                                <select id="tipoMargem" class="input-seth" onchange="calcularLancadorCompleto()">
+                                    <option value="reais">R$ (reais)</option>
+                                    <option value="percentual">% (percentual)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400 font-bold mb-1 block">Valor da Margem</label>
+                                <input type="number" id="valorMargem" class="input-seth" step="0.01" min="0" oninput="calcularLancadorCompleto()">
                             </div>
                         </div>
+
+                        <!-- ARREDONDAMENTO -->
                         <div class="mb-4">
                             <label class="text-xs text-gray-400 font-bold mb-1 block">Arredondamento</label>
-                            <select id="arredondamento" class="input-seth">
-                                <option value="cima">Arredondamento para cima</option>
-                                <option value="baixo">Arredondamento para baixo</option>
-                            </select>
+                            <div class="flex gap-4">
+                                <label class="flex items-center gap-2">
+                                    <input type="radio" name="arredondamento" value="baixo" checked onchange="calcularLancadorCompleto()">
+                                    <span>Arredondamento para baixo</span>
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input type="radio" name="arredondamento" value="cima" onchange="calcularLancadorCompleto()">
+                                    <span>Arredondamento para cima</span>
+                                </label>
+                            </div>
                         </div>
 
-                        <!-- Preview do valor calculado -->
+                        <!-- PREVIEW -->
                         <div class="preview-box">
-                            <p class="text-sm text-gray-400 mb-1">VALOR FINAL A SER ANUNCIADO:</p>
-                            <p class="valor" id="previewValor">R$ ---</p>
+                            <p class="text-sm text-gray-400 mb-1" id="previewLabel">VALOR FINAL A SER ANUNCIADO:</p>
+                            <p class="valor" id="previewPreco">R$ ---</p>
                         </div>
 
-                        <!-- Campo hidden que será preenchido com o valor calculado -->
                         <input type="hidden" id="preco_venda_calculado">
                     </div>
-
-                    <!-- Preço final (campo comum, mas preenchido pelo cálculo ou direto) -->
-                    <input type="hidden" id="preco_venda_final">
                 </div>
 
                 <div class="flex justify-end gap-3 mt-6">
@@ -433,7 +527,7 @@
     </div>
 
     <script>
-        // Supabase client
+        // Config Supabase
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
         let fornecedorId = null;
@@ -443,23 +537,23 @@
         let regioes = [];
 
         // Controle de abas
-        function abrirSidebar() { 
-            document.getElementById('sidebar').classList.add('open');
-            document.getElementById('sidebarOverlay').classList.add('open');
+        function abrirDrawer() {
+            document.getElementById('drawerMobile').classList.add('open');
+            document.getElementById('drawerOverlay').classList.add('open');
         }
-        function fecharSidebar() {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('sidebarOverlay').classList.remove('open');
+        function fecharDrawer() {
+            document.getElementById('drawerMobile').classList.remove('open');
+            document.getElementById('drawerOverlay').classList.remove('open');
         }
-        function mudarAba(nome) {
-            document.querySelectorAll('.aba').forEach(el => el.classList.add('hidden'));
-            document.getElementById('aba' + nome.charAt(0).toUpperCase() + nome.slice(1)).classList.remove('hidden');
+        function mudarAba(abaNome) {
+            document.querySelectorAll('.aba').forEach(el => el.classList.remove('ativa'));
+            document.getElementById('aba' + abaNome.charAt(0).toUpperCase() + abaNome.slice(1)).classList.add('ativa');
+            // Atualizar classe active nos menus
             document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
-            event.target.classList.add('active');
-            fecharSidebar();
+            document.querySelectorAll(`.sidebar-item[data-aba="${abaNome}"]`).forEach(el => el.classList.add('active'));
         }
 
-        // Inicialização
+        // Carregar dados iniciais
         window.onload = async () => {
             const tokenAta = localStorage.getItem('iFipe_Anunciante');
             const masterAuth = localStorage.getItem('iFipe_Master_Auth');
@@ -468,7 +562,6 @@
                 return;
             }
             fornecedorId = tokenAta || (masterAuth === 'gov_absoluto' ? 1 : null);
-            document.getElementById('nomeLojaHeader').innerText = 'Fornecedor ID: ' + fornecedorId;
 
             await carregarDadosBase();
             await carregarProdutos();
@@ -492,7 +585,7 @@
             produtosMestre.forEach(p => htmlModelo += `<option value="${p.id}">${p.nome}</option>`);
             document.getElementById('modelo').innerHTML = htmlModelo;
 
-            // Memória (será preenchida quando modelo mudar)
+            // Memória (depende do modelo)
             document.getElementById('modelo').addEventListener('change', function() {
                 const modeloId = this.value;
                 const caps = [...new Set(variacoes.filter(v => v.produto_id == modeloId).map(v => v.capacidade))];
@@ -517,7 +610,7 @@
             document.getElementById('origem').innerHTML = htmlOrigem;
         }
 
-        // Toggle entre produto iFipe e interno
+        // Toggle tipo produto
         function toggleTipoProduto() {
             const tipo = document.querySelector('input[name="tipoProduto"]:checked').value;
             const ifipeDiv = document.getElementById('camposIfipe');
@@ -527,24 +620,10 @@
                 ifipeDiv.classList.remove('hidden');
                 internoDiv.classList.add('hidden');
                 alerta.classList.add('hidden');
-                // Remove required da descrição interna
-                document.getElementById('descricaoInterna').required = false;
-                // Adiciona required nos selects
-                document.getElementById('modelo').required = true;
-                document.getElementById('memoria').required = true;
-                document.getElementById('cor').required = true;
-                document.getElementById('condicao').required = true;
-                document.getElementById('origem').required = true;
             } else {
                 ifipeDiv.classList.add('hidden');
                 internoDiv.classList.remove('hidden');
                 alerta.classList.remove('hidden');
-                document.getElementById('descricaoInterna').required = true;
-                document.getElementById('modelo').required = false;
-                document.getElementById('memoria').required = false;
-                document.getElementById('cor').required = false;
-                document.getElementById('condicao').required = false;
-                document.getElementById('origem').required = false;
             }
         }
 
@@ -561,52 +640,48 @@
                 diretoDiv.classList.add('hidden');
                 completoDiv.classList.remove('hidden');
                 document.getElementById('preco_venda_direto').required = false;
-                // Adiciona listeners para cálculo
-                ['custo_usd', 'taxa_dolar', 'percentual_frete', 'margem_valor', 'margem_tipo', 'arredondamento'].forEach(id => {
-                    document.getElementById(id).addEventListener('input', calcularPreview);
-                    document.getElementById(id).addEventListener('change', calcularPreview);
-                });
-                calcularPreview();
+                calcularLancadorCompleto();
             }
         }
 
-        // Função de cálculo do preview (Lançador Completo)
-        function calcularPreview() {
-            const custoUsd = parseFloat(document.getElementById('custo_usd').value) || 0;
-            const taxa = parseFloat(document.getElementById('taxa_dolar').value) || 0;
-            const frete = parseFloat(document.getElementById('percentual_frete').value) || 0;
-            const margemValor = parseFloat(document.getElementById('margem_valor').value) || 0;
-            const margemTipo = document.getElementById('margem_tipo').value;
-            const arred = document.getElementById('arredondamento').value;
+        // Cálculo do lançador completo (função exata conforme especificação)
+        function calcularLancadorCompleto() {
+            const custoUsd = parseFloat(document.getElementById('custoUsd').value) || 0;
+            const taxaDolar = parseFloat(document.getElementById('taxaDolar').value) || 0;
+            const percFrete = parseFloat(document.getElementById('percFrete').value) || 0;
+            const tipoMargem = document.getElementById('tipoMargem').value;
+            const valorMargem = parseFloat(document.getElementById('valorMargem').value) || 0;
+            const arredondamento = document.querySelector('input[name="arredondamento"]:checked')?.value;
 
-            if (custoUsd === 0 || taxa === 0) {
-                document.getElementById('previewValor').innerText = 'R$ ---';
+            if (custoUsd === 0 || taxaDolar === 0) {
+                document.getElementById('previewPreco').innerText = 'R$ ---';
                 return;
             }
 
-            // Custo seco
-            let custoSeco = custoUsd * taxa;
-            // Custo com frete
-            let custoComFrete = custoSeco * (1 + frete / 100);
-            // Custo efetivo (+6%)
-            let custoEfetivo = custoComFrete * 1.06;
-            // Aplica margem
+            // 1. Custo Seco
+            const custoSeco = custoUsd * taxaDolar;
+            // 2. Custo com Frete
+            const custoComFrete = custoSeco + (custoSeco * (percFrete / 100));
+            // 3. Custo Efetivo (REGRA FIXA DO SISTEMA: + 6%)
+            const custoEfetivo = custoComFrete * 1.06;
+            // 4. Soma da Margem Livre
             let precoBruto;
-            if (margemTipo === 'R$') {
-                precoBruto = custoEfetivo + margemValor;
+            if (tipoMargem === 'reais') {
+                precoBruto = custoEfetivo + valorMargem;
             } else {
-                precoBruto = custoEfetivo * (1 + margemValor / 100);
+                precoBruto = custoEfetivo + (custoEfetivo * (valorMargem / 100));
             }
 
-            // Arredondamento para dezena (final 0)
-            let precoFinal;
-            if (arred === 'cima') {
+            // 5. Arredondamento Mandatório (Final 0)
+            let precoFinal = precoBruto;
+            if (arredondamento === 'cima') {
                 precoFinal = Math.ceil(precoBruto / 10) * 10;
-            } else {
+            } else if (arredondamento === 'baixo') {
                 precoFinal = Math.floor(precoBruto / 10) * 10;
             }
 
-            document.getElementById('previewValor').innerText = `R$ ${precoFinal.toFixed(2)}`;
+            // 6. Atualiza Preview
+            document.getElementById('previewPreco').innerText = `R$ ${precoFinal.toFixed(2).replace('.', ',')}`;
             document.getElementById('preco_venda_calculado').value = precoFinal;
         }
 
@@ -654,18 +729,20 @@
             document.getElementById('formProduto').reset();
             document.getElementById('produtoId').value = '';
             document.getElementById('modalProduto').classList.remove('hidden');
-            // Padrão: iFipe e Direto
+            // Padrões: iFipe e Direto
             document.querySelector('input[name="tipoProduto"][value="ifipe"]').checked = true;
             document.querySelector('input[name="modoLancador"][value="direto"]').checked = true;
             toggleTipoProduto();
             toggleModoLancador();
+            // Reset preview
+            document.getElementById('previewPreco').innerText = 'R$ ---';
         }
 
         function fecharModalProduto() {
             document.getElementById('modalProduto').classList.add('hidden');
         }
 
-        // Salvar produto (inserir ou atualizar)
+        // Salvar produto
         async function salvarProduto(e) {
             e.preventDefault();
 
@@ -676,7 +753,6 @@
             // Determinar descrição
             let descricao = '';
             if (tipo === 'ifipe') {
-                // Montar descrição a partir dos selects
                 const modeloSelect = document.getElementById('modelo');
                 const modeloNome = modeloSelect.options[modeloSelect.selectedIndex]?.text || '';
                 const memoria = document.getElementById('memoria').value;
@@ -704,13 +780,13 @@
             const estoqueMin = parseInt(document.getElementById('estoque_minimo').value) || 0;
             const estoqueInicial = parseInt(document.getElementById('estoque_inicial').value) || 0;
 
-            // Dados para o lançador completo (opcionais)
-            const custoUsd = parseFloat(document.getElementById('custo_usd').value) || null;
-            const taxaDolar = parseFloat(document.getElementById('taxa_dolar').value) || null;
-            const percFrete = parseFloat(document.getElementById('percentual_frete').value) || null;
-            const margemValor = parseFloat(document.getElementById('margem_valor').value) || null;
-            const margemTipo = document.getElementById('margem_tipo').value;
-            const arred = document.getElementById('arredondamento').value;
+            // Dados adicionais do lançador completo (opcionais)
+            const custoUsd = parseFloat(document.getElementById('custoUsd').value) || null;
+            const taxaDolar = parseFloat(document.getElementById('taxaDolar').value) || null;
+            const percFrete = parseFloat(document.getElementById('percFrete').value) || null;
+            const tipoMargem = document.getElementById('tipoMargem').value;
+            const valorMargem = parseFloat(document.getElementById('valorMargem').value) || null;
+            const arred = document.querySelector('input[name="arredondamento"]:checked')?.value || 'baixo';
 
             const produtoData = {
                 fornecedor_id: fornecedorId,
@@ -723,7 +799,7 @@
                 cambio_pago: taxaDolar,
                 percentual_frete: percFrete,
                 tipo_arredondamento: arred,
-                // Se for iFipe, podemos vincular variação depois, por enquanto simplificado
+                // Poderíamos armazenar também margem e tipo, mas por enquanto ignoramos
             };
 
             if (id) {
@@ -739,7 +815,6 @@
                 const { data, error } = await _s.from('produtos').insert([produtoData]).select();
                 if (error) alert('Erro: ' + error.message);
                 else {
-                    // Se estoque inicial > 0, registrar movimento
                     if (estoqueInicial > 0 && data && data[0]) {
                         await _s.from('movimentos_estoque').insert([{
                             fornecedor_id: fornecedorId,
@@ -757,10 +832,7 @@
         }
 
         async function editarProduto(id) {
-            // Buscar produto e preencher modal (simplificado, apenas para demonstração)
-            const prod = produtos.find(p => p.id == id);
-            if (!prod) return;
-            alert('Edição completa com carregamento dos dados será implementada em breve.');
+            alert('Edição completa será implementada em breve.');
         }
 
         async function excluirProduto(id) {
@@ -771,14 +843,14 @@
         }
 
         // Expor funções globais
-        window.abrirSidebar = abrirSidebar;
-        window.fecharSidebar = fecharSidebar;
+        window.abrirDrawer = abrirDrawer;
+        window.fecharDrawer = fecharDrawer;
         window.mudarAba = mudarAba;
         window.abrirModalProduto = abrirModalProduto;
         window.fecharModalProduto = fecharModalProduto;
         window.toggleTipoProduto = toggleTipoProduto;
         window.toggleModoLancador = toggleModoLancador;
-        window.calcularPreview = calcularPreview;
+        window.calcularLancadorCompleto = calcularLancadorCompleto;
         window.salvarProduto = salvarProduto;
         window.editarProduto = editarProduto;
         window.excluirProduto = excluirProduto;
