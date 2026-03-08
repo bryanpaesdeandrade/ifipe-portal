@@ -198,6 +198,10 @@
             background: var(--blue);
             border-radius: 4px;
         }
+        /* Estilo para o banner dinâmico */
+        .banner-overlay {
+            background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.3));
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -271,20 +275,9 @@
                     </div>
                 </div>
 
-                <!-- Coluna 3: Banner Fábrica de Marcas -->
-                <div class="glass-card p-0 overflow-hidden flex">
-                    <a href="https://fabricademarcas.mercos.com/" target="_blank" class="block w-full h-full relative">
-                        <!-- Imagem com fallback via onerror -->
-                        <img src="https://raw.githubusercontent.com/Isis-AI/iFipe/main/IMG_2549.PNG" 
-                             alt="Fábrica de Marcas" 
-                             class="w-full h-full object-cover rounded-2xl hover:scale-[1.02] transition shadow-lg"
-                             onload="this.classList.remove('hidden'); this.nextElementSibling.classList.add('hidden');"
-                             onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
-                        <!-- Placeholder (inicialmente visível caso a imagem não carregue) -->
-                        <div class="w-full h-full bg-[#2c2c2e] rounded-2xl flex items-center justify-center text-center p-4">
-                            <span class="text-gray-400 text-xs">Imagem indisponível</span>
-                        </div>
-                    </a>
+                <!-- Coluna 3: Banner Dinâmico (Vitrine Randômica) -->
+                <div class="glass-card p-0 overflow-hidden flex" id="bannerContainer">
+                    <!-- Conteúdo será preenchido via JavaScript -->
                 </div>
             </div>
 
@@ -415,6 +408,32 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
         const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        // Array de links para a vitrine randômica
+        const vitrineLinks = [
+            { url: "https://fabricademarcas.mercos.com/produtos/211255645", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/211255542", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/211255540", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/211255653", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/223605124", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/235367312", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/215373806", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/211257928", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/211247849", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/222792958", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/237004270", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/237637272", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/237637188", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/237637248", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/226348642", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/241911826", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/226345768", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/242321243", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/211255980", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/211255984", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/232172759", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" },
+            { url: "https://fabricademarcas.mercos.com/produtos/211247820", img: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?q=80&w=600&auto=format&fit=crop" }
+        ];
+
         let currentProfile = 'buscador';
         let rateBinance = 5.2907;
         let rateOraculo = rateBinance + 0.06;
@@ -433,6 +452,28 @@
             }
         }
 
+        // Função para carregar banner aleatório
+        function carregarBannerRandomico() {
+            const container = document.getElementById('bannerContainer');
+            if (!container) return;
+            
+            // Escolhe um item aleatório do array
+            const randomIndex = Math.floor(Math.random() * vitrineLinks.length);
+            const item = vitrineLinks[randomIndex];
+            
+            // Cria o HTML do banner
+            container.innerHTML = `
+                <a href="${item.url}" target="_blank" class="block w-full h-full relative overflow-hidden rounded-2xl">
+                    <img src="${item.img}" alt="Oferta especial" class="w-full h-full object-cover opacity-60 hover:scale-105 transition duration-300">
+                    <div class="absolute inset-0 flex items-end justify-center p-4 bg-gradient-to-t from-black/80 to-transparent">
+                        <span class="text-white text-sm font-black text-center leading-tight drop-shadow-lg">
+                            🔥 COMPRE NO ATACADO COM O MELHOR PREÇO DO BRASIL
+                        </span>
+                    </div>
+                </a>
+            `;
+        }
+
         // Ticker Binance e Lockdown
         window.onload = async () => {
             // Lockdown check
@@ -449,6 +490,9 @@
             } catch (e) {
                 console.warn("Erro ao verificar sistema_config, prosseguindo normalmente.");
             }
+
+            // Carrega banner aleatório
+            carregarBannerRandomico();
 
             const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             ws.onmessage = (e) => {
