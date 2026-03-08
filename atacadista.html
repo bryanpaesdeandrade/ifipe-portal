@@ -870,6 +870,13 @@
             atualizarInsignias();
             preencherSelectsModais();
             carregarEstadosBrasil();
+
+            // === RADAR AUTOMÁTICO (POLLING) ===
+            setInterval(() => {
+                if (!document.hidden && document.getElementById('propostasModal').classList.contains('hidden')) {
+                    carregarPropostas();
+                }
+            }, 7000);
         };
 
         function preencherSelectsModais() {
@@ -1185,13 +1192,16 @@
         }
 
         // === PROPOSTAS E MENSAGENS INTERNAS (COM WHATSAPP) ===
+        // ***** FUNÇÃO CARREGARPROPOSTAS CORRIGIDA *****
         async function carregarPropostas() {
-            // Buscar comentários (propostas dos buscadores) - agora com whatsapp
-            const { data: comentarios } = await _s
+            // Buscar comentários (propostas dos buscadores) - join corrigido
+            const { data: comentarios, error } = await _s
                 .from('comentarios')
-                .select('*, ofertas!inner(variacao_id, variacoes!inner(produtos_mestre!inner(nome), capacidade, cor)), clientes_buscador(nome, whatsapp)')
+                .select('*, ofertas!inner(variacoes!inner(produtos_mestre!inner(nome), capacidade, cor)), clientes_buscador(nome, whatsapp)')
                 .eq('fornecedor_id', loja.id)
                 .order('criado_em', { ascending: false });
+
+            if (error) console.error("Erro ao puxar propostas:", error);
 
             propostasPend = (comentarios || []).filter(p => !p.resposta);
             propostasResp = (comentarios || []).filter(p => p.resposta);
@@ -1209,7 +1219,8 @@
             const badge = document.getElementById('badgeSino');
             if (badge) {
                 let naoLidas = mensagensInternas.filter(m => !m.lida).length;
-                let totalNotif = propostasPend.length + naoLidas;
+                let propsNaoLidas = propostasPend.filter(p => p.lida_fornecedor === false).length;
+                let totalNotif = propsNaoLidas + naoLidas;
                 badge.classList.toggle('hidden', totalNotif === 0);
                 badge.innerText = totalNotif;
             }
@@ -1315,7 +1326,17 @@
             localStorage.removeItem('iFipe_Func_Nome');
             window.location.replace('index.html');
         }
-        function abrirSino() { carregarPropostas(); document.getElementById('propostasModal').classList.remove('hidden'); }
+
+        // ***** FUNÇÃO ABRIRSINO CORRIGIDA *****
+        async function abrirSino() { 
+            document.getElementById('propostasModal').classList.remove('hidden'); 
+            const ids = propostasPend.filter(p => p.lida_fornecedor === false).map(p => p.id);
+            if (ids.length > 0) {
+                await _s.from('comentarios').update({ lida_fornecedor: true }).in('id', ids);
+                carregarPropostas();
+            }
+        }
+
         function fecharSino() { document.getElementById('propostasModal').classList.add('hidden'); }
         function abrirConta() {
             document.getElementById('c_nome').value = loja.nome || '';
