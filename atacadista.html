@@ -1191,22 +1191,19 @@
             }
         }
 
-        // === PROPOSTAS E MENSAGENS INTERNAS (COM WHATSAPP) ===
-        // ***** FUNÇÃO CARREGARPROPOSTAS CORRIGIDA *****
+        // ===== SISTEMA DE MENSAGENS BLINDADO =====
         async function carregarPropostas() {
-            // Buscar comentários (propostas dos buscadores) - join corrigido
+            // Removemos o !inner para evitar que a exclusão da oferta oculte a proposta (Left Join Seguro)
             const { data: comentarios, error } = await _s
                 .from('comentarios')
-                .select('*, ofertas!inner(variacoes!inner(produtos_mestre!inner(nome), capacidade, cor)), clientes_buscador(nome, whatsapp)')
+                .select('*, ofertas(variacoes(produtos_mestre(nome), capacidade, cor)), clientes_buscador(nome, whatsapp)')
                 .eq('fornecedor_id', loja.id)
                 .order('criado_em', { ascending: false });
 
             if (error) console.error("Erro ao puxar propostas:", error);
-
             propostasPend = (comentarios || []).filter(p => !p.resposta);
             propostasResp = (comentarios || []).filter(p => p.resposta);
 
-            // Buscar mensagens internas do sistema (enviadas pelo master)
             const { data: mensagens } = await _s
                 .from('mensagens_internas')
                 .select('*')
@@ -1215,11 +1212,10 @@
 
             mensagensInternas = mensagens || [];
 
-            // Atualizar badge do sino (propostas pendentes + mensagens não lidas)
             const badge = document.getElementById('badgeSino');
             if (badge) {
                 let naoLidas = mensagensInternas.filter(m => !m.lida).length;
-                let propsNaoLidas = propostasPend.filter(p => p.lida_fornecedor === false).length;
+                let propsNaoLidas = propostasPend.filter(p => p.lida_fornecedor === false || p.lida_fornecedor === undefined).length;
                 let totalNotif = propsNaoLidas + naoLidas;
                 badge.classList.toggle('hidden', totalNotif === 0);
                 badge.innerText = totalNotif;
@@ -1233,33 +1229,48 @@
             document.getElementById('listaPendentes').innerHTML = propostasPend.map(p => {
                 let w = p.clientes_buscador?.whatsapp ? p.clientes_buscador.whatsapp.replace(/\D/g, '') : '';
                 let btnZap = w ? `<a href="https://wa.me/55${w}" target="_blank" class="bg-green-600 text-white text-[9px] px-3 py-1.5 rounded font-black hover:bg-green-500">📱 ZAP</a>` : '';
+
+                // Injetando a identificação do iPhone na UI
+                let prodNome = p.ofertas?.variacoes?.produtos_mestre?.nome || 'Aparelho Excluído/Indisponível';
+                let prodCap = p.ofertas?.variacoes?.capacidade || '';
+                let prodCor = p.ofertas?.variacoes?.cor || '';
+
                 return `
                 <div class="border border-[#38383a] rounded-lg p-3">
-                    <div class="flex justify-between text-[9px] text-gray-400"><span>${p.clientes_buscador?.nome}</span><span>${new Date(p.criado_em).toLocaleString()}</span></div>
-                    <p class="text-xs mt-1 mb-2">${p.pergunta}</p>
-                    <textarea id="resp_${p.id}" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-2 text-xs" placeholder="Responder..."></textarea>
+                    <div class="flex justify-between text-[9px] text-gray-400"><span>👤 ${p.clientes_buscador?.nome || 'Buscador'}</span><span>${new Date(p.criado_em).toLocaleString()}</span></div>
+                    <div class="text-[10px] font-bold text-blue-400 mt-1">📱 ${prodNome} ${prodCap} ${prodCor}</div>
+                    <p class="text-xs mt-1 mb-2 font-medium">"${p.pergunta}"</p>
+                    <textarea id="resp_${p.id}" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-2 text-xs" placeholder="Escreva sua resposta..."></textarea>
                     <div class="flex items-center gap-2 mt-2">
-                        <button onclick="responder(${p.id})" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-full">Enviar resposta</button>
+                        <button onclick="responder(${p.id})" class="bg-blue-600 text-white text-[10px] px-4 py-2 rounded-full font-bold hover:bg-blue-500">Enviar Resposta</button>
                         ${btnZap}
-                        <button onclick="apagarProposta(${p.id})" class="bg-red-900/30 text-red-500 text-[9px] px-3 py-1 rounded font-black hover:bg-red-500 hover:text-white">🗑️ APAGAR</button>
+                        <button onclick="apagarProposta(${p.id})" class="bg-red-900/30 text-red-500 text-[9px] px-3 py-1 rounded font-black hover:bg-red-500 hover:text-white ml-auto">🗑️ APAGAR</button>
                     </div>
                 </div>
-            `}).join('');
+            `}).join('') || '<p class="text-center text-gray-400 text-xs py-4">Nenhuma proposta pendente.</p>';
 
             document.getElementById('listaRespondidas').innerHTML = propostasResp.map(p => {
                 let w = p.clientes_buscador?.whatsapp ? p.clientes_buscador.whatsapp.replace(/\D/g, '') : '';
                 let btnZap = w ? `<a href="https://wa.me/55${w}" target="_blank" class="bg-green-600 text-white text-[9px] px-3 py-1.5 rounded font-black hover:bg-green-500">📱 ZAP</a>` : '';
+
+                let prodNome = p.ofertas?.variacoes?.produtos_mestre?.nome || 'Aparelho Excluído/Indisponível';
+                let prodCap = p.ofertas?.variacoes?.capacidade || '';
+                let prodCor = p.ofertas?.variacoes?.cor || '';
+
                 return `
                 <div class="border border-[#38383a] rounded-lg p-3">
-                    <div class="flex justify-between text-[9px] text-gray-400"><span>${p.clientes_buscador?.nome}</span><span>${new Date(p.criado_em).toLocaleString()}</span></div>
-                    <p class="text-xs mt-1">${p.pergunta}</p>
-                    <p class="text-xs text-green-400 mt-1">✅ ${p.resposta}</p>
+                    <div class="flex justify-between text-[9px] text-gray-400"><span>👤 ${p.clientes_buscador?.nome || 'Buscador'}</span><span>${new Date(p.criado_em).toLocaleString()}</span></div>
+                    <div class="text-[10px] font-bold text-blue-400 mt-1">📱 ${prodNome} ${prodCap} ${prodCor}</div>
+                    <p class="text-xs mt-1">"${p.pergunta}"</p>
+                    <div class="mt-2 bg-green-900/20 border border-green-500/30 rounded p-2">
+                        <p class="text-xs text-green-400">✅ <b>Sua resposta:</b> ${p.resposta}</p>
+                    </div>
                     <div class="flex items-center gap-2 mt-2">
                         ${btnZap}
-                        <button onclick="apagarProposta(${p.id})" class="bg-red-900/30 text-red-500 text-[9px] px-3 py-1 rounded font-black hover:bg-red-500 hover:text-white">🗑️ APAGAR</button>
+                        <button onclick="apagarProposta(${p.id})" class="bg-red-900/30 text-red-500 text-[9px] px-3 py-1 rounded font-black hover:bg-red-500 hover:text-white ml-auto">🗑️ APAGAR</button>
                     </div>
                 </div>
-            `}).join('');
+            `}).join('') || '<p class="text-center text-gray-400 text-xs py-4">Nenhuma proposta respondida.</p>';
         }
 
         function renderizarMensagens() {
@@ -1327,12 +1338,13 @@
             window.location.replace('index.html');
         }
 
-        // ***** FUNÇÃO ABRIRSINO CORRIGIDA *****
-        async function abrirSino() { 
-            document.getElementById('propostasModal').classList.remove('hidden'); 
-            const ids = propostasPend.filter(p => p.lida_fornecedor === false).map(p => p.id);
+        async function abrirSino() {
+            document.getElementById('propostasModal').classList.remove('hidden');
+            const ids = propostasPend.filter(p => p.lida_fornecedor === false || p.lida_fornecedor === undefined).map(p => p.id);
             if (ids.length > 0) {
-                await _s.from('comentarios').update({ lida_fornecedor: true }).in('id', ids);
+                try {
+                    await _s.from('comentarios').update({ lida_fornecedor: true }).in('id', ids);
+                } catch(e) { console.warn('Coluna lida_fornecedor ausente, ignorando update.'); }
                 carregarPropostas();
             }
         }
