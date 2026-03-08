@@ -354,6 +354,10 @@
             <button class="header-btn ml-2 hidden lg:flex text-[10px]" onclick="abrirModalHorus()">
                 👁️‍🗨️ Horus
             </button>
+            <!-- Botão Atualizar (desktop) -->
+            <button onclick="forcarAtualizacao()" class="header-btn text-[10px] text-green-400 border-green-900/30 hover:bg-green-500/10 hidden lg:flex">
+                <i id="syncIconDesktop" class="fas fa-sync-alt mr-1"></i> Atualizar
+            </button>
         </div>
         
         <div class="flex items-center gap-2 lg:gap-4">
@@ -375,6 +379,11 @@
             <button class="header-btn text-[10px] hidden lg:flex" onclick="abrirHistoricoGeral()">
                 <i class="fas fa-chart-line mr-1"></i> Histórico
             </button>
+            
+            <!-- Botão Atualizar (mobile) - ícone compacto -->
+            <div class="notification-icon ml-2 text-green-400" onclick="forcarAtualizacao()">
+                <i id="syncIconMobile" class="fas fa-sync-alt"></i>
+            </div>
             
             <div class="notification-icon ml-2" onclick="abrirRespostasRecebidas()">
                 <i class="far fa-bell"></i>
@@ -732,6 +741,21 @@
             document.getElementById('backToTop').classList.toggle('hidden', window.scrollY <= 300);
         });
 
+        // Função de atualização forçada com animação
+        window.forcarAtualizacao = function() {
+            const desktopIcon = document.getElementById('syncIconDesktop');
+            const mobileIcon = document.getElementById('syncIconMobile');
+            if (desktopIcon) desktopIcon.classList.add('animate-spin');
+            if (mobileIcon) mobileIcon.classList.add('animate-spin');
+            
+            carregarDados().finally(() => {
+                setTimeout(() => {
+                    if (desktopIcon) desktopIcon.classList.remove('animate-spin');
+                    if (mobileIcon) mobileIcon.classList.remove('animate-spin');
+                }, 1000);
+            });
+        };
+
         // Inicialização
         window.onload = async () => {
             // Verificação de manutenção
@@ -792,6 +816,13 @@
             initTicker();
             await checarNotificacoes();
             await carregarMensagensSistema();
+
+            // Inicia o polling inteligente a cada 7 segundos (só quando a aba estiver ativa)
+            setInterval(() => {
+                if (!document.hidden) {
+                    forcarAtualizacao();
+                }
+            }, 7000);
         };
 
         function initTicker() {
