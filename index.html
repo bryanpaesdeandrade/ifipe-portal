@@ -202,6 +202,35 @@
         .banner-fade {
             transition: opacity 0.5s ease-in-out;
         }
+        /* Botões de navegação do banner */
+        .banner-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            backdrop-filter: blur(4px);
+            transition: background 0.2s;
+            font-size: 18px;
+        }
+        .banner-nav-btn:hover {
+            background: rgba(0,0,0,0.8);
+        }
+        .banner-nav-left {
+            left: 8px;
+        }
+        .banner-nav-right {
+            right: 8px;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -223,19 +252,19 @@
     <main class="min-h-screen flex items-center justify-center px-4 py-8 lg:py-0">
         <div class="max-w-7xl w-full">
 
-            <!-- CHAMADA DE MARKETING (HERO) -->
+            <!-- CHAMADA DE MARKETING (HERO) - versão reduzida para mobile -->
             <div class="w-full text-center mb-8">
                 <h1 class="text-xl md:text-2xl lg:text-3xl font-black text-white uppercase tracking-tight mb-2">
-                    ANUNCIE PARA TODO BRASIL DE GRAÇA,<br class="hidden md:block"> BUSQUE O MELHOR PREÇO DO BRASIL DE GRAÇA
+                    ANUNCIE GRÁTIS • COMPRE GRÁTIS
                 </h1>
                 <p class="text-gray-400 text-sm font-medium">iFipe | A Tabela Fipe do 📲</p>
             </div>
 
-            <!-- Grid principal com 3 colunas, com items-stretch para mesma altura -->
+            <!-- Grid principal com 3 colunas e ordem personalizada para mobile -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
                 
-                <!-- Coluna 1: Calculadora -->
-                <div class="glass-card flex flex-col">
+                <!-- Card 1: Calculadora (no desktop aparece primeiro, no mobile terceiro) -->
+                <div class="glass-card flex flex-col order-3 lg:order-1">
                     <h2 class="text-xl font-black text-center mb-2">Calculadora de iPhone Importado</h2>
                     <p class="text-[9px] text-gray-400 text-center mb-4">Custo Final Brasil</p>
                     <div class="relative mb-4">
@@ -253,8 +282,8 @@
                     </div>
                 </div>
 
-                <!-- Coluna 2: Painel de Login/Cadastro -->
-                <div class="glass-card">
+                <!-- Card 2: Painel de Login/Cadastro (no desktop segundo, no mobile primeiro) -->
+                <div class="glass-card order-1 lg:order-2">
                     <!-- Botões de perfil -->
                     <div class="flex gap-2 mb-6">
                         <button id="profileBuscador" class="btn-profile active" onclick="setProfile('buscador')">
@@ -284,9 +313,9 @@
                     </div>
                 </div>
 
-                <!-- Coluna 3: Banner Dinâmico (Vitrine Randômica) -->
-                <div class="glass-card p-0 overflow-hidden flex" id="bannerContainer">
-                    <!-- Conteúdo será preenchido via JavaScript -->
+                <!-- Card 3: Banner Dinâmico (Vitrine Randômica) - no desktop terceiro, no mobile segundo -->
+                <div class="glass-card p-0 overflow-hidden flex relative order-2 lg:order-3" id="bannerContainer">
+                    <!-- Conteúdo será preenchido via JavaScript, mas já deixamos a estrutura base com botões -->
                 </div>
             </div>
 
@@ -432,6 +461,7 @@
         let rateBinance = 5.2907;
         let rateOraculo = rateBinance + 0.06;
         let bannerInterval;
+        let bannerIndex = 0; // índice atual
 
         function setProfile(profile) {
             currentProfile = profile;
@@ -447,16 +477,19 @@
             }
         }
 
-        // Função para atualizar o banner com um item aleatório (com fade)
-        function atualizarBanner() {
+        // Função para atualizar o banner com um índice específico
+        function atualizarBanner(index) {
             const container = document.getElementById('bannerContainer');
             if (!container) return;
             
-            // Escolhe um índice aleatório
-            const randomIndex = Math.floor(Math.random() * vitrineLinks.length);
-            const item = vitrineLinks[randomIndex];
+            // Garantir que o índice esteja dentro dos limites
+            if (index < 0) index = vitrineLinks.length - 1;
+            if (index >= vitrineLinks.length) index = 0;
+            bannerIndex = index;
             
-            // Aplica fade out/in simples (opcional)
+            const item = vitrineLinks[bannerIndex];
+            
+            // Aplica fade out/in simples
             container.style.opacity = '0.5';
             setTimeout(() => {
                 container.innerHTML = `
@@ -472,10 +505,30 @@
                                 COMPRE NO ATACADO COM MELHOR PREÇO DO BRASIL
                             </span>
                         </div>
+                        <!-- Botões de navegação -->
+                        <button class="banner-nav-btn banner-nav-left" onclick="event.preventDefault(); event.stopPropagation(); anteriorBanner();">❮</button>
+                        <button class="banner-nav-btn banner-nav-right" onclick="event.preventDefault(); event.stopPropagation(); proximoBanner();">❯</button>
                     </a>
                 `;
                 container.style.opacity = '1';
             }, 150);
+        }
+
+        function proximoBanner() {
+            atualizarBanner(bannerIndex + 1);
+            // Reinicia o intervalo para não conflitar
+            if (bannerInterval) {
+                clearInterval(bannerInterval);
+                bannerInterval = setInterval(() => atualizarBanner(bannerIndex + 1), 2000);
+            }
+        }
+
+        function anteriorBanner() {
+            atualizarBanner(bannerIndex - 1);
+            if (bannerInterval) {
+                clearInterval(bannerInterval);
+                bannerInterval = setInterval(() => atualizarBanner(bannerIndex + 1), 2000);
+            }
         }
 
         // Ticker Binance e Lockdown
@@ -496,10 +549,11 @@
             }
 
             // Inicia o banner com um item aleatório
-            atualizarBanner();
+            const randomIndex = Math.floor(Math.random() * vitrineLinks.length);
+            atualizarBanner(randomIndex);
 
-            // Configura o intervalo para trocar a cada 5 segundos (5000 ms)
-            bannerInterval = setInterval(atualizarBanner, 5000);
+            // Configura o intervalo para trocar a cada 2 segundos
+            bannerInterval = setInterval(() => atualizarBanner(bannerIndex + 1), 2000);
 
             const ws = new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker');
             ws.onmessage = (e) => {
@@ -511,7 +565,7 @@
             };
         };
 
-        // Opcional: limpar intervalo se a página for descarregada
+        // Limpar intervalo se a página for descarregada
         window.onbeforeunload = function() {
             if (bannerInterval) clearInterval(bannerInterval);
         };
@@ -744,6 +798,8 @@
         window.abrirModalPrivacidade = abrirModalPrivacidade;
         window.fecharModalPrivacidade = fecharModalPrivacidade;
         window.calcularImportacao = calcularImportacao;
+        window.proximoBanner = proximoBanner;
+        window.anteriorBanner = anteriorBanner;
     </script>
 </body>
 </html>
