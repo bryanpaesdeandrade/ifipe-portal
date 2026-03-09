@@ -6,6 +6,7 @@
     <title>iFipe - A Tabela Fipe do iPhone</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -36,6 +37,15 @@
             margin: 0;
             -webkit-font-smoothing: antialiased;
             transition: background 0.3s, color 0.3s;
+        }
+        /* Remove spinners de input number */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
         }
         .nav-blur {
             background: rgba(255,255,255,0.8);
@@ -84,7 +94,11 @@
             gap: 4px;
         }
         .btn-apple:hover { background: #005bb5; transform: scale(1.02); }
-        
+        .btn-apple:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
         .header-btn {
             background: transparent;
             border: 1px solid var(--border);
@@ -259,6 +273,94 @@
             top: 60px;
             z-index: 100;
         }
+
+        /* USDT Widget */
+        .usdt-widget {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #1c1c1e;
+            border: 1px solid #38383a;
+            border-radius: 30px;
+            padding: 4px 8px;
+        }
+        .usdt-widget input {
+            width: 100px;
+            background: #2c2c2e;
+            border: none;
+            border-radius: 20px;
+            padding: 4px 8px;
+            font-size: 9px;
+            color: white;
+        }
+        .usdt-widget button {
+            background: #0071e3;
+            border: none;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 9px;
+            font-weight: 900;
+            color: white;
+            white-space: nowrap;
+        }
+        .usdt-widget button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        /* Pedido card */
+        .pedido-card {
+            background: #0a0a0a;
+            border: 1px solid #2c2c2e;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+        }
+        .timer {
+            color: #4ade80;
+            font-weight: 800;
+        }
+
+        /* Container do card PIX: mobile fullscreen com fundo escuro */
+        #usdtPedidoContainer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            top: 0;
+            background: rgba(0,0,0,0.9);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 1rem;
+        }
+        #usdtPedidoContainer.hidden {
+            display: none !important;
+        }
+        #usdtPedidoContainer > div {
+            max-width: 400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        @media (min-width: 1024px) {
+            #usdtPedidoContainer {
+                top: auto;
+                bottom: 20px;
+                left: auto;
+                right: 20px;
+                background: transparent;
+                backdrop-filter: none;
+                padding: 0;
+                width: auto;
+            }
+            #usdtPedidoContainer > div {
+                max-width: 380px;
+            }
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -372,6 +474,12 @@
             <a id="btnComprarUsdt" href="https://wa.me/15616760652?text=VENHO%20PELO%20iFipe%20DESEJO%20COMPRAR%20USDT" target="_blank" class="bg-green-600 text-white px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-green-700 transition flex items-center gap-1">
                 <i class="fab fa-whatsapp"></i> USDT ORÁCULO <span id="taxaVip" class="ml-1">R$ 5,3507</span>
             </a>
+
+            <!-- Widget USDT (Trava) -->
+            <div class="usdt-widget hidden lg:flex">
+                <input type="number" id="usdAmount" placeholder="VALOR EM USDT" min="500" style="font-size:9px;">
+                <button id="lockUsdtBtn" onclick="abrirModalRegrasTrava()">TRAVAR USDT</button>
+            </div>
             
             <a href="https://wa.me/556896003049" target="_blank" class="header-btn text-[10px] hidden lg:flex">
                 <i class="fab fa-whatsapp"></i> Suporte
@@ -457,6 +565,24 @@
             </div>
             <input type="text" id="buscaHorus" placeholder="🔍 Buscar modelo, cor, novo, seminovo..." class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-4 text-white" onkeyup="filtrarHorus(this.value)">
             <div id="horusList" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
+        </div>
+    </div>
+
+    <!-- MODAL REGRAS DA TRAVA (USDT) -->
+    <div id="modalRegrasTrava" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="fecharModalRegrasTrava()">&times;</span>
+            <h3 class="text-lg font-bold mb-4 border-b border-zinc-800 pb-2">⚠️ CONFIRMAR TRAVA</h3>
+            <div class="space-y-3 text-sm">
+                <p><span class="text-gray-400">Valor:</span> <span id="regrasValor" class="text-white font-bold">0 USD</span></p>
+                <p><span class="text-gray-400">Taxa atual:</span> <span id="regrasTaxa" class="text-green-400 font-mono">R$ 0,0000</span></p>
+                <p><span class="text-gray-400">Total R$:</span> <span id="regrasTotal" class="text-blue-400 font-bold">R$ 0,00</span></p>
+                <p class="text-yellow-400 text-center font-bold mt-2">Ao confirmar, seu comprovante será gerado e você terá 120s para pagar.</p>
+            </div>
+            <div class="flex gap-2 mt-6">
+                <button onclick="confirmarTrava()" class="btn-apple bg-green-600 flex-1">CONFIRMAR E GERAR PIX</button>
+                <button onclick="fecharModalRegrasTrava()" class="btn-apple bg-zinc-700 flex-1">CANCELAR</button>
+            </div>
         </div>
     </div>
 
@@ -644,6 +770,9 @@
         </div>
     </div>
 
+    <!-- Container do Card PIX (USDT) - será preenchido dinamicamente -->
+    <div id="usdtPedidoContainer" class="hidden"></div>
+
     <!-- Botão voltar ao topo -->
     <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-500 text-white w-12 h-12 rounded-full shadow-[0_0_15px_rgba(0,113,227,0.5)] transition-all hidden z-50 flex items-center justify-center">
         <i class="fas fa-arrow-up text-lg"></i>
@@ -676,6 +805,228 @@
         let respostasNaoLidas = [];
 
         let DADOS_PROCESSADOS = { menorPrecoPorProdutoGrupo: {} };
+
+        // ===== NOVAS VARIÁVEIS PARA TRAVA USDT =====
+        let usdtTimer, usdtInterval;
+        let usdtLockedUsd = 0;
+        let usdtLockedRate = 0;
+        let usdtLockedTotal = 0;
+        let usdtTimeLeft = 120;
+        let usdtPedidoId = '';
+        let pixInstrucoes = ''; // será carregado da tabela sistema_config
+
+        // ===== FUNÇÃO PARA CARREGAR INSTRUÇÕES PIX =====
+        async function carregarInstrucoesPix() {
+            try {
+                const { data, error } = await _s
+                    .from('sistema_config')
+                    .select('pix_instrucoes')
+                    .eq('id', 1)
+                    .maybeSingle();
+                if (data && data.pix_instrucoes) {
+                    pixInstrucoes = data.pix_instrucoes;
+                } else {
+                    pixInstrucoes = ''; // fallback
+                }
+            } catch (e) {
+                console.warn('Erro ao carregar instruções PIX:', e);
+                pixInstrucoes = '';
+            }
+        }
+
+        // ===== VERIFICAÇÃO DE HORÁRIO COMERCIAL =====
+        function isHorarioComercial() {
+            const agora = new Date();
+            const dia = agora.getDay(); // 0=domingo, 1=segunda, ..., 6=sábado
+            const hora = agora.getHours();
+            const minuto = agora.getMinutes();
+            // Horário: segunda a sexta, das 10:00 às 16:59
+            if (dia >= 1 && dia <= 5 && hora >= 10 && hora <= 16) {
+                if (hora === 16 && minuto > 59) return false;
+                return true;
+            }
+            return false;
+        }
+
+        // ===== ATUALIZAR ESTADO DO BOTÃO TRAVA USDT =====
+        function atualizarBotaoUsdt() {
+            const btn = document.getElementById('lockUsdtBtn');
+            if (!btn) return;
+            if (isHorarioComercial()) {
+                btn.disabled = false;
+                btn.innerText = 'TRAVAR USDT';
+            } else {
+                btn.disabled = true;
+                btn.innerText = 'MERCADO FECHADO';
+            }
+        }
+
+        // ===== FUNÇÕES DA TRAVA USDT =====
+        function abrirModalRegrasTrava() {
+            let usd = parseFloat(document.getElementById('usdAmount').value) || 0;
+            if (usd < 500) {
+                alert('Valor mínimo: 500 USD');
+                return;
+            }
+            let taxaAtual = rateOraculo;
+            let total = usd * taxaAtual;
+            document.getElementById('regrasValor').innerText = usd.toFixed(2) + ' USD';
+            document.getElementById('regrasTaxa').innerText = `R$ ${taxaAtual.toFixed(4)}`;
+            document.getElementById('regrasTotal').innerText = `R$ ${total.toFixed(2)}`;
+            document.getElementById('modalRegrasTrava').classList.remove('hidden');
+        }
+
+        function fecharModalRegrasTrava() {
+            document.getElementById('modalRegrasTrava').classList.add('hidden');
+        }
+
+        function confirmarTrava() {
+            fecharModalRegrasTrava();
+
+            let usd = parseFloat(document.getElementById('usdAmount').value) || 0;
+            if (usd < 500) {
+                alert('Valor mínimo: 500 USD');
+                return;
+            }
+
+            usdtLockedUsd = usd;
+            usdtLockedRate = rateOraculo;
+            usdtLockedTotal = usd * usdtLockedRate;
+            let agora = new Date();
+            let hh = agora.getHours().toString().padStart(2,'0');
+            let mm = agora.getMinutes().toString().padStart(2,'0');
+            let ss = agora.getSeconds().toString().padStart(2,'0');
+            let taxaStr = usdtLockedRate.toFixed(4).replace('.', '');
+            let usdFormatado = usd.toFixed(2);
+            let brlFormatado = usdtLockedTotal.toFixed(2);
+            usdtPedidoId = `TRVX>-$DTX>*${usdFormatado}*-CTX>${taxaStr}-R$X>*${brlFormatado}*-Printx>${hh}:${mm}:${ss}`;
+            usdtTimeLeft = 120;
+
+            mostrarPedido();
+
+            // Inicia timer e monitoramento
+            if (usdtTimer) clearInterval(usdtTimer);
+            iniciarTimerUsdt();
+
+            if (usdtInterval) clearInterval(usdtInterval);
+            usdtInterval = setInterval(() => {
+                let novaTaxa = rateOraculo;
+                if (Math.abs(novaTaxa - usdtLockedRate) > 0.03) {
+                    alert('⚠️ Variação brusca. Taxa atualizada por segurança.');
+                    usdtLockedRate = novaTaxa;
+                    usdtLockedTotal = usdtLockedUsd * usdtLockedRate;
+                    taxaStr = usdtLockedRate.toFixed(4).replace('.', '');
+                    usdtPedidoId = `TRVX>-$DTX>*${usdtLockedUsd.toFixed(2)}*-CTX>${taxaStr}-R$X>*${usdtLockedTotal.toFixed(2)}*-Printx>${hh}:${mm}:${ss}`;
+                    document.getElementById('usdtIdDisplay').innerText = usdtPedidoId;
+                    document.getElementById('usdtTotalDisplay').innerText = `R$ ${usdtLockedTotal.toFixed(2)}`;
+                    clearInterval(usdtTimer);
+                    usdtTimeLeft = 120;
+                    iniciarTimerUsdt();
+                }
+            }, 1000);
+        }
+
+        function iniciarTimerUsdt() {
+            usdtTimer = setInterval(() => {
+                usdtTimeLeft--;
+                let timerSpan = document.getElementById('usdtTimer');
+                if (timerSpan) timerSpan.innerText = `${usdtTimeLeft}s`;
+                if (usdtTimeLeft <= 0) {
+                    clearInterval(usdtTimer);
+                    usdtLockedRate += 0.01;
+                    usdtLockedTotal = usdtLockedUsd * usdtLockedRate;
+                    let taxaStr = usdtLockedRate.toFixed(4).replace('.', '');
+                    let agora = new Date();
+                    let hh = agora.getHours().toString().padStart(2,'0');
+                    let mm = agora.getMinutes().toString().padStart(2,'0');
+                    let ss = agora.getSeconds().toString().padStart(2,'0');
+                    usdtPedidoId = `TRVX>-$DTX>*${usdtLockedUsd.toFixed(2)}*-CTX>${taxaStr}-R$X>*${usdtLockedTotal.toFixed(2)}*-Printx>${hh}:${mm}:${ss}`;
+                    let idSpan = document.getElementById('usdtIdDisplay');
+                    if (idSpan) idSpan.innerText = usdtPedidoId;
+                    let totalSpan = document.getElementById('usdtTotalDisplay');
+                    if (totalSpan) totalSpan.innerText = `R$ ${usdtLockedTotal.toFixed(2)}`;
+                    usdtTimeLeft = 120;
+                    iniciarTimerUsdt();
+                }
+            }, 1000);
+        }
+
+        function mostrarPedido() {
+            let container = document.getElementById('usdtPedidoContainer');
+            container.innerHTML = `
+                <div class="pedido-card" id="reciboPrint">
+                    <div class="text-[10px] text-gray-300 mb-3 whitespace-pre-wrap text-center bg-[#1c1c1e] p-3 rounded border border-dashed border-[#38383a]">${pixInstrucoes}</div>
+                    
+                    <div class="text-[9px] text-gray-400 mb-1 border-t border-zinc-800 pt-3">ID DO PEDIDO:</div>
+                    <div class="text-[10px] text-green-400 break-all mb-3 font-mono" id="usdtIdDisplay">${usdtPedidoId}</div>
+                    
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div><div class="text-[8px] text-gray-400">VALOR EM USDT</div><div class="text-sm font-black text-white">${usdtLockedUsd.toFixed(2)}</div></div>
+                        <div><div class="text-[8px] text-gray-400">TAXA TRAVADA</div><div class="text-sm font-black text-green-400">R$ ${usdtLockedRate.toFixed(4).replace('.', ',')}</div></div>
+                    </div>
+                    
+                    <div class="text-center mb-2 border-t border-zinc-800 pt-3">
+                        <div class="text-[10px] text-gray-400">VALOR EM REAL A PAGAR</div>
+                        <div class="text-3xl font-black text-white" id="usdtTotalDisplay">R$ ${usdtLockedTotal.toFixed(2).replace('.', ',')}</div>
+                    </div>
+                    
+                    <div class="bg-yellow-400 text-red-600 font-black p-3 rounded-lg text-center animate-pulse mt-3 border-2 border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]">
+                        ⏰ *PERDER TAXA ESPECIAL* 💣🧨 <br><span id="usdtTimer" class="text-3xl">120s</span>
+                    </div>
+                    
+                    <div class="flex flex-col gap-2 mt-4" data-html2canvas-ignore>
+                        <button onclick="copiarDadosPix()" class="btn-apple bg-blue-600 py-3 text-[11px]">📋 COPIAR CHAVE PIX</button>
+                        <div class="flex gap-2">
+                            <button onclick="enviarComprovante()" class="btn-apple bg-green-600 flex-1 py-3 text-[9px]">📷 ENVIAR COMPROVANTE</button>
+                            <button onclick="fecharPedidoUsdt()" class="btn-apple bg-red-600 flex-1 py-3 text-[9px]">CANCELAR</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.classList.remove('hidden');
+        }
+
+        function fecharPedidoUsdt() {
+            document.getElementById('usdtPedidoContainer').classList.add('hidden');
+            if (usdtTimer) clearInterval(usdtTimer);
+            if (usdtInterval) clearInterval(usdtInterval);
+        }
+
+        function copiarDadosPix() {
+            let texto = pixInstrucoes || '';
+            try {
+                let partes = texto.split('*<');
+                if (partes.length > 1) {
+                    let chaveLimpada = partes[1].split('>*')[0].trim();
+                    let t = document.createElement("textarea");
+                    t.value = chaveLimpada;
+                    t.style.position = "fixed";
+                    t.style.opacity = "0";
+                    document.body.appendChild(t);
+                    t.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(t);
+                    alert('Chave PIX copiada com sucesso!');
+                } else {
+                    alert('Erro: Nenhuma chave PIX encontrada. Entre em contato com o suporte.');
+                }
+            } catch (err) {
+                alert('Erro ao copiar no celular. Tente selecionar manualmente.');
+            }
+        }
+
+        function enviarComprovante() {
+            let recibo = document.getElementById('reciboPrint');
+            html2canvas(recibo).then(canvas => {
+                let link = document.createElement('a');
+                link.download = 'comprovante.png';
+                link.href = canvas.toDataURL();
+                link.click();
+
+                let msg = `OLÁ TUDO BEM, TRAVEI O DOLAR. SEGUE O COMPROVANTE PARA VALIDAÇÃO.\n\n${usdtPedidoId}`;
+                window.open(`https://wa.me/15616760652?text=${encodeURIComponent(msg)}`, '_blank');
+            });
+        }
 
         // Ordem de poder das insígnias de anunciantes
         const ordemInsigniasAnunciante = [
@@ -776,6 +1127,9 @@
                 console.warn("Erro ao verificar sistema_config, prosseguindo normalmente.");
             }
 
+            // Carregar instruções PIX
+            await carregarInstrucoesPix();
+
             // Verificação de versão com persistência do aviso
             if (versaoArmazenada < VERSAO_ATUAL && localStorage.getItem('iFipe_AvisoVisto') !== VERSAO_ATUAL) {
                 document.getElementById('versionAlert').classList.remove('hidden');
@@ -823,6 +1177,10 @@
                     forcarAtualizacao();
                 }
             }, 7000);
+
+            // Atualizar estado do botão USDT a cada minuto
+            atualizarBotaoUsdt();
+            setInterval(atualizarBotaoUsdt, 60000);
         };
 
         function initTicker() {
@@ -931,10 +1289,28 @@
             });
         }
 
+        // Função de ordenação customizada para modelos (mais novos primeiro)
+        function ordenarProdutosMestre(lista) {
+            return lista.sort((a, b) => {
+                // Extrai o número do modelo (ex: "iPhone 16" -> 16, "iPhone 17 Pro Max" -> 17)
+                const numA = parseInt(a.nome.replace(/\D/g, '')) || 0;
+                const numB = parseInt(b.nome.replace(/\D/g, '')) || 0;
+                if (numA !== numB) return numB - numA; // decrescente
+                // Se números iguais, ordena alfabeticamente
+                return a.nome.localeCompare(b.nome);
+            });
+        }
+
         function ordenarOfertas(lista) {
             return lista.sort((a, b) => {
                 const idA = a.variacoes?.produto_id || 0;
                 const idB = b.variacoes?.produto_id || 0;
+                // Primeiro ordena por modelo (mais novo primeiro)
+                const produtoA = produtos.find(p => p.id == idA);
+                const produtoB = produtos.find(p => p.id == idB);
+                const numA = produtoA ? parseInt(produtoA.nome.replace(/\D/g, '')) || 0 : 0;
+                const numB = produtoB ? parseInt(produtoB.nome.replace(/\D/g, '')) || 0 : 0;
+                if (numA !== numB) return numB - numA;
                 if (idA !== idB) return idB - idA;
                 const pA = a.preco, pB = b.preco;
                 if (pA !== pB) return pA - pB;
@@ -1541,7 +1917,17 @@
                     });
                 }
             };
-            pop('filtroCategoria', produtos, p => p);
+            // Ordena produtos por número do modelo decrescente antes de popular
+            const produtosOrdenados = ordenarProdutosMestre([...produtos]);
+            const popProdutos = (id) => {
+                const el = document.getElementById(id);
+                if(el.options.length <= 1) {
+                    produtosOrdenados.forEach(p => {
+                        el.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+                    });
+                }
+            };
+            popProdutos('filtroCategoria');
             pop('filtroCapacidade', variacoes, v => v.capacidade);
             pop('filtroCor', variacoes, v => v.cor);
             pop('filtroCidade', fornecedores, f => f.cidade);
@@ -1742,6 +2128,14 @@
         window.marcarComoLida = marcarComoLida;
         window.apagarMensagem = apagarMensagem;
         window.apagarTudoMensagens = apagarTudoMensagens;
+
+        // Novas funções da trava USDT expostas globalmente
+        window.abrirModalRegrasTrava = abrirModalRegrasTrava;
+        window.fecharModalRegrasTrava = fecharModalRegrasTrava;
+        window.confirmarTrava = confirmarTrava;
+        window.copiarDadosPix = copiarDadosPix;
+        window.enviarComprovante = enviarComprovante;
+        window.fecharPedidoUsdt = fecharPedidoUsdt;
     </script>
 </body>
 </html>
