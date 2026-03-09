@@ -82,6 +82,11 @@
                 <div class="flex gap-6 border-l border-zinc-800 pl-6 items-center">
                     <div><span class="text-[7px] text-zinc-500 font-black block">BINANCE REAL</span><span id="tBin" class="text-xs font-mono font-black text-white">R$ --</span></div>
                     <div><span class="text-[7px] text-green-500 font-black block">USDT ORÁCULO (+ R$ 0,06)</span><span id="tUsdt" class="text-xs font-mono font-black text-green-400">R$ --</span></div>
+                    <!-- Widget USDT movido para junto do tUsdt -->
+                    <div class="usdt-widget master-only" id="usdtWidget">
+                        <input type="number" id="usdAmount" placeholder="USD" min="0" step="1" value="100">
+                        <button id="lockUsdtBtn" onclick="lockUsdt()">TRAVAR USDT</button>
+                    </div>
                     <div class="relative master-only" id="maintenanceDropdownContainer">
                         <button id="maintenanceBtn" onclick="toggleMaintenanceDropdown()" class="btn-master bg-green-600 px-3 py-1 text-[9px] ml-2">SISTEMA: ON</button>
                         <div id="maintenanceMenu" class="absolute right-0 mt-2 w-64 bg-[#1c1c1e] border border-zinc-700 rounded-lg shadow-lg z-50 hidden">
@@ -108,16 +113,11 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <!-- Grupo Horus + Widget USDT -->
+                <!-- Grupo Horus (sem widget) -->
                 <div class="flex items-center gap-2">
                     <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 master-only text-[9px] px-3 py-1 flex items-center gap-2">
                         👁️‍🗨️ HORUS
                     </button>
-                    <!-- Widget Travar USDT -->
-                    <div class="usdt-widget master-only" id="usdtWidget">
-                        <input type="number" id="usdAmount" placeholder="USD" min="0" step="1" value="100">
-                        <button id="lockUsdtBtn" onclick="lockUsdt()">TRAVAR USDT</button>
-                    </div>
                 </div>
                 <div class="relative master-only cursor-pointer" onclick="abrirNotificacoes()" title="Sugestões e Alertas">
                     <span class="text-lg hover:opacity-80">🔔</span>
@@ -165,12 +165,17 @@
             </div>
         </div>
 
+        <!-- Aba Buscadores (agora com botões de importar/exportar) -->
         <div id="v-clientes" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
                     <h2 class="text-sm font-black text-white">BUSCADORES</h2>
                     <div class="flex gap-2 w-2/3 justify-end items-center">
                         <input type="text" placeholder="🔍 BUSCAR NOME, CIDADE, EMAIL, WHATSAPP..." class="apple-input !w-1/2 !py-2" onkeyup="filterTable('listCli', this.value)">
+                        <!-- Botões de CSV para buscadores -->
+                        <button onclick="exportarBuscadores()" class="btn-master bg-green-700 text-white hover:bg-green-600">📤 EXPORTAR CSV</button>
+                        <button onclick="document.getElementById('importCsvBuscadores').click()" class="btn-master bg-blue-700 text-white hover:bg-blue-600">📥 IMPORTAR CSV</button>
+                        <input type="file" id="importCsvBuscadores" accept=".csv" class="hidden" onchange="importarBuscadores(event)">
                         <button onclick="abrirModalCliNovo()" class="btn-master bg-white text-black hover:bg-zinc-300">+ NOVO</button>
                         <button onclick="bulkCliModal()" class="btn-master bg-zinc-800 text-white">⚙️ EM MASSA</button>
                     </div>
@@ -2037,7 +2042,7 @@
 
         // ================== NOVAS FUNÇÕES ==================
 
-        // --- 1. Gestão de Contatos ---
+        // --- 1. Gestão de Contatos (formatar telefone) ---
         function formatarTelefone(numero) {
             let digits = numero.replace(/\D/g, '');
             if (digits.startsWith('595')) return '+595' + digits.slice(3);
@@ -2045,11 +2050,12 @@
             return '+55' + digits;
         }
 
+        // --- Exportar Atacadistas (cabeçalho novo) ---
         function exportarContatos() {
-            let csv = "Nome,Loja,WhatsApp,Email,País,Estado,Cidade\n";
+            let csv = "NOME DA LOJA,NOME DO DONO,WHATSAPP DA LOJA,WHATSAPP DO DONO,CONTATO\n";
             dbAta.forEach(a => {
                 let whats = formatarTelefone(a.whatsapp || '');
-                csv += `"${a.nome || ''}","${a.nome || ''}","${whats}","${a.email || ''}","${a.pais || ''}","${a.estado || ''}","${a.cidade || ''}"\n`;
+                csv += `"${a.nome || ''}","${a.nome || ''}","${whats}","${whats}","${whats}"\n`;
             });
             let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             let link = document.createElement('a');
@@ -2058,6 +2064,7 @@
             link.click();
         }
 
+        // --- Importar Atacadistas (já existente, mantido) ---
         async function importarFornecedores(event) {
             let file = event.target.files[0];
             if (!file) return;
@@ -2066,49 +2073,68 @@
             for (let linha of linhas) {
                 if (!linha.trim()) continue;
                 let cols = linha.split(',').map(s => s.replace(/^"|"$/g, ''));
-                if (cols.length < 7) continue;
-                let [nome, loja, whatsapp, email, pais, estado, cidade] = cols;
-                // simplificado: insere com senha padrão
+                if (cols.length < 5) continue; // mínimo 5 colunas
+                let [nomeLoja, nomeDono, whatsLoja, whatsDono, contato] = cols;
+                let whatsapp = whatsLoja.replace(/\D/g, '');
                 let { error } = await _s.from('fornecedores').insert({
-                    nome: nome.toUpperCase(),
-                    whatsapp: whatsapp.replace(/\D/g, ''),
-                    email,
-                    pais,
-                    estado,
-                    cidade,
+                    nome: nomeLoja.toUpperCase(),
+                    whatsapp: whatsapp,
                     ativo: true,
                     verificado: false,
                     senha: '123456'
                 });
                 if (error) console.warn('Erro ao importar:', error);
             }
-            alert('Importação concluída. Recarregue a página.');
+            alert('Importação de atacadistas concluída. Recarregue a página.');
             loadAll();
         }
 
-        // --- 2. Widget Travar USDT ---
+        // --- Exportar Buscadores (cabeçalho NOME,CONTATO) ---
+        function exportarBuscadores() {
+            let csv = "NOME,CONTATO\n";
+            dbCli.forEach(c => {
+                let contato = formatarTelefone(c.whatsapp || '');
+                csv += `"${c.nome || ''}","${contato}"\n`;
+            });
+            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'buscadores.csv';
+            link.click();
+        }
+
+        // --- Importar Buscadores ---
+        async function importarBuscadores(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            let text = await file.text();
+            let linhas = text.split('\n').slice(1);
+            for (let linha of linhas) {
+                if (!linha.trim()) continue;
+                let cols = linha.split(',').map(s => s.replace(/^"|"$/g, ''));
+                if (cols.length < 2) continue;
+                let [nome, contato] = cols;
+                let whatsapp = contato.replace(/\D/g, '');
+                let { error } = await _s.from('clientes_buscador').insert({
+                    nome: nome.toUpperCase(),
+                    whatsapp: whatsapp,
+                    ativo: true,
+                    senha: '123456',
+                    logins_count: 0
+                });
+                if (error) console.warn('Erro ao importar buscador:', error);
+            }
+            alert('Importação de buscadores concluída. Recarregue a página.');
+            loadAll();
+        }
+
+        // --- 2. Widget USDT (sem restrição de horário) ---
         let usdtTimer, usdtInterval;
         let usdtLockedRate = 0;
         let usdtLockedUsd = 0;
         let usdtLockedTotal = 0;
         let usdtTimeLeft = 120;
         let usdtPedidoId = '';
-
-        function atualizarBotaoUsdt() {
-            let btn = document.getElementById('lockUsdtBtn');
-            let now = new Date();
-            let dia = now.getDay(); // 0=domingo, 6=sábado
-            let hora = now.getHours();
-            if (dia >= 1 && dia <= 5 && hora >= 10 && hora < 17) {
-                btn.disabled = false;
-                btn.innerText = 'TRAVAR USDT';
-            } else {
-                btn.disabled = true;
-                btn.innerText = 'MERCADO FECHADO';
-            }
-        }
-        setInterval(atualizarBotaoUsdt, 60000);
-        atualizarBotaoUsdt();
 
         function lockUsdt() {
             if (usdtTimer) clearInterval(usdtTimer);
@@ -2204,7 +2230,7 @@
             });
         }
 
-        // --- 3. Lançamento Global em Massa ---
+        // --- 3. Lançamento Global em Massa (já existente, mantido) ---
         function abrirModalAddMassa() {
             document.getElementById('modalAddMassa').classList.remove('hidden');
         }
@@ -2245,7 +2271,6 @@
             `;
             container.appendChild(linha);
 
-            // Eventos para cascata
             let modeloSelect = linha.querySelector('.modelo');
             let capacidadeSelect = linha.querySelector('.capacidade');
             let corSelect = linha.querySelector('.cor');
@@ -2324,7 +2349,6 @@
 
             logArea.innerHTML += `<div class="text-white">⏳ Inserindo ${payloads.length} anúncios...</div>`;
 
-            // Inserir em paralelo
             const results = await Promise.allSettled(payloads.map(p => _s.from('ofertas').insert([p])));
 
             let sucessos = 0, erros = 0;
@@ -2343,9 +2367,11 @@
             }
         }
 
-        // Expor funções
+        // Expor funções globais
         window.exportarContatos = exportarContatos;
         window.importarFornecedores = importarFornecedores;
+        window.exportarBuscadores = exportarBuscadores;
+        window.importarBuscadores = importarBuscadores;
         window.lockUsdt = lockUsdt;
         window.enviarComprovante = enviarComprovante;
         window.fecharPedidoUsdt = fecharPedidoUsdt;
