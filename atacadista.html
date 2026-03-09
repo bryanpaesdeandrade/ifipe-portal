@@ -186,7 +186,7 @@
             }
         }
 
-        /* Linhas dinâmicas do lançamento em massa */
+        /* Linhas dinâmicas do lançamento em massa - base */
         .linha-anuncio {
             display: flex;
             gap: 8px;
@@ -213,6 +213,20 @@
             padding: 6px 10px;
             cursor: pointer;
             font-size: 10px;
+        }
+        /* Classe para select de modelo com largura mínima */
+        .modelo-select {
+            min-width: 180px;
+        }
+        /* Ajuste mobile: empilhar verticalmente */
+        @media (max-width: 640px) {
+            .linha-anuncio {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .linha-anuncio select, .linha-anuncio input {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -296,12 +310,12 @@
             <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1">
                 👁️‍🗨️ HORUS O OLHO QUE MENOR PREÇO VÊ
             </button>
-            <!-- BOTÕES: ANUNCIAR EM MASSA, LANÇADOR X 2.0 E GESTOR SETH -->
+            <!-- BOTÕES: ANUNCIAR EM MASSA EXCEL, ANUNCIAR NO SISTEMA E GESTOR SETH -->
             <button onclick="window.open('anuncios_em_massa.html', '_blank')" class="bg-zinc-800 text-white border border-[#38383a] px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-zinc-700 flex items-center gap-1" title="Subir estoque via planilha">
-                🚀 ANUNCIAR EM MASSA
+                📥 ANUNCIAR EM MASSA EXCEL
             </button>
             <button onclick="abrirModalAddMassa()" class="bg-purple-700 text-white px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-purple-600 flex items-center gap-1" title="Lançamento em massa pelo sistema">
-                🚀 LANÇAR EM MASSA
+                🚀 ANUNCIAR NO SISTEMA
             </button>
             <button onclick="abrirModalSeth()" class="btn-seth text-white px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1 transition-all duration-300" title="Inteligência Financeira">
                 <i class="fas fa-robot mr-1"></i> 7️⃣ GESTOR SETH
@@ -1979,8 +1993,12 @@
             let modelo = document.getElementById(`${prefix}Modelo`).value;
             let cap = document.getElementById(`${prefix}Capacidade`).value;
             let cor = document.getElementById(`${prefix}Cor`).value;
-            let v = variacoes.find(x => x.produto_id == modelo && x.capacidade == cap && x.cor == cor);
-            if (!v) return alert('Variação inválida');
+            // Case-insensitive search
+            let v = variacoes.find(x => x.produto_id == modelo && x.capacidade.toUpperCase() === cap.toUpperCase() && x.cor.toUpperCase() === cor.toUpperCase());
+            if (!v) {
+                alert("Variação não encontrada na base do sistema. Revise as seleções.");
+                return;
+            }
             
             let isBrl = document.getElementById(`${prefix}Brl`).value.length > 0;
             let preco = isBrl ? parseP(document.getElementById(`${prefix}Brl`).value) : parseP(document.getElementById(`${prefix}Usd`).value);
@@ -2034,8 +2052,12 @@
             e.preventDefault();
             let tipo = document.getElementById('f_tipo').value;
             if (!tipo) return alert('Selecione o tipo do produto');
-            let v = variacoes.find(x => x.produto_id == document.getElementById('f_mod').value && x.capacidade == document.getElementById('f_cap').value && x.cor == document.getElementById('f_cor').value);
-            if (!v) return alert('Variação inválida');
+            // Case-insensitive search
+            let v = variacoes.find(x => x.produto_id == document.getElementById('f_mod').value && x.capacidade.toUpperCase() === document.getElementById('f_cap').value.toUpperCase() && x.cor.toUpperCase() === document.getElementById('f_cor').value.toUpperCase());
+            if (!v) {
+                alert("Variação não encontrada na base do sistema. Revise as seleções.");
+                return;
+            }
             let isBrl = document.getElementById('f_brl').value.length > 0;
             let precoFinal = isBrl ? parseP(document.getElementById('f_brl').value) : parseP(document.getElementById('f_usd').value);
             let moeda = isBrl ? 'BRL' : 'USD';
@@ -2178,9 +2200,10 @@
             let container = document.getElementById('linhasContainer');
             let index = container.children.length;
             let linha = document.createElement('div');
-            linha.className = 'linha-anuncio';
+            // Aplicar classes melhoradas para layout
+            linha.className = 'linha-anuncio flex flex-col sm:flex-row flex-wrap sm:flex-nowrap gap-2 items-center mb-2 bg-[#141415] p-3 rounded-lg border border-[#38383a]';
             linha.innerHTML = `
-                <select class="modelo" data-index="${index}" style="min-width:120px">
+                <select class="modelo min-w-[180px]" data-index="${index}">
                     <option value="">Modelo</option>
                     ${produtos.map(p => `<option value="${p.id}" data-produto="${p.id}">${p.nome}</option>`).join('')}
                 </select>
@@ -2259,7 +2282,7 @@
                     continue;
                 }
 
-                let variacao = variacoes.find(v => v.produtos_mestre?.id == modeloId && v.capacidade == capacidade && v.cor.toUpperCase() == cor.toUpperCase());
+                let variacao = variacoes.find(v => v.produtos_mestre?.id == modeloId && v.capacidade.toUpperCase() === capacidade.toUpperCase() && v.cor.toUpperCase() === cor.toUpperCase());
                 if (!variacao) {
                     logArea.innerHTML += `<div class="text-red-400">❌ Variação não encontrada.</div>`;
                     erros++;
