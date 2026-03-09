@@ -186,7 +186,7 @@
             }
         }
 
-        /* Linhas dinâmicas do lançamento em massa - base */
+        /* Linhas dinâmicas do lançamento em massa */
         .linha-anuncio {
             display: flex;
             gap: 8px;
@@ -213,20 +213,6 @@
             padding: 6px 10px;
             cursor: pointer;
             font-size: 10px;
-        }
-        /* Classe para select de modelo com largura mínima */
-        .modelo-select {
-            min-width: 180px;
-        }
-        /* Ajuste mobile: empilhar verticalmente */
-        @media (max-width: 640px) {
-            .linha-anuncio {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .linha-anuncio select, .linha-anuncio input {
-                width: 100%;
-            }
         }
     </style>
 </head>
@@ -845,7 +831,7 @@
     <!-- Container do Card PIX (USDT) -->
     <div id="usdtPedidoContainer" class="fixed bottom-4 right-4 w-80 z-50 hidden"></div>
 
-    <!-- NOVO MODAL: Lançamento em Massa (X 2.0) -->
+    <!-- NOVO MODAL: Lançamento em Massa (X 2.0) - CLONADO DO MASTER -->
     <div id="modalAddMassa" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-4xl bg-[#050505] border-[#38383a] max-h-[90vh] overflow-y-auto relative">
             <button onclick="fecharModalAddMassa()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
@@ -854,8 +840,8 @@
                 <!-- Linhas serão adicionadas aqui -->
             </div>
             <div class="flex gap-2 mb-4">
-                <button type="button" onclick="adicionarLinhaAnuncio()" class="btn-master bg-zinc-700 text-white">➕ ADICIONAR LINHA</button>
-                <button type="button" onclick="executarLancamentoMassa()" class="btn-master bg-green-600 text-white">🚀 EXECUTAR LANÇAMENTO</button>
+                <button type="button" onclick="adicionarLinhaAnuncio()" class="bg-zinc-700 text-white px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-zinc-600">➕ ADICIONAR LINHA</button>
+                <button type="button" onclick="executarLancamentoMassa()" class="bg-green-600 text-white px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-green-700">🚀 EXECUTAR LANÇAMENTO</button>
             </div>
             <div id="massaLog" class="text-[10px] font-mono text-green-400 max-h-40 overflow-y-auto border border-zinc-800 p-2 rounded"></div>
         </div>
@@ -1321,7 +1307,8 @@
 
             const [p, v, r, o, oGlobal] = await Promise.all([
                 _s.from('produtos_mestre').select('*').order('id'),
-                _s.from('variacoes').select('*'),
+                // ALTERAÇÃO: busca variações com produtos_mestre para o lançador em massa
+                _s.from('variacoes').select('id, produtos_mestre(id, nome), capacidade, cor'),
                 _s.from('regioes').select('*'),
                 _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), regioes(*)').eq('fornecedor_id', loja.id).order('criado_em', { ascending: false }),
                 _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), fornecedores(nome, verificado)').gt('quantidade', 0)
@@ -2188,7 +2175,7 @@
             document.getElementById('modalSeth').classList.add('hidden');
         }
 
-        // ===== LANÇADOR EM MASSA (X 2.0) =====
+        // ===== LANÇADOR EM MASSA (CLONADO DO MASTER E ADAPTADO) =====
         function abrirModalAddMassa() {
             document.getElementById('modalAddMassa').classList.remove('hidden');
         }
@@ -2200,12 +2187,12 @@
             let container = document.getElementById('linhasContainer');
             let index = container.children.length;
             let linha = document.createElement('div');
-            // Aplicar classes melhoradas para layout
-            linha.className = 'linha-anuncio flex flex-col sm:flex-row flex-wrap sm:flex-nowrap gap-2 items-center mb-2 bg-[#141415] p-3 rounded-lg border border-[#38383a]';
+            linha.className = 'linha-anuncio';
+            // Usar as classes do atacadista, mas manter a estrutura do master
             linha.innerHTML = `
-                <select class="modelo min-w-[180px]" data-index="${index}">
+                <select class="modelo" data-index="${index}" style="min-width:120px">
                     <option value="">Modelo</option>
-                    ${produtos.map(p => `<option value="${p.id}" data-produto="${p.id}">${p.nome}</option>`).join('')}
+                    ${variacoes.map(v => v.produtos_mestre?.id ? `<option value="${v.produtos_mestre.id}" data-produto="${v.produtos_mestre.id}">${v.produtos_mestre.nome}</option>` : '').filter((v,i,a)=>a.indexOf(v)===i).join('')}
                 </select>
                 <select class="capacidade" data-index="${index}" disabled style="min-width:80px">
                     <option value="">Memória</option>
@@ -2258,8 +2245,14 @@
                 corSelect.disabled = false;
             });
         }
-
         async function executarLancamentoMassa() {
+            // Pega o ID da loja logada
+            const lojaId = loja?.id;
+            if (!lojaId) {
+                alert('Erro de sessão. Faça login novamente.');
+                return;
+            }
+
             let linhas = document.querySelectorAll('#linhasContainer .linha-anuncio');
             if (linhas.length === 0) { alert('Adicione pelo menos uma linha.'); return; }
 
@@ -2289,23 +2282,30 @@
                     continue;
                 }
 
+                // Cria payload com campos padrão (smart upsert espera todos os campos)
+                let payload = {
+                    fornecedor_id: lojaId,
+                    variacao_id: variacao.id,
+                    regiao_id: regiaoId,
+                    condicao: condicao,
+                    preco: preco,
+                    moeda: 'BRL',
+                    quantidade: quantidade,
+                    status_aprovacao: 'aprovado',
+                    aceita_pix: false,
+                    aceita_usdt: false,
+                    aceita_proposta: false,
+                    faz_envio: false,
+                    aceita_coleta: false,
+                    emite_nota: false,
+                    cidade_aparelho: null,
+                    estado_aparelho: null,
+                    saude_bateria: null,
+                    garantia: (condicao === 'Novo' || condicao === 'CPO') ? '1 ANO APPLE' : null
+                };
+
                 try {
-                    await smartUpsertOferta({
-                        fornecedor_id: loja.id,
-                        variacao_id: variacao.id,
-                        regiao_id: regiaoId,
-                        condicao: condicao,
-                        preco: preco,
-                        moeda: 'BRL',
-                        quantidade: quantidade,
-                        status_aprovacao: 'aprovado',
-                        aceita_pix: false,
-                        aceita_usdt: false,
-                        aceita_proposta: false,
-                        faz_envio: false,
-                        aceita_coleta: false,
-                        emite_nota: false
-                    });
+                    await smartUpsertOferta(payload);
                     logArea.innerHTML += `<div class="text-green-400">✅ Sucesso: ${variacao.produtos_mestre.nome} ${capacidade} ${cor} | Qtd: ${quantidade} | R$ ${preco.toFixed(2)}</div>`;
                     sucessos++;
                 } catch (err) {
@@ -2386,6 +2386,7 @@
         window.enviarComprovante = enviarComprovante;
         window.fecharPedidoUsdt = fecharPedidoUsdt;
         window.restaurarEstoqueZerado = restaurarEstoqueZerado;
+        // Exportar as novas funções do lançador em massa
         window.abrirModalAddMassa = abrirModalAddMassa;
         window.fecharModalAddMassa = fecharModalAddMassa;
         window.adicionarLinhaAnuncio = adicionarLinhaAnuncio;
