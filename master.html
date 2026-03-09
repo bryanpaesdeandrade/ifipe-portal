@@ -52,7 +52,7 @@
         .badge-grade { background: #eab308; color: black; }
         /* USDT Widget */
         .usdt-widget { display: flex; align-items: center; gap: 6px; background: #1c1c1e; border: 1px solid #38383a; border-radius: 30px; padding: 4px 8px; }
-        .usdt-widget input { width: 70px; background: #2c2c2e; border: none; border-radius: 20px; padding: 4px 8px; font-size: 11px; color: white; }
+        .usdt-widget input { width: 90px; background: #2c2c2e; border: none; border-radius: 20px; padding: 4px 8px; font-size: 11px; color: white; }
         .usdt-widget button { background: #0071e3; border: none; border-radius: 20px; padding: 4px 12px; font-size: 9px; font-weight: 900; color: white; white-space: nowrap; }
         .usdt-widget button:disabled { background: #555; cursor: not-allowed; }
         .pedido-card { background: #0a0a0a; border: 1px solid #2c2c2e; border-radius: 12px; padding: 12px; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
@@ -84,9 +84,9 @@
                     <div><span class="text-[7px] text-green-500 font-black block">USDT ORÁCULO (+ R$ 0,06)</span><span id="tUsdt" class="text-xs font-mono font-black text-green-400">R$ --</span></div>
                     <!-- Widget USDT com botão de config PIX -->
                     <div class="usdt-widget master-only" id="usdtWidget">
-                        <input type="number" id="usdAmount" min="500" value="500" step="1" placeholder="USD">
-                        <button id="lockUsdtBtn" onclick="lockUsdt()">TRAVAR USDT</button>
-                        <button onclick="configurarPix()" class="bg-zinc-700 text-white px-2 py-1 rounded-full text-[9px]" title="Configurar chave PIX">⚙️ PIX</button>
+                        <input type="number" id="usdAmount" min="500" step="1" placeholder="VALOR EM USDT">
+                        <button id="lockUsdtBtn" onclick="abrirModalRegrasTrava()">TRAVAR USDT</button>
+                        <button onclick="abrirModalConfigPix()" class="bg-zinc-700 text-white px-2 py-1 rounded-full text-[9px]" title="Configurar dados bancários">⚙️ PIX</button>
                     </div>
                     <div class="relative master-only" id="maintenanceDropdownContainer">
                         <button id="maintenanceBtn" onclick="toggleMaintenanceDropdown()" class="btn-master bg-green-600 px-3 py-1 text-[9px] ml-2">SISTEMA: ON</button>
@@ -322,7 +322,43 @@
         </div>
     </div>
 
-    <!-- Modais existentes (inalterados) -->
+    <!-- MODAL CONFIG PIX -->
+    <div id="modalConfigPix" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a] relative">
+            <button onclick="fecharModalConfigPix()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">⚙️ CONFIGURAR DADOS PIX</h3>
+            <p class="text-[9px] text-gray-400 mb-2">Coloque a chave a ser copiada entre < e > .</p>
+            <p class="text-[9px] text-gray-400 mb-4">Ex: Banco Itaú, Chave <45.000.000/0001-00>, Nome: iFipe LTDA</p>
+            <textarea id="textoPixConfig" rows="5" class="apple-input mb-4" placeholder="Digite o texto completo com a chave entre < >"></textarea>
+            <div class="flex gap-2">
+                <button onclick="salvarConfigPix()" class="btn-master !bg-green-600 flex-1">SALVAR</button>
+                <button onclick="fecharModalConfigPix()" class="btn-master !bg-zinc-700 flex-1">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL REGRAS DA TRAVA -->
+    <div id="modalRegrasTrava" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-md bg-[#050505] border-[#38383a] relative">
+            <button onclick="fecharModalRegrasTrava()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">⚠️ CONFIRMAR TRAVA</h3>
+            <div class="space-y-3 text-[11px]">
+                <p><span class="text-gray-400">Valor:</span> <span id="regrasValor" class="text-white font-bold">0 USD</span></p>
+                <p><span class="text-gray-400">Taxa atual:</span> <span id="regrasTaxa" class="text-green-400 font-mono">R$ 0,0000</span></p>
+                <p><span class="text-gray-400">Total R$:</span> <span id="regrasTotal" class="text-blue-400 font-bold">R$ 0,00</span></p>
+                <p class="text-yellow-400 text-center font-bold mt-2">Ao confirmar, seu comprovante será gerado e você terá 120s para pagar.</p>
+            </div>
+            <div class="flex gap-2 mt-6">
+                <button onclick="confirmarTrava()" class="btn-master !bg-green-600 flex-1">CONFIRMAR E GERAR PIX</button>
+                <button onclick="fecharModalRegrasTrava()" class="btn-master !bg-zinc-700 flex-1">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container do Card PIX (USDT) -->
+    <div id="usdtPedidoContainer" class="fixed bottom-4 right-4 w-80 z-50 hidden"></div>
+
+    <!-- Demais modais existentes (inalterados) -->
     <div id="modalTrocaPainel" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-sm bg-[#050505] border-[#38383a] text-center relative">
             <button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
@@ -746,9 +782,6 @@
             <div id="massaLog" class="text-[10px] font-mono text-green-400 max-h-40 overflow-y-auto border border-zinc-800 p-2 rounded"></div>
         </div>
     </div>
-
-    <!-- Container do Card PIX (USDT) -->
-    <div id="usdtPedidoContainer" class="fixed bottom-4 right-4 w-80 z-50 hidden"></div>
 
     <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
@@ -2043,120 +2076,52 @@
 
         // ================== NOVAS FUNÇÕES ==================
 
-        // --- Configurar chave PIX ---
-        function configurarPix() {
-            let novaChave = prompt("Digite a nova chave PIX (para exibição no card):");
-            if (novaChave !== null) {
-                localStorage.setItem('iFipe_Master_PIX', novaChave.trim());
-                alert("Chave PIX salva com sucesso!");
-            }
+        // --- Modal Config PIX ---
+        function abrirModalConfigPix() {
+            let textoSalvo = localStorage.getItem('iFipe_Master_PIX_Data') || '';
+            document.getElementById('textoPixConfig').value = textoSalvo;
+            document.getElementById('modalConfigPix').classList.remove('hidden');
+        }
+        function fecharModalConfigPix() {
+            document.getElementById('modalConfigPix').classList.add('hidden');
+        }
+        function salvarConfigPix() {
+            let texto = document.getElementById('textoPixConfig').value;
+            localStorage.setItem('iFipe_Master_PIX_Data', texto);
+            alert('Dados PIX salvos com sucesso!');
+            fecharModalConfigPix();
         }
 
-        // --- Formatação de telefone ---
-        function formatarTelefone(numero) {
-            if (!numero) return '';
-            let digits = numero.replace(/\D/g, '');
-            if (digits.startsWith('595')) return '+595' + digits.slice(3);
-            if (digits.startsWith('1') && digits.length === 11) return '+1' + digits.slice(1);
-            return '+55' + digits;
-        }
-
-        // --- Exportar Atacadistas (com BOM, separador ; e aspas duplas) ---
-        function exportarContatos() {
-            let conteudo = "\uFEFFNOME DA LOJA;NOME DO DONO;WHATSAPP DA LOJA;WHATSAPP DO DONO;CONTATO FORMATADO\n";
-            dbAta.forEach(a => {
-                let whatsRaw = a.whatsapp || '';
-                let whatsFormatado = formatarTelefone(whatsRaw);
-                conteudo += `"${a.nome}";"${a.nome}";"${whatsRaw}";"${whatsRaw}";"${whatsFormatado}"\n`;
-            });
-            let blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
-            let link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'atacadistas.csv';
-            link.click();
-        }
-
-        // --- Importar Atacadistas (já existente, mantido) ---
-        async function importarFornecedores(event) {
-            let file = event.target.files[0];
-            if (!file) return;
-            let text = await file.text();
-            let linhas = text.split('\n').slice(1);
-            for (let linha of linhas) {
-                if (!linha.trim()) continue;
-                let cols = linha.split(';').map(s => s.replace(/^"|"$/g, ''));
-                if (cols.length < 5) continue;
-                let [nomeLoja, nomeDono, whatsLoja, whatsDono, contato] = cols;
-                let whatsapp = whatsLoja.replace(/\D/g, '');
-                let { error } = await _s.from('fornecedores').insert({
-                    nome: nomeLoja.toUpperCase(),
-                    whatsapp: whatsapp,
-                    ativo: true,
-                    verificado: false,
-                    senha: '123456'
-                });
-                if (error) console.warn('Erro ao importar:', error);
-            }
-            alert('Importação de atacadistas concluída. Recarregue a página.');
-            loadAll();
-        }
-
-        // --- Exportar Buscadores (cabeçalho NOME;NUMERO) ---
-        function exportarBuscadores() {
-            let conteudo = "\uFEFFNOME;NUMERO\n";
-            dbCli.forEach(c => {
-                let contato = formatarTelefone(c.whatsapp || '');
-                conteudo += `"${c.nome}";"${contato}"\n`;
-            });
-            let blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
-            let link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'buscadores.csv';
-            link.click();
-        }
-
-        // --- Importar Buscadores ---
-        async function importarBuscadores(event) {
-            let file = event.target.files[0];
-            if (!file) return;
-            let text = await file.text();
-            let linhas = text.split('\n').slice(1);
-            for (let linha of linhas) {
-                if (!linha.trim()) continue;
-                let cols = linha.split(';').map(s => s.replace(/^"|"$/g, ''));
-                if (cols.length < 2) continue;
-                let [nome, contato] = cols;
-                let whatsapp = contato.replace(/\D/g, '');
-                let { error } = await _s.from('clientes_buscador').insert({
-                    nome: nome.toUpperCase(),
-                    whatsapp: whatsapp,
-                    ativo: true,
-                    senha: '123456',
-                    logins_count: 0
-                });
-                if (error) console.warn('Erro ao importar buscador:', error);
-            }
-            alert('Importação de buscadores concluída. Recarregue a página.');
-            loadAll();
-        }
-
-        // --- Widget USDT (sem restrição de horário) ---
-        let usdtTimer, usdtInterval;
-        let usdtLockedRate = 0;
-        let usdtLockedUsd = 0;
-        let usdtLockedTotal = 0;
-        let usdtTimeLeft = 120;
-        let usdtPedidoId = '';
-
-        function lockUsdt() {
-            if (usdtTimer) clearInterval(usdtTimer);
+        // --- Modal Regras da Trava ---
+        function abrirModalRegrasTrava() {
             let usd = parseFloat(document.getElementById('usdAmount').value) || 0;
             if (usd < 500) {
-                alert('Mínimo de 500 USD');
+                alert('Valor mínimo: 500 USD');
                 return;
             }
+            let taxaAtual = currentOracleUsdt || parseFloat(document.getElementById('tUsdt').innerText.replace('R$', '')) || 0;
+            let total = usd * taxaAtual;
+            document.getElementById('regrasValor').innerText = usd.toFixed(2) + ' USD';
+            document.getElementById('regrasTaxa').innerText = `R$ ${taxaAtual.toFixed(4)}`;
+            document.getElementById('regrasTotal').innerText = `R$ ${total.toFixed(2)}`;
+            document.getElementById('modalRegrasTrava').classList.remove('hidden');
+        }
+        function fecharModalRegrasTrava() {
+            document.getElementById('modalRegrasTrava').classList.add('hidden');
+        }
+
+        // --- Função principal que gera o card PIX ---
+        function confirmarTrava() {
+            fecharModalRegrasTrava();
+
+            let usd = parseFloat(document.getElementById('usdAmount').value) || 0;
+            if (usd < 500) {
+                alert('Valor mínimo: 500 USD');
+                return;
+            }
+
             usdtLockedUsd = usd;
-            usdtLockedRate = currentOracleUsdt || (parseFloat(document.getElementById('tUsdt').innerText.replace('R$', '')) || 0);
+            usdtLockedRate = currentOracleUsdt || parseFloat(document.getElementById('tUsdt').innerText.replace('R$', '')) || 0;
             usdtLockedTotal = usd * usdtLockedRate;
             let agora = new Date();
             let hh = agora.getHours().toString().padStart(2,'0');
@@ -2165,11 +2130,15 @@
             let taxaStr = usdtLockedRate.toFixed(4).replace('.', '');
             let usdFormatado = usd.toFixed(2);
             let brlFormatado = usdtLockedTotal.toFixed(2);
-            // Gera ID com asteriscos para negrito no WhatsApp
             usdtPedidoId = `TRVX>-$DTX>*${usdFormatado}*-CTX>${taxaStr}-R$X>*${brlFormatado}*-Printx>${hh}:${mm}:${ss}`;
             usdtTimeLeft = 120;
+
             mostrarPedido();
+
+            // Inicia timer e monitoramento
+            if (usdtTimer) clearInterval(usdtTimer);
             iniciarTimerUsdt();
+
             if (usdtInterval) clearInterval(usdtInterval);
             usdtInterval = setInterval(() => {
                 let novaTaxa = currentOracleUsdt || parseFloat(document.getElementById('tUsdt').innerText.replace('R$', ''));
@@ -2188,10 +2157,19 @@
             }, 1000);
         }
 
+        // --- Timer ---
+        let usdtTimer, usdtInterval;
+        let usdtLockedUsd = 0;
+        let usdtLockedRate = 0;
+        let usdtLockedTotal = 0;
+        let usdtTimeLeft = 120;
+        let usdtPedidoId = '';
+
         function iniciarTimerUsdt() {
             usdtTimer = setInterval(() => {
                 usdtTimeLeft--;
-                document.getElementById('usdtTimer').innerText = `${usdtTimeLeft}s`;
+                let timerSpan = document.getElementById('usdtTimer');
+                if (timerSpan) timerSpan.innerText = `${usdtTimeLeft}s`;
                 if (usdtTimeLeft <= 0) {
                     clearInterval(usdtTimer);
                     usdtLockedRate += 0.01;
@@ -2202,8 +2180,10 @@
                     let mm = agora.getMinutes().toString().padStart(2,'0');
                     let ss = agora.getSeconds().toString().padStart(2,'0');
                     usdtPedidoId = `TRVX>-$DTX>*${usdtLockedUsd.toFixed(2)}*-CTX>${taxaStr}-R$X>*${usdtLockedTotal.toFixed(2)}*-Printx>${hh}:${mm}:${ss}`;
-                    document.getElementById('usdtIdDisplay').innerText = usdtPedidoId;
-                    document.getElementById('usdtTotalDisplay').innerText = `R$ ${usdtLockedTotal.toFixed(2)}`;
+                    let idSpan = document.getElementById('usdtIdDisplay');
+                    if (idSpan) idSpan.innerText = usdtPedidoId;
+                    let totalSpan = document.getElementById('usdtTotalDisplay');
+                    if (totalSpan) totalSpan.innerText = `R$ ${usdtLockedTotal.toFixed(2)}`;
                     usdtTimeLeft = 120;
                     iniciarTimerUsdt();
                 }
@@ -2212,27 +2192,51 @@
 
         function mostrarPedido() {
             let container = document.getElementById('usdtPedidoContainer');
-            let chavePix = localStorage.getItem('iFipe_Master_PIX') || 'Não configurada';
+            let textoPix = localStorage.getItem('iFipe_Master_PIX_Data') || 'Chave não configurada. Clique em ⚙️ PIX para configurar.';
             container.innerHTML = `
                 <div class="pedido-card" id="reciboPrint">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-blue-400 font-black">PIX GERADO</span>
-                        <div class="bg-yellow-400 text-red-600 font-black p-2 rounded text-center animate-pulse text-sm">
-                            ⏰ PERDER TAXA ESPECIAL 💣🧨 <span id="usdtTimer" class="text-xl">120s</span>
-                        </div>
-                    </div>
-                    <div class="text-[9px] text-gray-400 mb-1">CHAVE PIX:</div>
-                    <div class="text-[10px] text-white break-all mb-2">${chavePix}</div>
+                    <div class="text-[9px] text-gray-400 mb-1 whitespace-pre-wrap">${textoPix}</div>
                     <div class="text-[9px] text-gray-400 mb-1">ID DO PEDIDO:</div>
                     <div class="text-[10px] text-green-400 break-all mb-2" id="usdtIdDisplay">${usdtPedidoId}</div>
                     <div class="text-sm font-black text-white mb-3" id="usdtTotalDisplay">R$ ${usdtLockedTotal.toFixed(2)}</div>
-                    <div class="flex gap-2">
-                        <button onclick="enviarComprovante()" class="btn-master !bg-green-600 flex-1 py-2 text-[9px]">📷 ENVIAR COMPROVANTE</button>
+                    <div class="bg-yellow-400 text-red-600 font-black p-3 rounded-lg text-center animate-pulse mt-2 border-2 border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]">
+                        ⏰ *PERDER TAXA ESPECIAL* 💣🧨 <br><span id="usdtTimer" class="text-3xl">120s</span>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button onclick="copiarDadosPix()" class="btn-master !bg-blue-600 flex-1 py-2 text-[9px]">📋 COPIAR DADOS</button>
                         <button onclick="fecharPedidoUsdt()" class="btn-master !bg-zinc-700 flex-1 py-2 text-[9px]">FECHAR</button>
                     </div>
                 </div>
             `;
             container.classList.remove('hidden');
+
+            // Print instantâneo e envio WhatsApp
+            setTimeout(() => {
+                let recibo = document.getElementById('reciboPrint');
+                html2canvas(recibo).then(canvas => {
+                    let link = document.createElement('a');
+                    link.download = 'comprovante.png';
+                    link.href = canvas.toDataURL();
+                    link.click();
+
+                    let msg = `OLÁ TUDO BEM, TRAVEI O DOLAR. SEGUE O COMPROVANTE PARA VALIDAÇÃO.\n\n${usdtPedidoId}`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                });
+            }, 100);
+        }
+
+        function copiarDadosPix() {
+            let texto = localStorage.getItem('iFipe_Master_PIX_Data') || '';
+            let match = texto.match(/<([^>]+)>/);
+            if (match && match[1]) {
+                navigator.clipboard.writeText(match[1]).then(() => {
+                    alert('Chave PIX copiada!');
+                }).catch(() => {
+                    alert('Erro ao copiar. Selecione manualmente.');
+                });
+            } else {
+                alert('Nenhuma chave entre < > encontrada.');
+            }
         }
 
         function fecharPedidoUsdt() {
@@ -2241,16 +2245,103 @@
             if (usdtInterval) clearInterval(usdtInterval);
         }
 
-        function enviarComprovante() {
-            let recibo = document.getElementById('reciboPrint');
-            html2canvas(recibo).then(canvas => {
-                let link = document.createElement('a');
-                link.download = 'comprovante.png';
-                link.href = canvas.toDataURL();
-                link.click();
-                let msg = `OLÁ TUDO BEM, TRAVEI O DOLAR. SEGUE O COMPROVANTE PARA VALIDAÇÃO.\n\n${usdtPedidoId}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        // --- Formatação de telefone para Excel (com aspa simples) ---
+        function formatarTelefoneExcel(numero, pais) {
+            if (!numero) return '""';
+            let digits = numero.replace(/\D/g, '');
+            if (pais === 'Brasil' || pais === '') {
+                // Remove o 55 se começar
+                if (digits.startsWith('55')) digits = digits.slice(2);
+                return `"'${digits}"`; // com aspa simples para forçar texto no Excel
+            } else {
+                // EUA, Paraguai, etc: retorna o número original como string
+                return `"'${numero}"`;
+            }
+        }
+
+        // --- Exportar Atacadistas (com BOM, separador ; e colunas exatas) ---
+        function exportarContatos() {
+            let conteudo = "\uFEFFNOME DA LOJA;NOME DO DONO;WHATSAPP DA LOJA;WHATSAPP DO DONO;CONTATO FORMATADO\n";
+            dbAta.forEach(a => {
+                let pais = a.pais || 'Brasil';
+                let nomeLoja = a.nome || '';
+                let whatsRaw = a.whatsapp || '';
+                let contatoFormatado = formatarTelefoneExcel(whatsRaw, pais);
+                // Para as colunas, usamos os mesmos valores repetidos
+                conteudo += `"${nomeLoja}";"${nomeLoja}";"${whatsRaw}";"${whatsRaw}";${contatoFormatado}\n`;
             });
+            let blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'atacadistas.csv';
+            link.click();
+        }
+
+        // --- Exportar Buscadores (com BOM, separador ; e colunas NOME;NUMERO) ---
+        function exportarBuscadores() {
+            let conteudo = "\uFEFFNOME;NUMERO\n";
+            dbCli.forEach(c => {
+                let nome = c.nome || '';
+                let pais = c.pais || 'Brasil';
+                let whats = c.whatsapp || '';
+                let numeroFormatado = formatarTelefoneExcel(whats, pais);
+                conteudo += `"${nome}";${numeroFormatado}\n`;
+            });
+            let blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'buscadores.csv';
+            link.click();
+        }
+
+        // --- Importar Fornecedores (já existente, mantido) ---
+        async function importarFornecedores(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            let text = await file.text();
+            let linhas = text.split('\n').slice(1);
+            for (let linha of linhas) {
+                if (!linha.trim()) continue;
+                let cols = linha.split(';').map(s => s.replace(/^"|"$/g, ''));
+                if (cols.length < 5) continue;
+                let [nomeLoja, nomeDono, whatsLoja, whatsDono, contato] = cols;
+                let whatsapp = contato.replace(/\D/g, '');
+                let { error } = await _s.from('fornecedores').insert({
+                    nome: nomeLoja.toUpperCase(),
+                    whatsapp: whatsapp,
+                    ativo: true,
+                    verificado: false,
+                    senha: '123456'
+                });
+                if (error) console.warn('Erro ao importar:', error);
+            }
+            alert('Importação de atacadistas concluída. Recarregue a página.');
+            loadAll();
+        }
+
+        // --- Importar Buscadores ---
+        async function importarBuscadores(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            let text = await file.text();
+            let linhas = text.split('\n').slice(1);
+            for (let linha of linhas) {
+                if (!linha.trim()) continue;
+                let cols = linha.split(';').map(s => s.replace(/^"|"$/g, ''));
+                if (cols.length < 2) continue;
+                let [nome, numero] = cols;
+                let whatsapp = numero.replace(/\D/g, '');
+                let { error } = await _s.from('clientes_buscador').insert({
+                    nome: nome.toUpperCase(),
+                    whatsapp: whatsapp,
+                    ativo: true,
+                    senha: '123456',
+                    logins_count: 0
+                });
+                if (error) console.warn('Erro ao importar buscador:', error);
+            }
+            alert('Importação de buscadores concluída. Recarregue a página.');
+            loadAll();
         }
 
         // --- Lançamento em Massa (já existente) ---
@@ -2391,14 +2482,18 @@
         }
 
         // Expor funções globais
-        window.configurarPix = configurarPix;
+        window.configurarPix = abrirModalConfigPix; // mantido para compatibilidade
+        window.abrirModalConfigPix = abrirModalConfigPix;
+        window.fecharModalConfigPix = fecharModalConfigPix;
+        window.salvarConfigPix = salvarConfigPix;
+        window.abrirModalRegrasTrava = abrirModalRegrasTrava;
+        window.fecharModalRegrasTrava = fecharModalRegrasTrava;
+        window.confirmarTrava = confirmarTrava;
+        window.copiarDadosPix = copiarDadosPix;
         window.exportarContatos = exportarContatos;
         window.importarFornecedores = importarFornecedores;
         window.exportarBuscadores = exportarBuscadores;
         window.importarBuscadores = importarBuscadores;
-        window.lockUsdt = lockUsdt;
-        window.enviarComprovante = enviarComprovante;
-        window.fecharPedidoUsdt = fecharPedidoUsdt;
         window.abrirModalAddMassa = abrirModalAddMassa;
         window.fecharModalAddMassa = fecharModalAddMassa;
         window.adicionarLinhaAnuncio = adicionarLinhaAnuncio;
