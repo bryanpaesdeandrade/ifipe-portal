@@ -1093,18 +1093,30 @@
         });
 
         // Função de atualização forçada com animação
-        window.forcarAtualizacao = function() {
+        window.forcarAtualizacao = async function() {
             const desktopIcon = document.getElementById('syncIconDesktop');
             const mobileIcon = document.getElementById('syncIconMobile');
             if (desktopIcon) desktopIcon.classList.add('animate-spin');
             if (mobileIcon) mobileIcon.classList.add('animate-spin');
             
-            carregarDados().finally(() => {
-                setTimeout(() => {
-                    if (desktopIcon) desktopIcon.classList.remove('animate-spin');
-                    if (mobileIcon) mobileIcon.classList.remove('animate-spin');
-                }, 1000);
-            });
+            // Captura valores atuais dos filtros
+            const filtros = {
+                searchInput: document.getElementById('searchInput').value,
+                filtroCategoria: document.getElementById('filtroCategoria').value,
+                filtroCondicao: document.getElementById('filtroCondicao').value,
+                filtroCapacidade: document.getElementById('filtroCapacidade').value,
+                filtroCor: document.getElementById('filtroCor').value,
+                filtroCidade: document.getElementById('filtroCidade').value,
+                filtroAnunciante: document.getElementById('filtroAnunciante').value,
+                filtroPais: document.getElementById('filtroPais').value
+            };
+
+            await carregarDados(true, filtros); // passa true para preservar filtros
+
+            setTimeout(() => {
+                if (desktopIcon) desktopIcon.classList.remove('animate-spin');
+                if (mobileIcon) mobileIcon.classList.remove('animate-spin');
+            }, 1000);
         };
 
         // Inicialização
@@ -1203,7 +1215,7 @@
             } catch (e) { console.warn('WebSocket Binance falhou'); }
         }
 
-        async function carregarDados() {
+        async function carregarDados(preserveFilters = false, filtrosAnteriores = null) {
             try {
                 const [p, v, f, o, r] = await Promise.all([
                     _s.from('produtos_mestre').select('*'),
@@ -1219,7 +1231,13 @@
                 ofertas = o.data || [];
                 regioes = r.data || [];
 
-                popularFiltros();
+                if (preserveFilters) {
+                    // Preservar valores atuais dos filtros
+                    popularFiltros(filtrosAnteriores);
+                } else {
+                    popularFiltros();
+                }
+
                 processarMenorPrecoGlobal();
                 renderizarCards();
                 
@@ -1728,51 +1746,74 @@
             }
         }
 
+        // Função melhorada para abrir o modal de respostas/mensagens
         async function abrirRespostasRecebidas() {
             if (!currentUser || currentUser.id === 0) return alert('Faça login.');
             document.getElementById('respostasModal').classList.remove('hidden');
             
-            const lista = document.getElementById('listaRespostas');
-            lista.innerHTML = '<p class="text-center text-gray-500 text-xs py-4">Carregando suas propostas...</p>';
-            // 1. Busca todas as mensagens respondidas do cliente
+            // Carrega respostas (comentários respondidos)
+            const listaRespostas = document.getElementById('listaRespostas');
+            listaRespostas.innerHTML = '<p class="text-center text-gray-500 text-xs py-4">Carregando suas propostas...</p>';
             const { data: comentarios } = await _s.from('comentarios')
                 .select('*')
                 .eq('cliente_id', currentUser.id)
                 .not('resposta', 'is', null)
                 .order('criado_em', { ascending: false });
+            
             if (!comentarios || comentarios.length === 0) {
-                lista.innerHTML = '<p class="text-center text-gray-400 text-xs py-10">Nenhuma resposta recebida ainda.</p>';
-                return;
+                listaRespostas.innerHTML = '<p class="text-center text-gray-400 text-xs py-10">Nenhuma resposta recebida ainda.</p>';
+            } else {
+                // Mapeia os iPhones negociados
+                await Promise.all(comentarios.map(async (c) => {
+                    if (c.oferta_id) {
+                        const { data: ofe } = await _s.from('ofertas')
+                            .select('*, variacoes(produtos_mestre(nome), capacidade, cor), fornecedores(whatsapp)')
+                            .eq('id', c.oferta_id).maybeSingle();
+                        c.detalhes = ofe;
+                    }
+                }));
+                listaRespostas.innerHTML = comentarios.map(c => {
+                    const iphone = c.detalhes?.variacoes?.produtos_mestre?.nome || 'Aparelho Indisponível';
+                    const zap = c.detalhes?.fornecedores?.whatsapp?.replace(/\D/g, '') || '';
+                    return `
+                    <div class="border border-[#38383a] rounded-xl p-3 bg-black/20 mb-2">
+                        <div class="flex justify-between items-start text-[10px] mb-1">
+                            <span class="text-blue-400 font-bold">📱 ${iphone}</span>
+                            <span class="text-gray-500">${new Date(c.criado_em).toLocaleDateString()}</span>
+                        </div>
+                        <p class="text-[11px] text-gray-300 italic mb-2">"${c.pergunta}"</p>
+                        <div class="bg-green-900/20 border border-green-500/30 rounded-lg p-2 mb-2">
+                            <p class="text-xs text-green-400">✅ <b>Resposta:</b> ${c.resposta}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <a href="https://wa.me/55${zap}" target="_blank" class="bg-green-600 text-white text-[10px] px-3 py-1.5 rounded-full font-bold">CONCLUIR NO ZAP</a>
+                            <button onclick="marcarComoLida(${c.id})" class="text-[9px] text-gray-500 hover:text-white uppercase font-black">Marcar como lida</button>
+                        </div>
+                    </div>`;
+                }).join('');
             }
-            // 2. Mapeia os iPhones negociados de forma blindada
-            await Promise.all(comentarios.map(async (c) => {
-                if (c.oferta_id) {
-                    const { data: ofe } = await _s.from('ofertas')
-                        .select('*, variacoes(produtos_mestre(nome), capacidade, cor), fornecedores(whatsapp)')
-                        .eq('id', c.oferta_id).maybeSingle();
-                    c.detalhes = ofe;
-                }
-            }));
-            // 3. Renderiza na Inbox do Sino
-            lista.innerHTML = comentarios.map(c => {
-                const iphone = c.detalhes?.variacoes?.produtos_mestre?.nome || 'Aparelho Indisponível';
-                const zap = c.detalhes?.fornecedores?.whatsapp?.replace(/\D/g, '') || '';
-                return `
-                <div class="border border-[#38383a] rounded-xl p-3 bg-black/20 mb-2">
-                    <div class="flex justify-between items-start text-[10px] mb-1">
-                        <span class="text-blue-400 font-bold">📱 ${iphone}</span>
-                        <span class="text-gray-500">${new Date(c.criado_em).toLocaleDateString()}</span>
+
+            // Carrega mensagens do sistema
+            const listaMensagens = document.getElementById('listaMensagens');
+            listaMensagens.innerHTML = '<p class="text-center text-gray-500 text-xs py-4">Carregando mensagens...</p>';
+            await carregarMensagensSistema(); // atualiza mensagensSistema
+            if (!mensagensSistema || mensagensSistema.length === 0) {
+                listaMensagens.innerHTML = '<p class="text-center text-gray-400 text-xs py-10">Nenhuma mensagem do sistema.</p>';
+            } else {
+                listaMensagens.innerHTML = mensagensSistema.map(m => `
+                    <div class="border border-[#38383a] rounded-xl p-3 bg-black/20 mb-2 ${!m.lida ? 'border-l-4 border-l-blue-500' : ''}">
+                        <div class="flex justify-between items-start text-[10px] mb-1">
+                            <span class="text-blue-400 font-bold">📢 MASTER</span>
+                            <span class="text-gray-500">${new Date(m.criado_em || m.created_at).toLocaleString()}</span>
+                        </div>
+                        <p class="text-xs text-gray-300 whitespace-pre-wrap mt-1">${m.mensagem}</p>
+                        ${!m.lida ? '<span class="inline-block mt-2 text-[8px] bg-blue-600 px-2 py-0.5 rounded-full">Nova</span>' : ''}
                     </div>
-                    <p class="text-[11px] text-gray-300 italic mb-2">"${c.pergunta}"</p>
-                    <div class="bg-green-900/20 border border-green-500/30 rounded-lg p-2 mb-2">
-                        <p class="text-xs text-green-400">✅ <b>Resposta:</b> ${c.resposta}</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <a href="https://wa.me/55${zap}" target="_blank" class="bg-green-600 text-white text-[10px] px-3 py-1.5 rounded-full font-bold">CONCLUIR NO ZAP</a>
-                        <button onclick="marcarComoLida(${c.id})" class="text-[9px] text-gray-500 hover:text-white uppercase font-black">Marcar como lida</button>
-                    </div>
-                </div>`;
-            }).join('');
+                `).join('');
+            }
+
+            // Abre a aba de respostas por padrão
+            mostrarAbaRespostas('respostas');
         }
 
         async function marcarComoLida(id) {
@@ -1911,26 +1952,44 @@
         }
 
         // ===== FILTROS =====
-        function popularFiltros() {
+        function popularFiltros(filtrosAnteriores = null) {
+            // Captura valores atuais antes de repopular
+            const valoresAtuais = filtrosAnteriores || {
+                searchInput: document.getElementById('searchInput').value,
+                filtroCategoria: document.getElementById('filtroCategoria').value,
+                filtroCondicao: document.getElementById('filtroCondicao').value,
+                filtroCapacidade: document.getElementById('filtroCapacidade').value,
+                filtroCor: document.getElementById('filtroCor').value,
+                filtroCidade: document.getElementById('filtroCidade').value,
+                filtroAnunciante: document.getElementById('filtroAnunciante').value,
+                filtroPais: document.getElementById('filtroPais').value
+            };
+
             const pop = (id, arr, prop) => {
                 const el = document.getElementById(id);
-                if(el.options.length <= 1) {
-                    const unicos = [...new Set(arr.map(x => prop(x)).filter(Boolean))];
-                    unicos.forEach(x => {
-                        if (typeof x === 'object') el.innerHTML += `<option value="${x.id}">${x.nome}</option>`;
-                        else el.innerHTML += `<option value="${x}">${x}</option>`;
-                    });
-                }
+                if (!el) return;
+                const valorAtual = valoresAtuais[id];
+                el.innerHTML = ''; // limpa
+                const opcoes = [...new Set(arr.map(x => prop(x)).filter(Boolean))];
+                opcoes.forEach(x => {
+                    if (typeof x === 'object') {
+                        el.innerHTML += `<option value="${x.id}" ${x.id == valorAtual ? 'selected' : ''}>${x.nome}</option>`;
+                    } else {
+                        el.innerHTML += `<option value="${x}" ${x === valorAtual ? 'selected' : ''}>${x}</option>`;
+                    }
+                });
             };
+
             // Ordena produtos por número do modelo decrescente antes de popular
             const produtosOrdenados = ordenarProdutosMestre([...produtos]);
             const popProdutos = (id) => {
                 const el = document.getElementById(id);
-                if(el.options.length <= 1) {
-                    produtosOrdenados.forEach(p => {
-                        el.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
-                    });
-                }
+                if (!el) return;
+                const valorAtual = valoresAtuais[id];
+                el.innerHTML = '<option value="">Modelos</option>';
+                produtosOrdenados.forEach(p => {
+                    el.innerHTML += `<option value="${p.id}" ${p.id == valorAtual ? 'selected' : ''}>${p.nome}</option>`;
+                });
             };
             popProdutos('filtroCategoria');
             pop('filtroCapacidade', variacoes, v => v.capacidade);
@@ -1940,7 +1999,11 @@
             // condições dinâmicas
             const conds = [...new Set(ofertas.map(o => o.condicao).filter(Boolean))];
             const selCond = document.getElementById('filtroCondicao');
-            selCond.innerHTML = '<option value="">Condição</option>' + conds.map(c => `<option value="${c}">${c}</option>`).join('');
+            const condAtual = valoresAtuais.filtroCondicao;
+            selCond.innerHTML = '<option value="">Condição</option>' + conds.map(c => `<option value="${c}" ${c === condAtual ? 'selected' : ''}>${c}</option>`).join('');
+
+            // Restaura valor do input de busca
+            document.getElementById('searchInput').value = valoresAtuais.searchInput;
         }
 
         function popularFiltrosAlerta() {
