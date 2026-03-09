@@ -6,6 +6,7 @@
     <title>iFipe - COMANDO CENTRAL MASTER</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #000; --card: #0a0a0a; --text: #fff; --border: #2c2c2e; --blue-master: #0071e3; }
@@ -49,6 +50,17 @@
         .badge-seminovo { background: #2563eb; }
         .badge-cpo { background: #f97316; }
         .badge-grade { background: #eab308; color: black; }
+        /* USDT Widget */
+        .usdt-widget { display: flex; align-items: center; gap: 6px; background: #1c1c1e; border: 1px solid #38383a; border-radius: 30px; padding: 4px 8px; }
+        .usdt-widget input { width: 70px; background: #2c2c2e; border: none; border-radius: 20px; padding: 4px 8px; font-size: 11px; color: white; }
+        .usdt-widget button { background: #0071e3; border: none; border-radius: 20px; padding: 4px 12px; font-size: 9px; font-weight: 900; color: white; white-space: nowrap; }
+        .usdt-widget button:disabled { background: #555; cursor: not-allowed; }
+        .pedido-card { background: #0a0a0a; border: 1px solid #2c2c2e; border-radius: 12px; padding: 12px; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+        .timer { color: #4ade80; font-weight: 800; }
+        /* Linhas dinâmicas do lançamento em massa */
+        .linha-anuncio { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; background: #141415; padding: 8px; border-radius: 8px; }
+        .linha-anuncio select, .linha-anuncio input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 6px; padding: 6px; color: white; font-size: 10px; }
+        .linha-anuncio .remover-linha { background: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 10px; }
     </style>
 </head>
 <body>
@@ -96,9 +108,17 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 master-only text-[9px] px-3 py-1 flex items-center gap-2">
-                    👁️‍🗨️ HORUS O OLHO QUE MENOR PREÇO VÊ
-                </button>
+                <!-- Grupo Horus + Widget USDT -->
+                <div class="flex items-center gap-2">
+                    <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 master-only text-[9px] px-3 py-1 flex items-center gap-2">
+                        👁️‍🗨️ HORUS
+                    </button>
+                    <!-- Widget Travar USDT -->
+                    <div class="usdt-widget master-only" id="usdtWidget">
+                        <input type="number" id="usdAmount" placeholder="USD" min="0" step="1" value="100">
+                        <button id="lockUsdtBtn" onclick="lockUsdt()">TRAVAR USDT</button>
+                    </div>
+                </div>
                 <div class="relative master-only cursor-pointer" onclick="abrirNotificacoes()" title="Sugestões e Alertas">
                     <span class="text-lg hover:opacity-80">🔔</span>
                     <span id="badgeNotif" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full pointer-events-none">0</span>
@@ -121,12 +141,17 @@
             <button class="menu-btn" onclick="switchView('v-conta', this)">⚙️ MINHA CONTA</button>
         </div>
 
+        <!-- Aba Atacadistas (com botões de importar/exportar) -->
         <div id="v-atacadistas" class="master-view active">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
                     <h2 class="text-sm font-black text-white">ATACADISTAS</h2>
                     <div class="flex gap-2 w-2/3 justify-end items-center">
                         <input type="text" placeholder="🔍 BUSCAR NOME, CIDADE, STATUS, WHATSAPP..." class="apple-input !w-1/2 !py-2" onkeyup="filterTable('listAta', this.value)">
+                        <!-- Botões de Gestão de Contatos -->
+                        <button onclick="exportarContatos()" class="btn-master bg-green-700 text-white hover:bg-green-600">📤 EXPORTAR CSV</button>
+                        <button onclick="document.getElementById('importCsvFile').click()" class="btn-master bg-blue-700 text-white hover:bg-blue-600">📥 IMPORTAR CSV</button>
+                        <input type="file" id="importCsvFile" accept=".csv" class="hidden" onchange="importarFornecedores(event)">
                         <button onclick="abrirModalAta()" class="btn-master bg-white text-black hover:bg-zinc-300">+ NOVO</button>
                         <button onclick="bulkAtaModal()" class="btn-master bg-zinc-800 text-white">⚙️ EM MASSA</button>
                     </div>
@@ -159,6 +184,7 @@
             </div>
         </div>
 
+        <!-- Aba Gestão Global (com botão de Lançamento em Massa) -->
         <div id="v-anuncios" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
@@ -170,6 +196,8 @@
                         <button onclick="abrirModalZerarEstoque()" class="btn-master !bg-red-600 master-only">🚫 ZERAR ESTOQUE DE LOJA</button>
                         <button onclick="abrirModalGestaoAnuncio()" class="btn-master !bg-blue-600">➕ LANÇAR ANÚNCIO</button>
                         <button onclick="bulkAnuModal()" class="btn-master bg-zinc-800 text-white">⚙️ EM MASSA</button>
+                        <!-- Botão Lançamento em Massa -->
+                        <button onclick="abrirModalAddMassa()" class="btn-master !bg-purple-600">🚀 LANÇAR EM MASSA</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
@@ -190,6 +218,7 @@
             </div>
         </div>
 
+        <!-- Demais abas (inalteradas) -->
         <div id="v-selos" class="master-view">
             <div class="apple-card">
                 <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">GESTÃO DE PATENTES FIPE 1.0</h2>
@@ -287,6 +316,7 @@
         </div>
     </div>
 
+    <!-- Modais existentes (inalterados) -->
     <div id="modalTrocaPainel" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-sm bg-[#050505] border-[#38383a] text-center relative">
             <button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
@@ -685,9 +715,39 @@
     <div id="modalBulkAta" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505] relative"><button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">AÇÕES EM MASSA (ATACADISTAS)</h3><input type="text" id="bulkAtaSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('fornecedores', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('fornecedores', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button><button onclick="runBulk('fornecedores', 'desativar')" class="btn-master w-full bg-zinc-700 mb-2">DESATIVAR SELECIONADOS</button><button onclick="runBulk('fornecedores', 'verificar')" class="btn-master w-full border border-blue-600 text-blue-500 bg-transparent mb-4">APLICAR SELO VERIFICADO</button><button onclick="runBulk('fornecedores', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button></div></div>
     <div id="modalBulkCli" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505] relative"><button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">AÇÕES EM MASSA (BUSCADORES)</h3><input type="text" id="bulkCliSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('clientes_buscador', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('clientes_buscador', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button><button onclick="runBulk('clientes_buscador', 'desativar')" class="btn-master w-full bg-zinc-700 mb-4">DESATIVAR SELECIONADOS</button><button onclick="runBulk('clientes_buscador', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button></div></div>
 
+    <!-- NOVO MODAL: Lançamento em Massa -->
+    <div id="modalAddMassa" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-4xl bg-[#050505] border-[#38383a] max-h-[90vh] overflow-y-auto relative">
+            <button onclick="fecharModalAddMassa()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">🚀 LANÇAMENTO GLOBAL EM MASSA</h3>
+            
+            <div class="mb-4">
+                <label class="text-[9px] text-gray-400 font-black block mb-1">FORNECEDOR (LOJA)</label>
+                <select id="massaFornecedor" class="apple-input">
+                    <option value="">Selecione...</option>
+                </select>
+            </div>
+
+            <div id="linhasContainer" class="space-y-2 mb-4">
+                <!-- Linhas serão adicionadas aqui -->
+            </div>
+
+            <div class="flex gap-2 mb-4">
+                <button type="button" onclick="adicionarLinhaAnuncio()" class="btn-master bg-zinc-700 text-white">➕ ADICIONAR LINHA</button>
+                <button type="button" onclick="executarLancamentoMassa()" class="btn-master bg-green-600 text-white">🚀 EXECUTAR LANÇAMENTO</button>
+            </div>
+
+            <div id="massaLog" class="text-[10px] font-mono text-green-400 max-h-40 overflow-y-auto border border-zinc-800 p-2 rounded"></div>
+        </div>
+    </div>
+
+    <!-- Container do Card PIX (USDT) -->
+    <div id="usdtPedidoContainer" class="fixed bottom-4 right-4 w-80 z-50 hidden"></div>
+
     <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
     <script>
+        // ================== CÓDIGO ORIGINAL ==================
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let dbAta=[], dbCli=[], dbAnu=[], dbVar=[], dbFunc=[], dbReg=[], currentOracleUsdt=0;
         let currentUserType = null;
@@ -903,7 +963,6 @@
             document.getElementById('maintenanceMenu').classList.toggle('hidden');
         }
 
-        // Função setMaintenance corrigida com upsert e renderSystemStatus
         async function setMaintenance(campo, acao) {
             let { data: atual } = await _s.from('sistema_config').select('*').eq('id', 1).maybeSingle();
             if (!atual) atual = { id: 1, status_geral: 'on', status_atacadista: 'on', status_buscador: 'on' };
@@ -926,7 +985,6 @@
                 data = defaultConfig;
             }
 
-            // Atualiza os checkboxes
             const chkGeral = document.getElementById('chk_status_geral');
             const chkAta = document.getElementById('chk_status_atacadista');
             const chkBusca = document.getElementById('chk_status_buscador');
@@ -964,7 +1022,6 @@
             else { alert('Estoque zerado com sucesso!'); fecharModais(); loadAll(); }
         }
 
-        // ===== HORUS AVANÇADO =====
         async function abrirModalHorus() {
             const { data: ofertas, error } = await _s
                 .from('ofertas')
@@ -1024,7 +1081,6 @@
             });
         }
 
-        // --- SISTEMA DE NOTIFICAÇÕES INTELIGENTES ---
         async function checarNotificacoes() {
             const { count } = await _s.from('feedbacks').select('*', { count: 'exact', head: true });
             const badge = document.getElementById('badgeNotif');
@@ -1053,7 +1109,6 @@
             checarNotificacoes();
         }
 
-        // Nova função para apagar múltiplos feedbacks selecionados
         async function deletarFeedbacksSelecionados() {
             const checkboxes = document.querySelectorAll('.chk-feedback:checked');
             if (checkboxes.length === 0) return alert('Selecione pelo menos uma mensagem.');
@@ -1068,7 +1123,6 @@
             }
         }
 
-        // Função que abre o modal de resposta
         function abrirModalResposta(id, nome, tipo) {
             document.getElementById('respostaFeedbackId').value = id;
             document.getElementById('respostaDestinatario').value = `${nome} (${tipo})`;
@@ -1080,7 +1134,6 @@
             document.getElementById('modalResponderFeedback').classList.add('hidden');
         }
 
-        // Função que envia a resposta para a tabela mensagens_internas
         async function enviarRespostaInterna(e) {
             e.preventDefault();
             const feedbackId = document.getElementById('respostaFeedbackId').value;
@@ -1089,7 +1142,6 @@
 
             if (!mensagem) return alert('Digite uma mensagem.');
 
-            // Extrai nome e tipo (formato "Nome (TIPO)")
             const partes = destinatario.split(' (');
             const nome = partes[0];
             const tipo = partes[1] ? partes[1].replace(')', '') : 'Desconhecido';
@@ -1107,7 +1159,7 @@
             } else {
                 alert('Resposta enviada com sucesso!');
                 fecharModalResposta();
-                abrirNotificacoes(); // atualiza a lista de notificações
+                abrirNotificacoes();
             }
         }
 
@@ -1247,6 +1299,13 @@
             document.getElementById('bulkOrigem').innerHTML = '<option value="">MANTER ORIGEM...</option>' + htmlOrigem.slice(0, -14) + '</select>';
 
             carregarEstadosMaster();
+
+            // Preencher select de fornecedor no modal de lançamento em massa
+            let massaSelect = document.getElementById('massaFornecedor');
+            if (massaSelect) {
+                massaSelect.innerHTML = '<option value="">Selecione...</option>';
+                dbAta.forEach(a => massaSelect.innerHTML += `<option value="${a.id}">${a.nome}</option>`);
+            }
         }
 
         function carregarEstadosMaster() {
@@ -1893,7 +1952,6 @@
                     document.getElementById('editCor').value = oferta.variacoes?.cor || '';
                 }, 50);
             }, 50);
-            // Agora usa a função setEditCondicao
             setEditCondicao(oferta.condicao || 'Novo');
             document.getElementById('editBateria').value = oferta.saude_bateria || '';
             document.getElementById('editGarantia').value = oferta.garantia || '';
@@ -1976,6 +2034,325 @@
         window.deletarFeedbacksSelecionados = deletarFeedbacksSelecionados;
 
         checkAuth();
+
+        // ================== NOVAS FUNÇÕES ==================
+
+        // --- 1. Gestão de Contatos ---
+        function formatarTelefone(numero) {
+            let digits = numero.replace(/\D/g, '');
+            if (digits.startsWith('595')) return '+595' + digits.slice(3);
+            if (digits.startsWith('1') && digits.length === 11) return '+1' + digits.slice(1);
+            return '+55' + digits;
+        }
+
+        function exportarContatos() {
+            let csv = "Nome,Loja,WhatsApp,Email,País,Estado,Cidade\n";
+            dbAta.forEach(a => {
+                let whats = formatarTelefone(a.whatsapp || '');
+                csv += `"${a.nome || ''}","${a.nome || ''}","${whats}","${a.email || ''}","${a.pais || ''}","${a.estado || ''}","${a.cidade || ''}"\n`;
+            });
+            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'atacadistas.csv';
+            link.click();
+        }
+
+        async function importarFornecedores(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+            let text = await file.text();
+            let linhas = text.split('\n').slice(1);
+            for (let linha of linhas) {
+                if (!linha.trim()) continue;
+                let cols = linha.split(',').map(s => s.replace(/^"|"$/g, ''));
+                if (cols.length < 7) continue;
+                let [nome, loja, whatsapp, email, pais, estado, cidade] = cols;
+                // simplificado: insere com senha padrão
+                let { error } = await _s.from('fornecedores').insert({
+                    nome: nome.toUpperCase(),
+                    whatsapp: whatsapp.replace(/\D/g, ''),
+                    email,
+                    pais,
+                    estado,
+                    cidade,
+                    ativo: true,
+                    verificado: false,
+                    senha: '123456'
+                });
+                if (error) console.warn('Erro ao importar:', error);
+            }
+            alert('Importação concluída. Recarregue a página.');
+            loadAll();
+        }
+
+        // --- 2. Widget Travar USDT ---
+        let usdtTimer, usdtInterval;
+        let usdtLockedRate = 0;
+        let usdtLockedUsd = 0;
+        let usdtLockedTotal = 0;
+        let usdtTimeLeft = 120;
+        let usdtPedidoId = '';
+
+        function atualizarBotaoUsdt() {
+            let btn = document.getElementById('lockUsdtBtn');
+            let now = new Date();
+            let dia = now.getDay(); // 0=domingo, 6=sábado
+            let hora = now.getHours();
+            if (dia >= 1 && dia <= 5 && hora >= 10 && hora < 17) {
+                btn.disabled = false;
+                btn.innerText = 'TRAVAR USDT';
+            } else {
+                btn.disabled = true;
+                btn.innerText = 'MERCADO FECHADO';
+            }
+        }
+        setInterval(atualizarBotaoUsdt, 60000);
+        atualizarBotaoUsdt();
+
+        function lockUsdt() {
+            if (usdtTimer) clearInterval(usdtTimer);
+            let usd = parseFloat(document.getElementById('usdAmount').value) || 0;
+            if (usd <= 0) { alert('Digite um valor em USD válido.'); return; }
+            usdtLockedUsd = usd;
+            usdtLockedRate = currentOracleUsdt || (parseFloat(document.getElementById('tUsdt').innerText.replace('R$', '')) || 0);
+            usdtLockedTotal = usd * usdtLockedRate;
+            let agora = new Date();
+            let hh = agora.getHours().toString().padStart(2,'0');
+            let mm = agora.getMinutes().toString().padStart(2,'0');
+            let ss = agora.getSeconds().toString().padStart(2,'0');
+            let taxaStr = usdtLockedRate.toFixed(4).replace('.', '');
+            usdtPedidoId = `TRVX>-$DTX>${usd}-CTX>${taxaStr}-R$X>${usdtLockedTotal.toFixed(2)}-Printx>${hh}:${mm}:${ss}`;
+            usdtTimeLeft = 120;
+            mostrarPedido();
+            iniciarTimerUsdt();
+            if (usdtInterval) clearInterval(usdtInterval);
+            usdtInterval = setInterval(() => {
+                let novaTaxa = currentOracleUsdt || parseFloat(document.getElementById('tUsdt').innerText.replace('R$', ''));
+                if (Math.abs(novaTaxa - usdtLockedRate) > 0.03) {
+                    alert('⚠️ Variação brusca. Taxa atualizada por segurança.');
+                    usdtLockedRate = novaTaxa;
+                    usdtLockedTotal = usdtLockedUsd * usdtLockedRate;
+                    taxaStr = usdtLockedRate.toFixed(4).replace('.', '');
+                    usdtPedidoId = `TRVX>-$DTX>${usdtLockedUsd}-CTX>${taxaStr}-R$X>${usdtLockedTotal.toFixed(2)}-Printx>${hh}:${mm}:${ss}`;
+                    document.getElementById('usdtIdDisplay').innerText = usdtPedidoId;
+                    document.getElementById('usdtTotalDisplay').innerText = `R$ ${usdtLockedTotal.toFixed(2)}`;
+                    clearInterval(usdtTimer);
+                    usdtTimeLeft = 120;
+                    iniciarTimerUsdt();
+                }
+            }, 1000);
+        }
+
+        function iniciarTimerUsdt() {
+            usdtTimer = setInterval(() => {
+                usdtTimeLeft--;
+                document.getElementById('usdtTimer').innerText = `${usdtTimeLeft}s`;
+                if (usdtTimeLeft <= 0) {
+                    clearInterval(usdtTimer);
+                    usdtLockedRate += 0.01;
+                    usdtLockedTotal = usdtLockedUsd * usdtLockedRate;
+                    let taxaStr = usdtLockedRate.toFixed(4).replace('.', '');
+                    let agora = new Date();
+                    let hh = agora.getHours().toString().padStart(2,'0');
+                    let mm = agora.getMinutes().toString().padStart(2,'0');
+                    let ss = agora.getSeconds().toString().padStart(2,'0');
+                    usdtPedidoId = `TRVX>-$DTX>${usdtLockedUsd}-CTX>${taxaStr}-R$X>${usdtLockedTotal.toFixed(2)}-Printx>${hh}:${mm}:${ss}`;
+                    document.getElementById('usdtIdDisplay').innerText = usdtPedidoId;
+                    document.getElementById('usdtTotalDisplay').innerText = `R$ ${usdtLockedTotal.toFixed(2)}`;
+                    usdtTimeLeft = 120;
+                    iniciarTimerUsdt();
+                }
+            }, 1000);
+        }
+
+        function mostrarPedido() {
+            let container = document.getElementById('usdtPedidoContainer');
+            container.innerHTML = `
+                <div class="pedido-card" id="reciboPrint">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-blue-400 font-black">PIX GERADO</span>
+                        <span class="timer" id="usdtTimer">120s</span>
+                    </div>
+                    <div class="text-[9px] text-gray-400 mb-1">ID DO PEDIDO:</div>
+                    <div class="text-[10px] text-green-400 break-all mb-2" id="usdtIdDisplay">${usdtPedidoId}</div>
+                    <div class="text-sm font-black text-white mb-3" id="usdtTotalDisplay">R$ ${usdtLockedTotal.toFixed(2)}</div>
+                    <div class="flex gap-2">
+                        <button onclick="enviarComprovante()" class="btn-master !bg-green-600 flex-1 py-2 text-[9px]">📷 ENVIAR COMPROVANTE</button>
+                        <button onclick="fecharPedidoUsdt()" class="btn-master !bg-zinc-700 flex-1 py-2 text-[9px]">FECHAR</button>
+                    </div>
+                </div>
+            `;
+            container.classList.remove('hidden');
+        }
+
+        function fecharPedidoUsdt() {
+            document.getElementById('usdtPedidoContainer').classList.add('hidden');
+            if (usdtTimer) clearInterval(usdtTimer);
+            if (usdtInterval) clearInterval(usdtInterval);
+        }
+
+        function enviarComprovante() {
+            let recibo = document.getElementById('reciboPrint');
+            html2canvas(recibo).then(canvas => {
+                let link = document.createElement('a');
+                link.download = 'comprovante.png';
+                link.href = canvas.toDataURL();
+                link.click();
+                let msg = `OLÁ TUDO BEM, TRAVEI O DOLAR. SEGUE O COMPROVANTE PARA VALIDAÇÃO. ${usdtPedidoId}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+            });
+        }
+
+        // --- 3. Lançamento Global em Massa ---
+        function abrirModalAddMassa() {
+            document.getElementById('modalAddMassa').classList.remove('hidden');
+        }
+
+        function fecharModalAddMassa() {
+            document.getElementById('modalAddMassa').classList.add('hidden');
+            document.getElementById('linhasContainer').innerHTML = '';
+        }
+
+        function adicionarLinhaAnuncio() {
+            let container = document.getElementById('linhasContainer');
+            let index = container.children.length;
+            let linha = document.createElement('div');
+            linha.className = 'linha-anuncio';
+            linha.innerHTML = `
+                <select class="modelo" data-index="${index}" style="min-width:120px">
+                    <option value="">Modelo</option>
+                    ${dbVar.map(v => v.produtos_mestre?.id ? `<option value="${v.produtos_mestre.id}" data-produto="${v.produtos_mestre.id}">${v.produtos_mestre.nome}</option>` : '').filter((v,i,a)=>a.indexOf(v)===i).join('')}
+                </select>
+                <select class="capacidade" data-index="${index}" disabled style="min-width:80px">
+                    <option value="">Memória</option>
+                </select>
+                <select class="cor" data-index="${index}" disabled style="min-width:80px">
+                    <option value="">Cor</option>
+                </select>
+                <select class="condicao" data-index="${index}" style="min-width:80px">
+                    <option value="Novo">Novo</option>
+                    <option value="Seminovo">Seminovo</option>
+                    <option value="CPO">CPO</option>
+                </select>
+                <select class="origem" data-index="${index}" style="min-width:100px">
+                    <option value="">Origem</option>
+                    ${dbReg.map(r => `<option value="${r.id}">${r.nome}</option>`).join('')}
+                </select>
+                <input type="number" class="quantidade" placeholder="Qtd" min="1" value="1" style="width:60px">
+                <input type="number" class="preco" placeholder="Preço R$" step="0.01" min="0" style="width:90px">
+                <button class="remover-linha" onclick="this.parentElement.remove()">🗑️</button>
+            `;
+            container.appendChild(linha);
+
+            // Eventos para cascata
+            let modeloSelect = linha.querySelector('.modelo');
+            let capacidadeSelect = linha.querySelector('.capacidade');
+            let corSelect = linha.querySelector('.cor');
+
+            modeloSelect.addEventListener('change', function() {
+                let prodId = this.value;
+                if (!prodId) {
+                    capacidadeSelect.disabled = true;
+                    corSelect.disabled = true;
+                    return;
+                }
+                let caps = [...new Set(dbVar.filter(v => v.produtos_mestre?.id == prodId).map(v => v.capacidade))];
+                capacidadeSelect.innerHTML = '<option value="">Memória</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
+                capacidadeSelect.disabled = false;
+                corSelect.disabled = true;
+            });
+
+            capacidadeSelect.addEventListener('change', function() {
+                let prodId = modeloSelect.value;
+                let cap = this.value;
+                if (!prodId || !cap) {
+                    corSelect.disabled = true;
+                    return;
+                }
+                let cores = dbVar.filter(v => v.produtos_mestre?.id == prodId && v.capacidade == cap).map(v => v.cor);
+                corSelect.innerHTML = '<option value="">Cor</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join('');
+                corSelect.disabled = false;
+            });
+        }
+
+        async function executarLancamentoMassa() {
+            let fornecedorId = document.getElementById('massaFornecedor').value;
+            if (!fornecedorId) { alert('Selecione um fornecedor.'); return; }
+
+            let linhas = document.querySelectorAll('#linhasContainer .linha-anuncio');
+            if (linhas.length === 0) { alert('Adicione pelo menos uma linha.'); return; }
+
+            let payloads = [];
+            let logArea = document.getElementById('massaLog');
+            logArea.innerHTML = '';
+
+            for (let linha of linhas) {
+                let modeloId = linha.querySelector('.modelo').value;
+                let capacidade = linha.querySelector('.capacidade').value;
+                let cor = linha.querySelector('.cor').value;
+                let condicao = linha.querySelector('.condicao').value;
+                let regiaoId = linha.querySelector('.origem').value;
+                let quantidade = parseInt(linha.querySelector('.quantidade').value) || 0;
+                let preco = parseFloat(linha.querySelector('.preco').value) || 0;
+
+                if (!modeloId || !capacidade || !cor || !condicao || !regiaoId || quantidade <= 0 || preco <= 0) {
+                    logArea.innerHTML += `<div class="text-red-400">⚠️ Linha ignorada: preencha todos os campos.</div>`;
+                    continue;
+                }
+
+                let variacao = dbVar.find(v => v.produtos_mestre?.id == modeloId && v.capacidade == capacidade && v.cor == cor);
+                if (!variacao) {
+                    logArea.innerHTML += `<div class="text-red-400">❌ Variação não encontrada.</div>`;
+                    continue;
+                }
+
+                payloads.push({
+                    fornecedor_id: fornecedorId,
+                    variacao_id: variacao.id,
+                    regiao_id: regiaoId,
+                    condicao: condicao,
+                    preco: preco,
+                    moeda: 'BRL',
+                    quantidade: quantidade,
+                    status_aprovacao: 'aprovado'
+                });
+                logArea.innerHTML += `<div class="text-green-400">✅ Preparado: ${variacao.produtos_mestre.nome} ${capacidade} ${cor} | Qtd: ${quantidade} | R$ ${preco.toFixed(2)}</div>`;
+            }
+
+            if (payloads.length === 0) { logArea.innerHTML += '<div class="text-yellow-400">Nenhum payload válido.</div>'; return; }
+
+            logArea.innerHTML += `<div class="text-white">⏳ Inserindo ${payloads.length} anúncios...</div>`;
+
+            // Inserir em paralelo
+            const results = await Promise.allSettled(payloads.map(p => _s.from('ofertas').insert([p])));
+
+            let sucessos = 0, erros = 0;
+            results.forEach((r, idx) => {
+                if (r.status === 'fulfilled' && !r.value.error) {
+                    sucessos++;
+                } else {
+                    erros++;
+                    logArea.innerHTML += `<div class="text-red-400">❌ Erro no anúncio ${idx+1}: ${r.value?.error?.message || r.reason}</div>`;
+                }
+            });
+
+            logArea.innerHTML += `<div class="text-blue-400">✅ Concluído: ${sucessos} sucessos, ${erros} erros.</div>`;
+            if (sucessos > 0) {
+                setTimeout(() => loadAll(), 2000);
+            }
+        }
+
+        // Expor funções
+        window.exportarContatos = exportarContatos;
+        window.importarFornecedores = importarFornecedores;
+        window.lockUsdt = lockUsdt;
+        window.enviarComprovante = enviarComprovante;
+        window.fecharPedidoUsdt = fecharPedidoUsdt;
+        window.abrirModalAddMassa = abrirModalAddMassa;
+        window.fecharModalAddMassa = fecharModalAddMassa;
+        window.adicionarLinhaAnuncio = adicionarLinhaAnuncio;
+        window.executarLancamentoMassa = executarLancamentoMassa;
     </script>
 </body>
 </html>
