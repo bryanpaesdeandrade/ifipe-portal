@@ -231,6 +231,35 @@
         .banner-nav-right {
             right: 8px;
         }
+        /* Prefixo fixo para WhatsApp Brasil */
+        .whatsapp-container {
+            display: flex;
+            align-items: center;
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .whatsapp-prefix {
+            background: var(--border);
+            padding: 10px 12px;
+            font-weight: 600;
+            color: var(--text);
+            border-right: 1px solid var(--border);
+            user-select: none;
+        }
+        .whatsapp-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: var(--text);
+            outline: none;
+        }
+        .whatsapp-input:focus {
+            box-shadow: none;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -335,8 +364,13 @@
             <form onsubmit="cadastrarBuscador(event)">
                 <div class="space-y-3">
                     <input type="text" id="buscadorNome" class="apple-input" placeholder="NOME COMPLETO" required>
-                    <input type="text" id="buscadorWhatsapp" class="apple-input" placeholder="WHATSAPP" required>
-                    <select id="buscadorPais" class="apple-input" onchange="toggleEstadoCidade('buscador')" required>
+                    
+                    <!-- Campo WhatsApp com prefixo dinâmico -->
+                    <div id="buscadorWhatsappContainer">
+                        <input type="text" id="buscadorWhatsapp" class="apple-input" placeholder="WHATSAPP" required>
+                    </div>
+
+                    <select id="buscadorPais" class="apple-input" onchange="toggleEstadoCidade('buscador'); ajustarWhatsAppPorPais('buscador')" required>
                         <option value="">PAÍS</option>
                         <option value="Brasil">🇧🇷 BRASIL</option>
                         <option value="EUA">🇺🇸 EUA</option>
@@ -355,7 +389,7 @@
                     <input type="password" id="buscadorSenha" class="apple-input" placeholder="SENHA" required>
                 </div>
                 <div class="flex gap-2 mt-4">
-                    <button type="submit" class="btn-primary flex-1">CADASTRAR</button>
+                    <button type="submit" id="btnCadastrarBuscador" class="btn-primary flex-1">CADASTRAR</button>
                     <button type="button" onclick="fecharModalCadastro('buscador')" class="btn-secondary flex-1">CANCELAR</button>
                 </div>
             </form>
@@ -372,8 +406,13 @@
                     <input type="text" id="anuncianteLoja" class="apple-input" placeholder="NOME DA LOJA" required>
                     <input type="text" id="anuncianteDono" class="apple-input" placeholder="NOME DO DONO" required>
                     <input type="text" id="anuncianteNumeroDono" class="apple-input" placeholder="NÚMERO DO DONO" required>
-                    <input type="text" id="anuncianteWhatsapp" class="apple-input" placeholder="WHATSAPP DE ATENDIMENTO" required>
-                    <select id="anunciantePais" class="apple-input" onchange="toggleEstadoCidade('anunciante')" required>
+                    
+                    <!-- Campo WhatsApp com prefixo dinâmico -->
+                    <div id="anuncianteWhatsappContainer">
+                        <input type="text" id="anuncianteWhatsapp" class="apple-input" placeholder="WHATSAPP DE ATENDIMENTO" required>
+                    </div>
+
+                    <select id="anunciantePais" class="apple-input" onchange="toggleEstadoCidade('anunciante'); ajustarWhatsAppPorPais('anunciante')" required>
                         <option value="">PAÍS</option>
                         <option value="Brasil">🇧🇷 BRASIL</option>
                         <option value="EUA">🇺🇸 EUA</option>
@@ -392,7 +431,7 @@
                     <input type="password" id="anuncianteSenha" class="apple-input" placeholder="SENHA" required>
                 </div>
                 <div class="flex gap-2 mt-4">
-                    <button type="submit" class="btn-primary flex-1">CADASTRAR</button>
+                    <button type="submit" id="btnCadastrarAnunciante" class="btn-primary flex-1">CADASTRAR</button>
                     <button type="button" onclick="fecharModalCadastro('anunciante')" class="btn-secondary flex-1">CANCELAR</button>
                 </div>
             </form>
@@ -691,11 +730,54 @@
             }
         }
 
-        // Cadastro Buscador (sem email)
+        // Função para ajustar o campo WhatsApp de acordo com o país selecionado
+        function ajustarWhatsAppPorPais(tipo) {
+            const pais = document.getElementById(`${tipo}Pais`).value;
+            const whatsInput = document.getElementById(`${tipo}Whatsapp`);
+            if (!whatsInput) return;
+
+            if (pais === 'Brasil') {
+                // Se o campo estiver vazio, preenche com +55
+                if (whatsInput.value.trim() === '') {
+                    whatsInput.value = '+55';
+                } else if (!whatsInput.value.startsWith('+55')) {
+                    // Se já tiver algo mas não começar com +55, apenas adicionamos +55 na validação final
+                    // Não forçamos para não perder o que o usuário digitou
+                }
+            } else {
+                // Para outros países, se o campo for exatamente '+55', podemos limpar (opcional)
+                if (whatsInput.value === '+55') {
+                    whatsInput.value = '';
+                }
+            }
+        }
+
+        // Função auxiliar para limpar e padronizar número de WhatsApp
+        function padronizarWhatsApp(numero, pais) {
+            // Remove tudo que não for dígito
+            let apenasDigitos = numero.replace(/\D/g, '');
+            
+            if (pais === 'Brasil') {
+                // Se o número não começar com 55, adiciona
+                if (!apenasDigitos.startsWith('55')) {
+                    apenasDigitos = '55' + apenasDigitos;
+                }
+                // Garante que tenha no mínimo 12 dígitos (55 + 2 DDD + 8/9 dígitos)
+                // Se tiver menos, completa com zeros? Melhor não, deixa como está, o banco pode aceitar.
+            }
+            return apenasDigitos;
+        }
+
+        // Cadastro Buscador (sem email) com blindagem de botão
         async function cadastrarBuscador(e) {
             e.preventDefault();
+            
+            const btn = document.getElementById('btnCadastrarBuscador');
+            btn.disabled = true;
+            btn.innerText = 'PROCESSANDO...';
+
             const nome = document.getElementById('buscadorNome').value.trim().toUpperCase();
-            const whatsapp = document.getElementById('buscadorWhatsapp').value.replace(/\D/g, '');
+            let whatsapp = document.getElementById('buscadorWhatsapp').value.trim();
             const pais = document.getElementById('buscadorPais').value;
             const estado = pais === 'Brasil' ? document.getElementById('buscadorEstado').value : null;
             const cidade = pais === 'Brasil' ? document.getElementById('buscadorCidade').value : null;
@@ -703,12 +785,19 @@
 
             if (!nome || !whatsapp || !pais || !senha) {
                 alert('Preencha todos os campos.');
+                btn.disabled = false;
+                btn.innerText = 'CADASTRAR';
                 return;
             }
             if (pais === 'Brasil' && (!estado || !cidade)) {
                 alert('Selecione estado e cidade.');
+                btn.disabled = false;
+                btn.innerText = 'CADASTRAR';
                 return;
             }
+
+            // Padronizar WhatsApp
+            whatsapp = padronizarWhatsApp(whatsapp, pais);
 
             const { error } = await _s.from('clientes_buscador').insert([{
                 nome,
@@ -721,6 +810,9 @@
                 logins_count: 0
             }]);
 
+            btn.disabled = false;
+            btn.innerText = 'CADASTRAR';
+
             if (error) {
                 alert('Erro ao cadastrar: ' + error.message);
             } else {
@@ -729,13 +821,18 @@
             }
         }
 
-        // Cadastro Anunciante (payload corrigido)
+        // Cadastro Anunciante com blindagem de botão
         async function cadastrarAnunciante(e) {
             e.preventDefault();
+            
+            const btn = document.getElementById('btnCadastrarAnunciante');
+            btn.disabled = true;
+            btn.innerText = 'PROCESSANDO...';
+
             const loja = document.getElementById('anuncianteLoja').value.trim().toUpperCase();
             const dono = document.getElementById('anuncianteDono').value.trim().toUpperCase();
             const numeroDono = document.getElementById('anuncianteNumeroDono').value.replace(/\D/g, '');
-            const whatsapp = document.getElementById('anuncianteWhatsapp').value.replace(/\D/g, '');
+            let whatsapp = document.getElementById('anuncianteWhatsapp').value.trim();
             const pais = document.getElementById('anunciantePais').value;
             const estado = pais === 'Brasil' ? document.getElementById('anuncianteEstado').value : null;
             const cidade = pais === 'Brasil' ? document.getElementById('anuncianteCidade').value : null;
@@ -743,12 +840,19 @@
 
             if (!loja || !dono || !numeroDono || !whatsapp || !pais || !senha) {
                 alert('Preencha todos os campos.');
+                btn.disabled = false;
+                btn.innerText = 'CADASTRAR';
                 return;
             }
             if (pais === 'Brasil' && (!estado || !cidade)) {
                 alert('Selecione estado e cidade.');
+                btn.disabled = false;
+                btn.innerText = 'CADASTRAR';
                 return;
             }
+
+            // Padronizar WhatsApp
+            whatsapp = padronizarWhatsApp(whatsapp, pais);
 
             const { error } = await _s.from('fornecedores').insert([{
                 nome: loja,
@@ -761,6 +865,9 @@
                 senha,
                 ativo: false
             }]);
+
+            btn.disabled = false;
+            btn.innerText = 'CADASTRAR';
 
             if (error) {
                 console.error('Erro detalhado no cadastro do anunciante:', error);
@@ -803,6 +910,7 @@
         window.calcularImportacao = calcularImportacao;
         window.proximoBanner = proximoBanner;
         window.anteriorBanner = anteriorBanner;
+        window.ajustarWhatsAppPorPais = ajustarWhatsAppPorPais;
     </script>
 </body>
 </html>
