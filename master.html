@@ -844,8 +844,36 @@
         let currentUserType = null;
         let isAndressa = false;
 
+        // Variáveis da trava USDT
+        let usdtTimer, usdtInterval;
+        let usdtLockedUsd = 0;
+        let usdtLockedRate = 0;
+        let usdtLockedTotal = 0;
+        let usdtTimeLeft = 120;
+        let usdtPedidoId = '';
+        let pixInstrucoes = ''; // carregado do banco
+
         const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
+
+        // ===== FUNÇÃO PARA CARREGAR INSTRUÇÕES PIX DO BANCO =====
+        async function carregarInstrucoesPix() {
+            try {
+                const { data, error } = await _s
+                    .from('sistema_config')
+                    .select('pix_instrucoes')
+                    .eq('id', 1)
+                    .maybeSingle();
+                if (data && data.pix_instrucoes) {
+                    pixInstrucoes = data.pix_instrucoes;
+                } else {
+                    pixInstrucoes = '';
+                }
+            } catch (e) {
+                console.warn('Erro ao carregar instruções PIX:', e);
+                pixInstrucoes = '';
+            }
+        }
 
         function updateMasterProfile(e) {
             e.preventDefault();
@@ -1352,6 +1380,7 @@
             } catch(e) { console.error("Erro WebSocket:", e); }
             await renderSystemStatus(); 
             await loadAll();
+            await carregarInstrucoesPix(); // carrega instruções PIX
             checarNotificacoes();
         }
 
@@ -1733,7 +1762,6 @@
             document.getElementById('modalAta').classList.remove('hidden'); 
         }
 
-        // ----- CORREÇÃO 2: Função saveAta com prevenção de duplo clique -----
         async function saveAta(e) { 
             e.preventDefault(); 
             const btn = e.target.querySelector('button[type="submit"]');
@@ -2212,30 +2240,6 @@
 
         // ================== NOVAS FUNÇÕES ==================
 
-        // --- CORREÇÃO 1: Função de cópia PIX infalível ---
-        function copiarDadosPix() {
-            let texto = localStorage.getItem('iFipe_Master_PIX_Data') || '';
-            try {
-                let partes = texto.split('*<');
-                if (partes.length > 1) {
-                    let chaveLimpada = partes[1].split('>*')[0].trim();
-                    let t = document.createElement("textarea");
-                    t.value = chaveLimpada;
-                    t.style.position = "fixed";
-                    t.style.opacity = "0";
-                    document.body.appendChild(t);
-                    t.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(t);
-                    alert('Chave PIX copiada com sucesso!');
-                } else {
-                    alert('Erro: Nenhuma chave PIX encontrada. Coloque a chave entre *< e >* no menu ⚙️ PIX.');
-                }
-            } catch (err) {
-                alert('Erro ao copiar no celular. Tente selecionar manualmente.');
-            }
-        }
-
         // --- Modal Mala Direta ---
         function abrirModalMalaDireta() {
             document.getElementById('modalMalaDireta').classList.remove('hidden');
@@ -2304,18 +2308,26 @@
             }
         }
 
-        // --- Modal Config PIX ---
+        // --- Modal Config PIX (agora salva no banco também) ---
         function abrirModalConfigPix() {
-            let textoSalvo = localStorage.getItem('iFipe_Master_PIX_Data') || '';
-            document.getElementById('textoPixConfig').value = textoSalvo;
+            document.getElementById('textoPixConfig').value = pixInstrucoes; // carrega do banco
             document.getElementById('modalConfigPix').classList.remove('hidden');
         }
         function fecharModalConfigPix() {
             document.getElementById('modalConfigPix').classList.add('hidden');
         }
-        function salvarConfigPix() {
+        async function salvarConfigPix() {
             let texto = document.getElementById('textoPixConfig').value;
-            localStorage.setItem('iFipe_Master_PIX_Data', texto);
+            // Salva no banco
+            const { error } = await _s
+                .from('sistema_config')
+                .upsert({ id: 1, pix_instrucoes: texto });
+            if (error) {
+                alert('Erro ao salvar no banco: ' + error.message);
+                return;
+            }
+            // Atualiza variável global
+            pixInstrucoes = texto;
             alert('Dados PIX salvos com sucesso!');
             fecharModalConfigPix();
         }
@@ -2338,7 +2350,7 @@
             document.getElementById('modalRegrasTrava').classList.add('hidden');
         }
 
-        // --- Função principal que gera o card PIX (sem print) ---
+        // --- Função principal que gera o card PIX (usa pixInstrucoes do banco) ---
         function confirmarTrava() {
             fecharModalRegrasTrava();
 
@@ -2385,14 +2397,6 @@
             }, 1000);
         }
 
-        // --- Timer ---
-        let usdtTimer, usdtInterval;
-        let usdtLockedUsd = 0;
-        let usdtLockedRate = 0;
-        let usdtLockedTotal = 0;
-        let usdtTimeLeft = 120;
-        let usdtPedidoId = '';
-
         function iniciarTimerUsdt() {
             usdtTimer = setInterval(() => {
                 usdtTimeLeft--;
@@ -2420,7 +2424,7 @@
 
         function mostrarPedido() {
             let container = document.getElementById('usdtPedidoContainer');
-            let textoPix = localStorage.getItem('iFipe_Master_PIX_Data') || '';
+            let textoPix = pixInstrucoes || ''; // usa a variável global carregada do banco
             container.innerHTML = `
                 <div class="pedido-card" id="reciboPrint">
                     <div class="text-[10px] text-gray-300 mb-3 whitespace-pre-wrap text-center bg-[#1c1c1e] p-3 rounded border border-dashed border-[#38383a]">${textoPix}</div>
@@ -2454,6 +2458,36 @@
             container.classList.remove('hidden');
         }
 
+        function fecharPedidoUsdt() {
+            document.getElementById('usdtPedidoContainer').classList.add('hidden');
+            if (usdtTimer) clearInterval(usdtTimer);
+            if (usdtInterval) clearInterval(usdtInterval);
+        }
+
+        // --- Função de cópia PIX (agora usa pixInstrucoes, não localStorage) ---
+        function copiarDadosPix() {
+            let texto = pixInstrucoes || '';
+            try {
+                let partes = texto.split('*<');
+                if (partes.length > 1) {
+                    let chaveLimpada = partes[1].split('>*')[0].trim();
+                    let t = document.createElement("textarea");
+                    t.value = chaveLimpada;
+                    t.style.position = "fixed";
+                    t.style.opacity = "0";
+                    document.body.appendChild(t);
+                    t.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(t);
+                    alert('Chave PIX copiada com sucesso!');
+                } else {
+                    alert('Erro: Nenhuma chave PIX encontrada. Coloque a chave entre *< e >* no menu ⚙️ PIX.');
+                }
+            } catch (err) {
+                alert('Erro ao copiar no celular. Tente selecionar manualmente.');
+            }
+        }
+
         function enviarComprovante() {
             let recibo = document.getElementById('reciboPrint');
             html2canvas(recibo).then(canvas => {
@@ -2465,12 +2499,6 @@
                 let msg = `OLÁ TUDO BEM, TRAVEI O DOLAR. SEGUE O COMPROVANTE PARA VALIDAÇÃO.\n\n${usdtPedidoId}`;
                 window.open(`https://wa.me/15616760652?text=${encodeURIComponent(msg)}`, '_blank');
             });
-        }
-
-        function fecharPedidoUsdt() {
-            document.getElementById('usdtPedidoContainer').classList.add('hidden');
-            if (usdtTimer) clearInterval(usdtTimer);
-            if (usdtInterval) clearInterval(usdtInterval);
         }
 
         // --- Formatação de telefone para Excel (com aspa simples) ---
