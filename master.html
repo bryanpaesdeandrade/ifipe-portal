@@ -1733,11 +1733,17 @@
             document.getElementById('modalAta').classList.remove('hidden'); 
         }
 
+        // ----- CORREÇÃO 2: Função saveAta com prevenção de duplo clique -----
         async function saveAta(e) { 
             e.preventDefault(); 
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerText = 'SALVANDO...';
+            
+            const id = document.getElementById('mAtaId').value; 
             const d = { 
                 nome: document.getElementById('mAtaNome').value.toUpperCase(), 
-                whatsapp: document.getElementById('mAtaWhats').value, 
+                whatsapp: document.getElementById('mAtaWhats').value.replace(/\D/g, ''), 
                 email: document.getElementById('mAtaEmail').value || null, 
                 pais: document.getElementById('mAtaPais').value, 
                 estado: (document.getElementById('mAtaPais').value === 'Brasil') ? document.getElementById('mAtaEst').value : null, 
@@ -1746,10 +1752,14 @@
                 verificado: document.getElementById('mAtaVeri').checked, 
                 senha: document.getElementById('mAtaSenha').value 
             }; 
-            const id = document.getElementById('mAtaId').value; 
+            
             let error;
-            if(id) ({ error } = await _s.from('fornecedores').update(d).eq('id', id));
+            if(id && id !== '') ({ error } = await _s.from('fornecedores').update(d).eq('id', id));
             else ({ error } = await _s.from('fornecedores').insert([d]));
+            
+            btn.disabled = false;
+            btn.innerText = 'SALVAR';
+            
             if(error) alert("ERRO AO SALVAR: " + error.message);
             else { fecharModais(); await loadAll(); } 
         }
@@ -1785,7 +1795,7 @@
             const id = document.getElementById('mCliId').value; 
             const payload = { 
                 nome: document.getElementById('mCliNome').value.toUpperCase(), 
-                whatsapp: document.getElementById('mCliWhats').value, 
+                whatsapp: document.getElementById('mCliWhats').value.replace(/\D/g, ''), 
                 email: document.getElementById('mCliEmail').value || null, 
                 pais: document.getElementById('mCliPais').value, 
                 estado: (document.getElementById('mCliPais').value === 'Brasil') ? document.getElementById('mCliEst').value : null, 
@@ -1828,7 +1838,7 @@
             const id = document.getElementById('mFuncId').value; 
             const payload = { 
                 nome: document.getElementById('mFuncNome').value.toUpperCase(), 
-                whatsapp: document.getElementById('mFuncWhats').value, 
+                whatsapp: document.getElementById('mFuncWhats').value.replace(/\D/g, ''), 
                 senha: document.getElementById('mFuncSenha').value, 
                 ativo: true 
             }; 
@@ -2202,36 +2212,28 @@
 
         // ================== NOVAS FUNÇÕES ==================
 
-        // --- Função de cópia com fallback ---
+        // --- CORREÇÃO 1: Função de cópia PIX infalível ---
         function copiarDadosPix() {
             let texto = localStorage.getItem('iFipe_Master_PIX_Data') || '';
-            let match = texto.match(/\*<([\s\S]*?)>\*/); 
-            if (match && match[1]) {
-                let chave = match[1].trim();
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(chave).then(() => alert('Chave PIX copiada!')).catch(() => fallbackCopy(chave));
-                } else { 
-                    fallbackCopy(chave); 
+            try {
+                let partes = texto.split('*<');
+                if (partes.length > 1) {
+                    let chaveLimpada = partes[1].split('>*')[0].trim();
+                    let t = document.createElement("textarea");
+                    t.value = chaveLimpada;
+                    t.style.position = "fixed";
+                    t.style.opacity = "0";
+                    document.body.appendChild(t);
+                    t.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(t);
+                    alert('Chave PIX copiada com sucesso!');
+                } else {
+                    alert('Erro: Nenhuma chave PIX encontrada. Coloque a chave entre *< e >* no menu ⚙️ PIX.');
                 }
-            } else { 
-                alert('Nenhuma chave PIX detectada entre *< e >*.'); 
+            } catch (err) {
+                alert('Erro ao copiar no celular. Tente selecionar manualmente.');
             }
-        }
-        function fallbackCopy(text) {
-            let ta = document.createElement("textarea");
-            ta.value = text; 
-            ta.style.position = "fixed"; 
-            ta.style.top = "0";
-            document.body.appendChild(ta); 
-            ta.focus(); 
-            ta.select();
-            try { 
-                document.execCommand('copy'); 
-                alert('Chave PIX copiada!'); 
-            } catch (err) { 
-                alert('Erro ao copiar no seu celular.'); 
-            }
-            document.body.removeChild(ta);
         }
 
         // --- Modal Mala Direta ---
