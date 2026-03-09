@@ -70,6 +70,15 @@
         input[type="number"] {
             -moz-appearance: textfield;
         }
+        /* Badge piscante para aprovação */
+        .badge-piscante {
+            animation: piscar 1.5s infinite;
+        }
+        @keyframes piscar {
+            0% { background-color: #ef4444; color: white; }
+            50% { background-color: #7f1d1d; color: #ccc; }
+            100% { background-color: #ef4444; color: white; }
+        }
     </style>
 </head>
 <body>
@@ -128,6 +137,14 @@
                     <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 master-only text-[9px] px-3 py-1 flex items-center gap-2">
                         👁️‍🗨️ HORUS
                     </button>
+                    <!-- Botão Mala Direta -->
+                    <button onclick="abrirModalMalaDireta()" class="btn-master !bg-blue-600 px-3 py-1 text-[9px] flex items-center gap-1">
+                        📢 MALA DIRETA
+                    </button>
+                </div>
+                <!-- Badge de aprovação -->
+                <div id="aprovacaoBadge" class="hidden cursor-pointer" onclick="filtrarApenasBloqueados()" title="Lojistas aguardando aprovação">
+                    <span class="badge-piscante px-2 py-1 rounded-full text-[9px] font-black">⚠️ LOJISTAS AGUARDANDO</span>
                 </div>
                 <div class="relative master-only cursor-pointer" onclick="abrirNotificacoes()" title="Sugestões e Alertas">
                     <span class="text-lg hover:opacity-80">🔔</span>
@@ -157,7 +174,7 @@
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
                     <h2 class="text-sm font-black text-white">ATACADISTAS</h2>
                     <div class="flex gap-2 w-2/3 justify-end items-center">
-                        <input type="text" placeholder="🔍 BUSCAR NOME, CIDADE, STATUS, WHATSAPP..." class="apple-input !w-1/2 !py-2" onkeyup="filterTable('listAta', this.value)">
+                        <input type="text" id="filtroAta" placeholder="🔍 BUSCAR NOME, CIDADE, STATUS, WHATSAPP..." class="apple-input !w-1/2 !py-2" onkeyup="filterTable('listAta', this.value)">
                         <!-- Botões de Gestão de Contatos -->
                         <button onclick="exportarContatos()" class="btn-master bg-green-700 text-white hover:bg-green-600">📤 EXPORTAR CSV</button>
                         <button onclick="document.getElementById('importCsvFile').click()" class="btn-master bg-blue-700 text-white hover:bg-blue-600">📥 IMPORTAR CSV</button>
@@ -181,7 +198,7 @@
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
                     <h2 class="text-sm font-black text-white">BUSCADORES</h2>
                     <div class="flex gap-2 w-2/3 justify-end items-center">
-                        <input type="text" placeholder="🔍 BUSCAR NOME, CIDADE, EMAIL, WHATSAPP..." class="apple-input !w-1/2 !py-2" onkeyup="filterTable('listCli', this.value)">
+                        <input type="text" id="filtroCli" placeholder="🔍 BUSCAR NOME, CIDADE, EMAIL, WHATSAPP..." class="apple-input !w-1/2 !py-2" onkeyup="filterTable('listCli', this.value)">
                         <!-- Botões de CSV para buscadores -->
                         <button onclick="exportarBuscadores()" class="btn-master bg-green-700 text-white hover:bg-green-600">📤 EXPORTAR CSV</button>
                         <button onclick="document.getElementById('importCsvBuscadores').click()" class="btn-master bg-blue-700 text-white hover:bg-blue-600">📥 IMPORTAR CSV</button>
@@ -366,6 +383,32 @@
 
     <!-- Container do Card PIX (USDT) -->
     <div id="usdtPedidoContainer" class="fixed bottom-4 right-4 w-80 z-50 hidden"></div>
+
+    <!-- MODAL MALA DIRETA -->
+    <div id="modalMalaDireta" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a] relative">
+            <button onclick="fecharModalMalaDireta()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">📢 MALA DIRETA (Mensagem Interna)</h3>
+            <form onsubmit="enviarMalaDireta(event)">
+                <div class="mb-4">
+                    <label class="text-[9px] text-gray-400 font-black block mb-1">Destinatários</label>
+                    <select id="malaDestino" class="apple-input">
+                        <option value="todos">TODOS (Atacadistas + Buscadores)</option>
+                        <option value="atacadistas">Apenas Atacadistas</option>
+                        <option value="buscadores">Apenas Buscadores</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="text-[9px] text-gray-400 font-black block mb-1">Mensagem</label>
+                    <textarea id="malaTexto" rows="5" class="apple-input resize-none" placeholder="Digite sua mensagem..." required></textarea>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn-master !bg-green-600 flex-1">DISPARAR</button>
+                    <button type="button" onclick="fecharModalMalaDireta()" class="btn-master !bg-zinc-700 flex-1">CANCELAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Demais modais existentes (inalterados) -->
     <div id="modalTrocaPainel" class="hidden modal-overlay">
@@ -894,11 +937,24 @@
             } catch(e) { sel.innerHTML = '<option value="Padrão">Erro ao carregar cidades</option>'; }
         }
 
+        // Função toggleLocationFields melhorada: DDI automático para Brasil
         function toggleLocationFields(tipo) {
             const p = document.getElementById(`m${tipo}Pais`).value;
             const s = document.getElementById(`divEstado${tipo}`);
             const c = document.getElementById(`divCidade${tipo}`);
-            if(p === 'Brasil') { s.classList.remove('hidden'); c.classList.remove('hidden'); } else { s.classList.add('hidden'); c.classList.add('hidden'); }
+            const whatsField = document.getElementById(`m${tipo}Whats`);
+            
+            if(p === 'Brasil') { 
+                s.classList.remove('hidden'); 
+                c.classList.remove('hidden');
+                // Se o campo whats estiver vazio, preenche com +55
+                if (whatsField && whatsField.value.trim() === '') {
+                    whatsField.value = '+55';
+                }
+            } else { 
+                s.classList.add('hidden'); 
+                c.classList.add('hidden');
+            }
         }
 
         function filterTable(tbodyId, query) {
@@ -1354,6 +1410,15 @@
                 massaSelect.innerHTML = '<option value="">Selecione...</option>';
                 dbAta.forEach(a => massaSelect.innerHTML += `<option value="${a.id}">${a.nome}</option>`);
             }
+
+            // Verificar se há lojistas inativos para mostrar badge
+            const inativos = dbAta.filter(a => !a.ativo);
+            const badge = document.getElementById('aprovacaoBadge');
+            if (inativos.length > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
         }
 
         function carregarEstadosMaster() {
@@ -1406,6 +1471,7 @@
             document.getElementById('btBulkCPO').classList.toggle('active', cond === 'CPO');
         }
 
+        // Funções de cores sem duplicatas (usando Set e toUpperCase)
         function libMemM() {
             let p = parseInt(document.getElementById('f_mod_m').value);
             let caps = [...new Set(dbVar.filter(v => v.produtos_mestre && v.produtos_mestre.id === p).map(v => v.capacidade))];
@@ -1414,8 +1480,9 @@
         }
         function libCorM() {
             let p = parseInt(document.getElementById('f_mod_m').value), c = document.getElementById('f_cap_m').value;
-            let cores = dbVar.filter(v => v.produtos_mestre && v.produtos_mestre.id === p && v.capacidade === c).map(v => v.cor);
-            document.getElementById('f_cor_m').innerHTML = '<option value="">COR...</option>' + cores.map(co=>`<option value="${co}">${co.toUpperCase()}</option>`).join('');
+            let cores = dbVar.filter(v => v.produtos_mestre && v.produtos_mestre.id === p && v.capacidade === c).map(v => v.cor.toUpperCase());
+            let coresUnicas = [...new Set(cores)];
+            document.getElementById('f_cor_m').innerHTML = '<option value="">COR...</option>' + coresUnicas.map(co=>`<option value="${co}">${co}</option>`).join('');
             document.getElementById('f_cor_m').disabled = false; 
         }
         function libMemMEdit(produtoId) {
@@ -1424,8 +1491,9 @@
             document.getElementById('editCapacidade').disabled = false;
         }
         function libCorMEdit(produtoId, capacidade) {
-            let cores = dbVar.filter(v => v.produtos_mestre?.id == produtoId && v.capacidade == capacidade).map(v => v.cor);
-            document.getElementById('editCor').innerHTML = '<option value="">COR...</option>' + cores.map(co=>`<option value="${co}">${co.toUpperCase()}</option>`).join('');
+            let cores = dbVar.filter(v => v.produtos_mestre?.id == produtoId && v.capacidade == capacidade).map(v => v.cor.toUpperCase());
+            let coresUnicas = [...new Set(cores)];
+            document.getElementById('editCor').innerHTML = '<option value="">COR...</option>' + coresUnicas.map(co=>`<option value="${co}">${co}</option>`).join('');
             document.getElementById('editCor').disabled = false;
         }
         function libMemMBulk() {
@@ -1438,8 +1506,9 @@
         function libCorMBulk() {
             let p = parseInt(document.getElementById('bulkModelo').value), c = document.getElementById('bulkCapacidade').value;
             if(!c) { document.getElementById('bulkCor').disabled = true; return; }
-            let cores = dbVar.filter(v => v.produtos_mestre?.id === p && v.capacidade === c).map(v => v.cor);
-            document.getElementById('bulkCor').innerHTML = '<option value="">MANTER COR...</option>' + cores.map(co=>`<option value="${co}">${co.toUpperCase()}</option>`).join('');
+            let cores = dbVar.filter(v => v.produtos_mestre?.id === p && v.capacidade === c).map(v => v.cor.toUpperCase());
+            let coresUnicas = [...new Set(cores)];
+            document.getElementById('bulkCor').innerHTML = '<option value="">MANTER COR...</option>' + coresUnicas.map(co=>`<option value="${co}">${co}</option>`).join('');
             document.getElementById('bulkCor').disabled = false; 
         }
 
@@ -1465,7 +1534,7 @@
             const mId = parseInt(document.getElementById('f_mod_m').value); 
             const c = document.getElementById('f_cap_m').value; 
             const cor = document.getElementById('f_cor_m').value; 
-            const v = dbVar.find(x => x.produtos_mestre?.id === mId && x.capacidade === c && x.cor === cor); 
+            const v = dbVar.find(x => x.produtos_mestre?.id === mId && x.capacidade === c && x.cor.toUpperCase() === cor.toUpperCase()); 
             if(!v) return alert("Variação não encontrada."); 
             let tipo = document.getElementById('f_tipo_m').value;
             let isBrl = document.getElementById('f_brl_m').value.length > 0;
@@ -1521,7 +1590,7 @@
             const isBrl = precoBrl.length > 0;
             const precoFinal = isBrl ? parseP(precoBrl) : parseP(precoUsd);
             const moeda = isBrl ? 'BRL' : 'USD';
-            const variacao = dbVar.find(v => v.produtos_mestre?.id == modelo && v.capacidade == capacidade && v.cor == cor);
+            const variacao = dbVar.find(v => v.produtos_mestre?.id == modelo && v.capacidade == capacidade && v.cor.toUpperCase() == cor.toUpperCase());
             if (!variacao) { alert('Variação não encontrada.'); return; }
 
             const bateria = (condicao === 'Novo' || condicao === 'CPO') ? null : document.getElementById('editBateria').value;
@@ -1574,7 +1643,7 @@
             const capacidade = document.getElementById('bulkCapacidade').value;
             const cor = document.getElementById('bulkCor').value;
             if (modelo && capacidade && cor) {
-                const variacao = dbVar.find(v => v.produtos_mestre?.id == modelo && v.capacidade == capacidade && v.cor == cor);
+                const variacao = dbVar.find(v => v.produtos_mestre?.id == modelo && v.capacidade == capacidade && v.cor.toUpperCase() == cor.toUpperCase());
                 if (variacao) updates.variacao_id = variacao.id;
                 else { alert('Variação selecionada inválida.'); return; }
             } else if (modelo || capacidade || cor) {
@@ -1634,8 +1703,35 @@
             else { alert('Anúncios atualizados com sucesso!'); fecharBulkAnu(); loadAll(); }
         }
 
-        function abrirModalAta() { document.getElementById('mAtaTitle').innerText = "NOVO ATACADISTA"; document.getElementById('mAtaId').value=''; document.getElementById('mAtaNome').value=''; document.getElementById('mAtaWhats').value=''; document.getElementById('mAtaEmail').value=''; document.getElementById('mAtaPais').value='Brasil'; toggleLocationFields('Ata'); document.getElementById('mAtaSenha').value=''; document.getElementById('modalAta').classList.remove('hidden'); }
-        function editAta(id) { const a = dbAta.find(x => x.id == id); document.getElementById('mAtaTitle').innerText = `EDITANDO: ${a.nome}`; document.getElementById('mAtaId').value = a.id; document.getElementById('mAtaNome').value = a.nome; document.getElementById('mAtaWhats').value = a.whatsapp||''; document.getElementById('mAtaEmail').value = a.email||''; document.getElementById('mAtaPais').value = a.pais||'Brasil'; toggleLocationFields('Ata'); if(a.pais==='Brasil'){ document.getElementById('mAtaEst').value = a.estado||''; loadCidadesIBGE('Ata').then(()=> document.getElementById('mAtaCid').value = a.cidade||''); } document.getElementById('mAtaSenha').value = a.senha||''; document.getElementById('mAtaAtivo').checked = a.ativo; document.getElementById('mAtaVeri').checked = a.verificado; document.getElementById('modalAta').classList.remove('hidden'); }
+        function abrirModalAta() { 
+            document.getElementById('mAtaTitle').innerText = "NOVO ATACADISTA"; 
+            document.getElementById('mAtaId').value=''; 
+            document.getElementById('mAtaNome').value=''; 
+            document.getElementById('mAtaWhats').value=''; 
+            document.getElementById('mAtaEmail').value=''; 
+            document.getElementById('mAtaPais').value='Brasil'; 
+            toggleLocationFields('Ata'); 
+            document.getElementById('mAtaSenha').value=''; 
+            document.getElementById('modalAta').classList.remove('hidden'); 
+        }
+        function editAta(id) { 
+            const a = dbAta.find(x => x.id == id); 
+            document.getElementById('mAtaTitle').innerText = `EDITANDO: ${a.nome}`; 
+            document.getElementById('mAtaId').value = a.id; 
+            document.getElementById('mAtaNome').value = a.nome; 
+            document.getElementById('mAtaWhats').value = a.whatsapp||''; 
+            document.getElementById('mAtaEmail').value = a.email||''; 
+            document.getElementById('mAtaPais').value = a.pais||'Brasil'; 
+            toggleLocationFields('Ata'); 
+            if(a.pais==='Brasil'){ 
+                document.getElementById('mAtaEst').value = a.estado||''; 
+                loadCidadesIBGE('Ata').then(()=> document.getElementById('mAtaCid').value = a.cidade||''); 
+            } 
+            document.getElementById('mAtaSenha').value = a.senha||''; 
+            document.getElementById('mAtaAtivo').checked = a.ativo; 
+            document.getElementById('mAtaVeri').checked = a.verificado; 
+            document.getElementById('modalAta').classList.remove('hidden'); 
+        }
 
         async function saveAta(e) { 
             e.preventDefault(); 
@@ -1660,8 +1756,29 @@
 
         function bulkAtaModal() { document.getElementById('modalBulkAta').classList.remove('hidden'); }
 
-        function abrirModalCliNovo() { document.getElementById('mCliTitle').innerText="NOVO BUSCADOR"; document.getElementById('mCliId').value=''; document.getElementById('formCli').reset(); toggleLocationFields('Cli'); document.getElementById('modalCli').classList.remove('hidden'); }
-        function editCli(id) { const c = dbCli.find(x=>x.id==id); document.getElementById('mCliTitle').innerText=`EDITANDO: ${c.nome}`; document.getElementById('mCliId').value=c.id; document.getElementById('mCliNome').value=c.nome||''; document.getElementById('mCliWhats').value=c.whatsapp||''; document.getElementById('mCliEmail').value=c.email||''; document.getElementById('mCliPais').value=c.pais||'Brasil'; toggleLocationFields('Cli'); if(c.pais==='Brasil'){ document.getElementById('mCliEst').value=c.estado||''; loadCidadesIBGE('Cli').then(()=> document.getElementById('mCliCid').value=c.cidade||''); } document.getElementById('mCliSenha').value=c.senha||''; document.getElementById('modalCli').classList.remove('hidden'); }
+        function abrirModalCliNovo() { 
+            document.getElementById('mCliTitle').innerText="NOVO BUSCADOR"; 
+            document.getElementById('mCliId').value=''; 
+            document.getElementById('formCli').reset(); 
+            toggleLocationFields('Cli'); 
+            document.getElementById('modalCli').classList.remove('hidden'); 
+        }
+        function editCli(id) { 
+            const c = dbCli.find(x=>x.id==id); 
+            document.getElementById('mCliTitle').innerText=`EDITANDO: ${c.nome}`; 
+            document.getElementById('mCliId').value=c.id; 
+            document.getElementById('mCliNome').value=c.nome||''; 
+            document.getElementById('mCliWhats').value=c.whatsapp||''; 
+            document.getElementById('mCliEmail').value=c.email||''; 
+            document.getElementById('mCliPais').value=c.pais||'Brasil'; 
+            toggleLocationFields('Cli'); 
+            if(c.pais==='Brasil'){ 
+                document.getElementById('mCliEst').value=c.estado||''; 
+                loadCidadesIBGE('Cli').then(()=> document.getElementById('mCliCid').value=c.cidade||''); 
+            } 
+            document.getElementById('mCliSenha').value=c.senha||''; 
+            document.getElementById('modalCli').classList.remove('hidden'); 
+        }
         
         async function saveCli(e) { 
             e.preventDefault(); 
@@ -2085,6 +2202,106 @@
 
         // ================== NOVAS FUNÇÕES ==================
 
+        // --- Função de cópia com fallback ---
+        function copiarDadosPix() {
+            let texto = localStorage.getItem('iFipe_Master_PIX_Data') || '';
+            let match = texto.match(/\*<([\s\S]*?)>\*/); 
+            if (match && match[1]) {
+                let chave = match[1].trim();
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(chave).then(() => alert('Chave PIX copiada!')).catch(() => fallbackCopy(chave));
+                } else { 
+                    fallbackCopy(chave); 
+                }
+            } else { 
+                alert('Nenhuma chave PIX detectada entre *< e >*.'); 
+            }
+        }
+        function fallbackCopy(text) {
+            let ta = document.createElement("textarea");
+            ta.value = text; 
+            ta.style.position = "fixed"; 
+            ta.style.top = "0";
+            document.body.appendChild(ta); 
+            ta.focus(); 
+            ta.select();
+            try { 
+                document.execCommand('copy'); 
+                alert('Chave PIX copiada!'); 
+            } catch (err) { 
+                alert('Erro ao copiar no seu celular.'); 
+            }
+            document.body.removeChild(ta);
+        }
+
+        // --- Modal Mala Direta ---
+        function abrirModalMalaDireta() {
+            document.getElementById('modalMalaDireta').classList.remove('hidden');
+        }
+        function fecharModalMalaDireta() {
+            document.getElementById('modalMalaDireta').classList.add('hidden');
+        }
+        async function enviarMalaDireta(e) {
+            e.preventDefault();
+            const destino = document.getElementById('malaDestino').value;
+            const texto = document.getElementById('malaTexto').value.trim();
+            if (!texto) return alert('Digite uma mensagem.');
+
+            let payloads = [];
+            if (destino === 'todos' || destino === 'atacadistas') {
+                dbAta.forEach(a => {
+                    payloads.push({
+                        destinatario_nome: a.nome,
+                        destinatario_tipo: 'SISTEMA',
+                        mensagem: texto,
+                        lida: false
+                    });
+                });
+            }
+            if (destino === 'todos' || destino === 'buscadores') {
+                dbCli.forEach(c => {
+                    payloads.push({
+                        destinatario_nome: c.nome,
+                        destinatario_tipo: 'SISTEMA',
+                        mensagem: texto,
+                        lida: false
+                    });
+                });
+            }
+
+            if (payloads.length === 0) return alert('Nenhum destinatário encontrado.');
+
+            // Enviar em lotes de 100 para não estourar limite
+            const chunkSize = 100;
+            for (let i = 0; i < payloads.length; i += chunkSize) {
+                const chunk = payloads.slice(i, i + chunkSize);
+                const { error } = await _s.from('mensagens_internas').insert(chunk);
+                if (error) {
+                    alert('Erro ao enviar mensagens: ' + error.message);
+                    return;
+                }
+            }
+
+            alert(`Mensagem enviada para ${payloads.length} destinatários!`);
+            fecharModalMalaDireta();
+            document.getElementById('malaTexto').value = '';
+        }
+
+        // --- Função para filtrar apenas bloqueados na tabela de atacadistas ---
+        function filtrarApenasBloqueados() {
+            // Muda para a aba de atacadistas se necessário
+            const abaAtaBtn = document.querySelector('.menu-btn[onclick*="v-atacadistas"]');
+            if (abaAtaBtn && !abaAtaBtn.classList.contains('active')) {
+                switchView('v-atacadistas', abaAtaBtn);
+            }
+            // Aplica filtro na tabela
+            const filtroInput = document.getElementById('filtroAta');
+            if (filtroInput) {
+                filtroInput.value = 'BLOQUEADO';
+                filterTable('listAta', 'BLOQUEADO');
+            }
+        }
+
         // --- Modal Config PIX ---
         function abrirModalConfigPix() {
             let textoSalvo = localStorage.getItem('iFipe_Master_PIX_Data') || '';
@@ -2233,20 +2450,6 @@
                 </div>
             `;
             container.classList.remove('hidden');
-        }
-
-        function copiarDadosPix() {
-            let texto = localStorage.getItem('iFipe_Master_PIX_Data') || '';
-            let match = texto.match(/\*<(.*?)>\*/);
-            if (match && match[1]) {
-                navigator.clipboard.writeText(match[1].trim()).then(() => {
-                    alert('Chave PIX copiada com sucesso!');
-                }).catch(() => {
-                    alert('Erro ao copiar. Selecione manualmente.');
-                });
-            } else {
-                alert('Erro: Nenhuma chave PIX encontrada entre *< e >*.');
-            }
         }
 
         function enviarComprovante() {
@@ -2429,8 +2632,9 @@
                     corSelect.disabled = true;
                     return;
                 }
-                let cores = dbVar.filter(v => v.produtos_mestre?.id == prodId && v.capacidade == cap).map(v => v.cor);
-                corSelect.innerHTML = '<option value="">Cor</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join('');
+                let cores = dbVar.filter(v => v.produtos_mestre?.id == prodId && v.capacidade == cap).map(v => v.cor.toUpperCase());
+                let coresUnicas = [...new Set(cores)];
+                corSelect.innerHTML = '<option value="">Cor</option>' + coresUnicas.map(c => `<option value="${c}">${c}</option>`).join('');
                 corSelect.disabled = false;
             });
         }
@@ -2460,7 +2664,7 @@
                     continue;
                 }
 
-                let variacao = dbVar.find(v => v.produtos_mestre?.id == modeloId && v.capacidade == capacidade && v.cor == cor);
+                let variacao = dbVar.find(v => v.produtos_mestre?.id == modeloId && v.capacidade == capacidade && v.cor.toUpperCase() == cor.toUpperCase());
                 if (!variacao) {
                     logArea.innerHTML += `<div class="text-red-400">❌ Variação não encontrada.</div>`;
                     continue;
@@ -2519,6 +2723,10 @@
         window.fecharModalAddMassa = fecharModalAddMassa;
         window.adicionarLinhaAnuncio = adicionarLinhaAnuncio;
         window.executarLancamentoMassa = executarLancamentoMassa;
+        window.abrirModalMalaDireta = abrirModalMalaDireta;
+        window.fecharModalMalaDireta = fecharModalMalaDireta;
+        window.enviarMalaDireta = enviarMalaDireta;
+        window.filtrarApenasBloqueados = filtrarApenasBloqueados;
     </script>
 </body>
 </html>
