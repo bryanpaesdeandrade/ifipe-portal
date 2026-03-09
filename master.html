@@ -93,7 +93,7 @@
                     <div><span class="text-[7px] text-green-500 font-black block">USDT ORÁCULO (+ R$ 0,06)</span><span id="tUsdt" class="text-xs font-mono font-black text-green-400">R$ --</span></div>
                     <!-- Widget USDT com botão de config PIX -->
                     <div class="usdt-widget master-only" id="usdtWidget">
-                        <input type="number" id="usdAmount" placeholder="VALOR EM USDT" min="500" value="500">
+                        <input type="number" id="usdAmount" placeholder="⚠️*VALOR EM USDT*🚨" min="500">
                         <button id="lockUsdtBtn" onclick="abrirModalRegrasTrava()">TRAVAR USDT</button>
                         <button onclick="abrirModalConfigPix()" class="bg-zinc-700 text-white px-2 py-1 rounded-full text-[9px]" title="Configurar dados bancários">⚙️ PIX</button>
                     </div>
@@ -336,9 +336,9 @@
         <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a] relative">
             <button onclick="fecharModalConfigPix()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
             <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">⚙️ CONFIGURAR DADOS PIX</h3>
-            <p class="text-[9px] text-gray-400 mb-2">Coloque a chave a ser copiada entre < e > .</p>
-            <p class="text-[9px] text-gray-400 mb-4">Ex: Banco Itaú, Chave <45.000.000/0001-00>, Nome: iFipe LTDA</p>
-            <textarea id="textoPixConfig" rows="5" class="apple-input mb-4" placeholder="Digite o texto completo com a chave entre < >"></textarea>
+            <p class="text-[9px] text-gray-400 mb-2">Coloque a chave a ser copiada entre *< e >* .</p>
+            <p class="text-[9px] text-gray-400 mb-4">Ex: Minha chave é *<45.000.000/0001-00>*</p>
+            <textarea id="textoPixConfig" rows="5" class="apple-input mb-4" placeholder="Digite o texto completo com a chave entre *< >*"></textarea>
             <div class="flex gap-2">
                 <button onclick="salvarConfigPix()" class="btn-master !bg-green-600 flex-1">SALVAR</button>
                 <button onclick="fecharModalConfigPix()" class="btn-master !bg-zinc-700 flex-1">CANCELAR</button>
@@ -2201,20 +2201,26 @@
 
         function mostrarPedido() {
             let container = document.getElementById('usdtPedidoContainer');
-            let textoPix = localStorage.getItem('iFipe_Master_PIX_Data') || 'Chave não configurada. Clique em ⚙️ PIX para configurar.';
+            let textoPix = localStorage.getItem('iFipe_Master_PIX_Data') || '';
             container.innerHTML = `
                 <div class="pedido-card" id="reciboPrint">
-                    <div class="text-[9px] text-gray-400 mb-1 whitespace-pre-wrap">${textoPix}</div>
-                    <div class="text-[9px] text-gray-400 mb-1">ID DO PEDIDO:</div>
+                    <div class="text-[10px] text-gray-300 mb-3 whitespace-pre-wrap text-center bg-[#1c1c1e] p-2 rounded border border-dashed border-[#38383a]">${textoPix}</div>
+                    <div class="grid grid-cols-2 gap-2 mb-2 border-t border-zinc-800 pt-2">
+                        <div><div class="text-[8px] text-gray-400">VALOR EM USDT</div><div class="text-xs font-black text-white">${usdtLockedUsd.toFixed(2)}</div></div>
+                        <div><div class="text-[8px] text-gray-400">TAXA TRAVADA</div><div class="text-xs font-black text-green-400">R$ ${usdtLockedRate.toFixed(4).replace('.', ',')}</div></div>
+                    </div>
+                    <div class="text-[9px] text-gray-400 mb-1 border-t border-zinc-800 pt-2">ID DO PEDIDO:</div>
                     <div class="text-[10px] text-green-400 break-all mb-2" id="usdtIdDisplay">${usdtPedidoId}</div>
-                    <div class="text-sm font-black text-white mb-3" id="usdtTotalDisplay">R$ ${usdtLockedTotal.toFixed(2)}</div>
+                    <div class="text-center mb-2 border-t border-zinc-800 pt-2"><div class="text-[9px] text-gray-400">VALOR EM REAL A PAGAR</div><div class="text-xl font-black text-white" id="usdtTotalDisplay">R$ ${usdtLockedTotal.toFixed(2).replace('.', ',')}</div></div>
                     <div class="bg-yellow-400 text-red-600 font-black p-3 rounded-lg text-center animate-pulse mt-2 border-2 border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]">
                         ⏰ *PERDER TAXA ESPECIAL* 💣🧨 <br><span id="usdtTimer" class="text-3xl">120s</span>
                     </div>
-                    <div class="flex gap-2 mt-3">
-                        <button onclick="copiarDadosPix()" class="btn-master !bg-blue-600 flex-1 py-2 text-[9px]">📋 COPIAR CHAVE</button>
-                        <button onclick="enviarComprovante()" class="btn-master !bg-green-600 flex-1 py-2 text-[9px]">📷 ENVIAR COMPROVANTE</button>
-                        <button onclick="fecharPedidoUsdt()" class="btn-master !bg-zinc-700 flex-1 py-2 text-[9px]">FECHAR</button>
+                    <div class="flex flex-col gap-2 mt-3" data-html2canvas-ignore>
+                        <button onclick="copiarDadosPix()" class="btn-master !bg-blue-600 py-3 text-[10px]">📋 COPIAR CHAVE PIX</button>
+                        <div class="flex gap-2">
+                            <button onclick="enviarComprovante()" class="btn-master !bg-green-600 flex-1 py-2 text-[9px]">📷 ENVIAR COMPROVANTE</button>
+                            <button onclick="fecharPedidoUsdt()" class="btn-master !bg-red-600 flex-1 py-2 text-[9px]">CANCELAR</button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -2223,15 +2229,15 @@
 
         function copiarDadosPix() {
             let texto = localStorage.getItem('iFipe_Master_PIX_Data') || '';
-            let match = texto.match(/<([^>]+)>/);
+            let match = texto.match(/\*<(.*?)>\*/);
             if (match && match[1]) {
-                navigator.clipboard.writeText(match[1]).then(() => {
-                    alert('Chave PIX copiada!');
+                navigator.clipboard.writeText(match[1].trim()).then(() => {
+                    alert('Chave PIX copiada com sucesso!');
                 }).catch(() => {
                     alert('Erro ao copiar. Selecione manualmente.');
                 });
             } else {
-                alert('Nenhuma chave entre < > encontrada.');
+                alert('Erro: Nenhuma chave PIX encontrada entre *< e >*.');
             }
         }
 
