@@ -52,7 +52,7 @@
         .badge-grade { background: #eab308; color: black; }
         /* USDT Widget */
         .usdt-widget { display: flex; align-items: center; gap: 6px; background: #1c1c1e; border: 1px solid #38383a; border-radius: 30px; padding: 4px 8px; }
-        .usdt-widget input { width: 90px; background: #2c2c2e; border: none; border-radius: 20px; padding: 4px 8px; font-size: 11px; color: white; }
+        .usdt-widget input { width: 100px; background: #2c2c2e; border: none; border-radius: 20px; padding: 4px 8px; font-size: 11px; color: white; }
         .usdt-widget button { background: #0071e3; border: none; border-radius: 20px; padding: 4px 12px; font-size: 9px; font-weight: 900; color: white; white-space: nowrap; }
         .usdt-widget button:disabled { background: #555; cursor: not-allowed; }
         .pedido-card { background: #0a0a0a; border: 1px solid #2c2c2e; border-radius: 12px; padding: 12px; margin-top: 10px; font-family: 'JetBrains Mono', monospace; font-size: 10px; }
@@ -61,6 +61,15 @@
         .linha-anuncio { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; background: #141415; padding: 8px; border-radius: 8px; }
         .linha-anuncio select, .linha-anuncio input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 6px; padding: 6px; color: white; font-size: 10px; }
         .linha-anuncio .remover-linha { background: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 10px; }
+        /* Remove spinners do input number */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
 <body>
@@ -84,7 +93,7 @@
                     <div><span class="text-[7px] text-green-500 font-black block">USDT ORÁCULO (+ R$ 0,06)</span><span id="tUsdt" class="text-xs font-mono font-black text-green-400">R$ --</span></div>
                     <!-- Widget USDT com botão de config PIX -->
                     <div class="usdt-widget master-only" id="usdtWidget">
-                        <input type="number" id="usdAmount" min="500" step="1" placeholder="VALOR EM USDT">
+                        <input type="number" id="usdAmount" placeholder="VALOR EM USDT" min="500" value="500">
                         <button id="lockUsdtBtn" onclick="abrirModalRegrasTrava()">TRAVAR USDT</button>
                         <button onclick="abrirModalConfigPix()" class="bg-zinc-700 text-white px-2 py-1 rounded-full text-[9px]" title="Configurar dados bancários">⚙️ PIX</button>
                     </div>
@@ -2110,7 +2119,7 @@
             document.getElementById('modalRegrasTrava').classList.add('hidden');
         }
 
-        // --- Função principal que gera o card PIX ---
+        // --- Função principal que gera o card PIX (sem print) ---
         function confirmarTrava() {
             fecharModalRegrasTrava();
 
@@ -2203,26 +2212,13 @@
                         ⏰ *PERDER TAXA ESPECIAL* 💣🧨 <br><span id="usdtTimer" class="text-3xl">120s</span>
                     </div>
                     <div class="flex gap-2 mt-3">
-                        <button onclick="copiarDadosPix()" class="btn-master !bg-blue-600 flex-1 py-2 text-[9px]">📋 COPIAR DADOS</button>
+                        <button onclick="copiarDadosPix()" class="btn-master !bg-blue-600 flex-1 py-2 text-[9px]">📋 COPIAR CHAVE</button>
+                        <button onclick="enviarComprovante()" class="btn-master !bg-green-600 flex-1 py-2 text-[9px]">📷 ENVIAR COMPROVANTE</button>
                         <button onclick="fecharPedidoUsdt()" class="btn-master !bg-zinc-700 flex-1 py-2 text-[9px]">FECHAR</button>
                     </div>
                 </div>
             `;
             container.classList.remove('hidden');
-
-            // Print instantâneo e envio WhatsApp
-            setTimeout(() => {
-                let recibo = document.getElementById('reciboPrint');
-                html2canvas(recibo).then(canvas => {
-                    let link = document.createElement('a');
-                    link.download = 'comprovante.png';
-                    link.href = canvas.toDataURL();
-                    link.click();
-
-                    let msg = `OLÁ TUDO BEM, TRAVEI O DOLAR. SEGUE O COMPROVANTE PARA VALIDAÇÃO.\n\n${usdtPedidoId}`;
-                    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-                });
-            }, 100);
         }
 
         function copiarDadosPix() {
@@ -2239,6 +2235,19 @@
             }
         }
 
+        function enviarComprovante() {
+            let recibo = document.getElementById('reciboPrint');
+            html2canvas(recibo).then(canvas => {
+                let link = document.createElement('a');
+                link.download = 'comprovante.png';
+                link.href = canvas.toDataURL();
+                link.click();
+
+                let msg = `OLÁ TUDO BEM, TRAVEI O DOLAR. SEGUE O COMPROVANTE PARA VALIDAÇÃO.\n\n${usdtPedidoId}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+            });
+        }
+
         function fecharPedidoUsdt() {
             document.getElementById('usdtPedidoContainer').classList.add('hidden');
             if (usdtTimer) clearInterval(usdtTimer);
@@ -2250,16 +2259,14 @@
             if (!numero) return '""';
             let digits = numero.replace(/\D/g, '');
             if (pais === 'Brasil' || pais === '') {
-                // Remove o 55 se começar
                 if (digits.startsWith('55')) digits = digits.slice(2);
-                return `"'${digits}"`; // com aspa simples para forçar texto no Excel
+                return `"'${digits}"`;
             } else {
-                // EUA, Paraguai, etc: retorna o número original como string
                 return `"'${numero}"`;
             }
         }
 
-        // --- Exportar Atacadistas (com BOM, separador ; e colunas exatas) ---
+        // --- Exportar Atacadistas ---
         function exportarContatos() {
             let conteudo = "\uFEFFNOME DA LOJA;NOME DO DONO;WHATSAPP DA LOJA;WHATSAPP DO DONO;CONTATO FORMATADO\n";
             dbAta.forEach(a => {
@@ -2267,7 +2274,6 @@
                 let nomeLoja = a.nome || '';
                 let whatsRaw = a.whatsapp || '';
                 let contatoFormatado = formatarTelefoneExcel(whatsRaw, pais);
-                // Para as colunas, usamos os mesmos valores repetidos
                 conteudo += `"${nomeLoja}";"${nomeLoja}";"${whatsRaw}";"${whatsRaw}";${contatoFormatado}\n`;
             });
             let blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
@@ -2277,7 +2283,7 @@
             link.click();
         }
 
-        // --- Exportar Buscadores (com BOM, separador ; e colunas NOME;NUMERO) ---
+        // --- Exportar Buscadores ---
         function exportarBuscadores() {
             let conteudo = "\uFEFFNOME;NUMERO\n";
             dbCli.forEach(c => {
@@ -2294,7 +2300,7 @@
             link.click();
         }
 
-        // --- Importar Fornecedores (já existente, mantido) ---
+        // --- Importar Fornecedores ---
         async function importarFornecedores(event) {
             let file = event.target.files[0];
             if (!file) return;
@@ -2482,7 +2488,6 @@
         }
 
         // Expor funções globais
-        window.configurarPix = abrirModalConfigPix; // mantido para compatibilidade
         window.abrirModalConfigPix = abrirModalConfigPix;
         window.fecharModalConfigPix = fecharModalConfigPix;
         window.salvarConfigPix = salvarConfigPix;
@@ -2490,6 +2495,8 @@
         window.fecharModalRegrasTrava = fecharModalRegrasTrava;
         window.confirmarTrava = confirmarTrava;
         window.copiarDadosPix = copiarDadosPix;
+        window.enviarComprovante = enviarComprovante;
+        window.fecharPedidoUsdt = fecharPedidoUsdt;
         window.exportarContatos = exportarContatos;
         window.importarFornecedores = importarFornecedores;
         window.exportarBuscadores = exportarBuscadores;
