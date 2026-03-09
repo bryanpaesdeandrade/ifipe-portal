@@ -761,7 +761,7 @@
                     <div class="col-span-2 border-t border-zinc-800 pt-2"><label class="text-[8px] text-red-500 font-bold">SENHA</label><input type="text" id="mCliSenha" class="apple-input border-red-500" required></div>
                 </div>
                 <div class="flex gap-2 pt-4">
-                    <button type="submit" class="btn-master w-full">SALVAR</button>
+                    <button type="submit" id="btnSalvarCli" class="btn-master w-full">SALVAR</button>
                 </div>
             </form>
         </div>
@@ -1817,9 +1817,14 @@
             document.getElementById('mCliSenha').value=c.senha||''; 
             document.getElementById('modalCli').classList.remove('hidden'); 
         }
-        
+
+        // ----- FUNÇÃO saveCli CORRIGIDA (trava de botão + logins_count:0) -----
         async function saveCli(e) { 
             e.preventDefault(); 
+            const btn = document.getElementById('btnSalvarCli');
+            btn.disabled = true;
+            btn.innerText = 'SALVANDO...';
+
             const id = document.getElementById('mCliId').value; 
             const payload = { 
                 nome: document.getElementById('mCliNome').value.toUpperCase(), 
@@ -1830,13 +1835,20 @@
                 cidade: (document.getElementById('mCliPais').value === 'Brasil') ? document.getElementById('mCliCid').value : null, 
                 senha: document.getElementById('mCliSenha').value 
             }; 
+            
             if(!id) {
                 const colInfo = getStatusCol('clientes_buscador');
                 payload[colInfo.name] = colInfo.valT;
+                // Para novos buscadores, garantir logins_count = 0
+                payload.logins_count = 0;
             }
             let error;
             if(id) ({ error } = await _s.from('clientes_buscador').update(payload).eq('id', id));
             else ({ error } = await _s.from('clientes_buscador').insert([payload]));
+            
+            btn.disabled = false;
+            btn.innerText = 'SALVAR';
+            
             if(error) alert("ERRO AO SALVAR: " + error.message);
             else { fecharModais(); await loadAll(); } 
         }
