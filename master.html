@@ -82,10 +82,11 @@
                 <div class="flex gap-6 border-l border-zinc-800 pl-6 items-center">
                     <div><span class="text-[7px] text-zinc-500 font-black block">BINANCE REAL</span><span id="tBin" class="text-xs font-mono font-black text-white">R$ --</span></div>
                     <div><span class="text-[7px] text-green-500 font-black block">USDT ORÁCULO (+ R$ 0,06)</span><span id="tUsdt" class="text-xs font-mono font-black text-green-400">R$ --</span></div>
-                    <!-- Widget USDT movido para junto do tUsdt -->
+                    <!-- Widget USDT com botão de config PIX -->
                     <div class="usdt-widget master-only" id="usdtWidget">
-                        <input type="number" id="usdAmount" placeholder="USD" min="0" step="1" value="100">
+                        <input type="number" id="usdAmount" min="500" value="500" step="1" placeholder="USD">
                         <button id="lockUsdtBtn" onclick="lockUsdt()">TRAVAR USDT</button>
+                        <button onclick="configurarPix()" class="bg-zinc-700 text-white px-2 py-1 rounded-full text-[9px]" title="Configurar chave PIX">⚙️ PIX</button>
                     </div>
                     <div class="relative master-only" id="maintenanceDropdownContainer">
                         <button id="maintenanceBtn" onclick="toggleMaintenanceDropdown()" class="btn-master bg-green-600 px-3 py-1 text-[9px] ml-2">SISTEMA: ON</button>
@@ -113,7 +114,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <!-- Grupo Horus (sem widget) -->
+                <!-- Grupo Horus -->
                 <div class="flex items-center gap-2">
                     <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 master-only text-[9px] px-3 py-1 flex items-center gap-2">
                         👁️‍🗨️ HORUS
@@ -141,7 +142,7 @@
             <button class="menu-btn" onclick="switchView('v-conta', this)">⚙️ MINHA CONTA</button>
         </div>
 
-        <!-- Aba Atacadistas (com botões de importar/exportar) -->
+        <!-- Aba Atacadistas -->
         <div id="v-atacadistas" class="master-view active">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
@@ -165,7 +166,7 @@
             </div>
         </div>
 
-        <!-- Aba Buscadores (agora com botões de importar/exportar) -->
+        <!-- Aba Buscadores -->
         <div id="v-clientes" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
@@ -2042,22 +2043,33 @@
 
         // ================== NOVAS FUNÇÕES ==================
 
-        // --- 1. Gestão de Contatos (formatar telefone) ---
+        // --- Configurar chave PIX ---
+        function configurarPix() {
+            let novaChave = prompt("Digite a nova chave PIX (para exibição no card):");
+            if (novaChave !== null) {
+                localStorage.setItem('iFipe_Master_PIX', novaChave.trim());
+                alert("Chave PIX salva com sucesso!");
+            }
+        }
+
+        // --- Formatação de telefone ---
         function formatarTelefone(numero) {
+            if (!numero) return '';
             let digits = numero.replace(/\D/g, '');
             if (digits.startsWith('595')) return '+595' + digits.slice(3);
             if (digits.startsWith('1') && digits.length === 11) return '+1' + digits.slice(1);
             return '+55' + digits;
         }
 
-        // --- Exportar Atacadistas (cabeçalho novo) ---
+        // --- Exportar Atacadistas (com BOM, separador ; e aspas duplas) ---
         function exportarContatos() {
-            let csv = "NOME DA LOJA,NOME DO DONO,WHATSAPP DA LOJA,WHATSAPP DO DONO,CONTATO\n";
+            let conteudo = "\uFEFFNOME DA LOJA;NOME DO DONO;WHATSAPP DA LOJA;WHATSAPP DO DONO;CONTATO FORMATADO\n";
             dbAta.forEach(a => {
-                let whats = formatarTelefone(a.whatsapp || '');
-                csv += `"${a.nome || ''}","${a.nome || ''}","${whats}","${whats}","${whats}"\n`;
+                let whatsRaw = a.whatsapp || '';
+                let whatsFormatado = formatarTelefone(whatsRaw);
+                conteudo += `"${a.nome}";"${a.nome}";"${whatsRaw}";"${whatsRaw}";"${whatsFormatado}"\n`;
             });
-            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            let blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
             let link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = 'atacadistas.csv';
@@ -2072,8 +2084,8 @@
             let linhas = text.split('\n').slice(1);
             for (let linha of linhas) {
                 if (!linha.trim()) continue;
-                let cols = linha.split(',').map(s => s.replace(/^"|"$/g, ''));
-                if (cols.length < 5) continue; // mínimo 5 colunas
+                let cols = linha.split(';').map(s => s.replace(/^"|"$/g, ''));
+                if (cols.length < 5) continue;
                 let [nomeLoja, nomeDono, whatsLoja, whatsDono, contato] = cols;
                 let whatsapp = whatsLoja.replace(/\D/g, '');
                 let { error } = await _s.from('fornecedores').insert({
@@ -2089,14 +2101,14 @@
             loadAll();
         }
 
-        // --- Exportar Buscadores (cabeçalho NOME,CONTATO) ---
+        // --- Exportar Buscadores (cabeçalho NOME;NUMERO) ---
         function exportarBuscadores() {
-            let csv = "NOME,CONTATO\n";
+            let conteudo = "\uFEFFNOME;NUMERO\n";
             dbCli.forEach(c => {
                 let contato = formatarTelefone(c.whatsapp || '');
-                csv += `"${c.nome || ''}","${contato}"\n`;
+                conteudo += `"${c.nome}";"${contato}"\n`;
             });
-            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            let blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
             let link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = 'buscadores.csv';
@@ -2111,7 +2123,7 @@
             let linhas = text.split('\n').slice(1);
             for (let linha of linhas) {
                 if (!linha.trim()) continue;
-                let cols = linha.split(',').map(s => s.replace(/^"|"$/g, ''));
+                let cols = linha.split(';').map(s => s.replace(/^"|"$/g, ''));
                 if (cols.length < 2) continue;
                 let [nome, contato] = cols;
                 let whatsapp = contato.replace(/\D/g, '');
@@ -2128,7 +2140,7 @@
             loadAll();
         }
 
-        // --- 2. Widget USDT (sem restrição de horário) ---
+        // --- Widget USDT (sem restrição de horário) ---
         let usdtTimer, usdtInterval;
         let usdtLockedRate = 0;
         let usdtLockedUsd = 0;
@@ -2139,7 +2151,10 @@
         function lockUsdt() {
             if (usdtTimer) clearInterval(usdtTimer);
             let usd = parseFloat(document.getElementById('usdAmount').value) || 0;
-            if (usd <= 0) { alert('Digite um valor em USD válido.'); return; }
+            if (usd < 500) {
+                alert('Mínimo de 500 USD');
+                return;
+            }
             usdtLockedUsd = usd;
             usdtLockedRate = currentOracleUsdt || (parseFloat(document.getElementById('tUsdt').innerText.replace('R$', '')) || 0);
             usdtLockedTotal = usd * usdtLockedRate;
@@ -2148,7 +2163,10 @@
             let mm = agora.getMinutes().toString().padStart(2,'0');
             let ss = agora.getSeconds().toString().padStart(2,'0');
             let taxaStr = usdtLockedRate.toFixed(4).replace('.', '');
-            usdtPedidoId = `TRVX>-$DTX>${usd}-CTX>${taxaStr}-R$X>${usdtLockedTotal.toFixed(2)}-Printx>${hh}:${mm}:${ss}`;
+            let usdFormatado = usd.toFixed(2);
+            let brlFormatado = usdtLockedTotal.toFixed(2);
+            // Gera ID com asteriscos para negrito no WhatsApp
+            usdtPedidoId = `TRVX>-$DTX>*${usdFormatado}*-CTX>${taxaStr}-R$X>*${brlFormatado}*-Printx>${hh}:${mm}:${ss}`;
             usdtTimeLeft = 120;
             mostrarPedido();
             iniciarTimerUsdt();
@@ -2160,7 +2178,7 @@
                     usdtLockedRate = novaTaxa;
                     usdtLockedTotal = usdtLockedUsd * usdtLockedRate;
                     taxaStr = usdtLockedRate.toFixed(4).replace('.', '');
-                    usdtPedidoId = `TRVX>-$DTX>${usdtLockedUsd}-CTX>${taxaStr}-R$X>${usdtLockedTotal.toFixed(2)}-Printx>${hh}:${mm}:${ss}`;
+                    usdtPedidoId = `TRVX>-$DTX>*${usdtLockedUsd.toFixed(2)}*-CTX>${taxaStr}-R$X>*${usdtLockedTotal.toFixed(2)}*-Printx>${hh}:${mm}:${ss}`;
                     document.getElementById('usdtIdDisplay').innerText = usdtPedidoId;
                     document.getElementById('usdtTotalDisplay').innerText = `R$ ${usdtLockedTotal.toFixed(2)}`;
                     clearInterval(usdtTimer);
@@ -2183,7 +2201,7 @@
                     let hh = agora.getHours().toString().padStart(2,'0');
                     let mm = agora.getMinutes().toString().padStart(2,'0');
                     let ss = agora.getSeconds().toString().padStart(2,'0');
-                    usdtPedidoId = `TRVX>-$DTX>${usdtLockedUsd}-CTX>${taxaStr}-R$X>${usdtLockedTotal.toFixed(2)}-Printx>${hh}:${mm}:${ss}`;
+                    usdtPedidoId = `TRVX>-$DTX>*${usdtLockedUsd.toFixed(2)}*-CTX>${taxaStr}-R$X>*${usdtLockedTotal.toFixed(2)}*-Printx>${hh}:${mm}:${ss}`;
                     document.getElementById('usdtIdDisplay').innerText = usdtPedidoId;
                     document.getElementById('usdtTotalDisplay').innerText = `R$ ${usdtLockedTotal.toFixed(2)}`;
                     usdtTimeLeft = 120;
@@ -2194,12 +2212,17 @@
 
         function mostrarPedido() {
             let container = document.getElementById('usdtPedidoContainer');
+            let chavePix = localStorage.getItem('iFipe_Master_PIX') || 'Não configurada';
             container.innerHTML = `
                 <div class="pedido-card" id="reciboPrint">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-blue-400 font-black">PIX GERADO</span>
-                        <span class="timer" id="usdtTimer">120s</span>
+                        <div class="bg-yellow-400 text-red-600 font-black p-2 rounded text-center animate-pulse text-sm">
+                            ⏰ PERDER TAXA ESPECIAL 💣🧨 <span id="usdtTimer" class="text-xl">120s</span>
+                        </div>
                     </div>
+                    <div class="text-[9px] text-gray-400 mb-1">CHAVE PIX:</div>
+                    <div class="text-[10px] text-white break-all mb-2">${chavePix}</div>
                     <div class="text-[9px] text-gray-400 mb-1">ID DO PEDIDO:</div>
                     <div class="text-[10px] text-green-400 break-all mb-2" id="usdtIdDisplay">${usdtPedidoId}</div>
                     <div class="text-sm font-black text-white mb-3" id="usdtTotalDisplay">R$ ${usdtLockedTotal.toFixed(2)}</div>
@@ -2225,12 +2248,12 @@
                 link.download = 'comprovante.png';
                 link.href = canvas.toDataURL();
                 link.click();
-                let msg = `OLÁ TUDO BEM, TRAVEI O DOLAR. SEGUE O COMPROVANTE PARA VALIDAÇÃO. ${usdtPedidoId}`;
+                let msg = `OLÁ TUDO BEM, TRAVEI O DOLAR. SEGUE O COMPROVANTE PARA VALIDAÇÃO.\n\n${usdtPedidoId}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
             });
         }
 
-        // --- 3. Lançamento Global em Massa (já existente, mantido) ---
+        // --- Lançamento em Massa (já existente) ---
         function abrirModalAddMassa() {
             document.getElementById('modalAddMassa').classList.remove('hidden');
         }
@@ -2368,6 +2391,7 @@
         }
 
         // Expor funções globais
+        window.configurarPix = configurarPix;
         window.exportarContatos = exportarContatos;
         window.importarFornecedores = importarFornecedores;
         window.exportarBuscadores = exportarBuscadores;
