@@ -1637,37 +1637,77 @@
                 'Seminovo': { titulo: `📦 *SEMINOVOS PRONTA ENTREGA*`, itens: ativas.filter(o => o.condicao !== 'Novo' && o.condicao !== 'CPO') }
             };
 
+            // Funções auxiliares para ordenação
+            const ordemCores = [
+                'BRANCO', 'BRANCO-NUVEM', 'PRATEADO', 'DOURADO', 'DOURADO-CLARO', 'ESTELAR',
+                'ROSA', 'AMARELO', 'VERDE', 'VERDE-ACINZENTADO', 'VERDE MEIA-NOITE', 'VERDE ALPINO', 'AZUL', 'AZUL-CÉU', 'AZUL-NÉVOA', 'AZUL SIERRA', 'AZUL PACÍFICO', 'AZUL-INTENSO', 'ROXO', 'ROXO PROFUNDO', 'VERMELHO', 'VERMELHO (PRODUCT RED)',
+                'LARANJA-CÓSMICO', 'TITÂNIO NATURAL', 'TITÂNIO DESERTO', 'TITÂNIO AZUL', 'TITÂNIO BRANCO', 'TITÂNIO PRETO',
+                'CINZA', 'CINZA ESPACIAL', 'GRAFITE', 'PRETO', 'PRETO-ESPACIAL', 'MEIA-NOITE'
+            ];
+
+            function indiceCor(cor) {
+                const idx = ordemCores.findIndex(c => cor.toUpperCase().includes(c));
+                return idx === -1 ? 999 : idx;
+            }
+
+            function extrairNumeroModelo(nome) {
+                const match = nome.match(/\d+/);
+                return match ? parseInt(match[0]) : 0;
+            }
+
+            function pesoVariante(nome) {
+                if (nome.includes('Pro Max')) return 5;
+                if (nome.includes('Pro')) return 4;
+                if (nome.includes('Plus')) return 3;
+                if (nome.includes('Air')) return 2;
+                if (nome.includes('mini')) return 1;
+                return 2.5; // base
+            }
+
             for (const [cond, cat] of Object.entries(categorias)) {
                 if (cat.itens.length === 0) continue;
+                
+                // Ordena os itens da categoria
+                cat.itens.sort((a, b) => {
+                    const nomeA = a.variacoes.produtos_mestre.nome;
+                    const nomeB = b.variacoes.produtos_mestre.nome;
+                    const numA = extrairNumeroModelo(nomeA);
+                    const numB = extrairNumeroModelo(nomeB);
+                    if (numA !== numB) return numB - numA; // mais novo primeiro
+                    const pesoA = pesoVariante(nomeA);
+                    const pesoB = pesoVariante(nomeB);
+                    if (pesoA !== pesoB) return pesoB - pesoA; // variante mais avançada primeiro
+                    const capA = parseInt(a.variacoes.capacidade) || 0;
+                    const capB = parseInt(b.variacoes.capacidade) || 0;
+                    if (capA !== capB) return capA - capB; // capacidade crescente
+                    return indiceCor(a.variacoes.cor) - indiceCor(b.variacoes.cor); // cor clara para escura
+                });
+
                 texto += `${cat.titulo}\n\n`;
                 
                 // Linha com nome da empresa e bandeira
                 texto += `*${tipoAtacadista} ${bandeiraPais} | ${loja.nome}* \n\n`;
 
-                const modelosGroup = {};
-                cat.itens.forEach(o => {
-                    const nomeModelo = `iPhone ${o.variacoes.produtos_mestre.nome} ${o.variacoes.capacidade}`;
-                    if (!modelosGroup[nomeModelo]) modelosGroup[nomeModelo] = [];
-                    modelosGroup[nomeModelo].push(o);
-                });
+                let lastModeloBase = '';
+                for (const o of cat.itens) {
+                    const modeloBase = `iPhone ${o.variacoes.produtos_mestre.nome}`;
+                    if (modeloBase !== lastModeloBase) {
+                        texto += `*${modeloBase}*\n\n`;
+                        lastModeloBase = modeloBase;
+                    }
 
-                for (const [nomeModelo, ofertasModelo] of Object.entries(modelosGroup)) {
-                    texto += `*${nomeModelo}*\n\n`;
+                    let local = o.cidade_aparelho ? ` *${o.cidade_aparelho.toUpperCase()}*` : '';
+                    let precoStr = o.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+                    let corStr = o.variacoes.cor.toUpperCase();
+                    let bandeira = o.regioes?.bandeira || '';
                     
-                    ofertasModelo.forEach(o => {
-                        let local = o.cidade_aparelho ? ` *${o.cidade_aparelho.toUpperCase()}*` : '';
-                        let precoStr = o.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-                        let corStr = o.variacoes.cor.toUpperCase();
-                        let bandeira = o.regioes?.bandeira || '';
-                        
-                        texto += `*${o.quantidade}* - ${bandeira} ${corStr} R$ ${precoStr}${local}\n`;
-                        if (cond === 'Seminovo' && o.saude_bateria) texto += `🔋 ${o.saude_bateria}\n`;
-                        
-                        let gar = o.garantia ? o.garantia.toUpperCase() : 'NÃO INFORMADA';
-                        if (cond === 'Novo' || cond === 'CPO') gar = '1 ANO APPLE';
-                        
-                        texto += `🛡️ *GARANTIA ${gar}*\n\n`;
-                    });
+                    texto += `*${o.quantidade}* - ${bandeira} ${corStr} R$ ${precoStr}${local}\n`;
+                    if (cond === 'Seminovo' && o.saude_bateria) texto += `🔋 ${o.saude_bateria}\n`;
+                    
+                    let gar = o.garantia ? o.garantia.toUpperCase() : 'NÃO INFORMADA';
+                    if (cond === 'Novo' || cond === 'CPO') gar = '1 ANO APPLE';
+                    
+                    texto += `🛡️ *GARANTIA ${gar}*\n\n`;
                 }
             }
 
