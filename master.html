@@ -437,10 +437,16 @@
         </div>
     </div>
 
+    <!-- MODAL HORUS (MODIFICADO: ADICIONADO BOTÃO COPIAR LISTA) -->
     <div id="modalHorus" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-4xl bg-[#050505] border-[#38383a] max-h-[80vh] overflow-y-auto relative">
             <button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80 z-50">X</button>
-            <h3 class="text-sm font-black mb-2 border-b border-zinc-800 pb-2 flex items-center gap-2 mt-4">👁️$ FERRAMENTA HORUS <span class="text-[8px] text-zinc-500">MENOR PREÇO ABSOLUTO</span></h3>
+            <div class="flex justify-between items-center mb-2 border-b border-zinc-800 pb-2 mt-4">
+                <h3 class="text-sm font-black flex items-center gap-2">👁️$ FERRAMENTA HORUS <span class="text-[8px] text-zinc-500">MENOR PREÇO ABSOLUTO</span></h3>
+                <button onclick="copiarListaHorus()" class="btn-master !bg-green-600 px-3 py-1 text-[9px] flex items-center gap-1">
+                    📋 COPIAR LISTA
+                </button>
+            </div>
             <input type="text" id="buscaHorus" placeholder="🔍 Buscar modelo, cor, novo, seminovo..." class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-4 text-white mt-4" onkeyup="filtrarHorus(this.value)">
             <div id="horusList" class="space-y-2 max-h-96 overflow-y-auto pr-2"></div>
         </div>
@@ -852,6 +858,7 @@
         let usdtTimeLeft = 120;
         let usdtPedidoId = '';
         let pixInstrucoes = ''; // carregado do banco
+        let ofertasHorus = []; // para armazenar os dados carregados no Horus
 
         const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
@@ -1154,13 +1161,16 @@
             else { alert('Estoque zerado com sucesso!'); fecharModais(); loadAll(); }
         }
 
+        // === FUNÇÃO HORUS (MODIFICADA PARA ARMAZENAR OS DADOS) ===
         async function abrirModalHorus() {
             const { data: ofertas, error } = await _s
                 .from('ofertas')
-                .select('*, fornecedores!inner(nome, whatsapp), variacoes!inner(produtos_mestre!inner(nome), capacidade, cor), regioes!inner(nome, bandeira)')
+                .select('*, fornecedores!inner(nome, whatsapp, pais), variacoes!inner(produtos_mestre!inner(nome), capacidade, cor), regioes!inner(nome, bandeira)')
                 .gt('quantidade', 0);
             if (error) { alert('Erro ao carregar dados para Horus: ' + error.message); return; }
             
+            ofertasHorus = ofertas; // armazena para uso na cópia
+
             const grupos = {};
             ofertas.forEach(o => {
                 const key = `${o.variacoes.produto_id}-${o.variacoes.capacidade}-${o.variacoes.cor}-${o.regiao_id}-${o.moeda}-${o.condicao}`;
@@ -1175,6 +1185,7 @@
                         moeda: o.moeda,
                         fornecedor: o.fornecedores.nome,
                         whatsapp: o.fornecedores.whatsapp,
+                        pais: o.fornecedores.pais,
                         condicao: o.condicao
                     };
                 }
@@ -1210,6 +1221,113 @@
             const q = query.toLowerCase();
             document.querySelectorAll('.horus-item').forEach(el => {
                 el.style.display = el.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+            });
+        }
+
+        // === NOVA FUNÇÃO: copiarListaHorus ===
+        function copiarListaHorus() {
+            if (!ofertasHorus || ofertasHorus.length === 0) {
+                alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
+                return;
+            }
+
+            // Agrupar por combinação exata e pegar o menor preço
+            const grupos = {};
+            ofertasHorus.forEach(o => {
+                const key = `${o.variacoes.produto_id}-${o.variacoes.capacidade}-${o.variacoes.cor}-${o.regiao_id}-${o.moeda}-${o.condicao}`;
+                if (!grupos[key] || o.preco < grupos[key].preco) {
+                    grupos[key] = {
+                        produto: o.variacoes.produtos_mestre.nome, // ex: "iPhone 17 Pro Max"
+                        capacidade: o.variacoes.capacidade,
+                        cor: o.variacoes.cor,
+                        bandeira: o.regioes.bandeira,
+                        preco: o.preco,
+                        fornecedor: o.fornecedores.nome,
+                        whatsapp: o.fornecedores.whatsapp,
+                        pais: o.fornecedores.pais
+                    };
+                }
+            });
+
+            // Converter para array e ordenar
+            let lista = Object.values(grupos);
+
+            // Função para extrair número do modelo (ex: 17 de "iPhone 17 Pro Max")
+            function extrairNumero(nome) {
+                const match = nome.match(/\d+/);
+                return match ? parseInt(match[0]) : 0;
+            }
+
+            // Função para extrair variante (Pro Max > Pro > Plus > Air > base > mini)
+            function pesoVariante(nome) {
+                if (nome.includes('Pro Max')) return 5;
+                if (nome.includes('Pro')) return 4;
+                if (nome.includes('Plus')) return 3;
+                if (nome.includes('Air')) return 2;
+                if (nome.includes('mini')) return 1;
+                return 2.5; // base
+            }
+
+            // Função para extrair capacidade numérica (ex: "256GB" -> 256)
+            function extrairCapacidade(capacidade) {
+                const match = capacidade.match(/\d+/);
+                return match ? parseInt(match[0]) : 0;
+            }
+
+            // Ordenar: primeiro por número do modelo decrescente, depois por variante decrescente, depois por capacidade crescente
+            lista.sort((a, b) => {
+                const numA = extrairNumero(a.produto);
+                const numB = extrairNumero(b.produto);
+                if (numA !== numB) return numB - numA; // mais novo primeiro
+
+                const pesoA = pesoVariante(a.produto);
+                const pesoB = pesoVariante(b.produto);
+                if (pesoA !== pesoB) return pesoB - pesoA; // variante mais avançada primeiro
+
+                const capA = extrairCapacidade(a.capacidade);
+                const capB = extrairCapacidade(b.capacidade);
+                return capA - capB; // capacidade crescente
+            });
+
+            // Formatar número de WhatsApp conforme país
+            function formatarWhatsApp(whats, pais) {
+                let digits = whats.replace(/\D/g, '');
+                if (pais === 'Brasil') {
+                    return `Zap> +55${digits}`;
+                } else if (pais === 'EUA') {
+                    // tentar formatar como +1 (XXX) XXX-XXXX
+                    if (digits.length === 10) {
+                        return `Zap> +1 (${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+                    } else if (digits.length === 11 && digits[0] === '1') {
+                        return `Zap> +1 (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7)}`;
+                    } else {
+                        return `Zap> +${digits}`;
+                    }
+                } else if (pais === 'Paraguai') {
+                    // exemplo: +595 981 750944
+                    if (digits.length === 9) {
+                        return `Zap> +595 ${digits.slice(0,3)} ${digits.slice(3,6)}-${digits.slice(6)}`;
+                    } else {
+                        return `Zap> +${digits}`;
+                    }
+                } else {
+                    return `Zap> +${digits}`;
+                }
+            }
+
+            // Montar o texto
+            let texto = `*LISTA DE ITENS MAIS BARATOS POR MODELO EXATO* 🔥\n\n`;
+
+            lista.forEach(item => {
+                // Extrai o nome do modelo sem "iPhone", ex: "17 PRO MAX"
+                let nomeModelo = item.produto.replace('iPhone', '').trim().toUpperCase();
+                texto += `${nomeModelo} ${item.capacidade.toUpperCase()} ${item.cor.toUpperCase()} ${item.bandeira} R$ ${item.preco.toFixed(2).replace('.', ',')} ${item.fornecedor} ${formatarWhatsApp(item.whatsapp, item.pais)}\n`;
+            });
+
+            navigator.clipboard.writeText(texto).then(() => {
+                alert('Lista copiada com sucesso!');
+            }).catch(() => {
+                alert('Erro ao copiar lista.');
             });
         }
 
@@ -2288,6 +2406,7 @@ Agora voce vai encontrar o melhor preço apple do Brasil
         window.enviarRespostaInterna = enviarRespostaInterna;
         window.deletarFeedbacksSelecionados = deletarFeedbacksSelecionados;
         window.copiarDadosAcesso = copiarDadosAcesso; // EXPORTA FUNÇÃO
+        window.copiarListaHorus = copiarListaHorus; // EXPORTA NOVA FUNÇÃO
 
         checkAuth();
 
