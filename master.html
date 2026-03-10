@@ -1170,7 +1170,7 @@
         async function abrirModalHorus() {
             const { data: ofertas, error } = await _s
                 .from('ofertas')
-                .select('*, fornecedores!inner(nome, whatsapp, pais), variacoes!inner(produtos_mestre!inner(nome), capacidade, cor), regioes!inner(nome, bandeira)')
+                .select('*, fornecedores!inner(nome, whatsapp, pais, cidade, estado), variacoes!inner(produtos_mestre!inner(nome), capacidade, cor), regioes!inner(nome, bandeira)')
                 .gt('quantidade', 0);
             if (error) { alert('Erro ao carregar dados para Horus: ' + error.message); return; }
             
@@ -1191,6 +1191,8 @@
                         fornecedor: o.fornecedores.nome,
                         whatsapp: o.fornecedores.whatsapp,
                         pais: o.fornecedores.pais,
+                        cidade_sede: o.fornecedores.cidade,
+                        estado_sede: o.fornecedores.estado,
                         condicao: o.condicao,
                         cidade_aparelho: o.cidade_aparelho,
                         estado_aparelho: o.estado_aparelho
@@ -1265,6 +1267,8 @@
                         fornecedor: o.fornecedores.nome,
                         whatsapp: o.fornecedores.whatsapp,
                         pais: o.fornecedores.pais,
+                        cidade_sede: o.fornecedores.cidade,
+                        estado_sede: o.fornecedores.estado,
                         cidade_aparelho: o.cidade_aparelho,
                         estado_aparelho: o.estado_aparelho
                     };
@@ -1355,7 +1359,7 @@
             });
 
             // Montar o texto com título adequado
-            let titulo = tipo === 'novos' ? '👁️‍🗨️ *RANKING DE NOVOS + CPO MAIS BARATOS* 🔥' : '👁️‍🗨️ *RANKING DE SEMINOVOS MAIS BARATOS* 🔥';
+            let titulo = tipo === 'novos' ? '👁️‍🗨️ *RANKING DE NOVOS + CPO MAIS BARATOS* 🔥' : '👁️‍🗨️ *RANKING SEMINOVOS POR MODELOS MAIS BARATOS* 🔥';
             let texto = titulo + '\n\n';
 
             let currentModeloBase = '';
@@ -1371,12 +1375,16 @@
                     currentModeloBase = modeloBase;
                 }
 
+                // Determinar localização: prioridade cidade_aparelho, senão cidade_sede
+                let cidadeExibicao = item.cidade_aparelho || item.cidade_sede;
+                let estadoExibicao = item.estado_aparelho || item.estado_sede;
+
                 // Linha do produto
                 texto += `*${item.capacidade.toUpperCase()} ${item.cor.toUpperCase()}* ${item.bandeira}\n\n`;
                 texto += `R$ ${item.preco.toFixed(2).replace('.', ',')} — ${item.fornecedor}\n`;
                 texto += `Zap: ${formatarWhatsApp(item.whatsapp, item.pais)}\n`;
-                if (item.cidade_aparelho && item.estado_aparelho) {
-                    texto += `(📍 *${item.cidade_aparelho.toUpperCase()}/${item.estado_aparelho.toUpperCase()}*)\n`;
+                if (cidadeExibicao && estadoExibicao) {
+                    texto += `(📍 *${cidadeExibicao.toUpperCase()}/${estadoExibicao.toUpperCase()}*)\n`;
                 }
                 texto += `\n`; // linha em branco após cada item
             });
