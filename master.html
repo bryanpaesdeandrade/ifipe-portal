@@ -1186,7 +1186,9 @@
                         fornecedor: o.fornecedores.nome,
                         whatsapp: o.fornecedores.whatsapp,
                         pais: o.fornecedores.pais,
-                        condicao: o.condicao
+                        condicao: o.condicao,
+                        cidade_aparelho: o.cidade_aparelho,
+                        estado_aparelho: o.estado_aparelho
                     };
                 }
             });
@@ -1224,7 +1226,7 @@
             });
         }
 
-        // === NOVA FUNÇÃO: copiarListaHorus ===
+        // === NOVA FUNÇÃO: copiarListaHorus (formato corrigido) ===
         function copiarListaHorus() {
             if (!ofertasHorus || ofertasHorus.length === 0) {
                 alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
@@ -1244,7 +1246,9 @@
                         preco: o.preco,
                         fornecedor: o.fornecedores.nome,
                         whatsapp: o.fornecedores.whatsapp,
-                        pais: o.fornecedores.pais
+                        pais: o.fornecedores.pais,
+                        cidade_aparelho: o.cidade_aparelho,
+                        estado_aparelho: o.estado_aparelho
                     };
                 }
             });
@@ -1274,6 +1278,49 @@
                 return match ? parseInt(match[0]) : 0;
             }
 
+            // Função para formatar número de WhatsApp corretamente
+            function formatarWhatsApp(whats, pais) {
+                let digits = whats.replace(/\D/g, '');
+                if (pais === 'Brasil') {
+                    // Se começar com 55, remove o primeiro 55 para não duplicar
+                    if (digits.startsWith('55')) {
+                        digits = digits.slice(2);
+                    }
+                    // Garantir que tenha pelo menos 10 dígitos (DDD + número)
+                    // Formatar como +55 11 96826-8722
+                    if (digits.length >= 10) {
+                        let ddd = digits.slice(0, 2);
+                        let numero = digits.slice(2);
+                        if (numero.length === 8) {
+                            numero = numero.slice(0,4) + '-' + numero.slice(4);
+                        } else if (numero.length === 9) {
+                            numero = numero.slice(0,5) + '-' + numero.slice(5);
+                        }
+                        return `+55 ${ddd} ${numero}`;
+                    } else {
+                        return `+55 ${digits}`;
+                    }
+                } else if (pais === 'EUA') {
+                    // tentar formatar como +1 (XXX) XXX-XXXX
+                    if (digits.length === 10) {
+                        return `+1 (${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+                    } else if (digits.length === 11 && digits[0] === '1') {
+                        return `+1 (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7)}`;
+                    } else {
+                        return `+${digits}`;
+                    }
+                } else if (pais === 'Paraguai') {
+                    // exemplo: +595 981 750944
+                    if (digits.length === 9) {
+                        return `+595 ${digits.slice(0,3)} ${digits.slice(3,6)}-${digits.slice(6)}`;
+                    } else {
+                        return `+${digits}`;
+                    }
+                } else {
+                    return `+${digits}`;
+                }
+            }
+
             // Ordenar: primeiro por número do modelo decrescente, depois por variante decrescente, depois por capacidade crescente
             lista.sort((a, b) => {
                 const numA = extrairNumero(a.produto);
@@ -1289,39 +1336,30 @@
                 return capA - capB; // capacidade crescente
             });
 
-            // Formatar número de WhatsApp conforme país
-            function formatarWhatsApp(whats, pais) {
-                let digits = whats.replace(/\D/g, '');
-                if (pais === 'Brasil') {
-                    return `Zap> +55${digits}`;
-                } else if (pais === 'EUA') {
-                    // tentar formatar como +1 (XXX) XXX-XXXX
-                    if (digits.length === 10) {
-                        return `Zap> +1 (${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
-                    } else if (digits.length === 11 && digits[0] === '1') {
-                        return `Zap> +1 (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7)}`;
-                    } else {
-                        return `Zap> +${digits}`;
-                    }
-                } else if (pais === 'Paraguai') {
-                    // exemplo: +595 981 750944
-                    if (digits.length === 9) {
-                        return `Zap> +595 ${digits.slice(0,3)} ${digits.slice(3,6)}-${digits.slice(6)}`;
-                    } else {
-                        return `Zap> +${digits}`;
-                    }
-                } else {
-                    return `Zap> +${digits}`;
-                }
-            }
-
             // Montar o texto
-            let texto = `*LISTA DE ITENS MAIS BARATOS POR MODELO EXATO* 🔥\n\n`;
+            let texto = `👁️‍🗨️ *RANKING POR PRODUTO EXATO MAIS BARATO* 🔥\n\n`;
 
+            let currentModeloBase = '';
             lista.forEach(item => {
-                // Extrai o nome do modelo sem "iPhone", ex: "17 PRO MAX"
-                let nomeModelo = item.produto.replace('iPhone', '').trim().toUpperCase();
-                texto += `${nomeModelo} ${item.capacidade.toUpperCase()} ${item.cor.toUpperCase()} ${item.bandeira} R$ ${item.preco.toFixed(2).replace('.', ',')} ${item.fornecedor} ${formatarWhatsApp(item.whatsapp, item.pais)}\n`;
+                // Extrair nome base do modelo (sem capacidade)
+                let modeloBase = item.produto.replace(/iPhone\s*/i, '').trim().toUpperCase();
+                // Ex: "17 PRO MAX"
+                if (modeloBase !== currentModeloBase) {
+                    if (currentModeloBase !== '') {
+                        texto += `\n`; // linha extra entre modelos
+                    }
+                    texto += `📲 *${modeloBase}*\n\n`;
+                    currentModeloBase = modeloBase;
+                }
+
+                // Linha do produto
+                texto += `*${item.capacidade.toUpperCase()} ${item.cor.toUpperCase()}* ${item.bandeira}\n\n`;
+                texto += `R$ ${item.preco.toFixed(2).replace('.', ',')} — ${item.fornecedor}\n`;
+                texto += `Zap: ${formatarWhatsApp(item.whatsapp, item.pais)}\n`;
+                if (item.cidade_aparelho && item.estado_aparelho) {
+                    texto += `(📍 *${item.cidade_aparelho.toUpperCase()}/${item.estado_aparelho.toUpperCase()}*)\n`;
+                }
+                texto += `\n`; // linha em branco após cada item
             });
 
             navigator.clipboard.writeText(texto).then(() => {
