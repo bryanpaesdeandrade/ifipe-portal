@@ -437,15 +437,20 @@
         </div>
     </div>
 
-    <!-- MODAL HORUS (MODIFICADO: ADICIONADO BOTÃO COPIAR LISTA) -->
+    <!-- MODAL HORUS (MODIFICADO: DOIS BOTÕES DE COPIAR) -->
     <div id="modalHorus" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-4xl bg-[#050505] border-[#38383a] max-h-[80vh] overflow-y-auto relative">
             <button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80 z-50">X</button>
             <div class="flex justify-between items-center mb-2 border-b border-zinc-800 pb-2 mt-4">
                 <h3 class="text-sm font-black flex items-center gap-2">👁️$ FERRAMENTA HORUS <span class="text-[8px] text-zinc-500">MENOR PREÇO ABSOLUTO</span></h3>
-                <button onclick="copiarListaHorus()" class="btn-master !bg-green-600 px-3 py-1 text-[9px] flex items-center gap-1">
-                    📋 COPIAR LISTA
-                </button>
+                <div class="flex gap-2">
+                    <button onclick="copiarListaHorus('novos')" class="btn-master !bg-green-600 px-3 py-1 text-[9px] flex items-center gap-1">
+                        📋 NOVOS + CPO
+                    </button>
+                    <button onclick="copiarListaHorus('seminovos')" class="btn-master !bg-yellow-600 px-3 py-1 text-[9px] flex items-center gap-1">
+                        📋 SEMINOVOS
+                    </button>
+                </div>
             </div>
             <input type="text" id="buscaHorus" placeholder="🔍 Buscar modelo, cor, novo, seminovo..." class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-4 text-white mt-4" onkeyup="filtrarHorus(this.value)">
             <div id="horusList" class="space-y-2 max-h-96 overflow-y-auto pr-2"></div>
@@ -1226,20 +1231,33 @@
             });
         }
 
-        // === NOVA FUNÇÃO: copiarListaHorus (formato corrigido) ===
-        function copiarListaHorus() {
+        // === NOVA FUNÇÃO: copiarListaHorus (aceita tipo: 'novos' ou 'seminovos') ===
+        function copiarListaHorus(tipo) {
             if (!ofertasHorus || ofertasHorus.length === 0) {
                 alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
                 return;
             }
 
+            // Filtrar por condição
+            let ofertasFiltradas = ofertasHorus;
+            if (tipo === 'novos') {
+                ofertasFiltradas = ofertasHorus.filter(o => o.condicao === 'Novo' || o.condicao === 'CPO');
+            } else if (tipo === 'seminovos') {
+                ofertasFiltradas = ofertasHorus.filter(o => o.condicao !== 'Novo' && o.condicao !== 'CPO');
+            }
+
+            if (ofertasFiltradas.length === 0) {
+                alert('Nenhuma oferta encontrada para esta categoria.');
+                return;
+            }
+
             // Agrupar por combinação exata e pegar o menor preço
             const grupos = {};
-            ofertasHorus.forEach(o => {
+            ofertasFiltradas.forEach(o => {
                 const key = `${o.variacoes.produto_id}-${o.variacoes.capacidade}-${o.variacoes.cor}-${o.regiao_id}-${o.moeda}-${o.condicao}`;
                 if (!grupos[key] || o.preco < grupos[key].preco) {
                     grupos[key] = {
-                        produto: o.variacoes.produtos_mestre.nome, // ex: "iPhone 17 Pro Max"
+                        produto: o.variacoes.produtos_mestre.nome,
                         capacidade: o.variacoes.capacidade,
                         cor: o.variacoes.cor,
                         bandeira: o.regioes.bandeira,
@@ -1336,8 +1354,9 @@
                 return capA - capB; // capacidade crescente
             });
 
-            // Montar o texto
-            let texto = `👁️‍🗨️ *RANKING POR PRODUTO EXATO MAIS BARATO* 🔥\n\n`;
+            // Montar o texto com título adequado
+            let titulo = tipo === 'novos' ? '👁️‍🗨️ *RANKING DE NOVOS + CPO MAIS BARATOS* 🔥' : '👁️‍🗨️ *RANKING DE SEMINOVOS MAIS BARATOS* 🔥';
+            let texto = titulo + '\n\n';
 
             let currentModeloBase = '';
             lista.forEach(item => {
