@@ -1167,6 +1167,8 @@
             atualizarStatusUsuarioMobile();
 
             await carregarDados();
+            // Chama popularFiltros apenas uma vez, após o carregamento inicial dos dados
+            popularFiltros();
             initTicker();
             await checarNotificacoes();
             await carregarMensagensSistema();
@@ -1219,7 +1221,7 @@
                 ofertas = o.data || [];
                 regioes = r.data || [];
 
-                popularFiltros();
+                // Não chama popularFiltros aqui para não resetar os selects
                 processarMenorPrecoGlobal();
                 renderizarCards();
                 
@@ -1914,23 +1916,26 @@
         function popularFiltros() {
             const pop = (id, arr, prop) => {
                 const el = document.getElementById(id);
-                if(el.options.length <= 1) {
-                    const unicos = [...new Set(arr.map(x => prop(x)).filter(Boolean))];
-                    unicos.forEach(x => {
-                        if (typeof x === 'object') el.innerHTML += `<option value="${x.id}">${x.nome}</option>`;
-                        else el.innerHTML += `<option value="${x}">${x}</option>`;
-                    });
+                // Limpa as opções atuais, mantendo apenas a primeira (placeholder)
+                while (el.options.length > 1) {
+                    el.remove(1);
                 }
+                const unicos = [...new Set(arr.map(x => prop(x)).filter(Boolean))];
+                unicos.forEach(x => {
+                    if (typeof x === 'object') el.innerHTML += `<option value="${x.id}">${x.nome}</option>`;
+                    else el.innerHTML += `<option value="${x}">${x}</option>`;
+                });
             };
             // Ordena produtos por número do modelo decrescente antes de popular
             const produtosOrdenados = ordenarProdutosMestre([...produtos]);
             const popProdutos = (id) => {
                 const el = document.getElementById(id);
-                if(el.options.length <= 1) {
-                    produtosOrdenados.forEach(p => {
-                        el.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
-                    });
+                while (el.options.length > 1) {
+                    el.remove(1);
                 }
+                produtosOrdenados.forEach(p => {
+                    el.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+                });
             };
             popProdutos('filtroCategoria');
             pop('filtroCapacidade', variacoes, v => v.capacidade);
@@ -1940,7 +1945,10 @@
             // condições dinâmicas
             const conds = [...new Set(ofertas.map(o => o.condicao).filter(Boolean))];
             const selCond = document.getElementById('filtroCondicao');
-            selCond.innerHTML = '<option value="">Condição</option>' + conds.map(c => `<option value="${c}">${c}</option>`).join('');
+            while (selCond.options.length > 1) {
+                selCond.remove(1);
+            }
+            conds.forEach(c => selCond.innerHTML += `<option value="${c}">${c}</option>`);
         }
 
         function popularFiltrosAlerta() {
