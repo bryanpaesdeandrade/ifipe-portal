@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>iFipe - A Tabela Fipe do iPhone</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔎%3C/text%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -740,13 +739,13 @@
 
             <!-- Filtros em grid -->
             <div class="filters-grid mb-4">
-                <select id="filtroCategoria" class="apple-input text-xs py-2" onchange="atualizarFiltrosPorModelo(); renderizarCards()">
+                <select id="filtroCategoria" class="apple-input text-xs py-2" onchange="renderizarCards()">
                     <option value="">Modelos</option>
                 </select>
                 <select id="filtroCondicao" class="apple-input text-xs py-2" onchange="renderizarCards()">
                     <option value="">Condição</option>
                 </select>
-                <select id="filtroCapacidade" class="apple-input text-xs py-2" onchange="atualizarFiltrosPorCapacidade(); renderizarCards()">
+                <select id="filtroCapacidade" class="apple-input text-xs py-2" onchange="renderizarCards()">
                     <option value="">GB</option>
                 </select>
                 <select id="filtroCor" class="apple-input text-xs py-2" onchange="renderizarCards()">
@@ -1108,63 +1107,6 @@
             });
         };
 
-        // ===== NOVAS FUNÇÕES PARA FILTROS DEPENDENTES =====
-        function atualizarFiltrosPorModelo() {
-            const modeloId = document.getElementById('filtroCategoria').value;
-            const capSelect = document.getElementById('filtroCapacidade');
-            const corSelect = document.getElementById('filtroCor');
-            
-            // Resetar selects dependentes
-            capSelect.innerHTML = '<option value="">GB</option>';
-            corSelect.innerHTML = '<option value="">Cores</option>';
-            
-            if (!modeloId) {
-                // Se nenhum modelo selecionado, popula com todas as capacidades e cores
-                const caps = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
-                caps.sort((a,b) => a.localeCompare(b));
-                caps.forEach(c => capSelect.innerHTML += `<option value="${c}">${c}</option>`);
-                
-                const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
-                cores.sort((a,b) => a.localeCompare(b));
-                cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
-                return;
-            }
-            
-            // Filtrar capacidades para o modelo selecionado
-            const caps = [...new Set(variacoes.filter(v => v.produto_id == modeloId).map(v => v.capacidade).filter(Boolean))];
-            caps.sort((a,b) => a.localeCompare(b));
-            caps.forEach(c => capSelect.innerHTML += `<option value="${c}">${c}</option>`);
-            
-            // Para cores, inicialmente mostra todas as cores do modelo (quando capacidade não selecionada)
-            const cores = [...new Set(variacoes.filter(v => v.produto_id == modeloId).map(v => v.cor).filter(Boolean))];
-            cores.sort((a,b) => a.localeCompare(b));
-            cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
-        }
-
-        function atualizarFiltrosPorCapacidade() {
-            const modeloId = document.getElementById('filtroCategoria').value;
-            const capacidade = document.getElementById('filtroCapacidade').value;
-            const corSelect = document.getElementById('filtroCor');
-            
-            corSelect.innerHTML = '<option value="">Cores</option>';
-            
-            if (!modeloId && !capacidade) {
-                // Se nenhum filtro, popula com todas as cores
-                const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
-                cores.sort((a,b) => a.localeCompare(b));
-                cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
-                return;
-            }
-            
-            let variaveisFiltradas = variacoes;
-            if (modeloId) variaveisFiltradas = variaveisFiltradas.filter(v => v.produto_id == modeloId);
-            if (capacidade) variaveisFiltradas = variaveisFiltradas.filter(v => v.capacidade === capacidade);
-            
-            const cores = [...new Set(variaveisFiltradas.map(v => v.cor).filter(Boolean))];
-            cores.sort((a,b) => a.localeCompare(b));
-            cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
-        }
-
         // Inicialização
         window.onload = async () => {
             // Verificação de manutenção
@@ -1225,12 +1167,6 @@
             atualizarStatusUsuarioMobile();
 
             await carregarDados();
-            // Chama popularFiltros apenas uma vez, após o carregamento inicial dos dados
-            popularFiltros();
-            // Inicializa os filtros dependentes com base nos dados carregados
-            setTimeout(() => {
-                atualizarFiltrosPorModelo();
-            }, 100);
             initTicker();
             await checarNotificacoes();
             await carregarMensagensSistema();
@@ -1283,7 +1219,7 @@
                 ofertas = o.data || [];
                 regioes = r.data || [];
 
-                // Não chama popularFiltros aqui para não resetar os selects
+                popularFiltros();
                 processarMenorPrecoGlobal();
                 renderizarCards();
                 
@@ -1978,40 +1914,33 @@
         function popularFiltros() {
             const pop = (id, arr, prop) => {
                 const el = document.getElementById(id);
-                // Limpa as opções atuais, mantendo apenas a primeira (placeholder)
-                while (el.options.length > 1) {
-                    el.remove(1);
+                if(el.options.length <= 1) {
+                    const unicos = [...new Set(arr.map(x => prop(x)).filter(Boolean))];
+                    unicos.forEach(x => {
+                        if (typeof x === 'object') el.innerHTML += `<option value="${x.id}">${x.nome}</option>`;
+                        else el.innerHTML += `<option value="${x}">${x}</option>`;
+                    });
                 }
-                const unicos = [...new Set(arr.map(x => prop(x)).filter(Boolean))];
-                unicos.forEach(x => {
-                    if (typeof x === 'object') el.innerHTML += `<option value="${x.id}">${x.nome}</option>`;
-                    else el.innerHTML += `<option value="${x}">${x}</option>`;
-                });
             };
             // Ordena produtos por número do modelo decrescente antes de popular
             const produtosOrdenados = ordenarProdutosMestre([...produtos]);
             const popProdutos = (id) => {
                 const el = document.getElementById(id);
-                while (el.options.length > 1) {
-                    el.remove(1);
+                if(el.options.length <= 1) {
+                    produtosOrdenados.forEach(p => {
+                        el.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+                    });
                 }
-                produtosOrdenados.forEach(p => {
-                    el.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
-                });
             };
             popProdutos('filtroCategoria');
-            // Não popula capacidade e cor aqui, pois será feito pelas funções dependentes
-            // pop('filtroCapacidade', variacoes, v => v.capacidade);
-            // pop('filtroCor', variacoes, v => v.cor);
+            pop('filtroCapacidade', variacoes, v => v.capacidade);
+            pop('filtroCor', variacoes, v => v.cor);
             pop('filtroCidade', fornecedores, f => f.cidade);
             pop('filtroAnunciante', fornecedores, f => f);
             // condições dinâmicas
             const conds = [...new Set(ofertas.map(o => o.condicao).filter(Boolean))];
             const selCond = document.getElementById('filtroCondicao');
-            while (selCond.options.length > 1) {
-                selCond.remove(1);
-            }
-            conds.forEach(c => selCond.innerHTML += `<option value="${c}">${c}</option>`);
+            selCond.innerHTML = '<option value="">Condição</option>' + conds.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
         function popularFiltrosAlerta() {
@@ -2204,8 +2133,6 @@
         window.marcarComoLida = marcarComoLida;
         window.apagarMensagem = apagarMensagem;
         window.apagarTudoMensagens = apagarTudoMensagens;
-        window.atualizarFiltrosPorModelo = atualizarFiltrosPorModelo;
-        window.atualizarFiltrosPorCapacidade = atualizarFiltrosPorCapacidade;
 
         // Novas funções da trava USDT expostas globalmente
         window.abrirModalRegrasTrava = abrirModalRegrasTrava;
