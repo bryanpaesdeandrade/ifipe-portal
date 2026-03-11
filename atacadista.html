@@ -297,12 +297,12 @@
             <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1">
                 👁️‍🗨️ HORUS O OLHO QUE MENOR PREÇO VÊ
             </button>
-            <!-- BOTÕES: ANUNCIAR EM MASSA EXCEL, ANUNCIAR NO SISTEMA E GESTOR SETH -->
+            <!-- BOTÕES: ANUNCIAR EM MASSA EXCEL, ANUNCIAR EM MASSA NO SISTEMA E GESTOR SETH -->
             <button onclick="window.open('anuncios_em_massa.html', '_blank')" class="bg-zinc-800 text-white border border-[#38383a] px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-zinc-700 flex items-center gap-1" title="Subir estoque via planilha">
                 📥 ANUNCIAR EM MASSA EXCEL
             </button>
             <button onclick="abrirModalAddMassa()" class="bg-purple-700 text-white px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-purple-600 flex items-center gap-1" title="Lançamento em massa pelo sistema">
-                🚀 ANUNCIAR NO SISTEMA
+                🚀 ANUNCIAR EM MASSA NO SISTEMA
             </button>
             <button onclick="abrirModalSeth()" class="btn-seth text-white px-3 py-1.5 rounded-full text-[10px] font-bold flex items-center gap-1 transition-all duration-300" title="Inteligência Financeira">
                 <i class="fas fa-robot mr-1"></i> 7️⃣ GESTOR SETH
@@ -738,6 +738,20 @@
                     <option value="6 Meses">6 Meses</option>
                     <option value="12 Meses">12 Meses</option>
                 </select>
+                <div class="localizacao-fieldset">
+                    <label class="flex items-center gap-2 text-xs">
+                        <input type="checkbox" id="bulkLocalOrigem" checked onchange="document.getElementById('bulkLocAlt').classList.toggle('hidden', this.checked)">
+                        Aparelho na minha cidade sede? (aplica a todos)
+                    </label>
+                    <div id="bulkLocAlt" class="hidden mt-3 space-y-2">
+                        <select id="bulkEstadoAparelho" class="apple-input" onchange="carregarCidadesDinamicoMaster(this.value, 'bulkCidadeAparelho')">
+                            <option value="">Selecione o estado (aplica a todos)</option>
+                        </select>
+                        <select id="bulkCidadeAparelho" class="apple-input">
+                            <option value="">Selecione a cidade (aplica a todos)</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="grid grid-cols-2 gap-2 mb-2">
                     <select id="bulkOrigem" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
                         <option value="">MANTER ORIGEM...</option>
@@ -876,6 +890,18 @@
             if (!v) { i.value = ''; return; }
             i.value = (parseFloat(v) / 100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         };
+
+        // ===== FUNÇÃO NORMALIZAR STRING =====
+        function normalizarString(str) {
+            if (!str) return '';
+            return str
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/-/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toUpperCase();
+        }
 
         // ===== FUNÇÃO PARA CARREGAR INSTRUÇÕES PIX =====
         async function carregarInstrucoesPix() {
@@ -1404,9 +1430,13 @@
         }
         function libCor() {
             let p = document.getElementById('f_mod').value, c = document.getElementById('f_cap').value;
-            // CORREÇÃO: usar produtos_mestre?.id e toUpperCase() nas cores
-            let cores = variacoes.filter(v => v.produtos_mestre?.id == p && v.capacidade == c).map(v => v.cor.toUpperCase());
-            let coresUnicas = [...new Set(cores)];
+            // Agrupar cores normalizadas para evitar duplicatas no select, mantendo a grafia original da primeira ocorrência
+            let coresMap = {};
+            variacoes.filter(v => v.produtos_mestre?.id == p && v.capacidade == c).forEach(v => {
+                let norm = normalizarString(v.cor);
+                if (!coresMap[norm]) coresMap[norm] = v.cor;
+            });
+            let coresUnicas = Object.values(coresMap).sort((a,b) => a.localeCompare(b));
             document.getElementById('f_cor').innerHTML = '<option value="">COR</option>' + coresUnicas.map(co => `<option value="${co}">${co}</option>`).join('');
             document.getElementById('f_cor').disabled = false;
             document.getElementById('s3').classList.add('active');
@@ -1426,7 +1456,7 @@
         // === IBGE ===
         function carregarEstadosBrasil() {
             const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
-            ['estadoAparelho', 'editEstadoAparelho', 'dupEstadoAparelho'].forEach(id => {
+            ['estadoAparelho', 'editEstadoAparelho', 'dupEstadoAparelho', 'gEstadoAparelho', 'bulkEstadoAparelho'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.innerHTML = '<option value="">Selecione o estado</option>';
@@ -1450,6 +1480,9 @@
         function carregarCidadesAparelho() {
             carregarCidadesDinamico(document.getElementById('estadoAparelho').value, 'cidadeAparelho');
         }
+
+        // Função para carregar cidades no modal de lançamento em massa (reaproveita)
+        window.carregarCidadesDinamicoMaster = carregarCidadesDinamico;
 
         function toggleCondicaoModal(cond, prefix) {
             const bat = document.getElementById(prefix + 'Bateria');
@@ -1904,8 +1937,8 @@
             const cap = document.getElementById('bulkCapacidade').value;
             const cor = document.getElementById('bulkCor').value;
             if (modelo && cap && cor) {
-                // CORREÇÃO: usar produtos_mestre?.id
-                const v = variacoes.find(x => x.produtos_mestre?.id == modelo && x.capacidade.toUpperCase() === cap.toUpperCase() && x.cor.toUpperCase() === cor.toUpperCase());
+                // CORREÇÃO: usar produtos_mestre?.id e normalizar
+                const v = variacoes.find(x => x.produtos_mestre?.id == modelo && normalizarString(x.capacidade) === normalizarString(cap) && normalizarString(x.cor) === normalizarString(cor));
                 if (v) updates.variacao_id = v.id;
                 else return alert('Variação inválida');
             } else if (modelo || cap || cor) {
@@ -1927,6 +1960,19 @@
             if (document.getElementById('bulkColeta').checked) updates.aceita_coleta = true;
             if (document.getElementById('bulkNota').checked) updates.emite_nota = true;
 
+            // Localização em massa (já tratada no bulkLocalOrigem)
+            if (!document.getElementById('bulkLocalOrigem').checked) {
+                const cidade = document.getElementById('bulkCidadeAparelho').value;
+                const estado = document.getElementById('bulkEstadoAparelho').value;
+                if (cidade && estado) {
+                    updates.cidade_aparelho = cidade;
+                    updates.estado_aparelho = estado;
+                } else if (cidade || estado) {
+                    alert('Para alterar a localização, preencha cidade e estado juntos.');
+                    return;
+                }
+            }
+
             if (Object.keys(updates).length === 0) return alert('Nada para alterar.');
             await _s.from('ofertas').update(updates).in('id', ids);
             fecharBulk();
@@ -1937,7 +1983,6 @@
         function editCarregarMemoria() {
             let p = document.getElementById('editModelo').value;
             if (!p) return;
-            // CORREÇÃO: usar produtos_mestre?.id
             let caps = [...new Set(variacoes.filter(v => v.produtos_mestre?.id == p).map(v => v.capacidade))];
             document.getElementById('editCapacidade').innerHTML = '<option value="">MEMÓRIA</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
             document.getElementById('editCapacidade').disabled = false;
@@ -1945,16 +1990,18 @@
         function editCarregarCor() {
             let p = document.getElementById('editModelo').value, c = document.getElementById('editCapacidade').value;
             if (!p || !c) return;
-            // CORREÇÃO: usar produtos_mestre?.id e toUpperCase()
-            let cores = variacoes.filter(v => v.produtos_mestre?.id == p && v.capacidade == c).map(v => v.cor.toUpperCase());
-            let coresUnicas = [...new Set(cores)];
+            let coresMap = {};
+            variacoes.filter(v => v.produtos_mestre?.id == p && v.capacidade == c).forEach(v => {
+                let norm = normalizarString(v.cor);
+                if (!coresMap[norm]) coresMap[norm] = v.cor;
+            });
+            let coresUnicas = Object.values(coresMap).sort((a,b) => a.localeCompare(b));
             document.getElementById('editCor').innerHTML = '<option value="">COR</option>' + coresUnicas.map(co => `<option value="${co}">${co}</option>`).join('');
             document.getElementById('editCor').disabled = false;
         }
         function dupCarregarMemoria() {
             let p = document.getElementById('dupModelo').value;
             if (!p) return;
-            // CORREÇÃO: usar produtos_mestre?.id
             let caps = [...new Set(variacoes.filter(v => v.produtos_mestre?.id == p).map(v => v.capacidade))];
             document.getElementById('dupCapacidade').innerHTML = '<option value="">MEMÓRIA</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
             document.getElementById('dupCapacidade').disabled = false;
@@ -1962,16 +2009,18 @@
         function dupCarregarCor() {
             let p = document.getElementById('dupModelo').value, c = document.getElementById('dupCapacidade').value;
             if (!p || !c) return;
-            // CORREÇÃO: usar produtos_mestre?.id e toUpperCase()
-            let cores = variacoes.filter(v => v.produtos_mestre?.id == p && v.capacidade == c).map(v => v.cor.toUpperCase());
-            let coresUnicas = [...new Set(cores)];
+            let coresMap = {};
+            variacoes.filter(v => v.produtos_mestre?.id == p && v.capacidade == c).forEach(v => {
+                let norm = normalizarString(v.cor);
+                if (!coresMap[norm]) coresMap[norm] = v.cor;
+            });
+            let coresUnicas = Object.values(coresMap).sort((a,b) => a.localeCompare(b));
             document.getElementById('dupCor').innerHTML = '<option value="">COR</option>' + coresUnicas.map(co => `<option value="${co}">${co}</option>`).join('');
             document.getElementById('dupCor').disabled = false;
         }
         function bulkCarregarMemoria() {
             let p = document.getElementById('bulkModelo').value;
             if (!p) return;
-            // CORREÇÃO: usar produtos_mestre?.id
             let caps = [...new Set(variacoes.filter(v => v.produtos_mestre?.id == p).map(v => v.capacidade))];
             document.getElementById('bulkCapacidade').innerHTML = '<option value="">MANTER CAPACIDADE</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
             document.getElementById('bulkCapacidade').disabled = false;
@@ -1979,9 +2028,12 @@
         function bulkCarregarCor() {
             let p = document.getElementById('bulkModelo').value, c = document.getElementById('bulkCapacidade').value;
             if (!p || !c) return;
-            // CORREÇÃO: usar produtos_mestre?.id e toUpperCase()
-            let cores = variacoes.filter(v => v.produtos_mestre?.id == p && v.capacidade == c).map(v => v.cor.toUpperCase());
-            let coresUnicas = [...new Set(cores)];
+            let coresMap = {};
+            variacoes.filter(v => v.produtos_mestre?.id == p && v.capacidade == c).forEach(v => {
+                let norm = normalizarString(v.cor);
+                if (!coresMap[norm]) coresMap[norm] = v.cor;
+            });
+            let coresUnicas = Object.values(coresMap).sort((a,b) => a.localeCompare(b));
             document.getElementById('bulkCor').innerHTML = '<option value="">MANTER COR</option>' + coresUnicas.map(co => `<option value="${co}">${co}</option>`).join('');
             document.getElementById('bulkCor').disabled = false;
         }
@@ -2058,8 +2110,8 @@
             let modelo = document.getElementById(`${prefix}Modelo`).value;
             let cap = document.getElementById(`${prefix}Capacidade`).value;
             let cor = document.getElementById(`${prefix}Cor`).value;
-            // CORREÇÃO: usar produtos_mestre?.id e toUpperCase()
-            let v = variacoes.find(x => x.produtos_mestre?.id == modelo && x.capacidade.toUpperCase() === cap.toUpperCase() && x.cor.toUpperCase() === cor.toUpperCase());
+            // CORREÇÃO: usar normalizarString
+            let v = variacoes.find(x => x.produtos_mestre?.id == modelo && normalizarString(x.capacidade) === normalizarString(cap) && normalizarString(x.cor) === normalizarString(cor));
             if (!v) {
                 alert("Variação não encontrada na base do sistema. Revise as seleções.");
                 return;
@@ -2117,8 +2169,8 @@
             e.preventDefault();
             let tipo = document.getElementById('f_tipo').value;
             if (!tipo) return alert('Selecione o tipo do produto');
-            // CORREÇÃO: usar produtos_mestre?.id e toUpperCase()
-            let v = variacoes.find(x => x.produtos_mestre?.id == document.getElementById('f_mod').value && x.capacidade.toUpperCase() === document.getElementById('f_cap').value.toUpperCase() && x.cor.toUpperCase() === document.getElementById('f_cor').value.toUpperCase());
+            // CORREÇÃO: usar normalizarString
+            let v = variacoes.find(x => x.produtos_mestre?.id == document.getElementById('f_mod').value && normalizarString(x.capacidade) === normalizarString(document.getElementById('f_cap').value) && normalizarString(x.cor) === normalizarString(document.getElementById('f_cor').value));
             if (!v) {
                 alert("Variação não encontrada na base do sistema. Revise as seleções.");
                 return;
@@ -2266,7 +2318,7 @@
             let index = container.children.length;
             let linha = document.createElement('div');
             linha.className = 'linha-anuncio';
-            // Usar as classes do atacadista, mas manter a estrutura do master
+            // Adicionar campos de localização (estado e cidade)
             linha.innerHTML = `
                 <select class="modelo" data-index="${index}" style="min-width:120px">
                     <option value="">Modelo</option>
@@ -2287,6 +2339,12 @@
                     <option value="">Origem</option>
                     ${regioes.map(r => `<option value="${r.id}">${r.nome}</option>`).join('')}
                 </select>
+                <select class="estado" data-index="${index}" style="min-width:80px">
+                    <option value="">Estado</option>
+                </select>
+                <select class="cidade" data-index="${index}" disabled style="min-width:120px">
+                    <option value="">Cidade</option>
+                </select>
                 <input type="number" class="quantidade" placeholder="Qtd" min="1" value="1" style="width:60px">
                 <input type="number" class="preco" placeholder="Preço R$" step="0.01" min="0" style="width:90px">
                 <button class="remover-linha" onclick="this.parentElement.remove()">🗑️</button>
@@ -2296,6 +2354,12 @@
             let modeloSelect = linha.querySelector('.modelo');
             let capacidadeSelect = linha.querySelector('.capacidade');
             let corSelect = linha.querySelector('.cor');
+            let estadoSelect = linha.querySelector('.estado');
+            let cidadeSelect = linha.querySelector('.cidade');
+
+            // Preencher estados
+            const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+            estados.forEach(uf => estadoSelect.innerHTML += `<option value="${uf}">${uf}</option>`);
 
             modeloSelect.addEventListener('change', function() {
                 let prodId = this.value;
@@ -2317,14 +2381,31 @@
                     corSelect.disabled = true;
                     return;
                 }
-                let cores = variacoes.filter(v => v.produtos_mestre?.id == prodId && v.capacidade == cap).map(v => v.cor.toUpperCase());
-                let coresUnicas = [...new Set(cores)];
+                // Agrupar cores normalizadas
+                let coresMap = {};
+                variacoes.filter(v => v.produtos_mestre?.id == prodId && v.capacidade == cap).forEach(v => {
+                    let norm = normalizarString(v.cor);
+                    if (!coresMap[norm]) coresMap[norm] = v.cor;
+                });
+                let coresUnicas = Object.values(coresMap).sort((a,b) => a.localeCompare(b));
                 corSelect.innerHTML = '<option value="">Cor</option>' + coresUnicas.map(c => `<option value="${c}">${c}</option>`).join('');
                 corSelect.disabled = false;
             });
+
+            estadoSelect.addEventListener('change', function() {
+                let uf = this.value;
+                if (!uf) {
+                    cidadeSelect.disabled = true;
+                    cidadeSelect.innerHTML = '<option value="">Cidade</option>';
+                    return;
+                }
+                carregarCidadesDinamico(uf, cidadeSelect.id).then(() => {
+                    cidadeSelect.disabled = false;
+                });
+            });
         }
+
         async function executarLancamentoMassa() {
-            // Pega o ID da loja logada
             const lojaId = loja?.id;
             if (!lojaId) {
                 alert('Erro de sessão. Faça login novamente.');
@@ -2344,23 +2425,29 @@
                 let cor = linha.querySelector('.cor').value;
                 let condicao = linha.querySelector('.condicao').value;
                 let regiaoId = linha.querySelector('.origem').value;
+                let estado = linha.querySelector('.estado').value;
+                let cidade = linha.querySelector('.cidade').value;
                 let quantidade = parseInt(linha.querySelector('.quantidade').value) || 0;
                 let preco = parseFloat(linha.querySelector('.preco').value) || 0;
 
                 if (!modeloId || !capacidade || !cor || !condicao || !regiaoId || quantidade <= 0 || preco <= 0) {
-                    logArea.innerHTML += `<div class="text-red-400">⚠️ Linha ignorada: preencha todos os campos.</div>`;
+                    logArea.innerHTML += `<div class="text-red-400">⚠️ Linha ignorada: preencha todos os campos (modelo, capacidade, cor, condição, origem, quantidade, preço).</div>`;
                     erros++;
                     continue;
                 }
 
-                let variacao = variacoes.find(v => v.produtos_mestre?.id == modeloId && v.capacidade.toUpperCase() === capacidade.toUpperCase() && v.cor.toUpperCase() === cor.toUpperCase());
+                // Usar normalizarString para encontrar a variação
+                let variacao = variacoes.find(v => v.produtos_mestre?.id == modeloId && normalizarString(v.capacidade) === normalizarString(capacidade) && normalizarString(v.cor) === normalizarString(cor));
                 if (!variacao) {
-                    logArea.innerHTML += `<div class="text-red-400">❌ Variação não encontrada.</div>`;
+                    logArea.innerHTML += `<div class="text-red-400">❌ Variação não encontrada para ${modeloId} ${capacidade} ${cor}.</div>`;
                     erros++;
                     continue;
                 }
 
-                // Cria payload com campos padrão (smart upsert espera todos os campos)
+                // Localização: se estado e cidade preenchidos, usar; caso contrário, null (cidade sede)
+                let cidadeAparelho = (estado && cidade) ? cidade : null;
+                let estadoAparelho = (estado && cidade) ? estado : null;
+
                 let payload = {
                     fornecedor_id: lojaId,
                     variacao_id: variacao.id,
@@ -2376,15 +2463,15 @@
                     faz_envio: false,
                     aceita_coleta: false,
                     emite_nota: false,
-                    cidade_aparelho: null,
-                    estado_aparelho: null,
+                    cidade_aparelho: cidadeAparelho,
+                    estado_aparelho: estadoAparelho,
                     saude_bateria: null,
                     garantia: (condicao === 'Novo' || condicao === 'CPO') ? '1 ANO APPLE' : null
                 };
 
                 try {
                     await smartUpsertOferta(payload);
-                    logArea.innerHTML += `<div class="text-green-400">✅ Sucesso: ${variacao.produtos_mestre.nome} ${capacidade} ${cor} | Qtd: ${quantidade} | R$ ${preco.toFixed(2)}</div>`;
+                    logArea.innerHTML += `<div class="text-green-400">✅ Sucesso: ${variacao.produtos_mestre.nome} ${capacidade} ${cor} | Qtd: ${quantidade} | R$ ${preco.toFixed(2)} ${cidadeAparelho ? `| ${cidadeAparelho}/${estadoAparelho}` : ''}</div>`;
                     sucessos++;
                 } catch (err) {
                     logArea.innerHTML += `<div class="text-red-400">❌ Erro: ${err.message}</div>`;
@@ -2469,6 +2556,8 @@
         window.fecharModalAddMassa = fecharModalAddMassa;
         window.adicionarLinhaAnuncio = adicionarLinhaAnuncio;
         window.executarLancamentoMassa = executarLancamentoMassa;
+        // Funções auxiliares
+        window.normalizarString = normalizarString;
     </script>
 </body>
 </html>
