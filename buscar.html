@@ -1119,12 +1119,13 @@
             corSelect.innerHTML = '<option value="">Cores</option>';
             
             if (!modeloId) {
-                // Se nenhum modelo selecionado, popula com todas as capacidades e cores
+                // Se nenhum modelo selecionado, popula com todas as capacidades e cores (normalizadas)
                 const caps = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
                 caps.sort((a,b) => a.localeCompare(b));
                 caps.forEach(c => capSelect.innerHTML += `<option value="${c}">${c}</option>`);
                 
-                const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
+                // Cores normalizadas
+                const cores = [...new Set(variacoes.map(v => v.cor.toUpperCase()).filter(Boolean))];
                 cores.sort((a,b) => a.localeCompare(b));
                 cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
                 return;
@@ -1135,8 +1136,8 @@
             caps.sort((a,b) => a.localeCompare(b));
             caps.forEach(c => capSelect.innerHTML += `<option value="${c}">${c}</option>`);
             
-            // Para cores, inicialmente mostra todas as cores do modelo (quando capacidade não selecionada)
-            const cores = [...new Set(variacoes.filter(v => v.produto_id == modeloId).map(v => v.cor).filter(Boolean))];
+            // Cores normalizadas para o modelo (quando capacidade não selecionada)
+            const cores = [...new Set(variacoes.filter(v => v.produto_id == modeloId).map(v => v.cor.toUpperCase()).filter(Boolean))];
             cores.sort((a,b) => a.localeCompare(b));
             cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
         }
@@ -1149,8 +1150,8 @@
             corSelect.innerHTML = '<option value="">Cores</option>';
             
             if (!modeloId && !capacidade) {
-                // Se nenhum filtro, popula com todas as cores
-                const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
+                // Se nenhum filtro, popula com todas as cores normalizadas
+                const cores = [...new Set(variacoes.map(v => v.cor.toUpperCase()).filter(Boolean))];
                 cores.sort((a,b) => a.localeCompare(b));
                 cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
                 return;
@@ -1160,7 +1161,7 @@
             if (modeloId) variaveisFiltradas = variaveisFiltradas.filter(v => v.produto_id == modeloId);
             if (capacidade) variaveisFiltradas = variaveisFiltradas.filter(v => v.capacidade === capacidade);
             
-            const cores = [...new Set(variaveisFiltradas.map(v => v.cor).filter(Boolean))];
+            const cores = [...new Set(variaveisFiltradas.map(v => v.cor.toUpperCase()).filter(Boolean))];
             cores.sort((a,b) => a.localeCompare(b));
             cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
         }
@@ -1471,7 +1472,7 @@
                 if (fCat && v.produto_id != fCat) return false;
                 if (fCond && o.condicao !== fCond) return false;
                 if (fCap && v.capacidade !== fCap) return false;
-                if (fCor && v.cor !== fCor) return false;
+                if (fCor && v.cor.toUpperCase() !== fCor) return false; // compara com maiúscula
                 if (fCid && f.cidade !== fCid) return false;
                 if (fAnunciante && f.id != fAnunciante) return false;
                 if (fPais && f.pais !== fPais) return false;
