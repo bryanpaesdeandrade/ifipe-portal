@@ -1119,7 +1119,7 @@
             corSelect.innerHTML = '<option value="">Cores</option>';
             
             if (!modeloId) {
-                // Se nenhum modelo selecionado, popula com todas as capacidades e cores (sem toUpperCase)
+                // Se nenhum modelo selecionado, popula com todas as capacidades e cores
                 const caps = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
                 caps.sort((a,b) => a.localeCompare(b));
                 caps.forEach(c => capSelect.innerHTML += `<option value="${c}">${c}</option>`);
@@ -1135,7 +1135,7 @@
             caps.sort((a,b) => a.localeCompare(b));
             caps.forEach(c => capSelect.innerHTML += `<option value="${c}">${c}</option>`);
             
-            // Cores para o modelo (quando capacidade não selecionada)
+            // Para cores, inicialmente mostra todas as cores do modelo (quando capacidade não selecionada)
             const cores = [...new Set(variacoes.filter(v => v.produto_id == modeloId).map(v => v.cor).filter(Boolean))];
             cores.sort((a,b) => a.localeCompare(b));
             cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
@@ -1149,7 +1149,7 @@
             corSelect.innerHTML = '<option value="">Cores</option>';
             
             if (!modeloId && !capacidade) {
-                // Se nenhum filtro, popula com todas as cores (sem toUpperCase)
+                // Se nenhum filtro, popula com todas as cores
                 const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
                 cores.sort((a,b) => a.localeCompare(b));
                 cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
@@ -1471,7 +1471,7 @@
                 if (fCat && v.produto_id != fCat) return false;
                 if (fCond && o.condicao !== fCond) return false;
                 if (fCap && v.capacidade !== fCap) return false;
-                if (fCor && v.cor.toUpperCase() !== fCor.toUpperCase()) return false; // comparação case-insensitive
+                if (fCor && v.cor !== fCor) return false;
                 if (fCid && f.cidade !== fCid) return false;
                 if (fAnunciante && f.id != fAnunciante) return false;
                 if (fPais && f.pais !== fPais) return false;
@@ -1580,11 +1580,18 @@
                 else if (o.condicao && o.condicao.includes('Grade')) condCls = 'badge-grade';
                 else condCls = 'badge-outros';
 
-                // Mensagem de compra corrigida
+                const saudacao = (() => {
+                    const h = new Date().getHours();
+                    if (h < 12) return 'Bom dia'; if (h < 18) return 'Boa tarde'; return 'Boa noite';
+                })();
+
                 const msgZap = encodeURIComponent(
-                    `Encontrei a sua oferta no iFipe *${p.nome} ${v?.capacidade || ''} ${v?.cor || ''}* pelo preço *${simbolo} ${preco.toFixed(2)}* Esta disponível? \n\n` +
-                    `*Sou uma indicação do BUSCADOR APPLE* 👇🏽\n\n` +
-                    `https://ifipe.com.br/buscar.html`
+                    `${saudacao}! Se liga nessa oferta especial 🔥 que encontrei:\n\n` +
+                    `${p.nome} ${v?.capacidade || ''} ${v?.cor || ''}\n` +
+                    `Preço: ${simbolo} ${preco.toFixed(2)}\n` +
+                    `Estoque disponível: ${o.quantidade} UN\n\n` +
+                    `Falar com Atacadista: https://wa.me/${f.whatsapp?.replace(/\D/g, '')}\n\n` +
+                    `Achei no www.iFipe.com.br | *A Tabela Fipe do iPhone* 📲`
                 );
 
                 const curtido = minhasCurtidas.has(o.id);
