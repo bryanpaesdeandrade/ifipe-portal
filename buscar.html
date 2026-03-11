@@ -740,13 +740,13 @@
 
             <!-- Filtros em grid -->
             <div class="filters-grid mb-4">
-                <select id="filtroCategoria" class="apple-input text-xs py-2" onchange="renderizarCards()">
+                <select id="filtroCategoria" class="apple-input text-xs py-2" onchange="atualizarFiltrosPorModelo(); renderizarCards()">
                     <option value="">Modelos</option>
                 </select>
                 <select id="filtroCondicao" class="apple-input text-xs py-2" onchange="renderizarCards()">
                     <option value="">Condição</option>
                 </select>
-                <select id="filtroCapacidade" class="apple-input text-xs py-2" onchange="renderizarCards()">
+                <select id="filtroCapacidade" class="apple-input text-xs py-2" onchange="atualizarFiltrosPorCapacidade(); renderizarCards()">
                     <option value="">GB</option>
                 </select>
                 <select id="filtroCor" class="apple-input text-xs py-2" onchange="renderizarCards()">
@@ -1108,6 +1108,63 @@
             });
         };
 
+        // ===== NOVAS FUNÇÕES PARA FILTROS DEPENDENTES =====
+        function atualizarFiltrosPorModelo() {
+            const modeloId = document.getElementById('filtroCategoria').value;
+            const capSelect = document.getElementById('filtroCapacidade');
+            const corSelect = document.getElementById('filtroCor');
+            
+            // Resetar selects dependentes
+            capSelect.innerHTML = '<option value="">GB</option>';
+            corSelect.innerHTML = '<option value="">Cores</option>';
+            
+            if (!modeloId) {
+                // Se nenhum modelo selecionado, popula com todas as capacidades e cores
+                const caps = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
+                caps.sort((a,b) => a.localeCompare(b));
+                caps.forEach(c => capSelect.innerHTML += `<option value="${c}">${c}</option>`);
+                
+                const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
+                cores.sort((a,b) => a.localeCompare(b));
+                cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
+                return;
+            }
+            
+            // Filtrar capacidades para o modelo selecionado
+            const caps = [...new Set(variacoes.filter(v => v.produto_id == modeloId).map(v => v.capacidade).filter(Boolean))];
+            caps.sort((a,b) => a.localeCompare(b));
+            caps.forEach(c => capSelect.innerHTML += `<option value="${c}">${c}</option>`);
+            
+            // Para cores, inicialmente mostra todas as cores do modelo (quando capacidade não selecionada)
+            const cores = [...new Set(variacoes.filter(v => v.produto_id == modeloId).map(v => v.cor).filter(Boolean))];
+            cores.sort((a,b) => a.localeCompare(b));
+            cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
+        }
+
+        function atualizarFiltrosPorCapacidade() {
+            const modeloId = document.getElementById('filtroCategoria').value;
+            const capacidade = document.getElementById('filtroCapacidade').value;
+            const corSelect = document.getElementById('filtroCor');
+            
+            corSelect.innerHTML = '<option value="">Cores</option>';
+            
+            if (!modeloId && !capacidade) {
+                // Se nenhum filtro, popula com todas as cores
+                const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
+                cores.sort((a,b) => a.localeCompare(b));
+                cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
+                return;
+            }
+            
+            let variaveisFiltradas = variacoes;
+            if (modeloId) variaveisFiltradas = variaveisFiltradas.filter(v => v.produto_id == modeloId);
+            if (capacidade) variaveisFiltradas = variaveisFiltradas.filter(v => v.capacidade === capacidade);
+            
+            const cores = [...new Set(variaveisFiltradas.map(v => v.cor).filter(Boolean))];
+            cores.sort((a,b) => a.localeCompare(b));
+            cores.forEach(c => corSelect.innerHTML += `<option value="${c}">${c}</option>`);
+        }
+
         // Inicialização
         window.onload = async () => {
             // Verificação de manutenção
@@ -1170,6 +1227,10 @@
             await carregarDados();
             // Chama popularFiltros apenas uma vez, após o carregamento inicial dos dados
             popularFiltros();
+            // Inicializa os filtros dependentes com base nos dados carregados
+            setTimeout(() => {
+                atualizarFiltrosPorModelo();
+            }, 100);
             initTicker();
             await checarNotificacoes();
             await carregarMensagensSistema();
@@ -1939,8 +2000,9 @@
                 });
             };
             popProdutos('filtroCategoria');
-            pop('filtroCapacidade', variacoes, v => v.capacidade);
-            pop('filtroCor', variacoes, v => v.cor);
+            // Não popula capacidade e cor aqui, pois será feito pelas funções dependentes
+            // pop('filtroCapacidade', variacoes, v => v.capacidade);
+            // pop('filtroCor', variacoes, v => v.cor);
             pop('filtroCidade', fornecedores, f => f.cidade);
             pop('filtroAnunciante', fornecedores, f => f);
             // condições dinâmicas
@@ -2142,6 +2204,8 @@
         window.marcarComoLida = marcarComoLida;
         window.apagarMensagem = apagarMensagem;
         window.apagarTudoMensagens = apagarTudoMensagens;
+        window.atualizarFiltrosPorModelo = atualizarFiltrosPorModelo;
+        window.atualizarFiltrosPorCapacidade = atualizarFiltrosPorCapacidade;
 
         // Novas funções da trava USDT expostas globalmente
         window.abrirModalRegrasTrava = abrirModalRegrasTrava;
