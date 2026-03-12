@@ -838,7 +838,7 @@
         </div>
     </div>
 
-    <!-- MODAIS Cli, Ata, Func (mantidos, mas já estão no código original) -->
+    <!-- MODAIS Cli, Ata, Func (mantidos) -->
     <div id="modalCli" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a] relative">
             <button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
@@ -904,7 +904,7 @@
     <div id="modalBulkAta" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505] relative"><button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">AÇÕES EM MASSA (ATACADISTAS)</h3><input type="text" id="bulkAtaSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('fornecedores', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('fornecedores', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button><button onclick="runBulk('fornecedores', 'desativar')" class="btn-master w-full bg-zinc-700 mb-2">DESATIVAR SELECIONADOS</button><button onclick="runBulk('fornecedores', 'verificar')" class="btn-master w-full border border-blue-600 text-blue-500 bg-transparent mb-4">APLICAR SELO VERIFICADO</button><button onclick="runBulk('fornecedores', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button></div></div>
     <div id="modalBulkCli" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505] relative"><button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">AÇÕES EM MASSA (BUSCADORES)</h3><input type="text" id="bulkCliSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('clientes_buscador', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('clientes_buscador', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button><button onclick="runBulk('clientes_buscador', 'desativar')" class="btn-master w-full bg-zinc-700 mb-4">DESATIVAR SELECIONADOS</button><button onclick="runBulk('clientes_buscador', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button></div></div>
 
-    <!-- MODAL: Lançamento em Massa (ATUALIZADO: grupo global + localização por linha) -->
+    <!-- MODAL: Lançamento em Massa (ATUALIZADO: grupo global + localização por linha + opção "TODOS") -->
     <div id="modalAddMassa" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-5xl bg-[#050505] border-[#38383a] max-h-[90vh] overflow-y-auto relative">
             <button onclick="fecharModalAddMassa()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
@@ -914,6 +914,8 @@
                 <label class="text-[9px] text-gray-400 font-black block mb-1">FORNECEDOR (LOJA)</label>
                 <select id="massaFornecedor" class="apple-input">
                     <option value="">Selecione...</option>
+                    <option value="TODOS" style="color: #0071e3; font-weight: 800;">[ 🚀 LANÇAR PARA TODOS OS ATACADISTAS ATIVOS ]</option>
+                    <!-- Opções de fornecedores serão inseridas via JS -->
                 </select>
             </div>
 
@@ -1659,7 +1661,7 @@
 
             let massaSelect = document.getElementById('massaFornecedor');
             if (massaSelect) {
-                massaSelect.innerHTML = '<option value="">Selecione...</option>';
+                massaSelect.innerHTML = '<option value="">Selecione...</option><option value="TODOS" style="color: #0071e3; font-weight: 800;">[ 🚀 LANÇAR PARA TODOS OS ATACADISTAS ATIVOS ]</option>';
                 dbAta.forEach(a => massaSelect.innerHTML += `<option value="${a.id}">${a.nome}</option>`);
             }
 
@@ -2879,13 +2881,29 @@
         }
 
         async function executarLancamentoMassa() {
-            let fornecedorId = document.getElementById('massaFornecedor').value;
-            if (!fornecedorId) { alert('Selecione um fornecedor.'); return; }
+            let fornecedorInput = document.getElementById('massaFornecedor').value;
+            if (!fornecedorInput) { alert('Selecione um fornecedor ou a opção "Lançar para Todos".'); return; }
 
             let linhas = document.querySelectorAll('#linhasContainer .linha-anuncio');
             if (linhas.length === 0) { alert('Adicione pelo menos uma linha.'); return; }
 
-            let payloads = [];
+            // Verificar se é para todos os atacadistas ativos
+            let fornecedoresIds = [];
+            if (fornecedorInput === 'TODOS') {
+                if (!confirm('Você está prestes a lançar estes produtos para TODOS os lojistas ativos. Confirma?')) {
+                    return;
+                }
+                fornecedoresIds = dbAta.filter(a => a.ativo === true).map(a => a.id);
+                if (fornecedoresIds.length === 0) {
+                    alert('Nenhum atacadista ativo encontrado.');
+                    return;
+                }
+            } else {
+                fornecedoresIds = [fornecedorInput];
+            }
+
+            // Construir os payloads base (sem fornecedor_id) a partir das linhas
+            let basePayloads = [];
             let logArea = document.getElementById('massaLog');
             logArea.innerHTML = '';
 
@@ -2914,8 +2932,7 @@
                 let cidadeAparelho = (estado && cidade) ? cidade : null;
                 let estadoAparelho = (estado && cidade) ? estado : null;
 
-                payloads.push({
-                    fornecedor_id: fornecedorId,
+                basePayloads.push({
                     variacao_id: variacao.id,
                     regiao_id: regiaoId,
                     condicao: condicao,
@@ -2926,14 +2943,30 @@
                     cidade_aparelho: cidadeAparelho,
                     estado_aparelho: estadoAparelho
                 });
+
                 logArea.innerHTML += `<div class="text-green-400">✅ Preparado: ${variacao.produtos_mestre.nome} ${capacidade} ${cor} | Qtd: ${quantidade} | R$ ${preco.toFixed(2)} ${cidadeAparelho ? `| ${cidadeAparelho}/${estadoAparelho}` : ''}</div>`;
             }
 
-            if (payloads.length === 0) { logArea.innerHTML += '<div class="text-yellow-400">Nenhum payload válido.</div>'; return; }
+            if (basePayloads.length === 0) {
+                logArea.innerHTML += '<div class="text-yellow-400">Nenhum payload válido.</div>';
+                return;
+            }
 
-            logArea.innerHTML += `<div class="text-white">⏳ Inserindo ${payloads.length} anúncios...</div>`;
+            // Expandir para todos os fornecedores
+            let todosPayloads = [];
+            for (let fid of fornecedoresIds) {
+                for (let bp of basePayloads) {
+                    todosPayloads.push({
+                        ...bp,
+                        fornecedor_id: fid
+                    });
+                }
+            }
 
-            const results = await Promise.allSettled(payloads.map(p => _s.from('ofertas').insert([p])));
+            logArea.innerHTML += `<div class="text-white">⏳ Inserindo ${todosPayloads.length} anúncios (${basePayloads.length} produtos x ${fornecedoresIds.length} lojas)...</div>`;
+
+            // Inserir em lote
+            const results = await Promise.allSettled(todosPayloads.map(p => _s.from('ofertas').insert([p])));
 
             let sucessos = 0, erros = 0;
             results.forEach((r, idx) => {
@@ -2941,7 +2974,10 @@
                     sucessos++;
                 } else {
                     erros++;
-                    logArea.innerHTML += `<div class="text-red-400">❌ Erro no anúncio ${idx+1}: ${r.value?.error?.message || r.reason}</div>`;
+                    // Para não poluir o log, mostramos apenas os erros resumidos
+                    if (erros < 10) {
+                        logArea.innerHTML += `<div class="text-red-400">❌ Erro no payload ${idx+1}: ${r.value?.error?.message || r.reason}</div>`;
+                    }
                 }
             });
 
