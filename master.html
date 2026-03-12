@@ -1316,7 +1316,6 @@
             if (error) alert('Erro ao zerar estoque: ' + error.message);
             else { alert('Estoque zerado com sucesso!'); fecharModais(); loadAll(); }
         }
-
         // ===== FUNÇÃO CORRIGIDA: abrirModalHorus =====
         async function abrirModalHorus() {
             const { data: ofertas, error } = await _s
@@ -1380,6 +1379,185 @@
         }
 
         // ===== FUNÇÃO REESCRITA: copiarListaHorus =====
+        function copiarListaHorus(tipo) {
+            if (!ofertasHorus || ofertasHorus.length === 0) {
+                alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
+                return;
+            }
+
+            // Filtrar ofertas de acordo com o tipo
+            let ofertasFiltradas = ofertasHorus.filter(o => {
+                const cat = o.variacoes && o.variacoes.produtos_mestre && o.variacoes.produtos_mestre.categoria ? o.variacoes.produtos_mestre.categoria.toUpperCase() : '';
+                const cond = o.condicao;
+
+                if (tipo === 'iphone_novo' || tipo === 'novos_iphone') {
+                    return (cond === 'Novo' || cond === 'CPO') && cat === 'IPHONE';
+                } else if (tipo === 'seminovos_geral' || tipo === 'seminovos') {
+                    return cond === 'Seminovo' || cond.includes('Grade');
+                } else if (tipo === 'mac_ipad' || tipo === 'novos_mac_ipad') {
+                    return (cond === 'Novo' || cond === 'CPO') && (cat === 'MACBOOK' || cat === 'IMAC' || cat === 'IPAD');
+                } else if (tipo === 'acessorios' || tipo === 'novos_acessorios') {
+                    return (cond === 'Novo' || cond === 'CPO') && (cat === 'ACESSORIOS' || cat === 'AIRPODS' || cat === 'PENCIL' || cat === 'AIRTAG');
+                }
+                return false;
+            });
+
+            if (ofertasFiltradas.length === 0) {
+                alert('Nenhuma oferta encontrada para esta categoria.');
+                return;
+            }
+
+            // Agrupar por produto + capacidade + cor + origem + moeda + condição para pegar o menor preço
+            const grupos = {};
+            ofertasFiltradas.forEach(o => {
+                const key = `${o.variacoes.produto_id}-${o.variacoes.capacidade}-${o.variacoes.cor}-${o.regiao_id}-${o.moeda}-${o.condicao}`;
+                if (!grupos[key] || o.preco < grupos[key].preco) {
+                    grupos[key] = {
+                        produto: o.variacoes.produtos_mestre.nome,
+                        capacidade: o.variacoes.capacidade,
+                        cor: o.variacoes.cor,
+                        bandeira: o.regioes.bandeira,
+                        preco: o.preco,
+                        fornecedor: o.fornecedores.nome,
+                        whatsapp: o.fornecedores.whatsapp,
+                        pais: o.fornecedores.pais,
+                        cidade_sede: o.fornecedores.cidade,
+                        estado_sede: o.fornecedores.estado,
+                        cidade_aparelho: o.cidade_aparelho,
+                        estado_aparelho: o.estado_aparelho,
+                        condicao: o.condicao,
+                        categoria: o.variacoes.produtos_mestre.categoria ? o.variacoes.produtos_mestre.categoria.toUpperCase() : ''
+                    };
+                }
+            });
+
+            let lista = Object.values(grupos);
+
+            // Funções Anti-Crash (Evita quebrar se um acessório não tiver número no nome)
+            function extrairNumero(nome) {
+                try {
+                    const match = nome.match(/\d+/);
+                    return match ? parseInt(match[0]) : 0;
+                } catch(e) { return 0; }
+            }
+            function pesoVariante(nome) {
+                try {
+                    if (nome.includes('Pro Max')) return 5;
+                    if (nome.includes('Pro')) return 4;
+                    if (nome.includes('Plus')) return 3;
+                    if (nome.includes('Air')) return 2;
+                    if (nome.includes('mini')) return 1;
+                    return 2.5;
+                } catch(e) { return 2.5; }
+            }
+            function extrairCapacidade(capacidade) {
+                try {
+                    const match = capacidade.match(/\d+/);
+                    return match ? parseInt(match[0]) : 0;
+                } catch(e) { return 0; }
+            }
+
+            try {
+                lista.sort((a, b) => {
+                    const numA = extrairNumero(a.produto);
+                    const numB = extrairNumero(b.produto);
+                    if (numA !== numB) return numB - numA;
+                    const pesoA = pesoVariante(a.produto);
+                    const pesoB = pesoVariante(b.produto);
+                    if (pesoA !== pesoB) return pesoB - pesoA;
+                    const capA = extrairCapacidade(a.capacidade);
+                    const capB = extrairCapacidade(b.capacidade);
+                    return capA - capB; 
+                });
+            } catch (e) {
+                console.warn('Erro na ordenação:', e);
+            }
+
+            // Seleção de Título
+            let titulo = '';
+            if (tipo === 'iphone_novo' || tipo === 'novos_iphone') titulo = '👁️‍🗨️ *RANKING NOVOS E CPO - IPHONE* 🔥';
+            else if (tipo === 'seminovos_geral' || tipo === 'seminovos') titulo = '👁️‍🗨️ *RANKING SEMINOVOS GERAL* 🔥';
+            else if (tipo === 'mac_ipad' || tipo === 'novos_mac_ipad') titulo = '👁️‍🗨️ *RANKING NOVOS - MAC/IPAD* 🔥';
+            else if (tipo === 'acessorios' || tipo === 'novos_acessorios') titulo = '👁️‍🗨️ *RANKING ACESSÓRIOS E OUTROS* 🔥';
+
+            let texto = titulo + '\n\n';
+
+            // Gerador de Texto
+            function gerarTextoItens(items) {
+                let resultado = '';
+                let currentModeloBase = '';
+                items.forEach(item => {
+                    let modeloBase = item.produto;
+                    if(item.categoria === 'IPHONE' || modeloBase.toUpperCase().includes('IPHONE')) {
+                        modeloBase = modeloBase.replace(/iPhone\s*/i, '').trim().toUpperCase();
+                    } else {
+                        modeloBase = modeloBase.toUpperCase();
+                    }
+
+                    if (modeloBase !== currentModeloBase) {
+                        if (currentModeloBase !== '') resultado += '\n';
+                        resultado += `📲 *${modeloBase}*\n\n`;
+                        currentModeloBase = modeloBase;
+                    }
+                    
+                    let capacidade = item.capacidade.toUpperCase();
+                    let cor = item.cor.toUpperCase();
+                    let bandeira = item.bandeira || '';
+                    let precoFormatado = item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                    let cidadeExibicao = item.cidade_aparelho || item.cidade_sede;
+                    let estadoExibicao = item.estado_aparelho || item.estado_sede;
+                    let localizacao = (cidadeExibicao && estadoExibicao) ? `(📍 *${cidadeExibicao.toUpperCase()}/${estadoExibicao.toUpperCase()}*)` : '';
+
+                    resultado += `*${capacidade} ${cor} ${bandeira} R$ ${precoFormatado.replace('.', ',')}*\n\n`;
+                    
+                    let zapDigits = item.whatsapp.replace(/\D/g, '');
+                    if(item.pais === 'Brasil' || !item.pais) {
+                        if(zapDigits.startsWith('55')) zapDigits = zapDigits.slice(2);
+                        if(zapDigits.length >= 10) {
+                            let ddd = zapDigits.slice(0, 2);
+                            let numero = zapDigits.slice(2);
+                            if(numero.length === 8) numero = numero.slice(0,4) + '-' + numero.slice(4);
+                            else if(numero.length === 9) numero = numero.slice(0,5) + '-' + numero.slice(5);
+                            zapDigits = `+55 ${ddd} ${numero}`;
+                        } else {
+                            zapDigits = `+55 ${zapDigits}`;
+                        }
+                    } else {
+                        zapDigits = `+${zapDigits}`;
+                    }
+
+                    resultado += `Zap: ${zapDigits} — ${item.fornecedor}\n`;
+                    if (localizacao) resultado += `${localizacao}\n`;
+                    resultado += '\n';
+                });
+                return resultado;
+            }
+
+            // Separar os blocos de Novo e CPO
+            if (tipo === 'iphone_novo' || tipo === 'novos_iphone' || tipo === 'mac_ipad' || tipo === 'novos_mac_ipad' || tipo === 'acessorios' || tipo === 'novos_acessorios') {
+                const novos = lista.filter(item => item.condicao === 'Novo');
+                const cpos = lista.filter(item => item.condicao === 'CPO');
+
+                if (novos.length > 0) {
+                    texto += '▶️ *NOVOS* ◀️\n\n';
+                    texto += gerarTextoItens(novos);
+                }
+                if (cpos.length > 0) {
+                    if (novos.length > 0) texto += '\n';
+                    texto += '▶️ *CPO* ◀️\n\n';
+                    texto += gerarTextoItens(cpos);
+                }
+            } else {
+                // Seminovos (vai tudo junto)
+                texto += gerarTextoItens(lista);
+            }
+
+            navigator.clipboard.writeText(texto).then(() => {
+                alert('Lista copiada com sucesso!');
+            }).catch(() => {
+                alert('Erro ao copiar lista.');
+            });
+        }
         function copiarListaHorus(tipo) {
             if (!ofertasHorus || ofertasHorus.length === 0) {
                 alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
