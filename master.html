@@ -478,25 +478,22 @@
         </div>
     </div>
 
-    <!-- MODAL HORUS (MODIFICADO: QUATRO BOTÕES) -->
+    <!-- MODAL HORUS (MODIFICADO: TRÊS BOTÕES DE COPIAR) -->
     <div id="modalHorus" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-4xl bg-[#050505] border-[#38383a] max-h-[80vh] overflow-y-auto relative">
             <button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80 z-50">X</button>
             <div class="flex justify-between items-center mb-2 border-b border-zinc-800 pb-2 mt-4">
                 <h3 class="text-sm font-black flex items-center gap-2">👁️$ FERRAMENTA HORUS <span class="text-[8px] text-zinc-500">MENOR PREÇO ABSOLUTO</span></h3>
-                <div class="flex gap-2 flex-wrap">
+                <div class="flex gap-2">
                     <!-- NOVOS BOTÕES -->
-                    <button onclick="copiarListaHorus('iphone_novo')" class="btn-master !bg-green-600 px-3 py-1 text-[9px] flex items-center gap-1">
-                        📋 NOVOS IPHONE
+                    <button onclick="copiarListaHorus('novos_iphone')" class="btn-master !bg-green-600 px-3 py-1 text-[9px] flex items-center gap-1">
+                        📋 NOVOS E CPO (IPHONE / ACESSÓRIOS)
+                    </button>
+                    <button onclick="copiarListaHorus('novos_outros')" class="btn-master !bg-blue-600 px-3 py-1 text-[9px] flex items-center gap-1">
+                        📋 NOVOS (IPAD/MAC/WATCH/ETC)
                     </button>
                     <button onclick="copiarListaHorus('seminovos')" class="btn-master !bg-yellow-600 px-3 py-1 text-[9px] flex items-center gap-1">
-                        📋 SEMINOVOS GERAL
-                    </button>
-                    <button onclick="copiarListaHorus('mac_ipad')" class="btn-master !bg-blue-600 px-3 py-1 text-[9px] flex items-center gap-1">
-                        📋 NOVOS MAC/IPAD
-                    </button>
-                    <button onclick="copiarListaHorus('acessorios')" class="btn-master !bg-purple-600 px-3 py-1 text-[9px] flex items-center gap-1">
-                        📋 ACESSÓRIOS
+                        📋 SEMINOVOS
                     </button>
                 </div>
             </div>
@@ -1379,27 +1376,19 @@
             });
         }
 
-        // ===== FUNÇÃO REESCRITA: copiarListaHorus =====
+        // ===== FUNÇÃO CORRIGIDA: copiarListaHorus =====
         function copiarListaHorus(tipo) {
             if (!ofertasHorus || ofertasHorus.length === 0) {
                 alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
                 return;
             }
 
-            // Filtrar ofertas de acordo com o tipo
             let ofertasFiltradas = ofertasHorus.filter(o => {
                 const cat = (o.variacoes.produtos_mestre.categoria || '').toUpperCase();
                 const cond = o.condicao;
-
-                if (tipo === 'iphone_novo') {
-                    return (cond === 'Novo' || cond === 'CPO') && cat === 'IPHONE';
-                } else if (tipo === 'seminovos') {
-                    return cond !== 'Novo' && cond !== 'CPO';
-                } else if (tipo === 'mac_ipad') {
-                    return (cond === 'Novo' || cond === 'CPO') && (cat === 'MACBOOK' || cat === 'IMAC' || cat === 'IPAD');
-                } else if (tipo === 'acessorios') {
-                    return cat === 'ACESSORIOS';
-                }
+                if (tipo === 'novos_iphone') return (cond === 'Novo' || cond === 'CPO') && (cat === 'IPHONE' || cat === 'ACESSORIOS' || cat === 'ACESSORIOS APPLE');
+                if (tipo === 'novos_outros') return (cond === 'Novo' || cond === 'CPO') && (cat !== 'IPHONE' && cat !== 'ACESSORIOS' && cat !== 'ACESSORIOS APPLE');
+                if (tipo === 'seminovos') return cond !== 'Novo' && cond !== 'CPO';
                 return false;
             });
 
@@ -1408,7 +1397,6 @@
                 return;
             }
 
-            // Agrupar por produto + capacidade + cor + origem + moeda + condição para pegar o menor preço de cada grupo
             const grupos = {};
             ofertasFiltradas.forEach(o => {
                 const key = `${o.variacoes.produto_id}-${o.variacoes.capacidade}-${o.variacoes.cor}-${o.regiao_id}-${o.moeda}-${o.condicao}`;
@@ -1425,116 +1413,99 @@
                         cidade_sede: o.fornecedores.cidade,
                         estado_sede: o.fornecedores.estado,
                         cidade_aparelho: o.cidade_aparelho,
-                        estado_aparelho: o.estado_aparelho,
-                        condicao: o.condicao
+                        estado_aparelho: o.estado_aparelho
                     };
                 }
             });
 
             let lista = Object.values(grupos);
-
-            // Ordenar com proteção anti-crash
             function extrairNumero(nome) {
-                try {
-                    const match = nome.match(/\d+/);
-                    return match ? parseInt(match[0]) : 0;
-                } catch (e) {
-                    return 0;
-                }
+                const match = nome.match(/\d+/);
+                return match ? parseInt(match[0]) : 0;
             }
             function pesoVariante(nome) {
-                try {
-                    if (nome.includes('Pro Max')) return 5;
-                    if (nome.includes('Pro')) return 4;
-                    if (nome.includes('Plus')) return 3;
-                    if (nome.includes('Air')) return 2;
-                    if (nome.includes('mini')) return 1;
-                    return 2.5;
-                } catch (e) {
-                    return 2.5;
-                }
+                if (nome.includes('Pro Max')) return 5;
+                if (nome.includes('Pro')) return 4;
+                if (nome.includes('Plus')) return 3;
+                if (nome.includes('Air')) return 2;
+                if (nome.includes('mini')) return 1;
+                return 2.5;
             }
             function extrairCapacidade(capacidade) {
-                try {
-                    const match = capacidade.match(/\d+/);
-                    return match ? parseInt(match[0]) : 0;
-                } catch (e) {
-                    return 0;
+                const match = capacidade.match(/\d+/);
+                return match ? parseInt(match[0]) : 0;
+            }
+            function formatarWhatsApp(whats, pais) {
+                let digits = whats.replace(/\D/g, '');
+                if (pais === 'Brasil') {
+                    if (digits.startsWith('55')) digits = digits.slice(2);
+                    if (digits.length >= 10) {
+                        let ddd = digits.slice(0, 2);
+                        let numero = digits.slice(2);
+                        if (numero.length === 8) {
+                            numero = numero.slice(0,4) + '-' + numero.slice(4);
+                        } else if (numero.length === 9) {
+                            numero = numero.slice(0,5) + '-' + numero.slice(5);
+                        }
+                        return `+55 ${ddd} ${numero}`;
+                    } else {
+                        return `+55 ${digits}`;
+                    }
+                } else if (pais === 'EUA') {
+                    if (digits.length === 10) {
+                        return `+1 (${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+                    } else if (digits.length === 11 && digits[0] === '1') {
+                        return `+1 (${digits.slice(1,4)}) ${digits.slice(4,7)}-${digits.slice(7)}`;
+                    } else {
+                        return `+${digits}`;
+                    }
+                } else if (pais === 'Paraguai') {
+                    if (digits.length === 9) {
+                        return `+595 ${digits.slice(0,3)} ${digits.slice(3,6)}-${digits.slice(6)}`;
+                    } else {
+                        return `+${digits}`;
+                    }
+                } else {
+                    return `+${digits}`;
                 }
             }
 
-            try {
-                lista.sort((a, b) => {
-                    const numA = extrairNumero(a.produto);
-                    const numB = extrairNumero(b.produto);
-                    if (numA !== numB) return numB - numA;
-                    const pesoA = pesoVariante(a.produto);
-                    const pesoB = pesoVariante(b.produto);
-                    if (pesoA !== pesoB) return pesoB - pesoA;
-                    const capA = extrairCapacidade(a.capacidade);
-                    const capB = extrairCapacidade(b.capacidade);
-                    return capB - capA;
-                });
-            } catch (e) {
-                console.warn('Erro na ordenação, ignorando:', e);
-            }
+            lista.sort((a, b) => {
+                const numA = extrairNumero(a.produto);
+                const numB = extrairNumero(b.produto);
+                if (numA !== numB) return numB - numA;
+                const pesoA = pesoVariante(a.produto);
+                const pesoB = pesoVariante(b.produto);
+                if (pesoA !== pesoB) return pesoB - pesoA;
+                const capA = extrairCapacidade(a.capacidade);
+                const capB = extrairCapacidade(b.capacidade);
+                return capA - capB;
+            });
 
-            // Título baseado no tipo
             let titulo = '';
-            if (tipo === 'iphone_novo') titulo = '👁️‍🗨️ *RANKING NOVOS IPHONE* 🔥';
-            else if (tipo === 'seminovos') titulo = '👁️‍🗨️ *RANKING SEMINOVOS* 🔥';
-            else if (tipo === 'mac_ipad') titulo = '👁️‍🗨️ *RANKING NOVOS MAC/IPAD* 🔥';
-            else if (tipo === 'acessorios') titulo = '👁️‍🗨️ *RANKING ACESSÓRIOS* 🔥';
+            if (tipo === 'novos_iphone') titulo = '👁️‍🗨️ *RANKING NOVOS E CPO (IPHONE / ACESSÓRIOS)* 🔥';
+            else if (tipo === 'novos_outros') titulo = '👁️‍🗨️ *RANKING NOVOS (IPAD/MAC/WATCH/ETC)* 🔥';
+            else titulo = '👁️‍🗨️ *RANKING SEMINOVOS* 🔥';
 
             let texto = titulo + '\n\n';
-
-            // Função auxiliar para gerar o texto dos itens
-            function gerarTextoItens(items) {
-                let resultado = '';
-                let currentModeloBase = '';
-                items.forEach(item => {
-                    // Extrair modelo base: remover 'iPhone' do início
-                    let modeloBase = item.produto.replace(/iPhone\s*/i, '').trim().toUpperCase();
-                    if (modeloBase !== currentModeloBase) {
-                        if (currentModeloBase !== '') resultado += '\n';
-                        resultado += `📲 *${modeloBase}*\n\n`;
-                        currentModeloBase = modeloBase;
-                    }
-                    let capacidade = item.capacidade.toUpperCase();
-                    let cor = item.cor.toUpperCase();
-                    let bandeira = item.bandeira || '';
-                    let precoFormatado = item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                    let cidadeExibicao = item.cidade_aparelho || item.cidade_sede;
-                    let estadoExibicao = item.estado_aparelho || item.estado_sede;
-                    let localizacao = (cidadeExibicao && estadoExibicao) ? `(📍 *${cidadeExibicao.toUpperCase()}/${estadoExibicao.toUpperCase()}*)` : '';
-
-                    resultado += `*${capacidade} ${cor} ${bandeira} R$ ${precoFormatado.replace('.', ',')}*\n\n`;
-                    resultado += `Zap: ${formatarWhatsApp(item.whatsapp, item.pais)} — ${item.fornecedor}\n`;
-                    if (localizacao) resultado += `${localizacao}\n`;
-                    resultado += '\n';
-                });
-                return resultado;
-            }
-
-            // Para tipos que incluem Novo e CPO, precisamos separar
-            if (tipo === 'iphone_novo' || tipo === 'mac_ipad') {
-                const novos = lista.filter(item => item.condicao === 'Novo');
-                const cpos = lista.filter(item => item.condicao === 'CPO');
-
-                if (novos.length > 0) {
-                    texto += '▶️ *NOVOS* ◀️\n\n';
-                    texto += gerarTextoItens(novos);
+            let currentModeloBase = '';
+            lista.forEach(item => {
+                let modeloBase = item.produto.replace(/iPhone\s*/i, '').trim().toUpperCase();
+                if (modeloBase !== currentModeloBase) {
+                    if (currentModeloBase !== '') texto += `\n`;
+                    texto += `📲 *${modeloBase}*\n\n`;
+                    currentModeloBase = modeloBase;
                 }
-                if (cpos.length > 0) {
-                    if (novos.length > 0) texto += '\n';
-                    texto += '▶️ *CPO* ◀️\n\n';
-                    texto += gerarTextoItens(cpos);
+                let cidadeExibicao = item.cidade_aparelho || item.cidade_sede;
+                let estadoExibicao = item.estado_aparelho || item.estado_sede;
+                texto += `*${item.capacidade.toUpperCase()} ${item.cor.toUpperCase()}* ${item.bandeira}\n\n`;
+                texto += `R$ ${item.preco.toFixed(2).replace('.', ',')} — ${item.fornecedor}\n`;
+                texto += `Zap: ${formatarWhatsApp(item.whatsapp, item.pais)}\n`;
+                if (cidadeExibicao && estadoExibicao) {
+                    texto += `(📍 *${cidadeExibicao.toUpperCase()}/${estadoExibicao.toUpperCase()}*)\n`;
                 }
-            } else {
-                // seminovos ou acessorios
-                texto += gerarTextoItens(lista);
-            }
-
+                texto += `\n`;
+            });
             navigator.clipboard.writeText(texto).then(() => {
                 alert('Lista copiada com sucesso!');
             }).catch(() => {
@@ -3155,1845 +3126,465 @@
 
             for (let i = 0; i < todosPayloads.length; i += chunkSize) {
                 const chunk = todosPayloads.slice(i, i + chunkSize);
-                const { error } =                const { error } = await _s.from('ofertas await _s.from('ofertas await _s.from('os.from('ofertas').insert(chunk').insertfertas').insert(chunk').insert(chunk);
-
-               (chunk);
-
-               );
-
-               );
+                const { error } = await _s.from('ofertas').insert(chunk);
 
                 if (error) {
-                    erros += chunk if (error) {
-                    erros += chunk if (error) {
-                    erros if (error) {
                     erros += chunk.length;
-                    log.length;
-                    logArea.innerHTML += chunk.length;
-                    log.length;
-                    logArea.innerHTMLArea.innerHTMLArea.innerHTML += `<div class="text-red-400"> += `<div class="text-red- += `<div class="text-red-400"> += `<div class="text-red-400">❌400">❌ Erro❌❌ Erro no lote ${ no lote ${ Erro no lote ${ Erro no lote ${Math.floor(i/chMath.floor(i/chunkSizeMath.floor(i/chunkSizeMath.floor(i/chunkSizeunkSize) + 1) + 1}: ${) + 1) + 1}: ${}: ${error.messageerror.message}: ${error.messageerror.message}</div>`;
+                    logArea.innerHTML += `<div class="text-red-400">❌ Erro no lote ${Math.floor(i/chunkSize) + 1}: ${error.message}</div>`;
                 } else {
-}</div>`;
-                } else {
-}</div>`;
-                } else {
-                    sucessos += chunk}</div>`;
-                } else {
-                    sucessos                    sucessos += chunk                    sucessos += chunk += chunk.length;
+                    sucessos += chunk.length;
                 }
             }
 
-            logArea.length;
-                }
-            }
-
-            logArea.innerHTML += `<div class="text-blue-400">.length;
-                }
-            }
-
-            logArea.innerHTML += `<div class="text-blue-400">.length;
-                }
-            }
-
-            logArea.innerHTML += `<div class="text-blue-400">.innerHTML += `<div class="text-blue-400">✅ Conclu✅ Conclu✅ Conclu✅ Concluído: ${suído: ${sucessosído: ${suído: ${sucessos} su} sucessos} sucessos} sucessos, ${cessos, ${erroscessos, ${erroscessos, ${erroserros} erros.</div>`;
-            if (} erros.</div>`;
-            if (} erros.</div>`;
-            if (} erros.</div>`;
-            if (sucessos >sucessos >sucessos > 0sucessos > 0) {
-                setTimeout 0) {
-                setTimeout(() => loadAll(),  0) {
-                setTimeout(() => loadAll(), ) {
-                setTimeout(() => loadAll(() => loadAll2000);
+            logArea.innerHTML += `<div class="text-blue-400">✅ Concluído: ${sucessos} sucessos, ${erros} erros.</div>`;
+            if (sucessos > 0) {
+                setTimeout(() => loadAll(), 2000);
             }
         }
 
-       2000);
-            }
-        }
-
-       (), 2000);
-            }
-        }
-
-       (), 2000);
-            }
-        }
-
-        // ===== FUNÇÕ // ===== FUNÇÕ // ===== FUNÇÕ // ===== FUNÇÕES PARA GESTÃO DE BASE CES PARA GESTÃO DE BASE CARTESES PARA GESTÃO DE BASE CARTESES PARA GESTÃO DE BASE CARTESARTESIANA =====
+        // ===== FUNÇÕES PARA GESTÃO DE BASE CARTESIANA =====
 
         function renderProdutosList() {
-            const tIANA =====
-
-        function renderProdutosList() {
-           IANA =====
-
-        function renderProdutosList() {
-            const tIANA =====
-
-        function renderProdutosList() {
-            const tbody =body = document.getElementById('listaProdutos const tbody = document.getElementById('listaProdutosbody = document.getElementById('lista document.getElementById('listaProdutosBase');
-            if (!tbodyBase');
+            const tbody = document.getElementById('listaProdutosBase');
             if (!tbody) return;
-           Base');
-            if (!tbody) return;
-           ProdutosBase');
-            if (!tbody) return) return if (!dbProdutos || if (!dbProdutos ||;
-            if (!dbProd;
-            if (!dbProd dbProd dbProdutos || dbProdutos.lengthutos || dbProdutos.length === 0)utos.length === 0 === 0)utos.length === 0) {
-                tbody) {
-                tbody {
-                tbody {
-                tbody.innerHTML =.innerHTML =.innerHTML =.innerHTML = '<tr><td colspan="4" class="text-center '<tr><td colspan="4" class="text-center '<tr><td colspan="4" '<tr><td colspan="4" py-4 text-gray- py-4 text class="text-center py- class="text-center py-400">-gray-400">Nenh4 text-gray-400">4 text-gray-400">Nenhum produtoum produto cadastNenhum produtoNenhum produto cadastrado.</td></ cadastrado.</td></ cadastrado.</td></tr>';
-                return;
-           rado.</td></tr>';
-                returntr>';
-                return;
-           tr>';
+            if (!dbProdutos || dbProdutos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">Nenhum produto cadastrado.</td></tr>';
                 return;
             }
-            tbody.innerHTML =;
-            }
-            tbody }
-            tbody.innerHTML = }
-            tbody.innerHTML =.innerHTML = dbProd dbProd dbProdutos.map(p => `
-               utos.map(p => `
-                <trutos.map(p => `
-                dbProdutos.map(p => `
+            tbody.innerHTML = dbProdutos.map(p => `
                 <tr>
-                    <td>
-                    <td <tr>
-                    <tr>
-                    <td class="py-2 text-[10 class="py-2 text <td class="py-2 text class="py-2 text-[10px]-[10-[10px]">${p.idpx]">${p.id}</tdpx]">${p.id">${p.id}</td}</td>
-                    <td class=">
-                    <td class="}</td>
-                    <td class=">
-                    <td class="py-py-2 text-xs fontpy-2 text-xs font-bold">py-2 text-xs font2 text-xs font-bold">${p-bold">${p.nome}</td-bold">${p.nome}</td${p.nome}</td.nome}</td>
-                    <td>
-                    <td>
-                    <td>
-                    <td class="py-2 text class="py-2 text class="py- class="py-2 text-[10px]">${-[10px]2 text-[10px]-[10px]">${p.categoria}</">${p.categoria}</td>
-">${p.categoria}</td>
-p.categoria}</td>
-td>
-                    <td class="py-2 text-right                    <td class="py-2 text-right                    <td class="                    <">
-                        <button onclick="">
-                        <button onclick="py-2 text-right">
-                        <buttontd class="py-2 text-right">
-                        <buttondelProduto($delProd onclick="delProduto($ onclick="delProduto(${p.id})" classuto(${p.id}){p.id})" class{p.id})="bg" class="bg="bg-red-" class="bg-red--red-600 text-white px-red-600 text-white px600 text-white px600 text-white px-2-2 py--2 py-1 rounded-2 py- py-1 rounded1 rounded text text1 rounded text text-[8px] font-black hover:bg-red--[8px] font-black hover:bg-[8px] font-black hover:bg-red--[8px] font-black hover:bg500">-red-500">500">🗑-red-500">🗑🗑️ EXCLU🗑️ EXCLU️ EXCLU️ EXCLUIR</button>
-                        <!--IR</button>
-                        <!--IR</IR</button>
-                        <!-- BOTÃO EDIT BOTÃO EDITbutton>
-                        <!-- BOTÃO EDIT BOTÃO EDITAR PROAR PROAR PROAR PRODUTO -->
-                        <button onclick="DUTO -->
-                        <button onclick="DUTO -->
-                        <button onclick="editarDUTO -->
-                        <button onclick="editareditarProduto(${editarProduto(${Produto(${p.idProduto(${p.idp.id})" class="bg-yp.id})" class="bg-y})" class="bg-y})" class="bg-yellow-600 textellow-ellow-600 textellow--white px-2600 text-white px-2-white px-2600 text-white px-2 py-1 rounded text-[8px py-1 rounded text-[8px py-1 rounded text py-1 rounded text-[8px] font] font-[8px] font-black hover] font-black hover:bg-black hover:bg-yellow-black hover:bg-yellow:bg-yellow-yellow-500 ml-1">-500 ml-1">-500 ml-1">-500 ml-1">✏️ EDIT✏️ EDIT✏️ EDIT✏️ EDITAR</button>
-                    </AR</button>
-                    </AR</button>
-                    </AR</button>
+                    <td class="py-2 text-[10px]">${p.id}</td>
+                    <td class="py-2 text-xs font-bold">${p.nome}</td>
+                    <td class="py-2 text-[10px]">${p.categoria}</td>
+                    <td class="py-2 text-right">
+                        <button onclick="delProduto(${p.id})" class="bg-red-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-red-500">🗑️ EXCLUIR</button>
+                        <!-- BOTÃO EDITAR PRODUTO -->
+                        <button onclick="editarProduto(${p.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500 ml-1">✏️ EDITAR</button>
                     </td>
-                </td>
-                </td>
-                </td>
                 </tr>
-tr>
-tr>
-tr>
             `).join('');
         }
 
-        // NO            `).join('');
-        }
+        // NOVA FUNÇÃO PARA EDITAR PRODUTO
+        async function editarProduto(id) {
+            const produto = dbProdutos.find(p => p.id == id);
+            if (!produto) return;
 
-        //            `).join('');
-        }
+            // Usando prompt simples para edição (pode ser substituído por um modal mais elaborado se desejar)
+            const novoNome = prompt('Novo nome do produto:', produto.nome);
+            if (novoNome === null) return; // cancelou
+            const novaCategoria = prompt('Nova categoria do produto:', produto.categoria);
+            if (novaCategoria === null) return;
 
-        //            `).join('');
-        }
-
-        //VA FUNÇÃO PARA EDITAR PROD NOVA FUNÇÃO PARA EDITAR PROD NOVA FUNÇÃO PARA EDITAR PROD NOVA FUNÇÃO PARA EDITAR PRODUTO
-UTO
-        async function edUTO
-        asyncUTO
-        async function ed        async function editarProditarProd function editarProduto(iditarProduto(iduto(id) {
-            constuto(id) {
-) {
-            const) {
-            const produto = produto = dbProdutos.find(p =>            const produto = dbProdutos.find produto = dbProdutos.find dbProdutos.find p.id == id(p => p.id == id(p => p.id == id(p => p.id == id);
-            if (!);
-            if (!);
-            if (!);
-            if (!produto) returnproduto) return;
-
-           produto) returnproduto) return;
-
-           ;
-
-            // Usando prompt // Usando prompt simples para;
-
-            // Usando prompt // Usando prompt simples para simples para edição (pode ser edição (pode ser simples para edição (p edição (pode substituído por um modal mais substituído por umode ser substituído por um ser substituído por um elaborado modal mais elaborado se dese modal mais elaborado se dese modal mais elaborado se dese se desejar)
-jar)
-jar)
-jar)
-            const novoNome = prompt('Novo nome do produto            const novoNome = prompt('Novo nome do produto            const novoNome = prompt('Novo nome do produto:', produto            const novoNome = prompt('Novo nome do produto:', produto:', produto.nome:', produto.nome.nome.nome);
-            if (novoNome ===);
-            if (novoNome ===);
-            if (novoNome ===);
-            if (novoNome === null) return; // cancel null) return; // cancel null) return; null) return; // cancelou
-            const novaCou
-            const novaC // cancelou
-            const novaCou
-            const novaCategoria = prompt('Nova categoria doategoria = prompt('Nova categoria doategoria = prompt('Novaategoria = prompt('Nova categoria do produto:', produto.c produto:', produto.categoria);
- categoria do produto:', produto.categoria);
- produto:', produto.categoria);
-            if (nova            if            ifategoria);
-            if (novaCategoria === null (novaCategoria === null (novaCategoria === nullCategoria === null) return;
-
-           ) return;
-
-           ) return;
-
-           ) return;
-
-            if (!novoNome.trim() || if (!novoNome.trim if (!novoNome.trim if (!novoNome.trim !novaCategoria.trim())() || !novaCategoria.trim())() || !novaCategoria.trim())() || !novaCategoria.trim()) {
-                alert(' {
-                alert(' {
-                alert(' {
-                alert('Nome e categoria não podem ficNome e categoria nãoNome e categoria não podem ficNome e categoria não podem ficar v podem ficar vaziosar vazar vaziosazios.');
-                return;
-.');
+            if (!novoNome.trim() || !novaCategoria.trim()) {
+                alert('Nome e categoria não podem ficar vazios.');
                 return;
             }
 
-            constios.');
-                return;
-.');
-                return;
-            }
-
-            const            }
-
-            const { error } = { error } =            }
-
-            const { error } = { error } = await _s.from('produtos_m await _s.from('produtos_m await _s.from('produtos_m await _s.from('produtos_mestre').update({ nome:estre').update({ nome:estre').update({ nome:estre').update({ nome: novoNome.trim(). novoNome.trim().toUpperCase novoNome.trim().toUpperCase novoNome.trim().toUpperCasetoUpperCase(), categoria: nova(), categoria: nova(), categoria: nova(), categoria: novaCategoria.trim().toUpperCase() }).Categoria.trim().toUpperCase() }).Categoria.trim().toUpperCase() }).Categoria.trim().toUpperCase() }).eq('eq('eq('eq('id', id);
-            if (errorid', id);
-            if (errorid', id);
-            if (errorid', id);
+            const { error } = await _s.from('produtos_mestre').update({ nome: novoNome.trim().toUpperCase(), categoria: novaCategoria.trim().toUpperCase() }).eq('id', id);
             if (error) {
-) {
-                alert('Er) {
-                alert('Er) {
-                alert('Er                alert('Erro ao atualizar: 'ro ao atualizar: 'ro ao atualizar: 'ro ao atualizar: ' + error.message);
- + error.message);
- + error.message);
-            } + error.message);
-            }            } else {
-                alert            } else {
-                alert else {
-                alert else {
-                alert('Produto atual('Produto atual('Produto atual('Produto atualizado com sucesso!');
-                loadAll();izado com sucesso!');
-                loadAll();izado com sucesso!');
-                loadizado com sucesso!');
-                loadAll(); // recarrega // recarregaAll(); // recarrega // recarrega tudo
+                alert('Erro ao atualizar: ' + error.message);
+            } else {
+                alert('Produto atualizado com sucesso!');
+                loadAll(); // recarrega tudo
             }
         }
 
- tudo
-            }
-        }
-
- tudo
-            }
-        }
-
- tudo
-            }
-        }
-
-        async function delProduto        async function delProduto        async function delProduto        async function delProduto(id)(id)(id) {
-            if (!confirm(`(id) {
-            if (!confirm(` {
-            if (!confirm(`ATENÇÃO: {
-            if (!confirm(`ATENÇÃO: DeseATENÇÃO: DeseATENÇÃO: Dese Deseja excluir oja exclja excluir oja excluir o produto #${id} euir o produto #${id produto #${id} e produto #${id} e TODAS} e TODAS TODAS TODAS as suas variações?`)) return as suas variações?`)) return as suas variações?`)) return as suas variações?`)) return;
-            const { error };
-            const { error };
-            const { error };
-            const { error } = await _s.from(' = await _s.from(' = await _s = await _s.from('produtos_mestreprodutos_mestre.from('produtos_mestreprodutos_mestre').delete').delete().eq').delete().eq').delete().eq().eq('id', id);
-            if (error)('id', id);
-            if (error)('id', id);
-            if (error)('id', id);
+        async function delProduto(id) {
+            if (!confirm(`ATENÇÃO: Deseja excluir o produto #${id} e TODAS as suas variações?`)) return;
+            const { error } = await _s.from('produtos_mestre').delete().eq('id', id);
             if (error) {
-                alert('Erro {
-                alert('Erro ao excl {
-                alert('Erro ao excl {
-                alert('Erro ao excl ao excluir: ' +uir: ' +uir:uir: error.message);
-            ' + ' + error.message);
-            error.message);
+                alert('Erro ao excluir: ' + error.message);
             } else {
-                alert(' } else {
-                alert('Produto error.message);
-            } else {
-                alert(' } else {
-                alert('ProdutoProduto excluído com excluído com sucessoProduto excluído com excluído com sucesso!');
- sucesso!');
-!');
- sucesso!');
-                await                await loadAll();
-                           await loadAll                await loadAll();
-            loadAll }
-        }
-
-        function adicionar();
+                alert('Produto excluído com sucesso!');
+                await loadAll();
             }
         }
 
-        function ad }
-        }
-
-        function adicionar();
-            }
-        }
-
-        function adCardProduto()icionarCardProduto()CardProduto()icionarCardProduto() {
-            {
-            {
-            {
-            const container const container = document.getElementById('cardsNov const container = document.getElementById('cardsNovosProdutos');
- const container = document.getElementById('cardsNov = document.getElementById('cardsNovosProdosProdutos');
-            const            constosProdutos');
-            constutos');
-            const cardId = `card_${card cardId = `card_${card cardId = `card_${card cardId = `card_${cardCounter++Counter++Counter++}`;
-Counter++}`;
-}`;
-}`;
-            const cardDiv            const cardDiv = document.createElement('            const cardDiv = document.createElement('            const cardDiv = document.createElement('div');
-            cardDiv.classdiv');
-            cardDiv.className = = document.createElement('div');
-            cardDiv.classdiv');
-            cardDiv.className =Name = 'bg-[# 'bg-[#141415Name = 'bg-[#141415 'bg-[#141415] border] border141415] border] border border-[#383 border-[#383 border-[#38383a border-[#38383a83a] rounded-xl p-4';
-            cardDiv.id =83a] rounded-xl p-4';
-            cardDiv] rounded-xl p-4';
-           ] rounded-xl p-4';
-           .id = cardId;
+        function adicionarCardProduto() {
+            const container = document.getElementById('cardsNovosProdutos');
+            const cardId = `card_${cardCounter++}`;
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'bg-[#141415] border border-[#38383a] rounded-xl p-4';
+            cardDiv.id = cardId;
             cardDiv.innerHTML = `
-                <div class=" cardId;
-            cardDiv.innerHTML = `
-                <div class="flex justify cardDiv.id = cardId;
-            cardDiv.innerHTML = `
-                <div class="flex justify cardDiv.id = cardId;
-            cardDiv.innerHTML = `
-                <div class="flex justifyflex justify-between items-center mb-3-between items-center mb-3-between items-center mb-3-between items-center mb-3">
-                   ">
-                   ">
-                   ">
-                    <h <h <h <h4 class="text4 class="text-xs font-bold text-blue-4 class="text-xs font-bold text-blue-4 class="text-xs font-bold text-blue--xs font-bold text-blue-400">400">400">400">NOVO PRODUTO</hNOVO PRODUTO</hNOVO PRODUTO</hNOVO PRODUTO</h4>
-                    <button type4>
-                    <button type4>
-                    <button type4>
-                    <button type="button" onclick="button" onclick="button" onclick="button" onclick="removerCard('${="removerCard('${="removerCard('${="removerCard('${cardId}')" classcardId}')" classcardId}')" classcardId}')" class="text="text="text="text-red-500 text-lg font-black hover:text-red-red-500 text-lg font-black hover:text-red-red-500 text-lg font-black hover:text-red-red-500 text-lg font-black hover:text-red-400">&times-400">&times-400">&times-400">&times;</button>
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="text-xs font-bold text-blue-400">NOVO PRODUTO</h4>
+                    <button type="button" onclick="removerCard('${cardId}')" class="text-red-500 text-lg font-black hover:text-red-400">&times;</button>
                 </div>
-                <div;</button>
-                </div>
-               ;</button>
-                </div>
-               ;</button>
-                </div>
-                class="grid grid <div class="grid grid-cols <div class="grid grid <div class="grid grid-cols-cols-2 gap--2 gap--cols-2 gap--23 mb3 mb-33 mb-3 gap-3 mb-3-3">
-                    <select">
-                    <select">
-                    <select">
-                    <select class="categoria apple-input class="categoria apple-input class="categoria apple-input class="categoria apple-input text-xs" onchange="renderizar text-xs" onchange=" text-xs" onchange="renderizarAtrib text-xs" onchange="renderizarAtributosCardAtribrenderizarAtributosCard('${utosCard('${cardId}', this('${cardId}', thisutosCard('${cardId}', this.value)">
-cardId}', this.value)">
-                        <option value.value)">
-                        <option value                        <option value.value)">
-                        <option value="">CAT="">CATEGORIA</="">CATEGORIA</="">CATEGORIA</EGORIA</option>
-option>
-                       option>
-                        <option valueoption>
-                        <                        <option value="IP <option value="IPHONE">IP="IPHONE">IPoption value="IPHONEHONE">IPHONE</optionHONE</optionHONE</option">IPHONE</option>
-                       >
-                       >
-                       >
-                        <option value <option value="APPLEWATCH">APP <option value="APPLEWATCH <option value="APPLEWATCH">APP="APPLEWATCHLEW">APPLEWLEW">APPLEWATCH</option>
-                       ATCH</option>
-ATCH</option>
-                       ATCH</option>
- <option value="MAC                        <option value="MAC <option value="MAC                        <option value="MACBOOK">MACBOOK</optionBOOK">MACBOOK</option>
-                       BOOK">MACBOOK</option>
-                       BOOK">MACBOOK</option>
-                       >
-                        <option <option <option <option value="IMAC value="IMAC">IM value="IMAC">IM value="IMAC">IMAC</option>
-                       AC</option>
-AC</option>
-                       ">IMAC</option>
- <option value                        <option value="IP <option value                        <option value="IP="IPAD">IPAD</option>
-                       AD">IPAD</option>
-                       ="IPAD">IPAD</option>
-                       AD">IPAD</option>
-                        <option value=" <option <option value=" <option value="ACESSORIOS">AC value="ACESSORIOS">ACACESSORIOS">ACACESSORIOS">ACESSORIOS</ESSORIOS</ESSORIOS</ESSORIOS</option>
-                        <!--option>
-                        <!--option>
-                        <!--option>
- NOVOS GRUPOS NOVOS GR NOVOS GR                        <!-- NOVOS GR -->
-                       UPOS -->
-                       UPOS -->
-                       UPOS -->
-                        <option <option value=" <option value=" <option value=" value="AIRPAIRPODS">AIRPODAIRPODS">AIRPODAIRPODS">AIRPODODS">AIRPODS</option>
-                       S</option>
-                       S</option>
-                        <option valueS</option>
-                        <option value="PENCIL">P <option value="PENCIL">P="PENCIL">P <option value="PENCIL">PENCIL</ENCIL</option>
-                       ENCIL</optionENCIL</optionoption>
-                        <option value="AIRT <option value=">
-                        <option value="AIRT>
-                        <option value="AIRTAG">AIRTAIRTAG">AIRTAG</AG">AIRTAG">AIRTAG</option>
-                        <!--option>
-                        <!-- OPÇÃOAG</option>
-                        <!--AG</option>
-                        <!-- OPÇÃO PARA CRIAR NOVO PARA CRIAR OPÇÃO PARA C OPÇÃO PARA C GRUPO -->
- NOVO GRUPO -->
-RIAR NOVO GRUPO -->
-RIAR NOVO GRUP                        <option value="OUT                        <option value                        <option valueO -->
-                        <option valueRO">+ CRIAR="OUT="OUTRO">+ CRIAR="OUT NOVORO">+ CRIAR NOVO NOVORO">+ CRIAR NOVO GRUPO</option>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <select class="categoria apple-input text-xs" onchange="renderizarAtributosCard('${cardId}', this.value)">
+                        <option value="">CATEGORIA</option>
+                        <option value="IPHONE">IPHONE</option>
+                        <option value="APPLEWATCH">APPLEWATCH</option>
+                        <option value="MACBOOK">MACBOOK</option>
+                        <option value="IMAC">IMAC</option>
+                        <option value="IPAD">IPAD</option>
+                        <option value="ACESSORIOS">ACESSORIOS</option>
+                        <!-- NOVOS GRUPOS -->
+                        <option value="AIRPODS">AIRPODS</option>
+                        <option value="PENCIL">PENCIL</option>
+                        <option value="AIRTAG">AIRTAG</option>
+                        <!-- OPÇÃO PARA CRIAR NOVO GRUPO -->
+                        <option value="OUTRO">+ CRIAR NOVO GRUPO</option>
                     </select>
-                    GRUPO</option>
-                    </select>
-                    GRUPO</option>
-                    </select>
-                    GRUPO</option>
-                    </select>
-                    <input type="text" class="nome-produto apple-input text-xs" placeholder="NOME <input type="text" class="nome-produto apple-input text-xs" placeholder="NOME <input type="text" class="nome-produto apple-input text-xs" placeholder="NOME <input type="text" class="nome-produto apple-input text-xs" placeholder="NOME DO PRODUTO">
-                DO PRODUTO">
+                    <input type="text" class="nome-produto apple-input text-xs" placeholder="NOME DO PRODUTO">
                 </div>
-                DO PRODUTO">
+                <!-- Input para novo grupo (inicialmente oculto) -->
+                <div class="novo-grupo-wrapper hidden mb-3">
+                    <input type="text" class="novo-grupo-input apple-input text-xs" placeholder="NOME DO NOVO GRUPO">
                 </div>
-                DO PRODUTO">
-                </div>
-                </div>
-                <!-- Input para novo <!-- Input para novo <!-- Input para novo grupo (inicialmente oculto) -->
-                <div class="novo-g <!-- Input para novo grupo (inicialmente oculto) -->
-                <div class="novo-g grupo (inicialmente oculto) -->
-                <div class="novo-g grupo (inicialmente oculto) -->
-                <div class="novrupo-wrapper hidden mb-3">
-                    <input type="text" classo-grupo-wrapper hidden mb-3">
-                    <input type="text" classrupo-wrapper hidden mb-3">
-                    <input type="text" class="novrupo-wrapper hidden mb-3">
-                    <input type="text" class="nov="novo-grupo-input apple="novo-grupo-input appleo-grupo-input appleo-grupo-input apple-input text-xs" placeholder="NOME DO NOVO GR-input text-xs" placeholder="NOME DO NOVO GR-input text-xs" placeholder="NOME DO NOVO GRUPO-input text-xs" placeholder="NOME DO NOVO GRUPO">
-                </div>
-                <div class="atributos-container space-y-3">
-                </div>
-                <div class="atributos-container space-y-3UPO">
-                </div>
-                <div class="atributos-container space-y-3UPO">
-                </div>
-                <div class="atributos-container space-y-3"></div"></div>
+                <div class="atributos-container space-y-3"></div>
             `;
-            container.prep"></div>
-            `;
-            container.prep"></div>
-            `;
-            container.prepend(c>
-            `;
-            container.prepardDiv);
-
-            // Adicionar evento para mostrar/esconder o input de novo grupo
-end(cardDiv);
+            container.prepend(cardDiv);
 
             // Adicionar evento para mostrar/esconder o input de novo grupo
             const categoriaSelect = cardDiv.querySelector('.categoria');
-            const novoGrupoWrapper = cardend(cardDiv);
-
-            // Adicionar evento para mostrar/esconder o input de novo grupo
-            const categoriaSelect = cardDiv.querySelector('.categoria');
-            const novoGrupoWrapper = cardDiv.querySelector('.end(cardDiv);
-
-            // Adicionar evento para mostrar/esconder o input de novo grupo
-            const categoriaSelect = cardDiv.querySelector('.categoria');
-            const novoGrupoWrapper = card            const categoriaSelect = cardDiv.querySelector('.categoria');
-            const novoGrupoWrapper = cardDiv.querySelector('.novDiv.querySelectornovDiv.querySelector('.novo-grupo-wrapper');
-            categoriaSelect.addEventListener('.novo-grupo-wrapper');
-            categoriaSelect.addEventListenero-grupo-wrapper');
-            categoriaSelect.addEventListenero-grupo-wrapper');
+            const novoGrupoWrapper = cardDiv.querySelector('.novo-grupo-wrapper');
             categoriaSelect.addEventListener('change', function() {
-                if('change', function() {
-                if (this('change', function() {
-                if (this('change', function() {
                 if (this.value === 'OUTRO') {
-                    novoGrupoWrapper.classList.remove('hidden.value === 'OUTRO') {
-                    novoGrupoWrapper.classList.remove('hidden.value === 'OUTRO') {
-                    novoGrupoWrapper.classList.remove('hidden (this.value === 'OUTRO') {
                     novoGrupoWrapper.classList.remove('hidden');
-                } else');
-                } else');
-                } else');
                 } else {
-                    novoGrupoWrapper.classList.add('hidden {
-                    novoGrupoWrapper.classList.add('hidden {
                     novoGrupoWrapper.classList.add('hidden');
-                }
-            {
-                    novoGrupoWrapper.classList.add('hidden');
-                }
-           ');
-                }
-           ');
                 }
             });
         }
 
-        function removerCard });
+        function removerCard(cardId) {
+            document.getElementById(cardId)?.remove();
         }
 
-        function removerCard(card });
-        }
-
-        function removerCard(cardId) });
-        }
-
-        function removerCard(cardId)(cardId) {
-            document.getElementById(cardId) {
-            document.getElementById(card {
-            document.getElementById(cardId) {
-            document.getElementById(cardId)Id)?.remove();
-        }
-
-        function adicionarNovoId)?.remove();
-        }
-
-        function adicionarNovo?.remove();
-        }
-
-        function adicionarNovo?.remove();
-        }
-
-        function adicionarNovoCheckbox(btn, tipoCheckbox(btn, tipoCheckbox(btn, tipoCheckbox(btn, tipo) {
-) {
+        function adicionarNovoCheckbox(btn, tipo) {
             const grupo = btn.closest('div.mb-2');
-            const input = grupo.querySelector(`.novo-valor) {
-            const grupo = btn.closest('div.mb-2');
-            const input = grupo.querySelector(`.novo-valor-${) {
-            const grupo = btn.closest('div.mb-2');
-            const input = grupo.querySelector(`.novo-valor-${            const grupo = btn.closest('div.mb-2');
-            const input = grupo.querySelector(`.novo-valor-${-${tipo}`);
-            const valor = input.value.trim().toUpperCase();
-tipo}`);
-            const valor = input.value.trim().toUpperCase();
-            if (!valor) returntipo}`);
-            const valor = input.value.trim().toUpperCase();
-            if (!valor) returntipo}`);
+            const input = grupo.querySelector(`.novo-valor-${tipo}`);
             const valor = input.value.trim().toUpperCase();
             if (!valor) return;
 
-           ;
-
-           ;
-
             const checkContainer = grupo.querySelector('.flex.flex-wrap');
-            const existente = Array.from(checkContainer.querySelector const checkContainer = grupo.querySelector('.flex.flex-wrap');
-            const existente = Array.from(checkContainer.querySelectorAll('input[type="checkbox"]')).some(cb            if (!valor) return;
-
-            const checkContainer = grupo.querySelector('.flex.flex-wrap');
-            const existente = Array.from(checkContainer.querySelectorAll('input[type="checkbox"]')).some(cb const checkContainer = grupo.querySelector('.flex.flex-wrap');
-            const existente = Array.from(checkContainer.querySelectorAll('input[type="checkbox"]')).some(cb => cbAll('input[type="checkbox"]')).some(cb => cb.value === => cb.value === valor);
- => cb.value === valor);
-.value === valor);
- valor);
-            if (existente)            if (existente)            if (existente)            if (existente) {
-                alert(' {
-                alert(' {
-                alert(' {
-                alert('ValorValorValorValor já existe já existe na lista.');
-                já existe na lista.');
-                já existe na lista.');
-                na lista.');
+            const existente = Array.from(checkContainer.querySelectorAll('input[type="checkbox"]')).some(cb => cb.value === valor);
+            if (existente) {
+                alert('Valor já existe na lista.');
                 return;
             }
 
-            const return;
-            }
-
-            const return;
-            }
-
-            const return;
-            }
-
-            const newC newCb = document.createElement newCb = document.createElement newCb = document.createElementb = document.createElement('div');
-            newCb.innerHTML('div');
-            newCb.innerHTML('div');
-            newCb.innerHTML('div');
-            newC = `
-                <label class = `
-                <label class = `
-                <label classb.innerHTML = `
-                <label class="inline="inline="inline="inline-flex items-center gap-flex items-center gap-1 text-flex items-center gap-1 text-[10px-flex items-center gap-1 text-1 text-[10px]">
-                   ]">
-                   -[10px]">
-                   -[10px]">
-                    <input type <input type <input type <input type="checkbox" class="checkbox="checkbox" class="checkbox="checkbox" class="checkbox="checkbox" class="checkbox-${tipo-${tipo-${tipo-${tipo}" value}" value="${valor}" checked}" value="${valor}" checked}" value="${valor}" checked="${valor}" checked> ${valor}
-> ${valor}
-> ${valor}
-> ${valor}
-                </                </label>
-            `                </label>
-            `                </label>
-            `label>
+            const newCb = document.createElement('div');
+            newCb.innerHTML = `
+                <label class="inline-flex items-center gap-1 text-[10px]">
+                    <input type="checkbox" class="checkbox-${tipo}" value="${valor}" checked> ${valor}
+                </label>
             `;
-           ;
-            checkContainer.appendChild(new;
-            checkContainer.appendChild(new;
-            checkContainer.appendChild(new checkContainer.appendChild(newCb);
+            checkContainer.appendChild(newCb);
             input.value = '';
-Cb);
-            input.value = '';
-Cb);
-            input.value = '';
-Cb);
-                   }
-
-        function        }
-
-        function        }
-
-        function input.value = '';
         }
 
-        function renderizarAtributosCard(cardId, categoria) renderizarAtributosCard(cardId, renderizarAtributosCard(cardId, renderizarAtributosCard(cardId, categoria) {
-            const card = document.getElementById(cardId);
-            categoria) {
-            const card = document.getElementById(cardId);
-            {
-            const card = document.getElementById(cardId);
-            categoria) {
+        function renderizarAtributosCard(cardId, categoria) {
             const card = document.getElementById(cardId);
             if (!card) return;
-            const container = card.querySelector('.at if (!card) return;
-            const container = card.querySelector('.at if (!card) return;
-            const container = card.querySelector('.at if (!card) return;
             const container = card.querySelector('.atributos-container');
-            container.innerHTML =ributos-container');
-            container.innerHTML =ributos-container');
-            container.innerHTML =ributos-container');
             container.innerHTML = '';
 
-            if (!categoria || '';
-
-            if (!categoria || categoria === '';
-
-            if (!categoria || categoria === '';
-
-            if (!categoria || categoria === categoria === 'OUTRO') {
-                // Para "OUT 'OUTRO') {
-                'OUTRO') {
-                'OUTRO') {
-               RO", não renderiza atributos pré-defin // Para "OUTRO", não renderiza atributos pré-defin // Para "OUTRO", não renderiza atributos pré-defin // Para "OUTRO", não renderiza atributos pré-definidos, mas podemosidos, mas podemos deixaridos, mas podemos deixaridos, mas podemos deixar deixar o usuário ad o usuário ad o usuário adicionar o usuário adicionaricionar livremente via inputs genéricicionar livremente via inputs genéric livremente via inputs livremente via inputsos
-                // Por simos
-                // Por sim genéricos
-                // Por sim genéricos
-                // Por simplicidadeplicidade, vamos permitir apenas queplicidade, vamos permitir apenas queplicidade, vamos permitir, vamos permitir ele crie variações depois manualmente ele c apenas que ele crie varia apenas que ele crie variações depois, mas aqui vamosrie variações depois manualmente, mas aqui vamosções depois manualmente, mas aqui vamos manualmente, mas aqui vamos mostrar um aviso.
-                mostrar um aviso mostrar um aviso mostrar um aviso.
-                container.innerHTML = '<p class.
-                container.innerHTML =.
-                container.innerHTML = container.innerHTML =="text-[9 '<p class="text-[9px] '<p class="text-[9px] '<p class="text-[9px] text-gray-400 text-gray-400 text-gray-400px] text-gray-400">Categoria personalizada. Você poder">Categoria personalizada. Você poderá ad">Categoria personalizada. Você poderá ad">Categoria personalizada. Você poderá adicionar variações depois manualicionar variaçõesicionar variaçõesá adicionar variações depoismente.</p>';
-                return depois manualmente.</p>';
-                return depois manualmente.</p>';
-                return manualmente.</p>';
+            if (!categoria || categoria === 'OUTRO') {
+                // Para "OUTRO", não renderiza atributos pré-definidos, mas podemos deixar o usuário adicionar livremente via inputs genéricos
+                // Por simplicidade, vamos permitir apenas que ele crie variações depois manualmente, mas aqui vamos mostrar um aviso.
+                container.innerHTML = '<p class="text-[9px] text-gray-400">Categoria personalizada. Você poderá adicionar variações depois manualmente.</p>';
                 return;
             }
 
-           ;
-            }
-
-            const criarGrupo;
-            }
-
-            const criarGrupo;
-            }
-
-            const criarGrupo = (titulo = (titulo, op = (titulo, op const criarGrupo = (titulo, opcoes, tipocoes, tipocoes, tipo, opcoes, tipo) => {
-                const grupo = document) => {
-                const grupo) => {
-                const grupo) => {
+            const criarGrupo = (titulo, opcoes, tipo) => {
                 const grupo = document.createElement('div');
- = document.createElement('div');
- = document.createElement('div');
-.createElement('                grupo.className = 'mb-                grupo.className = 'mb-div');
-                grupo.className = '                grupo.className = 'mb-2';
-2';
-mb-2';
-                grupo2';
-                grupo.innerHTML = `<label class="text-[9px                grupo.innerHTML = `<label class=".innerHTML = `<label class="text                grupo.innerHTML = `<label] text-gray-text-[9px] text-gray--[9px] text-gray- class="text-[9px] text400">${titulo}</label>400">${titulo}</label>400">${titulo}</label>-gray-400">${titulo}</`;
-                const checkContainer =`;
-                const checkContainer =`;
-                const checklabel>`;
+                grupo.className = 'mb-2';
+                grupo.innerHTML = `<label class="text-[9px] text-gray-400">${titulo}</label>`;
                 const checkContainer = document.createElement('div');
-                document.createElement('div');
-               Container = document.createElement('div document.createElement('div');
-                checkContainer.className checkContainer.className');
-                checkContainer.className = ' checkContainer.className = ' = 'flex flex-wrap gap-2 = 'flex flex-wrap gap-2flex flex-wrap gapflex flex-wrap gap-2 mt- mt-1';
-                op mt-1';
-                op-2 mt-1';
-                op1';
+                checkContainer.className = 'flex flex-wrap gap-2 mt-1';
                 opcoes.forEach(val => {
-                    constcoes.forEach(val => {
-                    constcoes.forEach(val => {
-                    const cb =coes.forEach(val => {
-                    const cb = cb = document.createElement cb = document.createElement('div');
-                    cb.innerHTML document.createElement('div');
-                    cb.innerHTML('div');
+                    const cb = document.createElement('div');
                     cb.innerHTML = `
-                        <label class document.createElement('div');
-                    cb.innerHTML = `
-                        = `
-                        <label class="inline-flex items-center gap = `
-                        <label class="inline-flex items-center="inline-flex items <label class="inline-flex items-center gap-1 text-[10px]">
- gap-1 text-[10px]">
-                           -center gap-1 text-[10px]">
-                           -1 text-[10px]">
-                                                       <input type="checkbox" class <input type="checkbox" <input type="checkbox <input type="checkbox" class="checkbox-${ class="checkbox-${tipo" class="checkbox-${="checkbox-${tipo}" value}" valuetipo}" valuetipo}" value="${val}"> ${val}
-                        </label="${val}"> ${val}
-                       ="${val}"> ${val}
-                       ="${val}"> ${val}
+                        <label class="inline-flex items-center gap-1 text-[10px]">
+                            <input type="checkbox" class="checkbox-${tipo}" value="${val}"> ${val}
                         </label>
                     `;
- </label>
-                    `;
- </label>
-                    `;
->
-                    `;
-                    checkContainer.appendChild(cb                    checkContainer.appendChild(cb);
-                                   checkContainer.appendChild(cb                    checkContainer.appendChild(cb);
-                });
-                grupo.appendChild(checkContainer });
-                grupo.appendChild);
-                });
-                grupo.appendChild(checkContainer);
+                    checkContainer.appendChild(cb);
                 });
                 grupo.appendChild(checkContainer);
 
-                const add(checkContainer);
-
-                const add);
-
-                const add);
-
-                const addDiv =Div =Div = document.createElement('div');
-                addDiv.className =Div = document.createElement('div');
-                addDiv.className = 'flex gap-2 mt- document.createElement('div');
-                addDiv.className document.createElement('div');
-                addDiv.class 'flex gap-2 mt-2';
-                addDiv.innerHTML = `
-                    <input type="text" class="novo-valor-${tipo} apple-input text-xs flex-1" placeholder="NOV2';
-                addDiv.innerHTML = `
-                    <input type="text" class="novo-valor-${tipo} apple-input text-xs flex-1" placeholder="NOVO ${ = 'flex gap-2 mt-2';
-                addDiv.innerHTML = `
-                    <input type="text" class="novo-valor-${tipo} apple-input text-xs flex-1" placeholder="NOVName = 'flex gap-2 mt-2';
+                const addDiv = document.createElement('div');
+                addDiv.className = 'flex gap-2 mt-2';
                 addDiv.innerHTML = `
                     <input type="text" class="novo-valor-${tipo} apple-input text-xs flex-1" placeholder="NOVO ${titulo.toUpperCase()}">
-titulo.toUpperCase()}">
-O ${titulo.toUpperCase()}">
-O ${titulo.toUpperCase                    <button type                    <button type                    <button type()}">
-                    <button type="button" class="btn-add-="button" class="btn-add-="button" class="btn-add-="button" class="btn-add-${tipo} btn-m${tipo} btn-m${tipo} btn-m${tipo}aster text-xs px-3aster text-xs px-3 py-aster text-xs px-3 py- btn-master text-xs px-3 py py-1"1" onclick="1" onclick="adicion-1" onclick=" onclick="adicionarNovoCheckadicionarNovoCheckarNovoCheckbox(this, 'adicionarNovoCheckbox(this, 'box(this, 'box(this, '${tipo}${tipo}')">ADD</${tipo}')">ADD</button>
-                `;
-                grupo.appendChild(addDiv${tipo}')">ADD</button>
-                `;
-                grupo.appendChild(addDiv')">ADD</button>
-                `;
-                grupo.appendChildbutton>
+                    <button type="button" class="btn-add-${tipo} btn-master text-xs px-3 py-1" onclick="adicionarNovoCheckbox(this, '${tipo}')">ADD</button>
                 `;
                 grupo.appendChild(addDiv);
                 return grupo;
-           );
-                return grupo;
-           (addDiv);
-                return grupo);
-                return grupo };
-
-            const memoriasUnicas = [...new };
-
-            const memoriasUnicas = [...new;
             };
 
-            const memoriasUnicas = [...new;
-            };
-
-            const memoriasUnicas = [...new Set(dbVar.map(v => v.c Set(dbVar.map(v => v.c Set(dbVar.map(v => Set(dbVar.map(v => v.capacidade).filter(Booleanapacidade).filter(Boolean v.capacidade).filter(Boolean))].apacidade).filter(Boolean))].))].sort();
-            // Adicion))].sort();
-            // Adicionsort();
-            //sort();
-            //ar 2TBar 2TB Adicionar 2TB Adicionar 2TB se for iPhone
-            if (categoria === se for iPhone
-            if (categoria === se for iPhone
-            if (c se for iPhone
-            if (c 'IPHONE 'IPategoria === 'IPHONEategoria === 'IPHONEHONE' &&' &&' && !memoriasUnicas.includes('' && !memoriasUnicas.includes(' !memoriasUnicas.includes(' !memoriasUnicas.includes('2TB')) {
-                memor2TB')) {
-2TB'))2TB')) {
-                memoriasUnicas.push                memoriasUnicas.push('2 {
-                memoriasUnicas.push('2iasUnicas.push('2TB');
+            const memoriasUnicas = [...new Set(dbVar.map(v => v.capacidade).filter(Boolean))].sort();
+            // Adicionar 2TB se for iPhone
+            if (categoria === 'IPHONE' && !memoriasUnicas.includes('2TB')) {
+                memoriasUnicas.push('2TB');
             }
-            constTB');
-            }
-            const('2TB');
-            }
-            constTB');
-            }
-            const coresUnicas = [...new coresUnicas = [...new coresUnicas = [...new coresUnicas = [...new Set(db Set(db Set(db Set(dbVar.map(v => v.cor).filter(Boolean))].sort();
+            const coresUnicas = [...new Set(dbVar.map(v => v.cor).filter(Boolean))].sort();
 
-            const processVar.map(v => v.cor).filter(Boolean))].sort();
-
-            const processadores =Var.map(v => v.cor).filter(Boolean))].sort();
-
-            const processadores =Var.map(v => v.cor).filter(Boolean))].sort();
-
-            const processadores =adores = ['M1', 'M2', 'M ['M1', 'M2', 'M3', ['M1', 'M2', 'M3', ['M1', 'M2', 'M3',3', 'M4', 'M 'M4', 'M 'M4', 'M 'M4', 'M5'];
-            const memorias5'];
-            const memorias5'];
-            const memorias5'];
-            const memoriasRam = ['4GB',Ram = ['4GB', '8Ram = ['4Ram = ['4 '8GB', '16GB', '24GB', '16GB', '24GB',GB', '8GB', '16GB', '24GB',GB', '8GB', '16GB', '24GB',GB', '32GB', '32GB', '32GB', '32GB', '48GB', '64 '48GB', '64 '48GB', '64 '48GB', '64GB'];
-            const ssdGB'];
-            constGB'];
-            constGB'];
-            const = ['128GB', ' ssd = ['128GB ssd = ['128GB ssd = ['128GB256GB', '256GB', '256GB', '256GB', '512GB', '512GB', '1TB', '', '512GB', '1TB', '', '512GB', '1TB', '', '1TB', '2TB', '4TB2TB', '4TB2TB', '4TB', '8TB2TB', '4TB', '8TB', '8TB'];
-           ', '8TB'];
-            const milimetros = [''];
-            const milimetros = [' const milimetros'];
-            const milimetros = ['38MM', '40MM38MM', '40MM = ['38MM', '40MM38MM', '40MM', '41MM', '', '41MM', '', '41MM', '', '41MM', '42MM', '42MM', '42MM', '44MM42MM', '44MM', '45MM44MM', '45MM', '45MM44MM', '45MM', '', '', '46MM', '46MM', '49MM'];
-           46MM', '49MM'];
-           ', '49MM'];
-            const46MM', '49MM'];
-            const vers const versoesIpad = const versoesIpad = versoesIpad =oesIpad = ['PRO', 'AIR', ['PRO', 'AIR', 'MIN ['PRO', 'AIR', 'MIN ['PRO', 'AIR', 'MINI',I',I', 'MINI', 'BASE 'BASE'];
-            const subGrupo 'BASE'];
-            const subGrupo 'BASE'];
-            const subGrupo'];
-            const subGrupo = [' = ['FONTES', 'C = ['FONTES', 'C = ['FONTES', 'CFONTES',ABOS', 'FONESABOS', 'FONESABOS', 'FONES 'CABOS', 'FONES', 'ADAPTADORES', 'ADAPTADORES', 'ADAPTADORES', 'ADAPTADORES', 'OUTROS'];
-
-            switch (', 'OUTROS'];
-
-            switch (', 'OUTROS'];
-
-           ', 'OUTROS'];
+            const processadores = ['M1', 'M2', 'M3', 'M4', 'M5'];
+            const memoriasRam = ['4GB', '8GB', '16GB', '24GB', '32GB', '48GB', '64GB'];
+            const ssd = ['128GB', '256GB', '512GB', '1TB', '2TB', '4TB', '8TB'];
+            const milimetros = ['38MM', '40MM', '41MM', '42MM', '44MM', '45MM', '46MM', '49MM'];
+            const versoesIpad = ['PRO', 'AIR', 'MINI', 'BASE'];
+            const subGrupo = ['FONTES', 'CABOS', 'FONES', 'ADAPTADORES', 'OUTROS'];
 
             switch (categoria) {
-                casecategoria) {
- switch (categoria) {
-categoria) {
-                case 'IPHONE                case 'IPHONE':
-                                   case 'IPHONE':
-                    'IPHONE':
-                    container.appendChild(criarGru container.appendChild(cri container.appendChild(cri':
-                    container.appendChild(criarGrupo('Memórias',arGrupo('Memórias', memoriasarGrupo('Memórias', memoriaspo('Memórias', memorias memoriasUnicas, 'memoriaUnicas, 'memoriaUnicas, 'memoriaUnicas, 'memoria'));
-                   '));
-                   '));
-                   '));
-                    container.appendChild(criarGrupo('Cores container.appendChild(criarGrupo('Cores container.appendChild(criarGrupo('Cores container.appendChild(criarGrupo('Cores', coresUnicas', cores', coresUnicas', coresUnicas, 'cor'));
-Unicas, 'cor'));
-, 'cor'));
+                case 'IPHONE':
+                    container.appendChild(criarGrupo('Memórias', memoriasUnicas, 'memoria'));
+                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
                     break;
-, 'cor'));
-                    break;
-                                   break;
-                case 'IPAD                    break;
                 case 'IPAD':
-                                   case 'IPAD':
-                    container.appendChild(criar case 'IPAD':
-                    container.appendChild(criarGru':
-                    container.appendChild(criarGrupo('Versão container.appendChild(criarGrupo('Versão', versGrupo('Versão', versoesIpad,po('Versão', versoesIpad,', versoesIpad, 'versao'));
-oesIpad, 'versao'));
-                    container 'versao'));
-                    container.appendChild(criar 'versao'));
-                    container.appendChild(criar                    container.appendChild(criarGrupo.appendChild(criarGrupoGrupoGrupo('Processador', processadores, '('Processador', processadores, 'processador('Processador', processadores, '('Processador', processadores, 'processador'));
-                   '));
-                   processador'));
-                   processador'));
-                    container.appendChild(criarGrupo('Memórias', container.appendChild(criarGrupo('Memórias', container.appendChild(criarGrupo('Memórias', container.appendChild(criarGrupo('Memórias', memoriasUnicas, ' memoriasUnicas memoriasUnicas, ' memoriasUnicas, 'memoria'));
-                   , 'memoria'));
-                    container.appendChildmemoria'));
-                    container.appendChildmemoria'));
-                    container.appendChild container.appendChild(criarGru(criarGrupo('(criarGrupo('(criarGrupo('Cores', coresUnicasCores', coresUnicasCores', coresUnicaspo('Cores', coresUnicas, ', ', ', 'cor'));
-                    break;
-                case 'APPLEcor'));
-                    break;
-                case 'APPLEcor'));
-                    break;
-                case 'APPLEcor'));
+                    container.appendChild(criarGrupo('Versão', versoesIpad, 'versao'));
+                    container.appendChild(criarGrupo('Processador', processadores, 'processador'));
+                    container.appendChild(criarGrupo('Memórias', memoriasUnicas, 'memoria'));
+                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
                     break;
                 case 'APPLEWATCH':
-WATCH':
-                    container.appendChildWATCH':
-                    container.appendChildWATCH':
-                    container.appendChild                    container.appendChild(cri(cri(cri(criarGrupo('Milímetros',arGrupo('arGrupo('MilíarGrupo('MilíMilímetros', milimetros,metros', milimetros, 'milmetros', milimetros, milimetros, 'milimetro'));
-                    container.appendChild(c 'milimetro'));
-                    containerimetro'));
-                    container 'milimetro'));
-riarGrupo.appendChild(criar.appendChild(criar                    container.appendChild(criarGrupo('Cores', coresUnGrupo('Cores', coresUnicas,Grupo('Cores', coresUnicas,('Cores', coresUnicas,icas, 'cor'));
+                    container.appendChild(criarGrupo('Milímetros', milimetros, 'milimetro'));
+                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
                     break;
- 'cor'));
-                    'cor'));
-                    'cor'));
-                    break;
-                case 'MAC break;
-                case 'MACBOOK':
- break;
-                case 'MACBOOK':
                 case 'MACBOOK':
                 case 'IMAC':
-                case 'IMAC':
-                    container                case 'IMAC':
-BOOK':
-                case 'IMAC':
-                    container.appendChild(criar.appendChild(criarGrupo                    container.appendChild(criarGrupo                    container.appendChild(criarGrupo('Processador', processadores('Processador', processadores, '('Processador', processadoresGrupo('Processador', processadores, 'processador'));
-                   processador'));
-                   , 'processador'));
-                   , 'processador'));
-                    container.appendChild(criarGru container.appendChild(criarGru container.appendChild(criarGru container.appendChild(criarGrupo('Memória RAM',po('Memória RAM', memoriaspo('Memória RAM', memoriaspo('Memória RAM', memorias memoriasRam, 'ram'));
-                   Ram, 'ram'));
-                    container.appendChildRam, 'ram'));
-                   Ram, 'ram'));
-                    container.appendChild(criarGru(criarGrupo(' container.appendChild(criarGrupo(' container.appendChild(criarGrupo('po('SSDSSDSSDSSD', ssd, 'ss', ssd, 'ss', ssd, 'ssd'));
-', ssd, 'ssd'));
-                    container.appendChild(criard'));
-                    container.appendChild(criarGrupo                    container.appendChild(criarGrupod'));
-                    container.appendChild(criarGrupoGrupo('Cores',('Cores',('Cores', coresUnicas, 'cor('Cores', coresUnicas, 'cor coresUnicas, 'cor'));
-                    break;
- coresUnicas, 'cor'));
-                    break;
-'));
-                    break;
-                case 'ACESSOR'));
+                    container.appendChild(criarGrupo('Processador', processadores, 'processador'));
+                    container.appendChild(criarGrupo('Memória RAM', memoriasRam, 'ram'));
+                    container.appendChild(criarGrupo('SSD', ssd, 'ssd'));
+                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
                     break;
                 case 'ACESSORIOS':
-                case 'ACESSOR                case 'ACESSORIOS':
-                    container.appendChild(c                    container.appendChild(cIOS':
-                    container.appendChild(criarIOS':
-                    container.appendChild(criarGruporiarGrupo('SubGrupo('SubriarGrupo('Sub-gru-grupo',('Sub-gru-grupo', subGrupo', subGru subGrupo, 'subgrupopo', subGrupo, 'subgrupo'));
-                   po, 'subgrupo'));
-                   '));
-                    container.appendChildpo, 'subgrupo'));
-                    container.appendChild container.appendChild container.appendChild(criarGrupo('Cores', cores(criarGrupo('Cores(criarGrupo('Cores(criarGrupo('Cores', coresUnicas, 'cor'));
-Unicas, 'cor'));
-', coresUnicas, 'cor'));
-', coresUnicas, 'cor'));
+                    container.appendChild(criarGrupo('Sub-grupo', subGrupo, 'subgrupo'));
+                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
                     break;
-                case '                    break;
-                case 'AIRP                    break;
-                case 'AIRP                    break;
-                case 'AIRPAIRPODSODSODSODS':
-                    // Para AIRP':
-                    // Para AIRP':
-                    // Para AIRP':
-                    // Para AIRPODS, podemosODS, podemosODS, podemosODS, podemos ter modelo (geração) e cor ter modelo (geração) e cor ter modelo (geração) e cor ter modelo (geração) e cor? Vamos simplificar com capacidade (? Vamos simplificar com capacidade (? Vamos simplificar com capacidade (? Vamos simplificar com capacidade (geração) e cor
-geração) e cor
-geraçãogeração) e cor
-                    const geracoesAirpods                    const geracoesAirpods) e cor
-                    const geracoesAirpods                    const geracoesAirpods = ['1ª GERA = ['1ª = ['1ª = ['1ª GERAÇÃO', '2 GERAÇÃO', '2 GERAÇÃO', '2ÇÃO', '2ª GERAÇÃO', '3ª GERAª GERAÇÃO', '3ª GERAÇÃO', 'PROª GERAÇÃO', '3ª GERAÇÃO', 'PROª GERAÇÃO', '3ª GERAÇÃO', 'PROÇÃO', 'PRO', 'PRO ', 'PRO 2', 'MAX', 'PRO 2', 'MAX', 'PRO 2', 'MAX'];
-                   2', 'MAX'];
-                    container.appendChild(cri'];
-                    container.appendChild container.appendChild(cri'];
-                    container.appendChildarGru(criarGruarGru(criarGrupo('Geração', geracoesAirppo('Geração', geracoesAirppo('Geração', geracoesAirpods,po('Geração', geracoesAirpods, 'memoria'));
-ods, 'memoria'));
- 'memoria'));
-ods, 'memoria'));
-                    container.appendChild(criar                    container.appendChild(criarGru                    container.appendChild(criar                    container.appendChild(criarGrupo('Cpo('CGrupo('CGrupo('Cores',ores', coresUnicas, 'corores', coresUnicas, 'corores', coresUnicas, 'cor coresUnicas, 'cor'));
+                case 'AIRPODS':
+                    // Para AIRPODS, podemos ter modelo (geração) e cor? Vamos simplificar com capacidade (geração) e cor
+                    const geracoesAirpods = ['1ª GERAÇÃO', '2ª GERAÇÃO', '3ª GERAÇÃO', 'PRO', 'PRO 2', 'MAX'];
+                    container.appendChild(criarGrupo('Geração', geracoesAirpods, 'memoria'));
+                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
                     break;
-'));
-                   '));
-                   '));
-                    break;
- break;
- break;
                 case 'PENCIL':
-                case 'PENCIL':
-                    const modelosPencil                case 'PENCIL':
-                    const modelosPencil                case 'PENCIL':
-                    const modelos                    const modelos = ['1ª GERAÇÃO', '2 = ['1ª GERAÇÃO', '2Pencil = ['1ª GERAÇÃO', '2Pencil = ['1ª GERAÇÃO', '2ª GERAÇÃO', 'ª GERAÇÃO', 'ª GERAÇÃOª GERAÇÃO', 'USB-C', 'USB-C', '', 'USB-C', 'PRO'];
-USB-C', 'PRO'];
-                    container.appendChild(criarPRO'];
-                    container.appendChild(criar                    container.appendChild(criarPRO'];
-                    container.appendChild(criarGrupo('ModelGrupo('ModelGrupo('ModelGrupo('Modelo', modelosPencil,o', modelosPencil,o', modelosPencil,o', modelosPencil, ' 'memoria'));
-                    container.appendChild(c 'memoria'));
-                    container.appendChild(c 'memoria'));
-                    containermemoria'));
-                    containerriarGrupo('CriarGrupo.appendChild(criarGrupo.appendChild(criarGrupoores', coresUnicas,('Cores', coresUnicas,('Cores', coresUnicas,('Cores', coresUnicas, 'cor'));
-                    'cor'));
-                    'cor'));
-                    'cor'));
+                    const modelosPencil = ['1ª GERAÇÃO', '2ª GERAÇÃO', 'USB-C', 'PRO'];
+                    container.appendChild(criarGrupo('Modelo', modelosPencil, 'memoria'));
+                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
                     break;
-                case 'A break;
-                case 'A break;
-                case 'A break;
                 case 'AIRTAG':
-                    // AIRTAGIRTAG':
-                    // AIRTAGIRTAG':
-                    // AIRTAGIRTAG':
-                    // AIRTAG geralmente não tem muitas varia geralmente não tem muitas variações, geralmente não tem muitas varia geralmente não tem muitas variações, mas podemos permitir mas podemos permitirções, mas podemos permitirções, mas podemos permitir gravação personalizada
-                    container.appendChild(criarGrupo gravação personalizada
-                    container.appendChild(criarGrupo('Model gravação personalizada
-                    container.appendChild(criarGrupo('Modelo', gravação personalizada
-                    container.appendChild(criarGrupo('Modelo',('Modelo', ['PADRÃO'], ' ['PADRÃO'], 'memoria ['PADRÃOo', ['PADRÃO'], 'memoria'));
-                    container.appendChild'));
-                    container.appendChild'], 'memoria'));
-                    container.appendChildmemoria'));
-                    container.appendChild(criarGrupo('Cores(criarGrupo('Cores(criarGrupo('Cores(criarGrupo('Cores', coresUnicas, '', coresUnicas, '', coresUnicas, '', coresUnicas, 'cor'));
+                    // AIRTAG geralmente não tem muitas variações, mas podemos permitir gravação personalizada
+                    container.appendChild(criarGrupo('Modelo', ['PADRÃO'], 'memoria'));
+                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
                     break;
-                default:cor'));
-                    break;
-                default:cor'));
-                    break;
-                default:cor'));
-                    break;
-                break;
-            }
- break;
-            }
- break;
-            }
- default: break;
+                default: break;
             }
         }
 
-        async function sal        }
-
-        async function salvarBaseMassa        }
-
-        async function sal        }
-
-        async function salvarBasevarBaseMassa() {
-            const() {
-            constvarBaseMassa() {
-            constMassa() {
-            const cards = cards = document.querySelectorAll('# cards = document.querySelectorAll('#cardsNov cards = document.querySelectorAll('# document.querySelectorAll('#cardsNovosProdutos >osProdutos >cardsNovosProdutos >cardsNovosProdutos > div');
- div');
- div');
- div');
-            if (cards.length ===            if (cards.length === 0            if (cards.length === 0            if (cards.length === 0 0) {
-) {
-                alert) {
-                alert) {
-                alert                alert('Adicione pelo menos('Adicione pelo menos('Adicione pelo menos('Adicione pelo menos um card de produto.');
-                return;
- um card de produto.');
-                return;
- um card de produto um card de produto.');
+        async function salvarBaseMassa() {
+            const cards = document.querySelectorAll('#cardsNovosProdutos > div');
+            if (cards.length === 0) {
+                alert('Adicione pelo menos um card de produto.');
                 return;
             }
 
-            let            }
+            let totalProdutos = 0;
+            let totalVariacoes = 0;
 
-            let.');
-                return;
-            }
+            for (const card of cards) {
+                const categoriaSelect = card.querySelector('.categoria');
+                let categoria = categoriaSelect.value;
+                let nomeProduto = card.querySelector('.nome-produto').value.trim().toUpperCase();
 
-            let            }
-
-            let totalProdutos = 0 totalProdutos = 0;
-            totalProdutos = 0;
-            totalProdutos = 0;
-           ;
-            let totalVariacoes = let totalVariacoes = let totalVariacoes = let totalVariacoes = 0;
-
-            for ( 0;
-
-            for ( 0;
-
-            for ( 0;
-
-            for (const cardconst card of cards) {
-                constconst card of cards) {
-const card of cards) {
- of cards) {
- categoriaSelect = card.querySelector('.                const categoriaSelect = card.querySelector('.categoria                const categoriaSelect = card.querySelector('.categoria                const categoriaSelect = card.querySelector('.categoria');
-               ');
-               categoria');
-               ');
-                let categoria = categoria let categoria let categoria = categoriaSelect.value let categoria = categoriaSelect.value;
-                let nomeSelect.value;
-                let nomeProduto = card = categoriaSelect.value;
-                let nomeProduto;
-                let nomeProduto = card.querySelector('.Produto = card.querySelector('.nome-produto.querySelector('.nome-produto').value.trim().toUpperCase = card.querySelector('.nome-produto').value.trim().').value.trim().toUpperCase();
-
-                // Se();
-
-                // Se for OUTRO, pegarnome-produto').value.trim().toUpperCase();
-
-                // Se for OUTRO, pegar o valortoUpperCase();
-
-                // Se for OUTRO, pegar o valor for OUTRO, pegar o valor do input de novo grupo
-                o valor do input de novo grupo
-                if (categoria === 'OUT do input de novo grupo
-                if (categoria === 'OUT do input de novo grupo
-                if (categoria === 'OUT if (categoria === 'OUTRO')RO') {
-                    const novoGrupoInput =RO') {
-                    const novoGrupoInput =RO') {
-                    const novoGrupoInput = {
-                    const novoGrupoInput = card.querySelector('.nov card.querySelector('.novo-grupo card.querySelector('.novo-grupo-input');
- card.querySelector('.novo-grupo-input');
-o-grupo-input');
--input');
-                    categoria = novoGrupo                    categoria = novoGrupo                    categoria = novoGrupo                    categoria = novoGrupoInput.valueInput.value.trim().toUpperCaseInput.value.trim().toUpperCase();
-                   Input.value.trim().toUpperCase();
-                   .trim().toUpperCase();
+                // Se for OUTRO, pegar o valor do input de novo grupo
+                if (categoria === 'OUTRO') {
+                    const novoGrupoInput = card.querySelector('.novo-grupo-input');
+                    categoria = novoGrupoInput.value.trim().toUpperCase();
                     if (!categoria) {
- if (!categoria) {
- if (!categoria) {
-();
-                    if (!categoria) {
-                        alert('Preencha                        alert('Preencha o nome                        alert('Preencha o nome                        alert('Preencha o nome do novo grupo.');
-                        return;
-                    do novo grupo.');
- o nome do novo grupo.');
-                        return do novo grupo.');
+                        alert('Preencha o nome do novo grupo.');
                         return;
                     }
                 }
-                                       return;
-                    }
-               ;
-                    }
-                }
-
-                if (!categoria }
-
-                if (!categoria || ! }
-
-                if (!categoria || ! }
 
                 if (!categoria || !nomeProduto) {
-                   nomeProduto) {
-                   nomeProduto) {
-                    || !nomeProduto) {
-                    alert('Preencha categoria alert('Preencha categoria e nome alert('Preencha categoria e nome alert('Preencha categoria e nome do produto em todos os cards do produto em todos do produto em todos e nome do produto em todos os cards.');
+                    alert('Preencha categoria e nome do produto em todos os cards.');
                     return;
                 }
 
- os cards.');
-                    return;
-                }
-
- os cards.');
-.');
-                    return;
-                const { data: novoProd,                const { data: novo                    return;
-                }
-
-                const { data: novo                }
-
-                const { data: novo error:Prod,Prod,Prod, errProd } = await _ error: errProd } = error: error: errProd } = await _s
-                    . await _s
-                    .from(' errProd } = await _s
-                    .s
-                    .from('from('produtos_mestre')
-                   produtos_mestre')
-                   from('produtos_mestre')
-                   produtos_mestre')
-                    .insert([{ nome: .insert([{ nome: nomeProd .insert([{ nome: .insert([{ nome: nomeProduto, categoria }])
-                   uto, categoria }])
-                    nomeProduto, categoria }])
-                    nomeProduto, categoria }])
+                const { data: novoProd, error: errProd } = await _s
+                    .from('produtos_mestre')
+                    .insert([{ nome: nomeProduto, categoria }])
                     .select()
-                    .single .select()
                     .single();
-                .select()
-                    .single();
-                .select()
-                    .single();
-                if (errProd if (errProd if (errProd();
                 if (errProd) {
-                    alert('Erro ao) {
-                    alert('Erro ao) {
-                    alert('Erro ao) {
-                    alert('Erro ao criar produto: ' + err criar produto: ' + err criar produto: ' + err criar produto: ' + errProd.message);
+                    alert('Erro ao criar produto: ' + errProd.message);
                     return;
                 }
-Prod.message);
-                    return;
-                }
-Prod.message);
-                    return;
-                }
-Prod.message);
-                    return;
-                const produtoId = novo                const produtoId = novo                const produtoId = novo                }
-                const produtoIdProd.id;
-
-                const gruposProd.id;
+                const produtoId = novoProd.id;
 
                 const grupos = {
-Prod.id;
-
-                const grupos = {
- = novoProd.id;
-
-                const grupos = {
-                    memor                    memor                    memor = {
                     memorias: [],
                     cores: [],
-                   ias: [],
-                    cores: [],
-                   ias: [],
-                    cores: [],
-                    milimetias: [],
-                    cores: milimetros: [],
-                    processadores milimetros: [],
-                    processadoresros: [],
-                    processadores [],
                     milimetros: [],
                     processadores: [],
                     rams: [],
-                   : [],
-                    rams:: [],
-                    rams: [],
-                   : [],
-                    rams: ssds [],
-                    ssds ssds [],
                     ssds: [],
-                    versoes:: [],
-                    versoes:: [],
                     versoes: [],
-                    subgru: [],
-                    versoes: [],
-                    subgrupos: [],
                     subgrupos: []
                 };
 
-                [],
-                    subgrupos: []
-                };
-
-               pos: []
-                };
-
-                card.querySelectorAll('.checkbox-m []
-                };
-
-                card.querySelectorAll('.checkbox-m card.querySelectorAll('.checkbox-memoria:checked').forEach card.querySelectorAll('.checkbox-memoria:checked').forEachemoria:checked').forEach(cb => gruposemoria:checked').forEach(cb => grupos(cb => grupos.memorias.push(cb(cb => grupos.memorias.push(cb.memorias.push(cb.value));
-                card.memorias.push(cb.value));
-.value));
-                card.querySelectorAll('.checkbox-cor:checked').forEach.value));
-                card.querySelectorAll('.checkbox-cor:.querySelectorAll('.checkbox-cor:checked').forEach(cb =>                card.querySelectorAll('.checkbox-cor:checked').forEach(cb =>(cb => grupos.cores.push(cchecked').forEach(cb => grupos.cores.push(c grupos.cores.push(cb.value));
-                card.querySelectorAll grupos.cores.push(cb.value));
-                card.querySelectorAll('.checkboxb.value));
-                card.querySelectorAll('.checkboxb.value));
-                card.querySelectorAll('.checkbox('.checkbox-milimetro:checked').forEach(c-milimetro:checked').forEach(c-milimetro:checked').forEach(c-milimetro:checked').forEach(cb => grupos.milimetros.pushb => grupos.milimetros.pushb => grupos.milimetros.pushb => grupos.milimetros.push(cb.value));
-                card(cb.value));
-                card(cb.value));
-(cb.value));
-.querySelectorAll('.checkbox-processador.querySelectorAll('.checkbox-processador                card.querySelectorAll('.checkbox-processador                card.querySelectorAll('.checkbox-processador:checked:checked:checked:checked').forEach(cb => grupos.processadores.push(c').forEach(cb => grupos.processadores.push(c').forEach(cb => grupos.processadores.push(c').forEach(cb => grupos.processadores.push(cb.value));
-               b.value));
-               b.value));
-               b.value));
-                card.querySelectorAll('. card.querySelectorAll('. card.querySelectorAll('. card.querySelectorAll('.checkbox-ram:checked').forEach(cb =>checkbox-ram:checked').forEach(cb =>checkbox-ram:checked').forEach(cb =>checkbox-ram:checked').forEach(cb => grupos.rams.push(cb grupos.rams.push(c grupos.rams.push(cb grupos.rams.push(cb.value));
-                card.querySelectorAll('.checkboxb.value));
-                card.querySelectorAll('.checkbox.value));
-                card.querySelectorAll('.checkbox.value));
-                card-ssd:-ssd:-ssd:.querySelectorAll('.checkbox-ssd:checked').forEach(cb => grupos.sschecked').forEach(cb => grupos.sschecked').forEach(cb => grupos.sschecked').forEach(cb => grupos.ssds.pushds.push(cb.value));
-ds.push(cb.value));
-ds.push(cb.value));
-(cb.value));
-                card.querySelectorAll                card.querySelectorAll                card.querySelectorAll('.checkbox                card.querySelectorAll('.checkbox('.checkbox-versao('.checkbox-versao-versao:checked-versao:checked:checked').forEach:checked').forEach(cb => grupos.verso').forEach(cb => grupos.verso').forEach(cb => grupos.verso(cb => grupos.versoes.push(cb.value));
-                cardes.push(cb.value));
-                cardes.push(cb.value));
-                cardes.push(cb.value));
-.querySelectorAll('.checkbox.querySelectorAll('.checkbox-subgru.querySelectorAll('.checkbox-subgru                card.querySelectorAll('.checkbox-subgru-subgrupo:po:po:po:checked').forEach(cb => grupos.subchecked').forEach(cb => grupos.subchecked').forEach(cb => grupos.subchecked').forEach(cb => grupos.subgrupos.push(cgrupos.push(cb.valuegrupos.push(cb.valuegrupos.push(cb.valueb.value));
-
-                let combin));
-
-                let combin));
-
-                let combin));
+                card.querySelectorAll('.checkbox-memoria:checked').forEach(cb => grupos.memorias.push(cb.value));
+                card.querySelectorAll('.checkbox-cor:checked').forEach(cb => grupos.cores.push(cb.value));
+                card.querySelectorAll('.checkbox-milimetro:checked').forEach(cb => grupos.milimetros.push(cb.value));
+                card.querySelectorAll('.checkbox-processador:checked').forEach(cb => grupos.processadores.push(cb.value));
+                card.querySelectorAll('.checkbox-ram:checked').forEach(cb => grupos.rams.push(cb.value));
+                card.querySelectorAll('.checkbox-ssd:checked').forEach(cb => grupos.ssds.push(cb.value));
+                card.querySelectorAll('.checkbox-versao:checked').forEach(cb => grupos.versoes.push(cb.value));
+                card.querySelectorAll('.checkbox-subgrupo:checked').forEach(cb => grupos.subgrupos.push(cb.value));
 
                 let combinacoes = [];
 
-                if (cacoes = [];
-
-                if (cacoes = [];
-
-                if (cacoes = [];
-
-                if (categoria === 'IPHONEategoria === 'IPHONEategoria === 'IPHONEategoria === 'IPHONE') {
-                    for (const') {
-                    for (const mem of') {
-                    for (const mem of') {
-                    for (const mem of mem of grupos.memorias) {
- grupos.memorias grupos.m grupos.m                        for (const) {
-                        for (constemorias) {
-                        for (const cor ofemorias) {
-                        for (const cor of cor of grupos.cores) {
-                            cor of grupos.cores) {
-                            grupos.cores) grupos.cores) combinacoes.push({ capacidade: mem combinaco {
-                            combinacoes.push {
-                            combinaco, cor });
-                        }
-                   es.push({ capacidade: mem, cor });
-                       ({ capacidade: mem, cor });
-                       es.push({ capacidade: mem, cor });
-                        }
-                } else if (categoria === ' }
-                    }
-                } else if (categoria === ' }
-                    }
-                } else if (categoria }
-                    }
-                } else if (categoriaIPAD') {
-                    forIPAD') {
- === 'IPAD') {
- === 'IPAD') {
- (const ver of                    for (const ver of grupos.                    for (const ver of grupos.                    for (const ver of grupos. grupos.versoes) {
-versoes) {
-versoes) {
-                        forversoes) {
-                        for                        for (const proc of grupos.process                        for (const proc of (const proc of grupos.process (const proc of grupos.processadores) grupos.processadores) {
-                           adores) {
-                            for ( {
-                            for (const mem of grupos.memoradores) {
-                            for (const mem of grupos.memor for (const mem of grupos.memorconst mem of grupos.memorias) {
-                                for (const corias) {
-                                for (const cor of gruposias) {
-                                for (const cor of gruposias) {
-                                for (const cor of grupos of grupos.cores) {
-                                    const.cores) {
-                                    const.cores) {
-                                    const.cores) {
-                                    const capacidade = `${ver capacidade = `${ver capacidade = `${ver capacidade = `${ver} - ${proc} - ${mem}`;
-} - ${proc} - ${mem} - ${proc} - ${mem} - ${proc} - ${mem                                    combinacoes}`;
-                                    combinacoes}`;
-                                    combinacoes.push({}`;
-                                    combinacoes.push({ capacidade, cor });
-                                }
-                            }
-.push({ capacidade, cor });
-                                }
-                            }
- capacidade, cor });
-                                }
-                            }
-.push({ capacidade, cor });
-                                }
-                        }
-                    }
-                }                        }
-                    }
-                }                        }
-                    }
-                }                            }
-                        }
-                    }
-                } else if (categoria === 'APP else if (categoria === 'APP else if (categoria === else if (categoria ===LEWATCH')LEWATCH') 'APPLEWATCH') {
-                    'APPLEWATCH') {
-                    {
-                    for ( {
-                    for (const mm of grupos.mil for ( for (const mm of grupos.milimetros) {
-imetros) {
-const mm of grupos.milimetros) {
-                        forconst mm of grupos.milimetros) {
-                        for                        for (const cor of grupos                        for (const cor of grupos.co (const (const.cores) {
-                           res) {
-                            cor of grupos.cores) {
-                            combinaco cor of grupos.cores) {
-                            combinaco combinacoes.push({ capacidade: mm combinacoes.push({ capacidade: mm, cores.push({ capacidade: mmes.push({ capacidade: mm, cor });
-                        });
-                       , cor });
-                        }
-                   , cor }
-                    }
-                }
-                    }
-                } else }
-                });
-                        }
-                    }
-                } else if (categoria === ' if (categoria } else if (categoria === ' } else if (categoria === 'MACBOOK' || categoria === === 'MACBOOK' || categoria ===MACBOOK' || categoria ===MACBOOK' || categoria === 'IMAC') {
-                    for ( 'IMAC') {
-                    'IMAC') {
-                    for ( 'IMAC') {
-                    for (const proc of grupos for (const proc of grupos.processadoresconst proc of gruposconst proc of grupos.processadores) {
-                        for (const) {
-                        for.processadores) {
-                        for (const.processadores) {
-                        for (const ram of grupos.rams) (const ram of grupos.rams) {
-                            ram of grupos.rams) ram of grupos.rams) {
-                            for (const ssd of for (const ss {
-                            for (const ssd of {
-                            for (const ssd of grupos.ssds)d of grupos.ssds) grupos.ssds) grupos.ssds) {
-                                for (const cor of grupos {
-                                for (const cor of grupos {
-                                for (const cor of grupos {
-                                for (const cor.cores) {
-                                    const.cores) {
-                                    const.cores) {
-                                    const capacidade = `${ of grupos.cores) {
-                                    const capacidade = `${proc} - ${ram capacidade = `${proc} - ${ramproc} - ${ram capacidade = `${proc} - ${ram} - ${ssd}`} - ${ssd}`;
-                                   } - ${ssd}`} - ${ssd}`;
-                                    combinacoes.push({ capacidade combinacoes.push({ capacidade;
-                                    combinacoes.push({ capacidade;
-                                    combinacoes.push({ capacidade, cor });
-                                }
-                           , cor });
-                                }
-                           , cor });
-                                }
-                           , cor });
-                                }
-                            }
-                        }
-                    }
-                }
-                        }
-                    }
-                }
-                        }
-                    }
-                } else }
-                        }
-                    }
-                } else } else if ( } else if (categoria === ' if (categoria === 'categoria === ' if (categoria === 'ACESSORIOS') {
-                    forACESSORIOS') {
-                    forACESSORIOS') {
-                    for (const sub of grupos.subACESSORIOS') {
-                    for (const sub of grupos.sub (const sub of grupos.sub (const sub ofgrupos) {
-                       grupos) {
-                        forgrupos) {
-                        for grupos.subgrupos) {
-                        for for (const cor of grupos (const cor of (const cor of (const cor of.cores) {
-                            combinaco grupos.cores) {
-                            combinaco grupos.cores) {
-                            combinaco grupos.cores) {
-                            combinacoes.push({ capacidade: subes.push({ capacidade: subes.push({ capacidade: subes.push({ capacidade: sub, cor });
-                        }
-                    }
-               , cor });
-                        }
-                   , cor });
-                        }
-                   , cor });
-                        }
-                    } else }
-                } else }
-                } else }
-                } else if (categoria === 'AIRPODS if (categoria === 'AIRP if (categoria === 'AIRPODS if (categoria === 'AIRPODS' || categoria ===ODS' || categoria === 'P' || categoria === 'PENCIL' || categoria === 'PENCIL 'PENCIL' || categoria ===ENCIL' || categoria ===' || categoria === 'AIRTAG') {
-' || categoria === 'AIRTAG') {
-                    // 'AIRTAG') {
-                    // 'AIRTAG') {
-                    //                    // Para novos grupos, tratar como Para novos grupos, Para novos grupos, tratar como Para novos grupos, tratar como combinação de capacidade (ou tratar como combinação de capacidade combinação de capacidade (ou combinação de capacidade (ou modelo) e cor
-                    for ( (ou modelo) e cor
-                    modelo) e cor
-                    for ( modelo) e cor
-                    for (const mem of grupos.memorias) for (const mem of grupos.memorconst mem of grupos.memorias)const mem of grupos.memorias) {
-                        for (ias) {
-                        for (const cor {
-                        for ( {
+                if (categoria === 'IPHONE') {
+                    for (const mem of grupos.memorias) {
                         for (const cor of grupos.cores) {
- of grupos.coresconst cor of grupos.cores) {
-const cor of grupos.cores) {
-                            combin) {
-                            combin                            combin                            combinacoesacoes.push({ capacidade: memacoes.push({ capacidade: mem, cor });
+                            combinacoes.push({ capacidade: mem, cor });
                         }
                     }
-               acoes.push({ capacidade: mem, cor });
+                } else if (categoria === 'IPAD') {
+                    for (const ver of grupos.versoes) {
+                        for (const proc of grupos.processadores) {
+                            for (const mem of grupos.memorias) {
+                                for (const cor of grupos.cores) {
+                                    const capacidade = `${ver} - ${proc} - ${mem}`;
+                                    combinacoes.push({ capacidade, cor });
+                                }
+                            }
                         }
                     }
-               .push({ capacidade: mem, cor });
+                } else if (categoria === 'APPLEWATCH') {
+                    for (const mm of grupos.milimetros) {
+                        for (const cor of grupos.cores) {
+                            combinacoes.push({ capacidade: mm, cor });
                         }
                     }
-                } else, cor });
+                } else if (categoria === 'MACBOOK' || categoria === 'IMAC') {
+                    for (const proc of grupos.processadores) {
+                        for (const ram of grupos.rams) {
+                            for (const ssd of grupos.ssds) {
+                                for (const cor of grupos.cores) {
+                                    const capacidade = `${proc} - ${ram} - ${ssd}`;
+                                    combinacoes.push({ capacidade, cor });
+                                }
+                            }
+                        }
+                    }
+                } else if (categoria === 'ACESSORIOS') {
+                    for (const sub of grupos.subgrupos) {
+                        for (const cor of grupos.cores) {
+                            combinacoes.push({ capacidade: sub, cor });
+                        }
+                    }
+                } else if (categoria === 'AIRPODS' || categoria === 'PENCIL' || categoria === 'AIRTAG') {
+                    // Para novos grupos, tratar como combinação de capacidade (ou modelo) e cor
+                    for (const mem of grupos.memorias) {
+                        for (const cor of grupos.cores) {
+                            combinacoes.push({ capacidade: mem, cor });
                         }
                     }
                 } else {
-                    // Para } else {
-                    // Para {
-                    // Para categorias } else {
-                    // Para categorias categorias personalizadas (OUTRO), categorias personalizadas (OUTRO), personalizadas (OUTRO), personalizadas (OUTRO), podemos permitir comb podemos permitir comb podemos permit podemos permitinações livres?inações livres?ir combinações livres?ir combinações livres? Por sim Por sim Por simplicidade Por simplicidadeplicidade, não criaremos variações automáticasplicidade, não criaremos variações automáticas, não criaremos variações automáticas, não criaremos variações automáticas,, mas, mas, mas podemos ped mas podemos ped podemos pedir para inserir manualmente podemos pedir para inserir manualmente depois.
-ir para inserir manualmente depois.
-ir para inserir manualmente depois.
- depois.
-                    // Neste caso,                    // Neste caso, vamos p                    // Neste caso, vamos p                    // Neste caso, vamos pular a criação deular a criação deular a criação de variações vamos pular a criação de variações variações e apenas criar o produto.
- variações e apenas criar o produto.
- e apenas criar o produto.
-                    combin e apenas criar o produto.
-                    combinacoes = []; //                    combinacoes =acoes =                    combinacoes = []; // nenhuma variação automática []; // nenhuma variação automática []; // nenhuma variação automática nenhuma variação automática
+                    // Para categorias personalizadas (OUTRO), podemos permitir combinações livres? Por simplicidade, não criaremos variações automáticas, mas podemos pedir para inserir manualmente depois.
+                    // Neste caso, vamos pular a criação de variações e apenas criar o produto.
+                    combinacoes = []; // nenhuma variação automática
                 }
 
-               
-                }
-
-                if (
-                }
-
-                if (
-                }
-
-                if (combin if (combincombincombinacoesacoes.length ===acoes.length ===acoes.length ===.length === 0) {
-                    // Apen 0) {
-                    // Apen 0) {
-                    // Apen 0) {
+                if (combinacoes.length === 0) {
                     // Apenas produto sem variações
-                   as produto sem variaas produto sem variaas produto sem variações
-                    totalProdutos++;
-                   ções
-                    totalções
-                    totalProdutos++;
                     totalProdutos++;
                     continue;
-                }
-
-                const payloadsProdutos++;
-                    continue;
-                }
-
-                const continue;
-                }
-
-                const payloads = combin continue;
                 }
 
                 const payloads = combinacoes.map(c => ({
- payloads = combinacoes.map(c => ({
-                    produtoacoes.map(c => ({
-                    = combinacoes.map(c => ({
-                    produto_id:_id: produto_id:                    produto_id: produtoId,
-                    capacidade: c.capacidade,
-                    produtoId,
-                    capacidade: c.capacidade produtoId,
-                    capacidade: c.capacidade,
-                    produtoId,
+                    produto_id: produtoId,
                     capacidade: c.capacidade,
                     cor: c.cor
-,
-                    cor: c.cor
- cor: c.cor
- cor: c.cor
                 }));
 
-                const {                }));
-
-                const {                }));
-
-                const { error:                }));
-
-                const { error: error: errVar error: errVar errVar errVar } = await _s.from('variacoes').insert } = await _s.from('variacoes } = await _s.from('variacoes } = await _s.from('variacoes').insert(payload').insert').insert(payload(payloads);
-                if(payloads);
-                ifs);
-                ifs);
-                if (errVar) (errVar) (errVar) {
-                    alert(' {
-                    alert(' {
-                    alert(' (errVar) {
-                    alert('Erro ao criar variações: 'Erro ao criar variações: ' + errErro ao criar variações: 'Erro ao criar variações: ' + err + errVar.message);
-                    await _Var.message);
-                    + errVar.message);
-                   Var.message);
-                   s.from('prod await _s.from('prod await _s.from('prod await _s.from('produtos_mestre').delete().utos_mestre').delete().utos_mestre').delete().eq('utos_mestre').delete().eq('id', produtoId);
-                   eq('id', produtoId);
-                   id', produtoIdeq('id', produtoId);
+                const { error: errVar } = await _s.from('variacoes').insert(payloads);
+                if (errVar) {
+                    alert('Erro ao criar variações: ' + errVar.message);
+                    await _s.from('produtos_mestre').delete().eq('id', produtoId);
                     return;
                 }
-
-                totalProdutos return;
-);
-                    return;
-                }
-
-                totalProdutos return;
-                }
-
-                total++;
-                totalVariacoes += payloads.length                }
 
                 totalProdutos++;
-                totalVariacoes += payloads.length++;
-                totalVariacoes += payloads.lengthProdutos;
-            }
-
-            alert(`;
-            }
-
-           ;
-            }
-
-            alert(`++;
                 totalVariacoes += payloads.length;
             }
 
-            alert(`SucessoSucesso alert(`Sucesso! ${Sucesso! ${! ${! ${totalProdutos}totalProdtotalProdutos}totalProd produto(s) criutos} produto(s) cri produto(s) criutos} produto(s) criado(s) com ${totalVariacoes}ado(s) com ${totalVariacoes}ado(s) com ${totalVariacoes}ado(s) com ${totalVariacoes} variações.`);
-            document.getElementById(' variações.`);
-            document.getElementById(' variações.`);
-            document.getElementById(' variações.`);
-            document.getElementById('cardsNovosProdcardsNovcardsNovosProdutoscardsNovutos').innerHTML = '';
-            awaitosProdutos').innerHTML = '';
-').innerHTML = '';
-            await loadAllosProdutos').innerHTML = '';
-            await loadAll loadAll();
+            alert(`Sucesso! ${totalProdutos} produto(s) criado(s) com ${totalVariacoes} variações.`);
+            document.getElementById('cardsNovosProdutos').innerHTML = '';
+            await loadAll();
         }
 
-                   await loadAll();
-        }
-
-        // =();
-        }
-
-        // =();
-        }
-
-        // = // ===== FUN==== FUNÇÕ==== FUNÇÕ==== FUNÇÕÇÕES DE FILTRO POR GRUPO PARAES DE FILTRO POR GRUPES DE FILTRO POR GRUPES DE FILTRO POR GRUP OS LANÇADORES =O PARA OS LANÇADORES =O PARA OS LANÇADORES =O PARA OS LANÇADORES =====
-        function filtrarModelos====
-        function filtrar====
-        function filtrar====
-        function filtrarPorGrupo(ModelosPorGrupo(prefixoModelosPorGrupo(prefixoModelosPorGrupo(prefixoprefixo) {
-) {
-            const grupo =) {
-) {
-            const grupo =            const grupo = document.getElementById(prefixo + document.getElementById(prefixo +            const grupo = document.getElementById(prefixo + document.getElementById(prefixo + 'Grupo')?.value;
-            'Grupo')?.value 'Grupo') 'Grupo')?.value const modeloSelect = document.getElementById;
-            const modeloSelect = document.getElementById?.value;
-            const modeloSelect;
+        // ===== FUNÇÕES DE FILTRO POR GRUPO PARA OS LANÇADORES =====
+        function filtrarModelosPorGrupo(prefixo) {
+            const grupo = document.getElementById(prefixo + 'Grupo')?.value;
             const modeloSelect = document.getElementById(prefixo + 'Modelo');
-(prefixo + 'Model = document.getElementById(prefixo + 'Modelo');
-(prefixo + 'Modelo');
-            if (!model            if (!modelo');
-            if (!model            if (!modeloSelect) return;
+            if (!modeloSelect) return;
 
-           oSelect) return;
-
-            modeloSelectoSelect) return;
-
-           oSelect) return;
-
-            modeloSelect modeloSelect.innerHTML = '<option value="">.innerHTML = '<option value=""> modeloSelect.innerHTML = '<option value="">.innerHTML = '<option value="">MODELO...</option>';
-            modeloMODELO...</MODELO...</option>';
-            modeloMODELO...</Select.disabled = !grupo;
-
-option>';
+            modeloSelect.innerHTML = '<option value="">MODELO...</option>';
             modeloSelect.disabled = !grupo;
-
-Select.disoption>';
-            modeloSelect.disabled = !gru            if (!gru            if (!gruabled = !grupo;
-
-            if (!grupo;
 
             if (!grupo) return;
 
-            constpo) return;
-
-            constpo) return;
-
-            constpo) return;
-
-            const modelosF modelosFiltrados = dbProdutos modelosFiltrados = dbProdutos modelosFiltrados = dbProdutosiltrados = db.filter(p => p.categoria.filter(p => p.categoria.filter(p => p.categoriaProdutos.filter(p => p.categoria === grupo);
-            modelosFiltrados === grupo);
-            modelosFiltrados === grupo);
-            modelosFiltrados === grupo);
-            modelosF.sort((a,.sort((a,.sort((a,iltrados.sort((a, b) b) => a.nome.locale b) => a.nome.locale b) => a.nome.locale => a.nome.localeCompare(bCompare(b.nome)).forEachCompare(b.nome)).forEachCompare(b.nome)).forEach.nome)).forEach(m => {
-               (m => {
-                modeloSelect.innerHTML += `<option(m => {
-                modeloSelect.innerHTML +=(m => {
-                modeloSelect.innerHTML += modeloSelect.innerHTML += value="${m.id `<option value="${m.id `<option value="${m.id `<option value="${m.id}">${m.nome}</option>`;
-}">${m.nome}</option>`;
-}">${m.nome}</option>`;
-}">${m.nome            });
-        }
-
+            const modelosFiltrados = dbProdutos.filter(p => p.categoria === grupo);
+            modelosFiltrados.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
+                modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
             });
         }
 
-            });
-        }
-
-}</option>`;
-            });
-        }
-
-        function        function atualizarModelosMassa        function atualizarModelosMassa        function atualizarModelosMassa atualizarModelos() {
-            const grupo =() {
-            const grupo =() {
-            const grupo =Massa() {
-            const grupo = document.getElementById document.getElementById document.getElementById document.getElementById('m('massaGrupo').value;
-            const linhas('massaGrupo').value;
-            const linhas('massaGrupo').value;
-            const linhasassaGrupo').value;
-            const linhas = document.querySelectorAll('#lin = document.querySelectorAll('#linhasContainer = document.querySelectorAll('#lin = document.querySelectorAll('#linhasContainerhasContainer .linha-an .linha-anhasContainer .linha-an .linha-anuncio');
-            linhas.forEach(uncio');
-            linhas.forEach(uncio');
-            linhas.forEach(uncio');
-            linhas.forEach(linhalinhalinhalinha => {
-                const modeloSelect = linha => {
-                const modeloSelect = linha => {
-                const modeloSelect = linha => {
+        function atualizarModelosMassa() {
+            const grupo = document.getElementById('massaGrupo').value;
+            const linhas = document.querySelectorAll('#linhasContainer .linha-anuncio');
+            linhas.forEach(linha => {
                 const modeloSelect = linha.querySelector('.modelo');
-                modeloSelect.querySelector('.modelo');
-               .querySelector('.modelo');
-                modeloSelect.querySelector('.modelo');
-                modeloSelect modeloSelect.innerHTML = '<option value="">Modelo</option.innerHTML = '<option value="">Modelo</option.innerHTML = '<option value="">Modelo</option.innerHTML = '<option value="">Modelo</option>';
-                if (grupo>';
-                if (grupo>';
-                if (grupo>';
+                modeloSelect.innerHTML = '<option value="">Modelo</option>';
                 if (grupo) {
-                    const modelos = dbProdutos.filter) {
-                    const modelos = dbProdutos.filter) {
-                    const modelos = dbProd) {
-                    const modelos = dbProd(p => p.categoria ===(p => p.categoria ===utos.filter(p => p.categoria ===utos.filter(p => p.c grupo);
-                    modelos.sort(( grupo);
-                    modelos grupo);
-                    modelos.sort((ategoria === grupo);
-                    modelos.sort((a, b) => a.nome.sort((a, b) => aa, b) => a.nomea, b) => a.localeCompare(b.nome.localeCompare(b.localeCompare(b.nome.localeCompare(b.nome)).forEach.nome)).forEach.nome)).forEach.nome)).forEach(m => {
-                        modeloSelect(m => {
-                        modeloSelect.innerHTML += `<option(m => {
-                        modeloSelect.innerHTML += `<option(m => {
-                        modeloSelect.innerHTML += `<option.innerHTML += `<option value="${m.id value="${m.id value="${m.id value="${m.id}">${m}">${m.nome}">${m.nome}">${m.nome.nome}</option}</option>`;
+                    const modelos = dbProdutos.filter(p => p.categoria === grupo);
+                    modelos.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
+                        modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
                     });
                 }
             });
         }
 
-}</option>`;
-                    });
-                }
-            });
-}</option>`;
-                    });
-                }
-            });
-        }
-
->`;
-                    });
-                }
-            });
-        }
-
-        // Expor funções        }
-
-        // Expor funções        // Expor funções        // Expor funções globais
-        window.editarProd globais
-        window.editarProd globais
-        window.editarProd globais
-        window.editarProduto = editarProdutouto = editarProdutouto = editarProdutouto = editarProduto; // adicionada
-        window; // adicionada
-       ; // adicionada
-        window; // adicionada
-        window.abrirModalConfigPix window.abrirModalConfigPix.abrirModalConfigPix.abrirModalConfigPix = abrirModalConfigPix;
- = abrirModalConfigP = abrirModalConfigP = abrirModalConfigPix;
-        window.fechix;
-        window.fecharModalix;
-        window.fech        window.fecharModalConfigPix = fecharConfigPix = fechararModalConfigPix =arModalConfigPix = fecharModalConfigPix;
-       ModalConfigPix;
-        fecharModalConfigPix;
-       ModalConfigPix;
-        window.s window.salvarConfigPix = window.salvarConfigP window.salvarConfigPalvarConfigPix = salvarConfigPix;
-ix = salvarConfigPix;
-ix = salvarConfigPix;
- salvarConfigPix;
-        window        window        window.abrirModalRegrasTra        window.abrirModalRegrasTra.abrirModalRegrasTrava = abrir.abrirModalRegrasTrava = abrirModalRegva = abrirModalRegva = abrirModalRegrasTrava;
-        windowModalRegrasTrava;
-        window.fecharModalRegrasTravarasTrava;
-        window.fecharModalRegrasTrarasTrava;
-        window.fecharModalRegras.fecharModalRegrasTravavaTrava = fecharModalRegrasTrava = fecharModalRegrasTrava;
-        window.confirmar = fecharModalRegrasTrava;
-        window.confirmar = fecharModalRegrasTrava;
-        window.confirmarTrava = confirmarTra;
-        window.confirmarTrava = confirmarTraTrava = confirmarTraTrava = confirmarTrava;
-va;
-        window.copiarDadosPix = copiarva;
-        window.copiarDadosPix = copiarDadosva;
+        // Expor funções globais
+        window.editarProduto = editarProduto; // adicionada
+        window.abrirModalConfigPix = abrirModalConfigPix;
+        window.fecharModalConfigPix = fecharModalConfigPix;
+        window.salvarConfigPix = salvarConfigPix;
+        window.abrirModalRegrasTrava = abrirModalRegrasTrava;
+        window.fecharModalRegrasTrava = fecharModalRegrasTrava;
+        window.confirmarTrava = confirmarTrava;
         window.copiarDadosPix = copiarDadosPix;
-               window.copiarDadosPix = copiarDadosPix;
-       DadosPix;
-        window.enviarComprovPix;
-        window.enviarComprov window.enviarComprov window.enviarComprovante = enviarComprovante;
-ante = enviarComprovante;
-        window.fecharPedante = enviarComprovante;
-        window.fecharPedante = enviarComprovante;
-        window.fecharPed        window.fecharPedidoUsdt = fecharPedidoUsdt;
-       idoUsdt = fecharPedidoUsdt;
-       idoUsdt = fecharPedidoUsdt;
-       idoUsdt = fecharPedidoUsdt window.exportarContatos = export window.exportarContatos window.exportarContatos;
-        window.exportarContatosarContatos;
-        window.import = exportarContatos;
-        window = exportarContatos;
-        window = exportarContatos;
-        windowarFornecedores =.importarFornecedores =.importarFornecedores =.importarForneced importarForne importarForne importarForneores = importarFornecedorescedores;
-        window.exportarBusccedores;
-        window.exportarBusccedores;
-        window.exportarBusc;
-        window.exportarBuscadores = exportaradores = exportaradores = exportaradores = exportarBuscBuscadores;
-        window.importarBBuscadores;
-        window.importBuscadores;
-        window.importadores;
-        window.importarBuscadores = importarBuscadores = importarBuscadores = importarBuscadores = importarBuscadores;
-        window.abrirModaluscadores;
-        window.abrirModalarBuscadores;
-        window.abrirModalAddMassa = abrirModalAddarBuscadores;
-        window.abrirModalAddMassa = abrirModalAddAddMassa = abrirModalAddAddMassa = abrirMassa;
-        window.fecharMassa;
-        window.fecharMassa;
-        window.fModalAddMassa;
-        window.fModalAddMassa = feModalAddMassa = feecharModalecharModalAddMassacharModalAddMassa;
-charModalAddMassa;
-AddMassa = fecharModalAddMassa;
-        window.adicionarLin        window.adicionarLin = fecharModalAddMassa;
-        window.adicionarLin        window.adicionarLinhaAnuncio = adicionarhaAnuncio = adicionarhaAnuncio = adicionarhaAnuncio = adicionarLinhaAnuncio;
-LinhaAnuncio;
-LinhaAnuncio;
-LinhaAnuncio;
-        window.executarLanc        window.executarLanc        window.executar        window.executarLancamentoMassa = executarLancamentoMassa = executarLancLancamentoMassa =amentoMassa = executarLancamentoMassa;
-        windowamentoMassa;
-        window executarLancamentoMassa;
-        windowamentoMassa;
-        window.abrirModalMalaDireta = abrir.abrirModalMalaDireta = abrirModalMalaDire.abrirModalMalaDireta = abrir.abrirModalMalaDireta = abrirModalMalaDireta;
-        windowta;
-        windowModalMalaDireta;
-        windowModalMalaDireta;
-        window.fecharModalMala.fecharModalMalaDireta.fecharModalMala.fecharModalMalaDiretaDireta = fecharModalMala = fecharModalMala = fecharModalMalaDireta;
-        window.enviarDireta;
-        window.enviarDireta;
-        window.enviarMalaMalaMalaDireta = fecharModalMalaDireta;
-        window.enviarMalaDireta = enviDireta = enviDireta = enviDireta = enviarMalaDireta;
-        window.filtrarMalaDireta;
-        window.filtrarMalaDireta;
-        window.filtrarMalaDireta;
-        window.filtrarApenasBloquearApenasBloquearApenasBloqueados =arApenasBloqueados =ados = filtrarApenados = filtrarApen filtrarApen filtrarApenasBloqueados;
-        window.adasBloqueados;
-        window.adasBloqueados;
-        window.adasBloqueados;
-        window.adicionarCardProdicionarCardProdicionarCardProduto = adicionarCardProdutoicionarCardProduto = adicionarCardProduto;
-        window.uto = adicionarCardProduto;
-        window.uto = adicionarCardProduto;
+        window.enviarComprovante = enviarComprovante;
+        window.fecharPedidoUsdt = fecharPedidoUsdt;
+        window.exportarContatos = exportarContatos;
+        window.importarFornecedores = importarFornecedores;
+        window.exportarBuscadores = exportarBuscadores;
+        window.importarBuscadores = importarBuscadores;
+        window.abrirModalAddMassa = abrirModalAddMassa;
+        window.fecharModalAddMassa = fecharModalAddMassa;
+        window.adicionarLinhaAnuncio = adicionarLinhaAnuncio;
+        window.executarLancamentoMassa = executarLancamentoMassa;
+        window.abrirModalMalaDireta = abrirModalMalaDireta;
+        window.fecharModalMalaDireta = fecharModalMalaDireta;
+        window.enviarMalaDireta = enviarMalaDireta;
+        window.filtrarApenasBloqueados = filtrarApenasBloqueados;
+        window.adicionarCardProduto = adicionarCardProduto;
         window.removerCard = removerCard;
-        window;
-        window.removerCard = removerCard;
-        windowremoverCard = removerCard;
-        windowremoverCard = removerCard;
-        window.renderizarAtrib.renderizarAtributosCard.renderizarAtrib.renderizarAtributosCardutosCard = renderizarAtributos = renderizarAtutosCard = renderizarAtributos = renderizarAtributosCard;
-Card;
-        window.adicionributosCard;
-        windowCard;
-        window.adicion        window.adicionararNovoCheckbox =.adicionarNovoCheckbox =arNovoCheckbox =NovoCheckbox = adicionarNovoCheckbox;
- adicionarNovoCheck adicionarNovoCheckbox;
- adicionarNovoCheckbox;
-        window.salvarBaseMassabox;
-        window.salvarBase        window.salvarBaseMassa        window.salvarBase = salvarBaseMassaMassa = salvarBaseMassa = salvarBaseMassa = salvarBaseMassa;
-        window.delProduto =;
-        window.delProduto =Massa;
-        window.delProduto = delProd;
+        window.renderizarAtributosCard = renderizarAtributosCard;
+        window.adicionarNovoCheckbox = adicionarNovoCheckbox;
+        window.salvarBaseMassa = salvarBaseMassa;
         window.delProduto = delProduto;
-        window.renderProd delProduto;
-        window.renderProduto;
-        window delProduto;
-        window.renderProdutosListutosList.renderProdutosListutosList = renderProdutosList;
- = renderProdutosList;
-        window.filtrarModelosPor = renderProdutosList;
-        window.filtr = renderProdutosList;
-        window.filtrarModelosPor        window.filtrarModelosPorGrupo = filtrarModelosPorarModelosPorGrupo = filtrarModelGrupo = filtrarModelosPorGrupo = filtrGrupo;
-       osPorGrupo;
-        window.atGrupo;
-       arModelosPorGrupo;
-        window.at window.atualizarModelosMassaualizarModelos window.atualizarModelosMassaualizarModelosMassa = atual = atualizarModelosMassa;
-Massa = atualizarModelosM = atualizarModelosMassa;
-izarModelosMassa;
-    </    </script>
-</body>
-</assa;
+        window.renderProdutosList = renderProdutosList;
+        window.filtrarModelosPorGrupo = filtrarModelosPorGrupo;
+        window.atualizarModelosMassa = atualizarModelosMassa;
     </script>
-</body    </script>
-</bodyscript>
-</bodyhtml>
+</body>
+</html>
