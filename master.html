@@ -225,6 +225,8 @@
                     <div class="flex gap-2 w-2/3 justify-end items-center">
                         <input type="text" placeholder="🔍 BUSCAR PRODUTO, LOJA, COR..." class="apple-input !w-1/3 !py-2" onkeyup="filterAnuncios(this.value)" id="buscaAnuncios">
                         <button onclick="zerarEstoqueSelecionados()" class="btn-master !bg-orange-600 master-only">🚫 ZERAR SELECIONADOS</button>
+                        <!-- NOVO BOTÃO APAGAR EM MASSA -->
+                        <button onclick="apagarAnunciosSelecionados()" class="btn-master !bg-red-800 master-only">🗑️ APAGAR SELECIONADOS</button>
                         <button onclick="restaurarEstoqueSelecionados()" class="btn-master !bg-emerald-600 master-only">♻️ RESTAURAR ESTOQUE</button>
                         <button onclick="abrirModalZerarEstoque()" class="btn-master !bg-red-600 master-only">🚫 ZERAR ESTOQUE DE LOJA</button>
                         <button onclick="abrirModalGestaoAnuncio()" class="btn-master !bg-blue-600">➕ LANÇAR ANÚNCIO</button>
@@ -476,15 +478,19 @@
         </div>
     </div>
 
-    <!-- MODAL HORUS (MODIFICADO: DOIS BOTÕES DE COPIAR) -->
+    <!-- MODAL HORUS (MODIFICADO: TRÊS BOTÕES DE COPIAR) -->
     <div id="modalHorus" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-4xl bg-[#050505] border-[#38383a] max-h-[80vh] overflow-y-auto relative">
             <button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80 z-50">X</button>
             <div class="flex justify-between items-center mb-2 border-b border-zinc-800 pb-2 mt-4">
                 <h3 class="text-sm font-black flex items-center gap-2">👁️$ FERRAMENTA HORUS <span class="text-[8px] text-zinc-500">MENOR PREÇO ABSOLUTO</span></h3>
                 <div class="flex gap-2">
-                    <button onclick="copiarListaHorus('novos')" class="btn-master !bg-green-600 px-3 py-1 text-[9px] flex items-center gap-1">
-                        📋 NOVOS + CPO
+                    <!-- NOVOS BOTÕES -->
+                    <button onclick="copiarListaHorus('novos_iphone')" class="btn-master !bg-green-600 px-3 py-1 text-[9px] flex items-center gap-1">
+                        📋 NOVOS E CPO (IPHONE / ACESSÓRIOS)
+                    </button>
+                    <button onclick="copiarListaHorus('novos_outros')" class="btn-master !bg-blue-600 px-3 py-1 text-[9px] flex items-center gap-1">
+                        📋 NOVOS (IPAD/MAC/WATCH/ETC)
                     </button>
                     <button onclick="copiarListaHorus('seminovos')" class="btn-master !bg-yellow-600 px-3 py-1 text-[9px] flex items-center gap-1">
                         📋 SEMINOVOS
@@ -561,6 +567,10 @@
                     <option value="IMAC">IMAC</option>
                     <option value="IPAD">IPAD</option>
                     <option value="ACESSORIOS">ACESSORIOS</option>
+                    <!-- NOVOS GRUPOS -->
+                    <option value="AIRPODS">AIRPODS</option>
+                    <option value="PENCIL">PENCIL</option>
+                    <option value="AIRTAG">AIRTAG</option>
                 </select>
                 <div class="grid grid-cols-2 gap-2">
                     <select id="editModelo" class="apple-input" onchange="libMemMEdit(this.value)" required>
@@ -658,6 +668,10 @@
                     <option value="IMAC">IMAC</option>
                     <option value="IPAD">IPAD</option>
                     <option value="ACESSORIOS">ACESSORIOS</option>
+                    <!-- NOVOS GRUPOS -->
+                    <option value="AIRPODS">AIRPODS</option>
+                    <option value="PENCIL">PENCIL</option>
+                    <option value="AIRTAG">AIRTAG</option>
                 </select>
 
                 <div class="grid grid-cols-3 gap-2 mb-2">
@@ -761,6 +775,10 @@
                     <option value="IMAC">IMAC</option>
                     <option value="IPAD">IPAD</option>
                     <option value="ACESSORIOS">ACESSORIOS</option>
+                    <!-- NOVOS GRUPOS -->
+                    <option value="AIRPODS">AIRPODS</option>
+                    <option value="PENCIL">PENCIL</option>
+                    <option value="AIRTAG">AIRTAG</option>
                 </select>
                 <div class="grid grid-cols-2 gap-2">
                     <select id="bulkModelo" class="apple-input" onchange="libMemMBulk()">
@@ -938,6 +956,10 @@
                     <option value="IMAC">IMAC</option>
                     <option value="IPAD">IPAD</option>
                     <option value="ACESSORIOS">ACESSORIOS</option>
+                    <!-- NOVOS GRUPOS -->
+                    <option value="AIRPODS">AIRPODS</option>
+                    <option value="PENCIL">PENCIL</option>
+                    <option value="AIRTAG">AIRTAG</option>
                 </select>
             </div>
 
@@ -1168,6 +1190,20 @@
             else { alert('Estoque restaurado com sucesso!'); loadAll(); }
         }
 
+        // ===== NOVA FUNÇÃO: APAGAR ANÚNCIOS SELECIONADOS =====
+        async function apagarAnunciosSelecionados() {
+            const checkboxes = document.querySelectorAll('.chk-anu:checked');
+            const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+            if (ids.length === 0) return alert('Selecione os anúncios nas caixinhas para apagar.');
+            if (!confirm(`Deseja EXCLUIR PERMANENTEMENTE ${ids.length} anúncio(s) selecionado(s)?`)) return;
+            const { error } = await _s.from('ofertas').delete().in('id', ids);
+            if (error) alert('Erro ao apagar: ' + error.message);
+            else {
+                alert('Anúncios apagados com sucesso!');
+                loadAll();
+            }
+        }
+
         async function tryLogin() { 
             const senhaDigitada = document.getElementById('mPass').value;
             if (senhaDigitada === '96197577@') { 
@@ -1304,7 +1340,8 @@
                         estado_sede: o.fornecedores.estado,
                         condicao: o.condicao,
                         cidade_aparelho: o.cidade_aparelho,
-                        estado_aparelho: o.estado_aparelho
+                        estado_aparelho: o.estado_aparelho,
+                        categoria: o.variacoes.produtos_mestre.categoria
                     };
                 }
             });
@@ -1343,16 +1380,35 @@
                 alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
                 return;
             }
-            let ofertasFiltradas = ofertasHorus;
-            if (tipo === 'novos') {
-                ofertasFiltradas = ofertasHorus.filter(o => o.condicao === 'Novo' || o.condicao === 'CPO');
+
+            let ofertasFiltradas = [];
+
+            if (tipo === 'novos_iphone') {
+                ofertasFiltradas = ofertasHorus.filter(o => 
+                    (o.condicao === 'Novo' || o.condicao === 'CPO') && 
+                    (o.categoria === 'IPHONE' || o.categoria === 'ACESSORIOS')
+                );
+            } else if (tipo === 'novos_outros') {
+                ofertasFiltradas = ofertasHorus.filter(o => 
+                    o.condicao === 'Novo' && 
+                    (o.categoria === 'IPAD' || o.categoria === 'MACBOOK' || o.categoria === 'IMAC' || 
+                     o.categoria === 'APPLEWATCH' || o.categoria === 'AIRPODS' || 
+                     o.categoria === 'PENCIL' || o.categoria === 'AIRTAG')
+                );
             } else if (tipo === 'seminovos') {
-                ofertasFiltradas = ofertasHorus.filter(o => o.condicao !== 'Novo' && o.condicao !== 'CPO');
+                ofertasFiltradas = ofertasHorus.filter(o => 
+                    o.condicao !== 'Novo' && o.condicao !== 'CPO' && 
+                    (o.categoria === 'IPHONE' || o.categoria === 'IPAD' || 
+                     o.categoria === 'MACBOOK' || o.categoria === 'IMAC' || 
+                     o.categoria === 'APPLEWATCH')
+                );
             }
+
             if (ofertasFiltradas.length === 0) {
                 alert('Nenhuma oferta encontrada para esta categoria.');
                 return;
             }
+
             const grupos = {};
             ofertasFiltradas.forEach(o => {
                 const key = `${o.variacoes.produto_id}-${o.variacoes.capacidade}-${o.variacoes.cor}-${o.regiao_id}-${o.moeda}-${o.condicao}`;
@@ -1373,6 +1429,7 @@
                     };
                 }
             });
+
             let lista = Object.values(grupos);
             function extrairNumero(nome) {
                 const match = nome.match(/\d+/);
@@ -1424,6 +1481,7 @@
                     return `+${digits}`;
                 }
             }
+
             lista.sort((a, b) => {
                 const numA = extrairNumero(a.produto);
                 const numB = extrairNumero(b.produto);
@@ -1435,7 +1493,12 @@
                 const capB = extrairCapacidade(b.capacidade);
                 return capA - capB;
             });
-            let titulo = tipo === 'novos' ? '👁️‍🗨️ *RANKING DE NOVOS + CPO MAIS BARATOS* 🔥' : '👁️‍🗨️ *RANKING SEMINOVOS POR MODELOS MAIS BARATOS* 🔥';
+
+            let titulo = '';
+            if (tipo === 'novos_iphone') titulo = '👁️‍🗨️ *RANKING NOVOS E CPO (IPHONE / ACESSÓRIOS)* 🔥';
+            else if (tipo === 'novos_outros') titulo = '👁️‍🗨️ *RANKING NOVOS (IPAD/MAC/WATCH/ETC)* 🔥';
+            else titulo = '👁️‍🗨️ *RANKING SEMINOVOS* 🔥';
+
             let texto = titulo + '\n\n';
             let currentModeloBase = '';
             lista.forEach(item => {
@@ -1630,8 +1693,8 @@
             const [f, c, o, v, r, fn, p] = await Promise.all([
                 _s.from('fornecedores').select('*').order('nome'),
                 _s.from('clientes_buscador').select('*').order('nome'),
-                _s.from('ofertas').select('*, fornecedores(nome, insignia_manual), variacoes(id, produtos_mestre(id, nome), capacidade, cor)').order('criado_em', {ascending:false}),
-                _s.from('variacoes').select('id, produtos_mestre(id, nome), capacidade, cor'),
+                _s.from('ofertas').select('*, fornecedores(nome, insignia_manual), variacoes(id, produtos_mestre(id, nome, categoria), capacidade, cor)').order('criado_em', {ascending:false}),
+                _s.from('variacoes').select('id, produtos_mestre(id, nome, categoria), capacidade, cor'),
                 _s.from('regioes').select('*'),
                 _s.from('funcionarios').select('*').order('nome'),
                 _s.from('produtos_mestre').select('*').order('nome')
@@ -1826,7 +1889,6 @@
 
             let isBrl = document.getElementById('f_brl_m').value.length > 0;
             let precoFinal = isBrl ? parseP(document.getElementById('f_brl_m').value) : parseP(document.getElementById('f_usd_m').value);
-            // Se precoFinal for NaN, define 0
             if (isNaN(precoFinal)) precoFinal = 0;
 
             let condicaoFinal = (tipo === 'Novo' || tipo === 'CPO') ? tipo : document.getElementById('f_cond_m').value;
@@ -1836,7 +1898,6 @@
             let q = parseInt(document.getElementById('f_qtd_m').value);
             if (isNaN(q) || q < 0) q = 0;
 
-            // Origem opcional
             let regiaoId = document.getElementById('f_orig_m').value;
             if (!regiaoId) regiaoId = null;
 
@@ -1844,7 +1905,6 @@
             if (!document.getElementById('gLocalOrigem').checked) {
                 cidadeAparelho = document.getElementById('gCidadeAparelho').value;
                 estadoAparelho = document.getElementById('gEstadoAparelho').value;
-                // se vazio, será null
             }
 
             const payload = { 
@@ -1897,7 +1957,6 @@
             if (!document.getElementById('editLocalOrigem').checked) {
                 cidadeAparelho = document.getElementById('editCidadeAparelho').value;
                 estadoAparelho = document.getElementById('editEstadoAparelho').value;
-                // se vazio, será null
             }
             const updates = {
                 variacao_id: variacao.id,
@@ -2004,7 +2063,7 @@
             document.getElementById('mAtaPais').value='Brasil'; 
             toggleLocationFields('Ata'); 
             document.getElementById('mAtaSenha').value=''; 
-            document.getElementById('mAtaAtivo').checked = true; // padrão ativo
+            document.getElementById('mAtaAtivo').checked = true;
             document.getElementById('mAtaVeri').checked = false;
             document.getElementById('mAtaAcessorios').checked = false;
             document.getElementById('modalAta').classList.remove('hidden'); 
@@ -2025,7 +2084,6 @@
             document.getElementById('mAtaSenha').value = a.senha||''; 
             document.getElementById('mAtaAtivo').checked = a.ativo; 
             document.getElementById('mAtaVeri').checked = a.verificado; 
-            // Carregar checkbox de acessórios
             let insig = [];
             try {
                 if (Array.isArray(a.insignia_manual)) insig = a.insignia_manual;
@@ -2042,7 +2100,6 @@
             btn.innerText = 'SALVANDO...';
             const id = document.getElementById('mAtaId').value; 
 
-            // Obter insígnias atuais se for edição
             let insigAtuais = [];
             if (id) {
                 const existing = dbAta.find(x => x.id == id);
@@ -2446,6 +2503,8 @@
                 }).join(''); 
         }
 
+        // Funções expostas globalmente (adicionando a nova função apagarAnunciosSelecionados)
+        window.apagarAnunciosSelecionados = apagarAnunciosSelecionados;
         window.abrirModalHorus = abrirModalHorus;
         window.filtrarHorus = filtrarHorus;
         window.selAll = selAll;
@@ -2607,11 +2666,9 @@
             const badgeText = document.getElementById('aprovacaoBadgeText');
             const filtroInput = document.getElementById('filtroAta');
             if (filtroBloqueadosAtivo) {
-                // Desativar filtro
                 filtroInput.value = '';
                 filterTable('listAta', '');
                 filtroBloqueadosAtivo = false;
-                // Reavaliar animação do badge
                 const pendentesSalvos = parseInt(localStorage.getItem('ifipe_pendentes')) || 0;
                 if (inativosCount > pendentesSalvos) {
                     badgeText.classList.add('badge-piscante');
@@ -2619,13 +2676,10 @@
                     badgeText.classList.remove('badge-piscante');
                 }
             } else {
-                // Ativar filtro
                 filtroInput.value = 'BLOQUEADO';
                 filterTable('listAta', 'BLOQUEADO');
                 filtroBloqueadosAtivo = true;
-                // Salvar número atual
                 localStorage.setItem('ifipe_pendentes', inativosCount);
-                // Remover animação
                 badgeText.classList.remove('badge-piscante');
             }
         }
@@ -2990,7 +3044,6 @@
             let linhas = document.querySelectorAll('#linhasContainer .linha-anuncio');
             if (linhas.length === 0) { alert('Adicione pelo menos uma linha.'); return; }
 
-            // Capturar checkboxes globais
             let aceitaPix = document.getElementById('massaPix').checked;
             let aceitaUsdt = document.getElementById('massaUsdt').checked;
             let aceitaNegocia = document.getElementById('massaNegocia').checked;
@@ -2998,7 +3051,6 @@
             let aceitaColeta = document.getElementById('massaColeta').checked;
             let emiteNota = document.getElementById('massaNota').checked;
 
-            // Verificar se é para todos os atacadistas ativos
             let fornecedoresIds = [];
             if (fornecedorInput === 'TODOS') {
                 if (!confirm('Você está prestes a lançar estes produtos para TODOS os lojistas ativos. Confirma?')) {
@@ -3013,7 +3065,6 @@
                 fornecedoresIds = [fornecedorInput];
             }
 
-            // Construir os payloads base (sem fornecedor_id) a partir das linhas
             let basePayloads = [];
             let logArea = document.getElementById('massaLog');
             logArea.innerHTML = '';
@@ -3041,13 +3092,12 @@
                     continue;
                 }
 
-                // Localização: se estado e cidade foram preenchidos, usar; caso contrário, null
                 let cidadeAparelho = (estado && cidade) ? cidade : null;
                 let estadoAparelho = (estado && cidade) ? estado : null;
 
                 basePayloads.push({
                     variacao_id: variacao.id,
-                    regiao_id: regiaoId || null, // se vazio, null
+                    regiao_id: regiaoId || null,
                     condicao: condicao,
                     preco: preco,
                     moeda: 'BRL',
@@ -3071,7 +3121,6 @@
                 return;
             }
 
-            // Expandir para todos os fornecedores
             let todosPayloads = [];
             for (let fid of fornecedoresIds) {
                 for (let bp of basePayloads) {
@@ -3084,7 +3133,6 @@
 
             logArea.innerHTML += `<div class="text-white">⏳ Inserindo ${todosPayloads.length} anúncios (${basePayloads.length} produtos x ${fornecedoresIds.length} lojas)...</div>`;
 
-            // Inserir em lote
             const results = await Promise.allSettled(todosPayloads.map(p => _s.from('ofertas').insert([p])));
 
             let sucessos = 0, erros = 0;
@@ -3121,9 +3169,36 @@
                     <td class="py-2 text-[10px]">${p.categoria}</td>
                     <td class="py-2 text-right">
                         <button onclick="delProduto(${p.id})" class="bg-red-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-red-500">🗑️ EXCLUIR</button>
+                        <!-- BOTÃO EDITAR PRODUTO -->
+                        <button onclick="editarProduto(${p.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500 ml-1">✏️ EDITAR</button>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        // NOVA FUNÇÃO PARA EDITAR PRODUTO
+        async function editarProduto(id) {
+            const produto = dbProdutos.find(p => p.id == id);
+            if (!produto) return;
+
+            // Usando prompt simples para edição (pode ser substituído por um modal mais elaborado se desejar)
+            const novoNome = prompt('Novo nome do produto:', produto.nome);
+            if (novoNome === null) return; // cancelou
+            const novaCategoria = prompt('Nova categoria do produto:', produto.categoria);
+            if (novaCategoria === null) return;
+
+            if (!novoNome.trim() || !novaCategoria.trim()) {
+                alert('Nome e categoria não podem ficar vazios.');
+                return;
+            }
+
+            const { error } = await _s.from('produtos_mestre').update({ nome: novoNome.trim().toUpperCase(), categoria: novaCategoria.trim().toUpperCase() }).eq('id', id);
+            if (error) {
+                alert('Erro ao atualizar: ' + error.message);
+            } else {
+                alert('Produto atualizado com sucesso!');
+                loadAll(); // recarrega tudo
+            }
         }
 
         async function delProduto(id) {
@@ -3157,12 +3232,33 @@
                         <option value="IMAC">IMAC</option>
                         <option value="IPAD">IPAD</option>
                         <option value="ACESSORIOS">ACESSORIOS</option>
+                        <!-- NOVOS GRUPOS -->
+                        <option value="AIRPODS">AIRPODS</option>
+                        <option value="PENCIL">PENCIL</option>
+                        <option value="AIRTAG">AIRTAG</option>
+                        <!-- OPÇÃO PARA CRIAR NOVO GRUPO -->
+                        <option value="OUTRO">+ CRIAR NOVO GRUPO</option>
                     </select>
                     <input type="text" class="nome-produto apple-input text-xs" placeholder="NOME DO PRODUTO">
+                </div>
+                <!-- Input para novo grupo (inicialmente oculto) -->
+                <div class="novo-grupo-wrapper hidden mb-3">
+                    <input type="text" class="novo-grupo-input apple-input text-xs" placeholder="NOME DO NOVO GRUPO">
                 </div>
                 <div class="atributos-container space-y-3"></div>
             `;
             container.prepend(cardDiv);
+
+            // Adicionar evento para mostrar/esconder o input de novo grupo
+            const categoriaSelect = cardDiv.querySelector('.categoria');
+            const novoGrupoWrapper = cardDiv.querySelector('.novo-grupo-wrapper');
+            categoriaSelect.addEventListener('change', function() {
+                if (this.value === 'OUTRO') {
+                    novoGrupoWrapper.classList.remove('hidden');
+                } else {
+                    novoGrupoWrapper.classList.add('hidden');
+                }
+            });
         }
 
         function removerCard(cardId) {
@@ -3198,7 +3294,12 @@
             const container = card.querySelector('.atributos-container');
             container.innerHTML = '';
 
-            if (!categoria) return;
+            if (!categoria || categoria === 'OUTRO') {
+                // Para "OUTRO", não renderiza atributos pré-definidos, mas podemos deixar o usuário adicionar livremente via inputs genéricos
+                // Por simplicidade, vamos permitir apenas que ele crie variações depois manualmente, mas aqui vamos mostrar um aviso.
+                container.innerHTML = '<p class="text-[9px] text-gray-400">Categoria personalizada. Você poderá adicionar variações depois manualmente.</p>';
+                return;
+            }
 
             const criarGrupo = (titulo, opcoes, tipo) => {
                 const grupo = document.createElement('div');
@@ -3267,6 +3368,22 @@
                     container.appendChild(criarGrupo('Sub-grupo', subGrupo, 'subgrupo'));
                     container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
                     break;
+                case 'AIRPODS':
+                    // Para AIRPODS, podemos ter modelo (geração) e cor? Vamos simplificar com capacidade (geração) e cor
+                    const geracoesAirpods = ['1ª GERAÇÃO', '2ª GERAÇÃO', '3ª GERAÇÃO', 'PRO', 'PRO 2', 'MAX'];
+                    container.appendChild(criarGrupo('Geração', geracoesAirpods, 'memoria'));
+                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
+                    break;
+                case 'PENCIL':
+                    const modelosPencil = ['1ª GERAÇÃO', '2ª GERAÇÃO', 'USB-C', 'PRO'];
+                    container.appendChild(criarGrupo('Modelo', modelosPencil, 'memoria'));
+                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
+                    break;
+                case 'AIRTAG':
+                    // AIRTAG geralmente não tem muitas variações, mas podemos permitir gravação personalizada
+                    container.appendChild(criarGrupo('Modelo', ['PADRÃO'], 'memoria'));
+                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
+                    break;
                 default: break;
             }
         }
@@ -3282,8 +3399,20 @@
             let totalVariacoes = 0;
 
             for (const card of cards) {
-                const categoria = card.querySelector('.categoria').value;
-                const nomeProduto = card.querySelector('.nome-produto').value.trim().toUpperCase();
+                const categoriaSelect = card.querySelector('.categoria');
+                let categoria = categoriaSelect.value;
+                let nomeProduto = card.querySelector('.nome-produto').value.trim().toUpperCase();
+
+                // Se for OUTRO, pegar o valor do input de novo grupo
+                if (categoria === 'OUTRO') {
+                    const novoGrupoInput = card.querySelector('.novo-grupo-input');
+                    categoria = novoGrupoInput.value.trim().toUpperCase();
+                    if (!categoria) {
+                        alert('Preencha o nome do novo grupo.');
+                        return;
+                    }
+                }
+
                 if (!categoria || !nomeProduto) {
                     alert('Preencha categoria e nome do produto em todos os cards.');
                     return;
@@ -3362,12 +3491,23 @@
                             combinacoes.push({ capacidade: sub, cor });
                         }
                     }
+                } else if (categoria === 'AIRPODS' || categoria === 'PENCIL' || categoria === 'AIRTAG') {
+                    // Para novos grupos, tratar como combinação de capacidade (ou modelo) e cor
+                    for (const mem of grupos.memorias) {
+                        for (const cor of grupos.cores) {
+                            combinacoes.push({ capacidade: mem, cor });
+                        }
+                    }
+                } else {
+                    // Para categorias personalizadas (OUTRO), podemos permitir combinações livres? Por simplicidade, não criaremos variações automáticas, mas podemos pedir para inserir manualmente depois.
+                    // Neste caso, vamos pular a criação de variações e apenas criar o produto.
+                    combinacoes = []; // nenhuma variação automática
                 }
 
                 if (combinacoes.length === 0) {
-                    alert(`Nenhuma variação selecionada para o produto ${nomeProduto}. Pelo menos um checkbox de cada grupo deve estar marcado.`);
-                    await _s.from('produtos_mestre').delete().eq('id', produtoId);
-                    return;
+                    // Apenas produto sem variações
+                    totalProdutos++;
+                    continue;
                 }
 
                 const payloads = combinacoes.map(c => ({
@@ -3425,6 +3565,7 @@
         }
 
         // Expor funções globais
+        window.editarProduto = editarProduto; // adicionada
         window.abrirModalConfigPix = abrirModalConfigPix;
         window.fecharModalConfigPix = fecharModalConfigPix;
         window.salvarConfigPix = salvarConfigPix;
