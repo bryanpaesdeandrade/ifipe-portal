@@ -225,7 +225,7 @@
                     <div class="flex gap-2 w-2/3 justify-end items-center">
                         <input type="text" placeholder="🔍 BUSCAR PRODUTO, LOJA, COR..." class="apple-input !w-1/3 !py-2" onkeyup="filterAnuncios(this.value)" id="buscaAnuncios">
                         <button onclick="zerarEstoqueSelecionados()" class="btn-master !bg-orange-600 master-only">🚫 ZERAR SELECIONADOS</button>
-                        <!-- NOVO BOTÃO APAGAR EM MASSA -->
+                        <!-- Botão Apagar em Massa -->
                         <button onclick="apagarAnunciosSelecionados()" class="btn-master !bg-red-800 master-only">🗑️ APAGAR SELECIONADOS</button>
                         <button onclick="restaurarEstoqueSelecionados()" class="btn-master !bg-emerald-600 master-only">♻️ RESTAURAR ESTOQUE</button>
                         <button onclick="abrirModalZerarEstoque()" class="btn-master !bg-red-600 master-only">🚫 ZERAR ESTOQUE DE LOJA</button>
@@ -3036,7 +3036,7 @@
             });
         }
 
-        // ========== FUNÇÃO MODIFICADA: executarLancamentoMassa ==========
+        // ========== FUNÇÃO MODIFICADA: executarLancamentoMassa (COM BULK INSERT EM CHUNKS) ==========
         async function executarLancamentoMassa() {
             let fornecedorInput = document.getElementById('massaFornecedor').value;
             if (!fornecedorInput) { alert('Selecione um fornecedor ou a opção "Lançar para Todos".'); return; }
@@ -3131,21 +3131,22 @@
                 }
             }
 
-            logArea.innerHTML += `<div class="text-white">⏳ Inserindo ${todosPayloads.length} anúncios (${basePayloads.length} produtos x ${fornecedoresIds.length} lojas)...</div>`;
+            logArea.innerHTML += `<div class="text-white">⏳ Inserindo ${todosPayloads.length} anúncios em lotes...</div>`;
+            const chunkSize = 300;
+            let sucessos = 0;
+            let erros = 0;
 
-            const results = await Promise.allSettled(todosPayloads.map(p => _s.from('ofertas').insert([p])));
+            for (let i = 0; i < todosPayloads.length; i += chunkSize) {
+                const chunk = todosPayloads.slice(i, i + chunkSize);
+                const { error } = await _s.from('ofertas').insert(chunk);
 
-            let sucessos = 0, erros = 0;
-            results.forEach((r, idx) => {
-                if (r.status === 'fulfilled' && !r.value.error) {
-                    sucessos++;
+                if (error) {
+                    erros += chunk.length;
+                    logArea.innerHTML += `<div class="text-red-400">❌ Erro no lote ${Math.floor(i/chunkSize) + 1}: ${error.message}</div>`;
                 } else {
-                    erros++;
-                    if (erros < 10) {
-                        logArea.innerHTML += `<div class="text-red-400">❌ Erro no payload ${idx+1}: ${r.value?.error?.message || r.reason}</div>`;
-                    }
+                    sucessos += chunk.length;
                 }
-            });
+            }
 
             logArea.innerHTML += `<div class="text-blue-400">✅ Concluído: ${sucessos} sucessos, ${erros} erros.</div>`;
             if (sucessos > 0) {
