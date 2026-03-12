@@ -1314,10 +1314,11 @@
             else { alert('Estoque zerado com sucesso!'); fecharModais(); loadAll(); }
         }
 
+        // ===== FUNÇÃO CORRIGIDA: abrirModalHorus =====
         async function abrirModalHorus() {
             const { data: ofertas, error } = await _s
                 .from('ofertas')
-                .select('*, fornecedores!inner(nome, whatsapp, pais, cidade, estado), variacoes!inner(produtos_mestre!inner(nome), capacidade, cor), regioes!inner(nome, bandeira)')
+                .select('*, fornecedores!inner(nome, whatsapp, pais, cidade, estado), variacoes!inner(produtos_mestre!inner(nome, categoria), capacidade, cor), regioes!inner(nome, bandeira)')
                 .gt('quantidade', 0);
             if (error) { alert('Erro ao carregar dados para Horus: ' + error.message); return; }
             ofertasHorus = ofertas;
@@ -1375,34 +1376,21 @@
             });
         }
 
+        // ===== FUNÇÃO CORRIGIDA: copiarListaHorus =====
         function copiarListaHorus(tipo) {
             if (!ofertasHorus || ofertasHorus.length === 0) {
                 alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
                 return;
             }
 
-            let ofertasFiltradas = [];
-
-            if (tipo === 'novos_iphone') {
-                ofertasFiltradas = ofertasHorus.filter(o => 
-                    (o.condicao === 'Novo' || o.condicao === 'CPO') && 
-                    (o.categoria === 'IPHONE' || o.categoria === 'ACESSORIOS')
-                );
-            } else if (tipo === 'novos_outros') {
-                ofertasFiltradas = ofertasHorus.filter(o => 
-                    o.condicao === 'Novo' && 
-                    (o.categoria === 'IPAD' || o.categoria === 'MACBOOK' || o.categoria === 'IMAC' || 
-                     o.categoria === 'APPLEWATCH' || o.categoria === 'AIRPODS' || 
-                     o.categoria === 'PENCIL' || o.categoria === 'AIRTAG')
-                );
-            } else if (tipo === 'seminovos') {
-                ofertasFiltradas = ofertasHorus.filter(o => 
-                    o.condicao !== 'Novo' && o.condicao !== 'CPO' && 
-                    (o.categoria === 'IPHONE' || o.categoria === 'IPAD' || 
-                     o.categoria === 'MACBOOK' || o.categoria === 'IMAC' || 
-                     o.categoria === 'APPLEWATCH')
-                );
-            }
+            let ofertasFiltradas = ofertasHorus.filter(o => {
+                const cat = (o.variacoes.produtos_mestre.categoria || '').toUpperCase();
+                const cond = o.condicao;
+                if (tipo === 'novos_iphone') return (cond === 'Novo' || cond === 'CPO') && (cat === 'IPHONE' || cat === 'ACESSORIOS' || cat === 'ACESSORIOS APPLE');
+                if (tipo === 'novos_outros') return (cond === 'Novo' || cond === 'CPO') && (cat !== 'IPHONE' && cat !== 'ACESSORIOS' && cat !== 'ACESSORIOS APPLE');
+                if (tipo === 'seminovos') return cond !== 'Novo' && cond !== 'CPO';
+                return false;
+            });
 
             if (ofertasFiltradas.length === 0) {
                 alert('Nenhuma oferta encontrada para esta categoria.');
