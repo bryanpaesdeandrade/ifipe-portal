@@ -149,7 +149,6 @@
         .badge-cpo { background: #f97316; }
         .badge-grade { background: #eab308; color: black; }
         .badge-outros { background: #6b7280; }
-        .badge-reposicao { background: #6b7280; color: #ccc; }
 
         .badge-origem-emoji {
             font-size: 0.9rem;
@@ -352,33 +351,11 @@
             }
         }
 
-        /* Pills de categoria */
-        .category-pills {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin: 12px 0;
-            justify-content: center;
-        }
-        .category-pill {
-            background: var(--input);
-            border: 1px solid var(--border);
-            border-radius: 50px;
-            padding: 6px 16px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--text);
-        }
-        .category-pill.active {
-            background: var(--blue);
-            border-color: var(--blue);
-            color: white;
-        }
-        .category-pill:hover {
-            background: var(--blue);
-            color: white;
+        /* Estilo para quando a busca está focada */
+        .updating-hidden {
+            opacity: 0.6;
+            pointer-events: none;
+            transition: opacity 0.3s;
         }
     </style>
 </head>
@@ -735,22 +712,11 @@
             </div>
         </div>
 
-        <!-- Conteúdo principal (busca, pills, filtros, cards) -->
+        <!-- Conteúdo principal (busca, filtros, cards) -->
         <div class="lg:col-span-4">
             <!-- Barra de pesquisa -->
             <div class="mb-3 relative">
-                <input type="text" id="searchInput" placeholder="ENCONTRE O MELHOR PREÇO (produto, loja, cidade...)" class="apple-input pl-4 pr-4 py-3 text-base font-medium border-2 uppercase-input" oninput="registrarInteracao(); renderizarCards()">
-            </div>
-
-            <!-- Pills de categoria (nova) -->
-            <div class="category-pills" id="categoryPills">
-                <button class="category-pill active" data-categoria="todos" onclick="filtrarPorCategoria('todos')">TODOS</button>
-                <button class="category-pill" data-categoria="IPHONE" onclick="filtrarPorCategoria('IPHONE')">IPHONE</button>
-                <button class="category-pill" data-categoria="IPAD" onclick="filtrarPorCategoria('IPAD')">IPAD</button>
-                <button class="category-pill" data-categoria="MACBOOK" onclick="filtrarPorCategoria('MACBOOK')">MACBOOK</button>
-                <button class="category-pill" data-categoria="APPLEWATCH" onclick="filtrarPorCategoria('APPLEWATCH')">WATCH</button>
-                <button class="category-pill" data-categoria="AIRPODS" onclick="filtrarPorCategoria('AIRPODS')">AIRPODS</button>
-                <button class="category-pill" data-categoria="OUTROS" onclick="filtrarPorCategoria('OUTROS')">OUTROS</button>
+                <input type="text" id="searchInput" placeholder="ENCONTRE O MELHOR PREÇO (produto, loja, cidade...)" class="apple-input pl-4 pr-4 py-3 text-base font-medium border-2 uppercase-input" oninput="atualizarFiltros()">
             </div>
 
             <!-- Container do botão de oportunidades -->
@@ -758,25 +724,25 @@
 
             <!-- Filtros em grid -->
             <div class="filters-grid mb-4">
-                <select id="filtroCategoria" class="apple-input text-xs py-2" onchange="registrarInteracao(); renderizarCards()">
+                <select id="filtroCategoria" class="apple-input text-xs py-2" onchange="atualizarFiltros()">
                     <option value="">Modelos</option>
                 </select>
-                <select id="filtroCondicao" class="apple-input text-xs py-2" onchange="registrarInteracao(); renderizarCards()">
+                <select id="filtroCondicao" class="apple-input text-xs py-2" onchange="atualizarFiltros()">
                     <option value="">Condição</option>
                 </select>
-                <select id="filtroCapacidade" class="apple-input text-xs py-2" onchange="registrarInteracao(); renderizarCards()">
+                <select id="filtroCapacidade" class="apple-input text-xs py-2" onchange="atualizarFiltros()">
                     <option value="">GB</option>
                 </select>
-                <select id="filtroCor" class="apple-input text-xs py-2" onchange="registrarInteracao(); renderizarCards()">
+                <select id="filtroCor" class="apple-input text-xs py-2" onchange="atualizarFiltros()">
                     <option value="">Cores</option>
                 </select>
-                <select id="filtroCidade" class="apple-input text-xs py-2" onchange="registrarInteracao(); renderizarCards()">
+                <select id="filtroCidade" class="apple-input text-xs py-2" onchange="atualizarFiltros()">
                     <option value="">Cidades</option>
                 </select>
-                <select id="filtroAnunciante" class="apple-input text-xs py-2" onchange="registrarInteracao(); renderizarCards()">
+                <select id="filtroAnunciante" class="apple-input text-xs py-2" onchange="atualizarFiltros()">
                     <option value="">Anunciante</option>
                 </select>
-                <select id="filtroPais" class="apple-input text-xs py-2" onchange="registrarInteracao(); renderizarCards()">
+                <select id="filtroPais" class="apple-input text-xs py-2" onchange="atualizarFiltros()">
                     <option value="">Todos os Países</option>
                     <option value="Brasil">Brasil</option>
                     <option value="EUA">EUA</option>
@@ -824,18 +790,38 @@
 
         let DADOS_PROCESSADOS = { menorPrecoPorProdutoGrupo: {} };
 
-        // Variáveis para controle de interação e atualização automática
-        let ultimaInteracao = Date.now();
-        let pausarAtualizacao = false;
-        let timerPausa;
+        // ===== ESTADO GLOBAL DOS FILTROS =====
+        let filtrosAtuais = {
+            busca: '',
+            categoria: '',
+            condicao: '',
+            capacidade: '',
+            cor: '',
+            cidade: '',
+            anunciante: '',
+            pais: ''
+        };
 
-        function registrarInteracao() {
-            ultimaInteracao = Date.now();
-            // Se houver um timer de pausa, reinicia
-            if (timerPausa) clearTimeout(timerPausa);
-            timerPausa = setTimeout(() => {
-                pausarAtualizacao = false;
-            }, 15000);
+        // Flag para pausar renderização enquanto o campo de busca estiver focado
+        let pausarRenderizacao = false;
+
+        // ===== FUNÇÃO PARA ATUALIZAR OS FILTROS E RENDERIZAR =====
+        function atualizarFiltros() {
+            filtrosAtuais.busca = document.getElementById('searchInput').value.toLowerCase().trim();
+            filtrosAtuais.categoria = document.getElementById('filtroCategoria').value;
+            filtrosAtuais.condicao = document.getElementById('filtroCondicao').value;
+            filtrosAtuais.capacidade = document.getElementById('filtroCapacidade').value;
+            filtrosAtuais.cor = document.getElementById('filtroCor').value;
+            filtrosAtuais.cidade = document.getElementById('filtroCidade').value;
+            filtrosAtuais.anunciante = document.getElementById('filtroAnunciante').value;
+            filtrosAtuais.pais = document.getElementById('filtroPais').value;
+            renderizarCards();
+        }
+
+        // ===== VERIFICA SE O CAMPO DE BUSCA ESTÁ FOCADO =====
+        function verificarFocoBusca() {
+            const active = document.activeElement;
+            return active && active.id === 'searchInput';
         }
 
         // ===== NOVAS VARIÁVEIS PARA TRAVA USDT =====
@@ -1187,16 +1173,16 @@
             await checarNotificacoes();
             await carregarMensagensSistema();
 
-            // Polling inteligente a cada 7 segundos (pausa se usuário interagiu)
-            setInterval(() => {
-                if (!document.hidden && (Date.now() - ultimaInteracao > 15000)) {
-                    forcarAtualizacao();
+            // Polling inteligente a cada 7 segundos: se a busca não estiver focada, renderiza com os filtros atuais
+            setInterval(async () => {
+                if (!document.hidden) {
+                    // Busca dados em background
+                    await carregarDados(true); // true indica apenas atualizar ofertas, sem resetar filtros
                 }
             }, 7000);
 
             atualizarBotaoUsdt();
             setInterval(atualizarBotaoUsdt, 60000);
-
             setInterval(async () => {
                 await carregarInstrucoesPix();
             }, 30000);
@@ -1217,7 +1203,7 @@
             } catch (e) { console.warn('WebSocket Binance falhou'); }
         }
 
-        // Função para buscar todos os registros com paginação
+        // ===== FUNÇÃO DE CARREGAMENTO COM PAGINAÇÃO (SUPABASE) =====
         async function fetchAll(table, query = {}, select = '*', extra = '') {
             let allData = [];
             let page = 0;
@@ -1230,7 +1216,7 @@
                     }
                 }
                 if (extra) {
-                    // extra pode ser string com .gt, etc. Mas para simplificar, vamos tratar casos específicos
+                    // extra pode ser string com .gt, etc. Para simplificar, vamos tratar casos específicos
                 }
                 const { data, error } = await q;
                 if (error) throw error;
@@ -1241,76 +1227,61 @@
             return allData;
         }
 
-        async function carregarDados() {
+        // Modificado para aceitar um parâmetro que indica se deve apenas atualizar ofertas
+        async function carregarDados(apenasOfertas = false) {
             try {
-                // Produtos mestre
-                const pData = [];
-                let page = 0;
-                while (true) {
-                    const { data, error } = await _s.from('produtos_mestre').select('*').range(page * 1000, (page + 1) * 1000 - 1);
-                    if (error) throw error;
-                    if (data.length === 0) break;
-                    pData.push(...data);
-                    page++;
+                if (!apenasOfertas) {
+                    // Carregamento completo inicial
+                    // Produtos mestre
+                    const pData = await fetchAll('produtos_mestre');
+                    produtos = pData;
+
+                    // Variações
+                    const vData = await fetchAll('variacoes');
+                    variacoes = vData;
+
+                    // Fornecedores ativos
+                    const fData = await fetchAll('fornecedores', { ativo: true });
+                    fornecedores = fData;
+
+                    // Regiões
+                    const rData = await fetchAll('regioes');
+                    regioes = rData;
+
+                    // Ofertas com quantidade > 0
+                    const oData = await fetchAll('ofertas', { quantidade_gt: 0 }, '*, fornecedores!inner(*), variacoes(*, produtos_mestre(*)), regiao_id', 'quantidade.gt.0');
+                    ofertas = oData;
+
+                    popularFiltros();
+                    processarMenorPrecoGlobal();
+                    renderizarCards();
+                    
+                    atualizarStatusUsuario();
+                    atualizarStatusUsuarioMobile();
+
+                    popularFiltrosAlerta();
+
+                    if (currentUser && currentUser.id !== 0) {
+                        await carregarAlertas();
+                    }
+                } else {
+                    // Atualização apenas de ofertas (background)
+                    const oData = await fetchAll('ofertas', { quantidade_gt: 0 }, '*, fornecedores!inner(*), variacoes(*, produtos_mestre(*)), regiao_id', 'quantidade.gt.0');
+                    ofertas = oData;
+                    processarMenorPrecoGlobal();
+                    // Renderiza apenas se a busca não estiver focada
+                    if (!verificarFocoBusca()) {
+                        renderizarCards();
+                    } else {
+                        // Se estiver focada, marca para renderizar quando perder o foco
+                        const input = document.getElementById('searchInput');
+                        const blurHandler = function() {
+                            renderizarCards();
+                            input.removeEventListener('blur', blurHandler);
+                        };
+                        input.addEventListener('blur', blurHandler, { once: true });
+                    }
                 }
-                produtos = pData;
-
-                // Variações
-                const vData = [];
-                page = 0;
-                while (true) {
-                    const { data, error } = await _s.from('variacoes').select('*').range(page * 1000, (page + 1) * 1000 - 1);
-                    if (error) throw error;
-                    if (data.length === 0) break;
-                    vData.push(...data);
-                    page++;
-                }
-                variacoes = vData;
-
-                // Fornecedores ativos
-                const fData = [];
-                page = 0;
-                while (true) {
-                    const { data, error } = await _s.from('fornecedores').select('*').eq('ativo', true).range(page * 1000, (page + 1) * 1000 - 1);
-                    if (error) throw error;
-                    if (data.length === 0) break;
-                    fData.push(...data);
-                    page++;
-                }
-                fornecedores = fData;
-
-                // Ofertas com quantidade > 0
-                const oData = [];
-                page = 0;
-                while (true) {
-                    const { data, error } = await _s.from('ofertas')
-                        .select('*, fornecedores!inner(*), variacoes(*, produtos_mestre(*)), regiao_id')
-                        .gt('quantidade', 0)
-                        .range(page * 1000, (page + 1) * 1000 - 1);
-                    if (error) throw error;
-                    if (data.length === 0) break;
-                    oData.push(...data);
-                    page++;
-                }
-                ofertas = oData;
-
-                // Regiões
-                const rData = await fetchAll('regioes');
-                regioes = rData;
-
-                popularFiltros();
-                processarMenorPrecoGlobal();
-                renderizarCards();
-                
-                atualizarStatusUsuario();
-                atualizarStatusUsuarioMobile();
-
-                popularFiltrosAlerta();
-
-                if (currentUser && currentUser.id !== 0) {
-                    await carregarAlertas();
-                }
-
             } catch (err) { console.error('Erro ao carregar dados:', err); }
         }
 
@@ -1382,58 +1353,73 @@
             });
         }
 
-        // NOVA FUNÇÃO DE ORDENAÇÃO COM HIERARQUIA
+        // ===== NOVA FUNÇÃO DE ORDENAÇÃO HIERÁRQUICA =====
         function ordenarOfertas(lista) {
-            return lista.sort((a, b) => {
-                // Primeiro: itens com quantidade 0 ou preço 0 vão para o final
-                const aZero = (a.quantidade === 0 || a.preco === 0);
-                const bZero = (b.quantidade === 0 || b.preco === 0);
-                if (aZero && !bZero) return 1;
-                if (!aZero && bZero) return -1;
-                if (aZero && bZero) return 0; // ambos zerados, mantém ordem
-
-                const produtoA = produtos.find(p => p.id == a.variacoes?.produto_id);
-                const produtoB = produtos.find(p => p.id == b.variacoes?.produto_id);
-                if (!produtoA || !produtoB) return 0;
-
-                const catA = produtoA.categoria || '';
-                const catB = produtoB.categoria || '';
-
-                // Hierarquia de categorias: G1 (iPhone), G2 (iPad, MacBook, iMac), G3 (Apple Watch, AirPods, Pencil, AirTag), G4 (outros)
-                const getGrupo = (cat) => {
-                    if (cat === 'IPHONE') return 1;
-                    if (cat === 'IPAD' || cat === 'MACBOOK' || cat === 'IMAC') return 2;
-                    if (cat === 'APPLEWATCH' || cat === 'AIRPODS' || cat === 'PENCIL' || cat === 'AIRTAG') return 3;
-                    return 4;
+            // Função auxiliar para obter o grupo principal
+            function getGrupo(categoria) {
+                const grupos = {
+                    'IPHONE': 1,
+                    'IPAD': 2,
+                    'MACBOOK': 2,
+                    'IMAC': 2,
+                    'APPLEWATCH': 3,
+                    'AIRPODS': 3,
+                    'PENCIL': 3,
+                    'AIRTAG': 3
                 };
-                const grupoA = getGrupo(catA);
-                const grupoB = getGrupo(catB);
+                return grupos[categoria] || 4;
+            }
+
+            // Função para extrair número do modelo (ex: iPhone 16 -> 16)
+            function extrairNumero(nome) {
+                const match = nome.match(/\d+/);
+                return match ? parseInt(match[0]) : 0;
+            }
+
+            // Função para peso da variante (Pro Max > Pro > Air > Base > e > mini)
+            function pesoVariante(nome) {
+                if (nome.includes('Pro Max')) return 5;
+                if (nome.includes('Pro')) return 4;
+                if (nome.includes('Air')) return 3;
+                if (nome.includes('Base')) return 2.5;
+                if (nome.includes('e')) return 2;
+                if (nome.includes('mini')) return 1;
+                return 2.5;
+            }
+
+            // Função para extrair capacidade em GB
+            function extrairCapacidadeGB(capacidade) {
+                if (!capacidade) return 0;
+                const match = capacidade.match(/(\d+)(?:\s*(GB|TB|MB)?)/i);
+                if (!match) return 0;
+                let num = parseInt(match[1]);
+                let unidade = match[2] ? match[2].toUpperCase() : 'GB';
+                if (unidade === 'TB') num *= 1024;
+                if (unidade === 'MB') num /= 1024;
+                return num;
+            }
+
+            return lista.sort((a, b) => {
+                const prodA = produtos.find(p => p.id == a.variacoes?.produto_id);
+                const prodB = produtos.find(p => p.id == b.variacoes?.produto_id);
+                if (!prodA || !prodB) return 0;
+
+                const grupoA = getGrupo(prodA.categoria);
+                const grupoB = getGrupo(prodB.categoria);
                 if (grupoA !== grupoB) return grupoA - grupoB;
 
-                // Dentro do mesmo grupo, iPhones mais novos primeiro
-                const numA = parseInt(produtoA.nome.replace(/\D/g, '')) || 0;
-                const numB = parseInt(produtoB.nome.replace(/\D/g, '')) || 0;
-                if (numA !== numB) return numB - numA;
+                const numA = extrairNumero(prodA.nome);
+                const numB = extrairNumero(prodB.nome);
+                if (numA !== numB) return numB - numA; // mais novo primeiro
 
-                // Mesmo número, ordenar por variante: Pro Max > Pro > Plus > Base > mini
-                const pesoVariante = (nome) => {
-                    if (nome.includes('Pro Max')) return 5;
-                    if (nome.includes('Pro')) return 4;
-                    if (nome.includes('Plus')) return 3;
-                    if (nome.includes('Air')) return 2;
-                    if (nome.includes('mini')) return 1;
-                    return 2.5;
-                };
-                const pesoA = pesoVariante(produtoA.nome);
-                const pesoB = pesoVariante(produtoB.nome);
+                const pesoA = pesoVariante(prodA.nome);
+                const pesoB = pesoVariante(prodB.nome);
                 if (pesoA !== pesoB) return pesoB - pesoA;
 
-                // Mesma variante, ordenar por capacidade descendente
-                const capA = parseInt(a.variacoes?.capacidade) || 0;
-                const capB = parseInt(b.variacoes?.capacidade) || 0;
-                if (capA !== capB) return capB - capA;
+                const capA = extrairCapacidadeGB(a.variacoes?.capacidade);
+                const capB = extrairCapacidadeGB(b.variacoes?.capacidade);
+                if (capA !== capB) return capB - capA; // maior capacidade primeiro
 
-                // Por fim, preço ascendente
                 return a.preco - b.preco;
             });
         }
@@ -1485,27 +1471,19 @@
             renderizarCards();
         }
 
-        // ===== RENDERIZAR CARDS =====
+        // ===== RENDERIZAR CARDS USANDO OS FILTROS ATUAIS =====
         function renderizarCards() {
             const container = document.getElementById('container-produtos');
             container.innerHTML = '';
 
-            const busca = document.getElementById('searchInput').value.toLowerCase().trim();
-            const fCat = document.getElementById('filtroCategoria').value;
-            const fCond = document.getElementById('filtroCondicao').value;
-            const fCap = document.getElementById('filtroCapacidade').value;
-            const fCor = document.getElementById('filtroCor').value;
-            const fCid = document.getElementById('filtroCidade').value;
-            const fAnunciante = document.getElementById('filtroAnunciante').value;
-            const fPais = document.getElementById('filtroPais').value;
-
+            // Aplica os filtros a partir do estado global
             let filtradas = ofertas.filter(o => {
                 const p = o.variacoes?.produtos_mestre;
                 const v = o.variacoes;
                 const f = o.fornecedores;
                 if (!p || !f || !v) return false;
                 
-                if (busca) {
+                if (filtrosAtuais.busca) {
                     const searchable = [
                         p.nome || '',
                         v.cor || '',
@@ -1514,15 +1492,15 @@
                         f.estado || '',
                         f.pais || ''
                     ].map(s => s.toLowerCase()).join(' ');
-                    if (!searchable.includes(busca)) return false;
+                    if (!searchable.includes(filtrosAtuais.busca)) return false;
                 }
-                if (fCat && v.produto_id != fCat) return false;
-                if (fCond && o.condicao !== fCond) return false;
-                if (fCap && v.capacidade !== fCap) return false;
-                if (fCor && v.cor !== fCor) return false;
-                if (fCid && f.cidade !== fCid) return false;
-                if (fAnunciante && f.id != fAnunciante) return false;
-                if (fPais && f.pais !== fPais) return false;
+                if (filtrosAtuais.categoria && v.produto_id != filtrosAtuais.categoria) return false;
+                if (filtrosAtuais.condicao && o.condicao !== filtrosAtuais.condicao) return false;
+                if (filtrosAtuais.capacidade && v.capacidade !== filtrosAtuais.capacidade) return false;
+                if (filtrosAtuais.cor && v.cor !== filtrosAtuais.cor) return false;
+                if (filtrosAtuais.cidade && f.cidade !== filtrosAtuais.cidade) return false;
+                if (filtrosAtuais.anunciante && f.id != filtrosAtuais.anunciante) return false;
+                if (filtrosAtuais.pais && f.pais !== filtrosAtuais.pais) return false;
                 return true;
             });
 
@@ -1554,7 +1532,7 @@
                 });
             }
 
-            // Aplica a nova ordenação
+            // Aplica a ordenação hierárquica
             const ofertasOrdenadas = ordenarOfertas(filtradas);
 
             const criarCard = (o) => {
@@ -1596,7 +1574,7 @@
                     }
                 }
 
-                // Molduras comerciais (badges coloridos)
+                // Molduras comerciais
                 let comerciais = '';
                 if (f.aceita_pix || o.aceita_pix) comerciais += '<span class="commercial-badge"><i class="fa-brands fa-pix"></i> PIX</span>';
                 if (f.aceita_usdt || o.aceita_usdt) comerciais += '<span class="commercial-badge"><i class="fas fa-coins text-green-500"></i> USDT</span>';
@@ -1649,12 +1627,7 @@
                     badgeEstoque = `<span class="badge-condicao bg-green-600">🆙 ALTO ESTOQUE: ${o.quantidade} UN</span>`;
                 }
 
-                // Se quantidade zero ou preço zero, badge cinza
-                if (o.quantidade === 0 || o.preco === 0) {
-                    badgeEstoque = `<span class="badge-condicao badge-reposicao">⏳ AGUARDANDO REPOSIÇÃO</span>`;
-                }
-
-                // Localização híbrida: prioridade cidade_aparelho
+                // Localização híbrida
                 let localizacaoTexto = '';
                 if (o.cidade_aparelho && o.estado_aparelho) {
                     localizacaoTexto = `📍 ${o.cidade_aparelho}/${o.estado_aparelho}`;
@@ -2010,57 +1983,34 @@
         }
 
         // ===== FILTROS =====
-        let categoriaSelecionadaPill = 'todos';
-
-        function filtrarPorCategoria(categoria) {
-            categoriaSelecionadaPill = categoria;
-            // Atualizar classe das pills
-            document.querySelectorAll('.category-pill').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.categoria === categoria) btn.classList.add('active');
-            });
-            // Filtrar ofertas e repopular o select de modelo
-            popularFiltros();
-            renderizarCards();
-        }
-
         function popularFiltros() {
             const pop = (id, arr, prop) => {
                 const el = document.getElementById(id);
-                if(el.options.length <= 1) {
-                    const unicos = [...new Set(arr.map(x => prop(x)).filter(Boolean))];
-                    unicos.forEach(x => {
-                        if (typeof x === 'object') el.innerHTML += `<option value="${x.id}">${x.nome}</option>`;
-                        else el.innerHTML += `<option value="${x}">${x}</option>`;
-                    });
-                }
-            };
-
-            // Filtrar produtos pela categoria selecionada na pill
-            let produtosFiltrados = produtos;
-            if (categoriaSelecionadaPill !== 'todos') {
-                if (categoriaSelecionadaPill === 'OUTROS') {
-                    const categoriasPrincipais = ['IPHONE', 'IPAD', 'MACBOOK', 'APPLEWATCH', 'AIRPODS'];
-                    produtosFiltrados = produtos.filter(p => !categoriasPrincipais.includes(p.categoria));
-                } else {
-                    produtosFiltrados = produtos.filter(p => p.categoria === categoriaSelecionadaPill);
-                }
-            }
-            const produtosOrdenados = ordenarProdutosMestre([...produtosFiltrados]);
-
-            const popProdutos = (id) => {
-                const el = document.getElementById(id);
                 el.innerHTML = '<option value="">Modelos</option>';
-                produtosOrdenados.forEach(p => {
-                    el.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+                const unicos = [...new Set(arr.map(x => prop(x)).filter(Boolean))];
+                unicos.forEach(x => {
+                    if (typeof x === 'object') el.innerHTML += `<option value="${x.id}">${x.nome}</option>`;
+                    else el.innerHTML += `<option value="${x}">${x}</option>`;
                 });
             };
-            popProdutos('filtroCategoria');
+            // Ordena produtos por número do modelo decrescente antes de popular
+            const produtosOrdenados = ordenarProdutosMestre([...produtos]);
+            pop('filtroCategoria', produtosOrdenados, p => ({ id: p.id, nome: p.nome }));
+            
+            const caps = [...new Set(variacoes.map(v => v.capacidade).filter(Boolean))];
+            const capSelect = document.getElementById('filtroCapacidade');
+            capSelect.innerHTML = '<option value="">GB</option>' + caps.map(c => `<option value="${c}">${c}</option>`).join('');
 
-            pop('filtroCapacidade', variacoes, v => v.capacidade);
-            pop('filtroCor', variacoes, v => v.cor);
-            pop('filtroCidade', fornecedores, f => f.cidade);
-            pop('filtroAnunciante', fornecedores, f => f);
+            const cores = [...new Set(variacoes.map(v => v.cor).filter(Boolean))];
+            const corSelect = document.getElementById('filtroCor');
+            corSelect.innerHTML = '<option value="">Cores</option>' + cores.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            const cidades = [...new Set(fornecedores.map(f => f.cidade).filter(Boolean))];
+            const cidadeSelect = document.getElementById('filtroCidade');
+            cidadeSelect.innerHTML = '<option value="">Cidades</option>' + cidades.map(c => `<option value="${c}">${c}</option>`).join('');
+
+            pop('filtroAnunciante', fornecedores, f => ({ id: f.id, nome: f.nome }));
+
             const conds = [...new Set(ofertas.map(o => o.condicao).filter(Boolean))];
             const selCond = document.getElementById('filtroCondicao');
             selCond.innerHTML = '<option value="">Condição</option>' + conds.map(c => `<option value="${c}">${c}</option>`).join('');
@@ -2264,9 +2214,9 @@
         window.enviarComprovante = enviarComprovante;
         window.fecharPedidoUsdt = fecharPedidoUsdt;
 
-        // Funções para as pills
-        window.filtrarPorCategoria = filtrarPorCategoria;
-        window.registrarInteracao = registrarInteracao;
+        // Funções auxiliares
+        window.atualizarFiltros = atualizarFiltros;
+        window.verificarFocoBusca = verificarFocoBusca;
     </script>
 </body>
 </html>
