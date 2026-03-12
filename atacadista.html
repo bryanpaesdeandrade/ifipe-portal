@@ -1350,16 +1350,28 @@
                 calcularImportacaoMobile();
             };
 
-            const [p, v, r, o, oGlobal] = await Promise.all([
+            const [p, r, o, oGlobal] = await Promise.all([
                 _s.from('produtos_mestre').select('*').order('id'),
-                _s.from('variacoes').select('id, produtos_mestre(id, nome, categoria), capacidade, cor'),
                 _s.from('regioes').select('*'),
                 _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), regioes(*)').eq('fornecedor_id', loja.id).order('criado_em', { ascending: false }),
                 _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), fornecedores(nome, verificado)').gt('quantidade', 0)
             ]);
             
             produtos = p.data || [];
-            variacoes = v.data || [];
+
+            // Paginação para variacoes
+            let varData = [];
+            let page = 0;
+            while (true) {
+                let res = await _s.from('variacoes').select('id, produto_id, produtos_mestre(id, nome, categoria), capacidade, cor').range(page * 1000, (page + 1) * 1000 - 1);
+                if (res.data && res.data.length > 0) {
+                    varData.push(...res.data);
+                    page++;
+                } else {
+                    break;
+                }
+            }
+            variacoes = varData;
 
             const origensPermitidas = ['BRASIL ANATEL', 'CHINA', 'ÍNDIA', 'CANADÁ', 'JAPÃO', 'EUA'];
             regioes = (r.data || []).filter(reg => {
@@ -1414,7 +1426,7 @@
                 modeloSelect.disabled = true;
                 return;
             }
-            const modelosFiltrados = produtos.filter(p => p.categoria === grupo);
+            const modelosFiltrados = produtos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
             modeloSelect.innerHTML = '<option value="">MODELO</option>';
             modelosFiltrados.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
                 modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
@@ -1435,7 +1447,7 @@
                 modeloSelect.disabled = true;
                 return;
             }
-            const modelosFiltrados = produtos.filter(p => p.categoria === grupo);
+            const modelosFiltrados = produtos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
             modeloSelect.innerHTML = '<option value="">MODELO</option>';
             modelosFiltrados.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
                 modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
@@ -1455,7 +1467,7 @@
                 modeloSelect.disabled = true;
                 return;
             }
-            const modelosFiltrados = produtos.filter(p => p.categoria === grupo);
+            const modelosFiltrados = produtos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
             modeloSelect.innerHTML = '<option value="">MODELO</option>';
             modelosFiltrados.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
                 modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
@@ -1475,7 +1487,7 @@
                 modeloSelect.disabled = false; // pode manter modelo anterior
                 return;
             }
-            const modelosFiltrados = produtos.filter(p => p.categoria === grupo);
+            const modelosFiltrados = produtos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
             modeloSelect.innerHTML = '<option value="">MANTER MODELO...</option>';
             modelosFiltrados.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
                 modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
@@ -1495,7 +1507,7 @@
                 const modeloSelect = linha.querySelector('.modelo');
                 modeloSelect.innerHTML = '<option value="">Modelo</option>';
                 if (grupo) {
-                    const modelos = produtos.filter(p => p.categoria === grupo);
+                    const modelos = produtos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
                     modelos.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
                         modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
                     });
@@ -2473,7 +2485,6 @@
             linha.innerHTML = `
                 <select class="modelo" data-index="${index}" style="min-width:120px">
                     <option value="">Modelo</option>
-                    <!-- Preenchido dinamicamente via grupo -->
                 </select>
                 <select class="capacidade" data-index="${index}" disabled style="min-width:80px">
                     <option value="">Memória</option>
@@ -2510,6 +2521,16 @@
 
             const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
             estados.forEach(uf => estadoSelect.innerHTML += `<option value="${uf}">${uf}</option>`);
+
+            // Povoar modelo com base no grupo global (se já houver um selecionado)
+            const grupo = document.getElementById('massaGrupo').value;
+            if (grupo) {
+                const modelos = produtos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
+                modelos.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
+                    modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
+                });
+                modeloSelect.disabled = false;
+            }
 
             modeloSelect.addEventListener('change', function() {
                 let prodId = this.value;
