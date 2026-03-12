@@ -1,5 +1,3 @@
-HTML BASE
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -488,17 +486,17 @@ HTML BASE
                 <h3 class="text-sm font-black flex items-center gap-2">👁️$ FERRAMENTA HORUS <span class="text-[8px] text-zinc-500">MENOR PREÇO ABSOLUTO</span></h3>
                 <div class="flex gap-2 flex-wrap">
                     <!-- NOVOS BOTÕES -->
-                    <button onclick="copiarListaHorus('novos_iphone')" class="btn-master !bg-green-600 px-3 py-1 text-[9px] flex items-center gap-1">
-                        📋 NOVOS (IPHONE)
+                    <button onclick="copiarListaHorus('iphone_novo')" class="btn-master !bg-green-600 px-3 py-1 text-[9px] flex items-center gap-1">
+                        📋 NOVOS IPHONE
                     </button>
                     <button onclick="copiarListaHorus('seminovos_geral')" class="btn-master !bg-yellow-600 px-3 py-1 text-[9px] flex items-center gap-1">
-                        📋 SEMINOVOS (GERAL)
+                        📋 SEMINOVOS GERAL
                     </button>
                     <button onclick="copiarListaHorus('novos_mac_ipad')" class="btn-master !bg-blue-600 px-3 py-1 text-[9px] flex items-center gap-1">
-                        📋 NOVOS (MAC/IPAD)
+                        📋 NOVOS MAC/IPAD
                     </button>
                     <button onclick="copiarListaHorus('novos_acessorios')" class="btn-master !bg-purple-600 px-3 py-1 text-[9px] flex items-center gap-1">
-                        📋 NOVOS (AIRPODS/ACESSÓRIOS)
+                        📋 NOVOS ACESSÓRIOS
                     </button>
                 </div>
             </div>
@@ -1347,7 +1345,7 @@ HTML BASE
                         condicao: o.condicao,
                         cidade_aparelho: o.cidade_aparelho,
                         estado_aparelho: o.estado_aparelho,
-                        categoria: o.variacoes.produtos_mestre.categoria
+                        categoria: (o.variacoes.produtos_mestre.categoria || '').toUpperCase()
                     };
                 }
             });
@@ -1381,7 +1379,7 @@ HTML BASE
             });
         }
 
-        // ===== NOVA FUNÇÃO copiarListaHorus =====
+        // ===== FUNÇÃO REESCRITA: copiarListaHorus =====
         function copiarListaHorus(tipo) {
             if (!ofertasHorus || ofertasHorus.length === 0) {
                 alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
@@ -1393,7 +1391,7 @@ HTML BASE
                 const cat = (o.variacoes.produtos_mestre.categoria || '').toUpperCase();
                 const cond = o.condicao;
 
-                if (tipo === 'novos_iphone') {
+                if (tipo === 'iphone_novo') {
                     return (cond === 'Novo' || cond === 'CPO') && cat === 'IPHONE';
                 } else if (tipo === 'seminovos_geral') {
                     return cond === 'Seminovo';
@@ -1435,42 +1433,58 @@ HTML BASE
 
             let lista = Object.values(grupos);
 
-            // Ordenar
+            // Ordenar com proteção anti-crash
             function extrairNumero(nome) {
-                const match = nome.match(/\d+/);
-                return match ? parseInt(match[0]) : 0;
+                try {
+                    const match = nome.match(/\d+/);
+                    return match ? parseInt(match[0]) : 0;
+                } catch (e) {
+                    return 0;
+                }
             }
             function pesoVariante(nome) {
-                if (nome.includes('Pro Max')) return 5;
-                if (nome.includes('Pro')) return 4;
-                if (nome.includes('Plus')) return 3;
-                if (nome.includes('Air')) return 2;
-                if (nome.includes('mini')) return 1;
-                return 2.5;
+                try {
+                    if (nome.includes('Pro Max')) return 5;
+                    if (nome.includes('Pro')) return 4;
+                    if (nome.includes('Plus')) return 3;
+                    if (nome.includes('Air')) return 2;
+                    if (nome.includes('mini')) return 1;
+                    return 2.5;
+                } catch (e) {
+                    return 2.5;
+                }
             }
             function extrairCapacidade(capacidade) {
-                const match = capacidade.match(/\d+/);
-                return match ? parseInt(match[0]) : 0;
+                try {
+                    const match = capacidade.match(/\d+/);
+                    return match ? parseInt(match[0]) : 0;
+                } catch (e) {
+                    return 0;
+                }
             }
 
-            lista.sort((a, b) => {
-                const numA = extrairNumero(a.produto);
-                const numB = extrairNumero(b.produto);
-                if (numA !== numB) return numB - numA;
-                const pesoA = pesoVariante(a.produto);
-                const pesoB = pesoVariante(b.produto);
-                if (pesoA !== pesoB) return pesoB - pesoA;
-                const capA = extrairCapacidade(a.capacidade);
-                const capB = extrairCapacidade(b.capacidade);
-                return capB - capA;
-            });
+            try {
+                lista.sort((a, b) => {
+                    const numA = extrairNumero(a.produto);
+                    const numB = extrairNumero(b.produto);
+                    if (numA !== numB) return numB - numA;
+                    const pesoA = pesoVariante(a.produto);
+                    const pesoB = pesoVariante(b.produto);
+                    if (pesoA !== pesoB) return pesoB - pesoA;
+                    const capA = extrairCapacidade(a.capacidade);
+                    const capB = extrairCapacidade(b.capacidade);
+                    return capB - capA;
+                });
+            } catch (e) {
+                console.warn('Erro na ordenação, ignorando:', e);
+            }
 
             // Título baseado no tipo
             let titulo = '';
-            if (tipo === 'novos_iphone') titulo = '👁️‍🗨️ *RANKING NOVOS E CPO - IPHONE* 🔥';
+            if (tipo === 'iphone_novo') titulo = '👁️‍🗨️ *RANKING NOVOS IPHONE* 🔥';
             else if (tipo === 'seminovos_geral') titulo = '👁️‍🗨️ *RANKING SEMINOVOS* 🔥';
-            else if (tipo === 'novos_mac_ipad') titulo = '👁️‍🗨️ *RANKING NOVOS - MAC/IPAD* 🔥';
-            else if (tipo === 'novos_acessorios') titulo = '👁️‍🗨️ *RANKING NOVOS - ACESSÓRIOS* 🔥';
+            else if (tipo === 'novos_mac_ipad') titulo = '👁️‍🗨️ *RANKING NOVOS MAC/IPAD* 🔥';
+            else if (tipo === 'novos_acessorios') titulo = '👁️‍🗨️ *RANKING NOVOS ACESSÓRIOS* 🔥';
 
             let texto = titulo + '\n\n';
 
@@ -1502,8 +1516,8 @@ HTML BASE
                 return resultado;
             }
 
-            // Para tipos que incluem Novo e CPO, precisamos separar
-            if (tipo === 'novos_iphone' || tipo === 'novos_mac_ipad' || tipo === 'novos_acessorios') {
+            // Para tipos que incluem Novo e CPO, separar
+            if (tipo === 'iphone_novo' || tipo === 'novos_mac_ipad' || tipo === 'novos_acessorios') {
                 const novos = lista.filter(item => item.condicao === 'Novo');
                 const cpos = lista.filter(item => item.condicao === 'CPO');
 
