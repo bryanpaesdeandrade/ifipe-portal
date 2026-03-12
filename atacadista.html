@@ -870,7 +870,7 @@
             <!-- GRUPO DO PRODUTO (global) -->
             <div class="mb-4">
                 <label class="text-[9px] text-gray-400 font-black block mb-1">GRUPO DO PRODUTO (aplica a todas as linhas)</label>
-                <select id="massaGrupo" class="apple-input" onchange="atualizarModelosMassa()">
+                <select id="massaGrupo" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs uppercase" onchange="atualizarModelosMassa()">
                     <option value="">Selecione o grupo...</option>
                     <option value="IPHONE">IPHONE</option>
                     <option value="APPLEWATCH">APPLEWATCH</option>
@@ -1618,7 +1618,7 @@
             toggleCondicaoModal(cond, 'dup');
         }
 
-        // === TABELA DE OFERTAS (COM ORDENAÇÃO PREMIUM) ===
+        // === TABELA DE OFERTAS (COM ORDENAÇÃO E PRIORIDADE POR ESTOQUE > 0) ===
         async function upTab() {
             const filtro = document.getElementById('filtroTipoLista').value;
             let ofertasFiltradas = ofertas.filter(o => !filtro || o.condicao === filtro);
@@ -1650,8 +1650,12 @@
                 return num;
             }
 
-            // Ordenação
+            // Ordenação: primeiro por quantidade > 0 (true vem antes), depois pelos critérios existentes
             ofertasFiltradas.sort((a, b) => {
+                // Prioridade: itens com estoque > 0 vêm antes
+                if (a.quantidade > 0 && b.quantidade === 0) return -1;
+                if (a.quantidade === 0 && b.quantidade > 0) return 1;
+                
                 const nomeA = a.variacoes?.produtos_mestre?.nome || '';
                 const nomeB = b.variacoes?.produtos_mestre?.nome || '';
                 const numA = extrairNumeroModelo(nomeA);
@@ -1780,7 +1784,7 @@
             }
         }
 
-        // === LISTA WHATSAPP ===
+        // === LISTA WHATSAPP (REFATORADA) ===
         async function copiarListaWhatsApp() {
             let ativas = ofertas.filter(o => o.quantidade > 0);
             if (!ativas.length) return alert('Lista vazia.');
@@ -1807,11 +1811,18 @@
             }
 
             let texto = `${saudacao}\n\n`;
+            // Cabeçalho único do atacadista
+            texto += `*${tipoAtacadista} ${bandeiraPais} | ${loja.nome}* \n\n`;
 
             const categorias = {
-                'Novo': { titulo: `📦 *NOVOS PRONTA ENTREGA ${cidadeBase}* 📍`, itens: ativas.filter(o => o.condicao === 'Novo') },
-                'CPO': { titulo: `📦 *CPO PRONTA ENTREGA*`, itens: ativas.filter(o => o.condicao === 'CPO') },
-                'Seminovo': { titulo: `📦 *SEMINOVOS PRONTA ENTREGA*`, itens: ativas.filter(o => o.condicao !== 'Novo' && o.condicao !== 'CPO') }
+                'NovosCPO': { 
+                    titulo: `📦 *NOVOS / CPO PRONTA ENTREGA${(loja.pais === 'Brasil' && cidadeBase) ? ' ' + cidadeBase : ''}* 📍`, 
+                    itens: ativas.filter(o => o.condicao === 'Novo' || o.condicao === 'CPO') 
+                },
+                'Seminovo': { 
+                    titulo: `📦 *SEMINOVOS PRONTA ENTREGA*`, 
+                    itens: ativas.filter(o => o.condicao !== 'Novo' && o.condicao !== 'CPO') 
+                }
             };
 
             const ordemCores = [
@@ -1864,12 +1875,12 @@
                     tituloCategoria = `📦 *NOVOS PRONTA ENTREGA* \n\n📍 *COM ESTOQUE NO BRASIL* 🇧🇷`;
                 }
                 texto += `${tituloCategoria}\n\n`;
-                
-                texto += `*${tipoAtacadista} ${bandeiraPais} | ${loja.nome}* \n\n`;
 
                 let lastModeloBase = '';
                 for (const o of cat.itens) {
-                    const modeloBase = `iPhone ${o.variacoes.produtos_mestre.nome}`;
+                    const produto = o.variacoes.produtos_mestre;
+                    // Corrige prefixo: se categoria for IPHONE, usa "iPhone X", senão apenas o nome
+                    const modeloBase = (produto.categoria === 'IPHONE') ? `iPhone ${produto.nome}` : produto.nome;
                     if (modeloBase !== lastModeloBase) {
                         texto += `*${modeloBase}*\n\n`;
                         lastModeloBase = modeloBase;
@@ -1884,7 +1895,7 @@
                     if (cond === 'Seminovo' && o.saude_bateria) texto += `🔋 ${o.saude_bateria}\n`;
                     
                     let gar = o.garantia ? o.garantia.toUpperCase() : 'NÃO INFORMADA';
-                    if (cond === 'Novo' || cond === 'CPO') gar = '1 ANO APPLE';
+                    if (cond === 'NovosCPO' && (o.condicao === 'Novo' || o.condicao === 'CPO')) gar = '1 ANO APPLE';
                     
                     texto += `🛡️ *GARANTIA ${gar}*\n\n`;
                 }
