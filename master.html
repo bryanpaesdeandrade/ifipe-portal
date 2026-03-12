@@ -144,7 +144,7 @@
                 </div>
                 <!-- Badge de aprovação -->
                 <div id="aprovacaoBadge" class="hidden cursor-pointer" onclick="filtrarApenasBloqueados()" title="Lojistas aguardando aprovação">
-                    <span class="badge-piscante px-2 py-1 rounded-full text-[9px] font-black">⚠️ LOJISTAS AGUARDANDO</span>
+                    <span id="aprovacaoBadgeText" class="badge-piscante px-2 py-1 rounded-full text-[9px] font-black">⚠️ LOJISTAS AGUARDANDO</span>
                 </div>
                 <div class="relative master-only cursor-pointer" onclick="abrirNotificacoes()" title="Sugestões e Alertas">
                     <span class="text-lg hover:opacity-80">🔔</span>
@@ -173,7 +173,7 @@
         <div id="v-atacadistas" class="master-view active">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
-                    <h2 class="text-sm font-black text-white">ATACADISTAS</h2>
+                    <h2 class="text-sm font-black text-white">ATACADISTAS <span id="countAta" class="text-blue-500 text-[10px] ml-2"></span></h2>
                     <div class="flex gap-2 w-2/3 justify-end items-center">
                         <input type="text" id="filtroAta" placeholder="🔍 BUSCAR NOME, CIDADE, STATUS, WHATSAPP..." class="apple-input !w-1/2 !py-2" onkeyup="filterTable('listAta', this.value)">
                         <!-- Botões de Gestão de Contatos -->
@@ -197,7 +197,7 @@
         <div id="v-clientes" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
-                    <h2 class="text-sm font-black text-white">BUSCADORES</h2>
+                    <h2 class="text-sm font-black text-white">BUSCADORES <span id="countCli" class="text-blue-500 text-[10px] ml-2"></span></h2>
                     <div class="flex gap-2 w-2/3 justify-end items-center">
                         <input type="text" id="filtroCli" placeholder="🔍 BUSCAR NOME, CIDADE, EMAIL, WHATSAPP..." class="apple-input !w-1/2 !py-2" onkeyup="filterTable('listCli', this.value)">
                         <!-- Botões de CSV para buscadores -->
@@ -862,6 +862,7 @@
         </div>
     </div>
 
+    <!-- MODAL ATA (ATACADISTA) - ADICIONADO CHECKBOX DE ACESSÓRIOS -->
     <div id="modalAta" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-lg bg-[#050505] border-[#38383a] relative">
             <button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
@@ -877,7 +878,11 @@
                     <div id="divCidadeAta" class="col-span-1"><select id="mAtaCid" class="apple-input"><option value="">Cidade...</option></select></div>
                     <div class="col-span-2"><input type="text" id="mAtaSenha" class="apple-input" placeholder="Senha" required></div>
                 </div>
-                <div class="flex gap-4 bg-zinc-900 p-3 rounded-lg"><label class="text-[9px] font-black"><input type="checkbox" id="mAtaAtivo"> ATIVO</label><label class="text-[9px] font-black"><input type="checkbox" id="mAtaVeri"> VERIFICADO</label></div>
+                <div class="flex gap-4 bg-zinc-900 p-3 rounded-lg">
+                    <label class="text-[9px] font-black"><input type="checkbox" id="mAtaAtivo"> ATIVO</label>
+                    <label class="text-[9px] font-black"><input type="checkbox" id="mAtaVeri"> VERIFICADO</label>
+                    <label class="text-[9px] font-black text-purple-400"><input type="checkbox" id="mAtaAcessorios"> AUTORIZADO ACESSÓRIOS</label>
+                </div>
                 <div class="flex gap-2 pt-2">
                     <button type="submit" class="btn-master w-full">SALVAR</button>
                 </div>
@@ -954,6 +959,7 @@
         let dbAta=[], dbCli=[], dbAnu=[], dbVar=[], dbFunc=[], dbReg=[], dbProdutos=[], currentOracleUsdt=0;
         let currentUserType = null;
         let isAndressa = false;
+        let filtroBloqueadosAtivo = false; // Controle do filtro de inativos
         let usdtTimer, usdtInterval;
         let usdtLockedUsd = 0;
         let usdtLockedRate = 0;
@@ -1625,6 +1631,10 @@
             dbFunc = fn.data || [];
             dbProdutos = p.data || [];
 
+            // Atualizar contadores
+            document.getElementById('countAta').innerText = dbAta.length;
+            document.getElementById('countCli').innerText = dbCli.length;
+
             renderAta(); 
             renderCli(); 
             renderAnu(); 
@@ -1665,12 +1675,22 @@
                 dbAta.forEach(a => massaSelect.innerHTML += `<option value="${a.id}">${a.nome}</option>`);
             }
 
-            const inativos = dbAta.filter(a => !a.ativo);
+            // Controle do badge de aprovação
+            const inativosCount = dbAta.filter(a => !a.ativo).length;
             const badge = document.getElementById('aprovacaoBadge');
-            if (inativos.length > 0) {
-                badge.classList.remove('hidden');
-            } else {
+            const badgeText = document.getElementById('aprovacaoBadgeText');
+            const pendentesSalvos = parseInt(localStorage.getItem('ifipe_pendentes')) || 0;
+
+            if (inativosCount === 0) {
                 badge.classList.add('hidden');
+            } else {
+                badge.classList.remove('hidden');
+                badgeText.innerText = `⚠️ ${inativosCount} AGUARDANDO`;
+                if (inativosCount > pendentesSalvos) {
+                    badgeText.classList.add('badge-piscante');
+                } else {
+                    badgeText.classList.remove('badge-piscante');
+                }
             }
         }
 
@@ -1799,7 +1819,7 @@
             if (!document.getElementById('gLocalOrigem').checked) {
                 cidadeAparelho = document.getElementById('gCidadeAparelho').value;
                 estadoAparelho = document.getElementById('gEstadoAparelho').value;
-                if (!cidadeAparelho || !estadoAparelho) return alert('Selecione a cidade e estado onde o aparelho se encontra');
+                // se vazio, será null (permitido)
             }
             const payload = { 
                 fornecedor_id: lojaId, variacao_id: v.id, regiao_id: document.getElementById('f_orig_m').value,
@@ -1843,7 +1863,7 @@
             if (!document.getElementById('editLocalOrigem').checked) {
                 cidadeAparelho = document.getElementById('editCidadeAparelho').value;
                 estadoAparelho = document.getElementById('editEstadoAparelho').value;
-                if (!cidadeAparelho || !estadoAparelho) return alert('Selecione a cidade e estado onde o aparelho se encontra');
+                // se vazio, será null
             }
             const updates = {
                 variacao_id: variacao.id,
@@ -1950,6 +1970,9 @@
             document.getElementById('mAtaPais').value='Brasil'; 
             toggleLocationFields('Ata'); 
             document.getElementById('mAtaSenha').value=''; 
+            document.getElementById('mAtaAtivo').checked = true; // padrão ativo
+            document.getElementById('mAtaVeri').checked = false;
+            document.getElementById('mAtaAcessorios').checked = false;
             document.getElementById('modalAta').classList.remove('hidden'); 
         }
         function editAta(id) { 
@@ -1968,6 +1991,13 @@
             document.getElementById('mAtaSenha').value = a.senha||''; 
             document.getElementById('mAtaAtivo').checked = a.ativo; 
             document.getElementById('mAtaVeri').checked = a.verificado; 
+            // Carregar checkbox de acessórios
+            let insig = [];
+            try {
+                if (Array.isArray(a.insignia_manual)) insig = a.insignia_manual;
+                else if (typeof a.insignia_manual === 'string') insig = JSON.parse(a.insignia_manual || '[]');
+            } catch(e) { insig = []; }
+            document.getElementById('mAtaAcessorios').checked = insig.includes('AUTORIZADO ACESSORIOS');
             document.getElementById('modalAta').classList.remove('hidden'); 
         }
 
@@ -1977,6 +2007,26 @@
             btn.disabled = true;
             btn.innerText = 'SALVANDO...';
             const id = document.getElementById('mAtaId').value; 
+
+            // Obter insígnias atuais se for edição
+            let insigAtuais = [];
+            if (id) {
+                const existing = dbAta.find(x => x.id == id);
+                if (existing) {
+                    try {
+                        if (Array.isArray(existing.insignia_manual)) insigAtuais = existing.insignia_manual;
+                        else if (typeof existing.insignia_manual === 'string') insigAtuais = JSON.parse(existing.insignia_manual || '[]');
+                    } catch(e) { insigAtuais = []; }
+                }
+            }
+
+            const acessoriosChecked = document.getElementById('mAtaAcessorios').checked;
+            if (acessoriosChecked && !insigAtuais.includes('AUTORIZADO ACESSORIOS')) {
+                insigAtuais.push('AUTORIZADO ACESSORIOS');
+            } else if (!acessoriosChecked && insigAtuais.includes('AUTORIZADO ACESSORIOS')) {
+                insigAtuais = insigAtuais.filter(i => i !== 'AUTORIZADO ACESSORIOS');
+            }
+
             const d = { 
                 nome: document.getElementById('mAtaNome').value.toUpperCase(), 
                 whatsapp: document.getElementById('mAtaWhats').value.replace(/\D/g, ''), 
@@ -1986,7 +2036,8 @@
                 cidade: (document.getElementById('mAtaPais').value === 'Brasil') ? document.getElementById('mAtaCid').value : null, 
                 ativo: document.getElementById('mAtaAtivo').checked, 
                 verificado: document.getElementById('mAtaVeri').checked, 
-                senha: document.getElementById('mAtaSenha').value 
+                senha: document.getElementById('mAtaSenha').value,
+                insignia_manual: insigAtuais
             }; 
             let error;
             if(id && id !== '') ({ error } = await _s.from('fornecedores').update(d).eq('id', id));
@@ -2517,14 +2568,31 @@
         }
 
         function filtrarApenasBloqueados() {
-            const abaAtaBtn = document.querySelector('.menu-btn[onclick*="v-atacadistas"]');
-            if (abaAtaBtn && !abaAtaBtn.classList.contains('active')) {
-                switchView('v-atacadistas', abaAtaBtn);
-            }
+            const inativosCount = dbAta.filter(a => !a.ativo).length;
+            const badge = document.getElementById('aprovacaoBadge');
+            const badgeText = document.getElementById('aprovacaoBadgeText');
             const filtroInput = document.getElementById('filtroAta');
-            if (filtroInput) {
+            if (filtroBloqueadosAtivo) {
+                // Desativar filtro
+                filtroInput.value = '';
+                filterTable('listAta', '');
+                filtroBloqueadosAtivo = false;
+                // Reavaliar animação do badge
+                const pendentesSalvos = parseInt(localStorage.getItem('ifipe_pendentes')) || 0;
+                if (inativosCount > pendentesSalvos) {
+                    badgeText.classList.add('badge-piscante');
+                } else {
+                    badgeText.classList.remove('badge-piscante');
+                }
+            } else {
+                // Ativar filtro
                 filtroInput.value = 'BLOQUEADO';
                 filterTable('listAta', 'BLOQUEADO');
+                filtroBloqueadosAtivo = true;
+                // Salvar número atual
+                localStorage.setItem('ifipe_pendentes', inativosCount);
+                // Remover animação
+                badgeText.classList.remove('badge-piscante');
             }
         }
 
@@ -2918,8 +2986,9 @@
                 let quantidade = parseInt(linha.querySelector('.quantidade').value) || 0;
                 let preco = parseFloat(linha.querySelector('.preco').value) || 0;
 
-                if (!modeloId || !capacidade || !cor || !condicao || !regiaoId || quantidade <= 0 || preco <= 0) {
-                    logArea.innerHTML += `<div class="text-red-400">⚠️ Linha ignorada: preencha todos os campos (incluindo estado/cidade se desejar localização).</div>`;
+                // Validação: permite preço 0 (Master pode lançar grátis)
+                if (!modeloId || !capacidade || !cor || !condicao || !regiaoId || quantidade <= 0) {
+                    logArea.innerHTML += `<div class="text-red-400">⚠️ Linha ignorada: preencha todos os campos obrigatórios (preço pode ser zero).</div>`;
                     continue;
                 }
 
