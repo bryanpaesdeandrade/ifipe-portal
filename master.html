@@ -954,12 +954,12 @@
     <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
     <script>
-        // ================== CÓDIGO ORIGINAL ==================
+        // ================== CÓDIGO ORIGINAL COM ALTERAÇÕES ==================
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
         let dbAta=[], dbCli=[], dbAnu=[], dbVar=[], dbFunc=[], dbReg=[], dbProdutos=[], currentOracleUsdt=0;
         let currentUserType = null;
         let isAndressa = false;
-        let filtroBloqueadosAtivo = false; // Controle do filtro de inativos
+        let filtroBloqueadosAtivo = false;
         let usdtTimer, usdtInterval;
         let usdtLockedUsd = 0;
         let usdtLockedRate = 0;
@@ -2911,8 +2911,9 @@
                 <select id="${cidadeId}" class="cidade" data-index="${index}" style="min-width:120px">
                     <option value="">Cidade</option>
                 </select>
-                <input type="number" class="quantidade" placeholder="Qtd" min="1" value="1" style="width:60px">
-                <input type="number" class="preco" placeholder="Preço R$" step="0.01" min="0" style="width:90px">
+                <!-- ALTERAÇÃO: quantidade com min=0 e value=0, preço mantém min=0 -->
+                <input type="number" class="quantidade" placeholder="Qtd" min="0" value="0" style="width:60px">
+                <input type="number" class="preco" placeholder="Preço R$" step="0.01" min="0" value="0" style="width:90px">
                 <button class="remover-linha" onclick="this.parentElement.remove()">🗑️</button>
             `;
             container.appendChild(linha);
@@ -2986,9 +2987,9 @@
                 let quantidade = parseInt(linha.querySelector('.quantidade').value) || 0;
                 let preco = parseFloat(linha.querySelector('.preco').value) || 0;
 
-                // Validação: permite preço 0 (Master pode lançar grátis)
-                if (!modeloId || !capacidade || !cor || !condicao || !regiaoId || quantidade <= 0) {
-                    logArea.innerHTML += `<div class="text-red-400">⚠️ Linha ignorada: preencha todos os campos obrigatórios (preço pode ser zero).</div>`;
+                // VALIDAÇÃO MODIFICADA: exige apenas modelo, capacidade, cor, condicao e origem
+                if (!modeloId || !capacidade || !cor || !condicao || !regiaoId) {
+                    logArea.innerHTML += `<div class="text-red-400">⚠️ Linha ignorada: preencha modelo, capacidade, cor, condição e origem (obrigatórios).</div>`;
                     continue;
                 }
 
@@ -2998,6 +2999,7 @@
                     continue;
                 }
 
+                // Localização: se estado e cidade foram preenchidos, usar; caso contrário, null
                 let cidadeAparelho = (estado && cidade) ? cidade : null;
                 let estadoAparelho = (estado && cidade) ? estado : null;
 
@@ -3005,9 +3007,9 @@
                     variacao_id: variacao.id,
                     regiao_id: regiaoId,
                     condicao: condicao,
-                    preco: preco,
+                    preco: preco,  // pode ser 0
                     moeda: 'BRL',
-                    quantidade: quantidade,
+                    quantidade: quantidade, // pode ser 0
                     status_aprovacao: 'aprovado',
                     cidade_aparelho: cidadeAparelho,
                     estado_aparelho: estadoAparelho
