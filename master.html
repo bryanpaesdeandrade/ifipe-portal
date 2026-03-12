@@ -14,7 +14,7 @@
         #masterAuth { background: #000; position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         .auth-box { border: 1px solid var(--border); padding: 40px; border-radius: 20px; background: #0a0a0a; text-align: center; width: 350px; }
         .master-nav { background: #050505; border-bottom: 1px solid var(--border); padding: 15px 40px; position: sticky; top:0; z-index: 1000; display: flex; justify-content: space-between; align-items: center; }
-        .master-menu { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; padding: 20px 40px; background: #0a0a0a; border-bottom: 1px solid var(--border); }
+        .master-menu { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 20px 40px; background: #0a0a0a; border-bottom: 1px solid var(--border); }
         .menu-btn { background: transparent; border: 1px solid var(--border); padding: 15px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; font-size: 10px; font-weight: 900; color: #86868b; }
         .menu-btn.active, .menu-btn:hover { background: rgba(0, 113, 227, 0.1); border-color: var(--blue-master); color: var(--blue-master); }
         .apple-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 1.5rem; margin-bottom: 20px; }
@@ -166,6 +166,7 @@
             <button class="menu-btn" onclick="switchView('v-selos', this)">🛡️ GESTÃO SELOS</button>
             <button class="menu-btn" onclick="switchView('v-funcionarios', this)">👨‍💼 FUNCIONÁRIOS</button>
             <button class="menu-btn" onclick="switchView('v-conta', this)">⚙️ MINHA CONTA</button>
+            <button class="menu-btn" onclick="switchView('v-gestao-base', this)">📦 GESTÃO DE BASE</button>
         </div>
 
         <!-- Aba Atacadistas -->
@@ -346,6 +347,39 @@
                 </form>
             </div>
         </div>
+
+        <!-- NOVA ABA: GESTÃO DE BASE -->
+        <div id="v-gestao-base" class="master-view">
+            <div class="apple-card">
+                <h2 class="text-sm font-black text-white mb-6 border-b border-zinc-800 pb-4">📦 GESTÃO DE BASE (PRODUTOS E VARIAÇÕES)</h2>
+                
+                <!-- Bloco 1: Cadastrar Novo Modelo Mestre -->
+                <div class="mb-8">
+                    <h3 class="text-[10px] font-black text-blue-400 mb-4">📱 CADASTRAR NOVO MODELO MESTRE</h3>
+                    <form onsubmit="criarModeloMestre(event)" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <input type="text" id="novoModeloNome" class="apple-input" placeholder="NOME DO MODELO (ex: iPhone 18)" required>
+                            <input type="number" id="novoModeloPrioridade" class="apple-input" placeholder="PRIORIDADE (ex: 1)" min="1" value="1" required>
+                        </div>
+                        <button type="submit" class="btn-master !bg-green-600">CRIAR MODELO</button>
+                    </form>
+                </div>
+
+                <!-- Bloco 2: Gerador em Massa de Variações -->
+                <div>
+                    <h3 class="text-[10px] font-black text-purple-400 mb-4">🚀 GERADOR EM MASSA DE VARIAÇÕES</h3>
+                    <form onsubmit="gerarVariacoesMassa(event)" class="space-y-4">
+                        <select id="variacaoModeloSelect" class="apple-input" required>
+                            <option value="">SELECIONE O MODELO...</option>
+                        </select>
+                        <input type="text" id="variacaoCapacidades" class="apple-input" placeholder="CAPACIDADES (ex: 128GB, 256GB, 512GB)" required>
+                        <input type="text" id="variacaoCores" class="apple-input" placeholder="CORES (ex: Preto, Branco, Titânio Natural)" required>
+                        <button type="submit" class="btn-master !bg-purple-600">GERAR E SALVAR VARIAÇÕES</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- MODAL CONFIG PIX -->
@@ -1631,6 +1665,9 @@
             } else {
                 badge.classList.add('hidden');
             }
+
+            // Popula o select de modelos na nova aba de gestão de base
+            preencherSelectModelosGestaoBase();
         }
 
         function carregarEstadosMaster() {
@@ -2972,6 +3009,95 @@ Agora voce vai encontrar o melhor preço apple do Brasil
             }
         }
 
+        // ===== NOVAS FUNÇÕES PARA GESTÃO DE BASE =====
+
+        // Popula o select de modelos na aba de gestão de base
+        function preencherSelectModelosGestaoBase() {
+            const select = document.getElementById('variacaoModeloSelect');
+            if (!select) return;
+            select.innerHTML = '<option value="">SELECIONE O MODELO...</option>';
+            // Extrai produtos únicos a partir de dbVar
+            const modelos = [];
+            const ids = new Set();
+            dbVar.forEach(v => {
+                if (v.produtos_mestre && !ids.has(v.produtos_mestre.id)) {
+                    ids.add(v.produtos_mestre.id);
+                    modelos.push(v.produtos_mestre);
+                }
+            });
+            modelos.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
+                select.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
+            });
+        }
+
+        // Criar novo modelo mestre
+        async function criarModeloMestre(e) {
+            e.preventDefault();
+            const nome = document.getElementById('novoModeloNome').value.trim().toUpperCase();
+            const prioridade = parseInt(document.getElementById('novoModeloPrioridade').value);
+            if (!nome || isNaN(prioridade)) {
+                alert('Preencha todos os campos corretamente.');
+                return;
+            }
+            const { error } = await _s.from('produtos_mestre').insert([{
+                nome: nome,
+                prioridade: prioridade,
+                categoria: 'iPhone' // fixo
+            }]);
+            if (error) {
+                alert('Erro ao criar modelo: ' + error.message);
+            } else {
+                alert('Modelo criado com sucesso!');
+                document.getElementById('novoModeloNome').value = '';
+                document.getElementById('novoModeloPrioridade').value = '1';
+                await loadAll(); // recarrega dados, incluindo dbVar
+            }
+        }
+
+        // Gerar variações em massa
+        async function gerarVariacoesMassa(e) {
+            e.preventDefault();
+            const produtoId = document.getElementById('variacaoModeloSelect').value;
+            const capacidadesRaw = document.getElementById('variacaoCapacidades').value;
+            const coresRaw = document.getElementById('variacaoCores').value;
+
+            if (!produtoId || !capacidadesRaw || !coresRaw) {
+                alert('Preencha todos os campos.');
+                return;
+            }
+
+            // Divide por vírgula e limpa espaços
+            const capacidades = capacidadesRaw.split(',').map(s => s.trim()).filter(s => s);
+            const cores = coresRaw.split(',').map(s => s.trim()).filter(s => s);
+
+            if (capacidades.length === 0 || cores.length === 0) {
+                alert('Listas de capacidades e cores não podem estar vazias.');
+                return;
+            }
+
+            // Gera combinações
+            const payloads = [];
+            for (const cap of capacidades) {
+                for (const cor of cores) {
+                    payloads.push({
+                        produto_id: produtoId,
+                        capacidade: cap,
+                        cor: cor
+                    });
+                }
+            }
+
+            const { error } = await _s.from('variacoes').insert(payloads);
+            if (error) {
+                alert('Erro ao gerar variações: ' + error.message);
+            } else {
+                alert(`${payloads.length} variações criadas com sucesso!`);
+                document.getElementById('variacaoCapacidades').value = '';
+                document.getElementById('variacaoCores').value = '';
+                await loadAll();
+            }
+        }
+
         // Expor funções globais
         window.abrirModalConfigPix = abrirModalConfigPix;
         window.fecharModalConfigPix = fecharModalConfigPix;
@@ -2994,6 +3120,10 @@ Agora voce vai encontrar o melhor preço apple do Brasil
         window.fecharModalMalaDireta = fecharModalMalaDireta;
         window.enviarMalaDireta = enviarMalaDireta;
         window.filtrarApenasBloqueados = filtrarApenasBloqueados;
+
+        // NOVAS FUNÇÕES EXPORTADAS
+        window.criarModeloMestre = criarModeloMestre;
+        window.gerarVariacoesMassa = gerarVariacoesMassa;
     </script>
 </body>
 </html>
