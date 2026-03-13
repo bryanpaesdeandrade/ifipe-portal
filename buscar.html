@@ -1150,86 +1150,40 @@
             } catch (e) { console.warn('WebSocket Binance falhou'); }
         }
 
-        // Função para buscar todos os registros com paginação
-        async function fetchAll(table, query = {}, select = '*', extra = '') {
+        // ===== FUNÇÃO AUXILIAR OTIMIZADA =====
+        async function fetchAllOptimized(table, selectStr, extraQuery = (q) => q) {
             let allData = [];
             let page = 0;
             const pageSize = 1000;
             while (true) {
-                let q = _s.from(table).select(select).range(page * pageSize, (page + 1) * pageSize - 1);
-                for (let key in query) {
-                    if (query[key] !== undefined && query[key] !== null) {
-                        q = q.eq(key, query[key]);
-                    }
-                }
-                if (extra) {
-                    // extra pode ser string com .gt, etc. Mas para simplificar, vamos tratar casos específicos
-                }
-                const { data, error } = await q;
+                let req = _s.from(table).select(selectStr).range(page * pageSize, (page + 1) * pageSize - 1);
+                req = extraQuery(req);
+                const { data, error } = await req;
                 if (error) throw error;
-                if (data.length === 0) break;
-                allData = allData.concat(data);
+                if (data && data.length > 0) allData.push(...data);
+                if (!data || data.length < pageSize) break; // Interrompe requisições inúteis se a página não vier cheia
                 page++;
             }
             return allData;
         }
 
+        // ===== CARREGAR DADOS OTIMIZADO =====
         async function carregarDados() {
             try {
-                // Produtos mestre
-                const pData = [];
-                let page = 0;
-                while (true) {
-                    const { data, error } = await _s.from('produtos_mestre').select('*').range(page * 1000, (page + 1) * 1000 - 1);
-                    if (error) throw error;
-                    if (data.length === 0) break;
-                    pData.push(...data);
-                    page++;
-                }
+                // Dispara todas as consultas ao mesmo tempo (Paralelismo)
+                const [pData, vData, fData, oData, rData] = await Promise.all([
+                    fetchAllOptimized('produtos_mestre', '*'),
+                    fetchAllOptimized('variacoes', '*'),
+                    fetchAllOptimized('fornecedores', '*', q => q.eq('ativo', true)),
+                    fetchAllOptimized('ofertas', '*, fornecedores(*), variacoes(*, produtos_mestre(*)), regiao_id', q => q.gt('quantidade', 0)),
+                    _s.from('regioes').select('*')
+                ]);
+
                 produtos = pData;
-
-                // Variações
-                const vData = [];
-                page = 0;
-                while (true) {
-                    const { data, error } = await _s.from('variacoes').select('*').range(page * 1000, (page + 1) * 1000 - 1);
-                    if (error) throw error;
-                    if (data.length === 0) break;
-                    vData.push(...data);
-                    page++;
-                }
                 variacoes = vData;
-
-                // Fornecedores ativos
-                const fData = [];
-                page = 0;
-                while (true) {
-                    const { data, error } = await _s.from('fornecedores').select('*').eq('ativo', true).range(page * 1000, (page + 1) * 1000 - 1);
-                    if (error) throw error;
-                    if (data.length === 0) break;
-                    fData.push(...data);
-                    page++;
-                }
                 fornecedores = fData;
-
-                // Ofertas com quantidade > 0 (removido !inner para evitar exclusão de ofertas com fornecedor ausente)
-                const oData = [];
-                page = 0;
-                while (true) {
-                    const { data, error } = await _s.from('ofertas')
-                        .select('*, fornecedores(*), variacoes(*, produtos_mestre(*)), regiao_id')
-                        .gt('quantidade', 0)
-                        .range(page * 1000, (page + 1) * 1000 - 1);
-                    if (error) throw error;
-                    if (data.length === 0) break;
-                    oData.push(...data);
-                    page++;
-                }
                 ofertas = oData;
-
-                // Regiões
-                const rData = await fetchAll('regioes');
-                regioes = rData;
+                regioes = rData.data || [];
 
                 popularFiltros();
                 processarMenorPrecoGlobal();
@@ -1237,14 +1191,14 @@
                 
                 atualizarStatusUsuario();
                 atualizarStatusUsuarioMobile();
-
                 popularFiltrosAlerta();
 
                 if (currentUser && currentUser.id !== 0) {
                     await carregarAlertas();
                 }
-
-            } catch (err) { console.error('Erro ao carregar dados:', err); }
+            } catch (err) {
+                console.error('Erro ao carregar dados:', err);
+            }
         }
 
         async function carregarMensagensSistema() {
@@ -1423,7 +1377,7 @@
             renderizarCards();
         }
 
-        // ===== RENDERIZAR CARDS =====
+        // ===== RENDERIZAR CARDS (SEM RESQUÍCIOS DE PILLS) =====
         function renderizarCards() {
             const container = document.getElementById('container-produtos');
             container.innerHTML = '';
@@ -1439,13 +1393,11 @@
 
             let filtradas = ofertas.filter(o => {
                 try {
-                    // Remover ofertas com preço zero (quantidade já é >0 pela query)
                     if (o.preco <= 0) return false;
                     
                     const p = o.variacoes?.produtos_mestre;
                     const v = o.variacoes;
                     const f = o.fornecedores;
-                    // Se não tiver produto ou variação, não exibe
                     if (!p || !v) return false;
 
                     if (busca) {
@@ -1510,14 +1462,13 @@
                     const v = o.variacoes;
                     const f = o.fornecedores;
 
-                    // Fallbacks para evitar undefined
                     const nomeProduto = p?.nome || 'Produto sem nome';
                     const capacidade = v?.capacidade || '';
                     const cor = v?.cor || '';
                     const nomeCor = (cor || '').toUpperCase();
                     const fornecedorNome = f?.nome || 'Anunciante';
                     const fornecedorWhats = f?.whatsapp || '';
-                    const wppLimpo = String(fornecedorWhats).replace(/\D/g, ''); // 🛡️ correção principal
+                    const wppLimpo = String(fornecedorWhats).replace(/\D/g, '');
                     const fornecedorCidade = f?.cidade || '';
                     const fornecedorEstado = f?.estado || '';
                     const fornecedorPais = f?.pais || '';
@@ -1533,7 +1484,6 @@
                     const preco = o.preco;
                     const simbolo = moeda === 'USD' ? 'US$' : 'R$';
 
-                    // Cor hexadecimal (simplificado, com fallback)
                     let corHexValue = '#808080';
                     if (nomeCor.includes('PRETO')||nomeCor.includes('BLACK')||nomeCor.includes('MEIA-NOITE')||nomeCor.includes('GRAFITE')||nomeCor.includes('MIDNIGHT')) corHexValue='#2d2d2d';
                     else if (nomeCor.includes('BRANCO')||nomeCor.includes('WHITE')||nomeCor.includes('ESTELAR')||nomeCor.includes('PRATEADO')||nomeCor.includes('STARLIGHT')||nomeCor.includes('SILVER')) corHexValue='#f5f5f7';
@@ -1562,7 +1512,6 @@
                         }
                     }
 
-                    // Molduras comerciais (badges coloridos)
                     let comerciais = '';
                     if (aceita_pix) comerciais += '<span class="commercial-badge"><i class="fa-brands fa-pix"></i> PIX</span>';
                     if (aceita_usdt) comerciais += '<span class="commercial-badge"><i class="fas fa-coins text-green-500"></i> USDT</span>';
@@ -1592,7 +1541,7 @@
                         if (h < 12) return 'Bom dia'; if (h < 18) return 'Boa tarde'; return 'Boa noite';
                     })();
 
-                    // 🛡️ NOVA MENSAGEM DO WHATSAPP (conforme solicitado)
+                    // NOVA MENSAGEM DO WHATSAPP
                     const msgZap = encodeURIComponent(
                         `${saudacao}! Vi seu anúncio no iFipe do produto ${nomeProduto} ${capacidade} ${cor} pelo valor ${simbolo} ${preco.toFixed(2)}. Está disponível?\n\nSou uma indicação do https://ifipe.com.br/`
                     );
@@ -1600,7 +1549,6 @@
                     const curtido = minhasCurtidas.has(o.id);
                     const btnCurtir = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="toggleCurtir(${o.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-heart text-red-500 text-sm"></i> <span>${curtido ? 'Curtido' : 'Curtir'}</span></button>`;
 
-                    // Badge de estoque por faixa
                     let badgeEstoque;
                     if (o.quantidade <= 5) {
                         badgeEstoque = `<span class="badge-condicao bg-red-600">🚨 POUCAS: ${o.quantidade} UN</span>`;
@@ -1610,12 +1558,10 @@
                         badgeEstoque = `<span class="badge-condicao bg-green-600">🆙 ALTO ESTOQUE: ${o.quantidade} UN</span>`;
                     }
 
-                    // Se quantidade zero ou preço zero, badge cinza (não será usado pois filtramos)
                     if (o.quantidade === 0 || o.preco === 0) {
                         badgeEstoque = `<span class="badge-condicao badge-reposicao">⏳ AGUARDANDO REPOSIÇÃO</span>`;
                     }
 
-                    // Localização híbrida: prioridade cidade_aparelho
                     let localizacaoTexto = '';
                     if (o.cidade_aparelho && o.estado_aparelho) {
                         localizacaoTexto = `📍 ${o.cidade_aparelho}/${o.estado_aparelho}`;
@@ -1824,7 +1770,6 @@
             }));
             lista.innerHTML = comentarios.map(c => {
                 const iphone = c.detalhes?.variacoes?.produtos_mestre?.nome || 'Aparelho Indisponível';
-                // 🛡️ proteção no whatsapp
                 const zap = String(c.detalhes?.fornecedores?.whatsapp || '').replace(/\D/g, '');
                 return `
                 <div class="border border-[#38383a] rounded-xl p-3 bg-black/20 mb-2">
@@ -1895,7 +1840,7 @@
             } catch (err) { alert('Erro: ' + err.message); }
         }
 
-        // ===== HISTÓRICO GERAL =====
+        // ===== HISTÓRICO GERAL (COM TRAVA DE PREÇO ZERO) =====
         async function abrirHistoricoGeral() {
             document.getElementById('historicoGeralModal').classList.remove('hidden');
             const lista = document.getElementById('listaHistorico');
@@ -1977,7 +1922,7 @@
             document.getElementById('precoVarejoMobile').innerText = `R$ ${c.toFixed(2)}`;
         }
 
-        // ===== FILTROS =====
+        // ===== FILTROS (CORRIGIDO, SEM RESQUÍCIOS DE PILLS) =====
         function popularFiltros() {
             const pop = (id, arr, prop) => {
                 const el = document.getElementById(id);
@@ -2053,16 +1998,17 @@
         function abrirLegendaInsignias() { document.getElementById('legendaInsigniasModal').classList.remove('hidden'); }
         function fecharLegendaInsignias() { document.getElementById('legendaInsigniasModal').classList.add('hidden'); }
 
-        // ===== HORUS (apenas visualização, sem botões de cópia) =====
+        // ===== HORUS (CORRIGIDO: FILTRO PRECO > 0) =====
         async function abrirModalHorus() {
             const { data: globalOfertas, error } = await _s
                 .from('ofertas')
                 .select('*, fornecedores!inner(nome, whatsapp, pais, cidade, estado), variacoes!inner(produtos_mestre!inner(nome, categoria), capacidade, cor), regioes!inner(nome, bandeira)')
-                .gt('quantidade', 0);
+                .gt('quantidade', 0)
+                .gt('preco', 0); // 🔒 TRAVA DE PREÇO ZERO
             
             if (error) return alert('Erro ao carregar Horus: ' + error.message);
 
-            horusOfertasGlobal = globalOfertas; // Armazena globalmente
+            horusOfertasGlobal = globalOfertas;
 
             const grupos = {};
             globalOfertas.forEach(o => {
@@ -2092,7 +2038,6 @@
             const lista = document.getElementById('horusList');
             lista.innerHTML = '';
             
-            // Ordenação com try/catch para não travar em erros
             try {
                 const items = Object.values(grupos);
                 items.sort((a, b) => a.preco - b.preco);
@@ -2223,8 +2168,6 @@
         window.enviarComprovante = enviarComprovante;
         window.fecharPedidoUsdt = fecharPedidoUsdt;
 
-        // Funções para as pills (removidas)
-        // As funções foram removidas conforme solicitado.
         window.registrarInteracao = registrarInteracao;
     </script>
 </body>
