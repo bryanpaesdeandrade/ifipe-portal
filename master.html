@@ -61,6 +61,7 @@
         .linha-anuncio { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; background: #141415; padding: 8px; border-radius: 8px; flex-wrap: wrap; }
         .linha-anuncio select, .linha-anuncio input { background: #2c2c2e; border: 1px solid #38383a; border-radius: 6px; padding: 6px; color: white; font-size: 10px; }
         .linha-anuncio .remover-linha { background: #ef4444; color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 10px; }
+        .linha-anuncio .duplicar-linha { background: #3b82f6; color: white; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; font-size: 10px; margin-right: 4px; }
         /* Remove spinners do input number */
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
@@ -217,7 +218,7 @@
             </div>
         </div>
 
-        <!-- Aba Gestão Global (com filtro por lojista + opção TODOS) -->
+        <!-- Aba Gestão Global (com filtro inteligente) -->
         <div id="v-anuncios" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
@@ -225,8 +226,8 @@
                     <div class="flex gap-2 w-2/3 justify-end items-center flex-wrap">
                         <!-- SELECT DE FILTRO COM OPÇÃO TODOS -->
                         <select id="filtroLojistaGlobal" class="apple-input !w-auto min-w-[200px] !py-2 text-[9px]" onchange="filtrarPorLojistaGlobal()">
-                            <option value="TODOS">TODOS OS LOJISTAS</option>
-                            <!-- opções serão inseridas via JS -->
+                            <option value="">SELECIONE UM LOJISTA</option>
+                            <option value="TODOS">TODOS OS LOJISTAS (ativos)</option>
                         </select>
                         <input type="text" placeholder="🔍 BUSCAR PRODUTO, COR..." class="apple-input !w-1/3 !py-2" onkeyup="filtrarAnunciosTexto(this.value)" id="buscaAnuncios">
                         <button onclick="zerarEstoqueSelecionados()" class="btn-master !bg-orange-600 master-only">🚫 ZERAR SELECIONADOS</button>
@@ -234,7 +235,7 @@
                         <button onclick="restaurarEstoqueSelecionados()" class="btn-master !bg-emerald-600 master-only">♻️ RESTAURAR ESTOQUE</button>
                         <button onclick="abrirModalZerarEstoque()" class="btn-master !bg-red-600 master-only">🚫 ZERAR ESTOQUE DE LOJA</button>
                         <button onclick="abrirModalGestaoAnuncio()" class="btn-master !bg-blue-600">➕ LANÇAR ANÚNCIO</button>
-                        <button onclick="bulkAnuModal()" class="btn-master bg-zinc-800 text-white">⚙️ EM MASSA</button>
+                        <button onclick="abrirBulkGlobal()" class="btn-master bg-zinc-800 text-white">⚙️ EDITAR EM MASSA</button>
                         <button onclick="abrirModalAddMassa()" class="btn-master !bg-purple-600">🚀 LANÇAR EM MASSA</button>
                     </div>
                 </div>
@@ -251,7 +252,7 @@
                             <th class="text-right">AÇÕES</th>
                         </tr></thead>
                         <tbody id="listAnu">
-                            <tr><td colspan="8" class="text-center py-8 text-gray-400">Carregando anúncios...</td></tr>
+                            <tr><td colspan="8" class="text-center py-8 text-gray-400">Selecione um lojista para visualizar os anúncios</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -657,7 +658,7 @@
         </div>
     </div>
 
-    <!-- MODAL LANÇAR ANÚNCIO (GLOBAL) - ATUALIZADO COM GRUPO -->
+    <!-- MODAL LANÇAR ANÚNCIO (GLOBAL) - ATUALIZADO COM GRUPO E MODELOS DE dbProdutos -->
     <div id="modalGestaoAnuncio" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-xl bg-[#050505] border-[#38383a] relative">
             <button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
@@ -769,46 +770,55 @@
         </div>
     </div>
 
-    <!-- MODAL EDIÇÃO EM MASSA (BULK) - ATUALIZADO COM GRUPO -->
-    <div id="modalBulkAnu" class="hidden modal-overlay">
-        <div class="apple-card w-full max-w-xl bg-[#050505] border-[#38383a] relative">
-            <button onclick="fecharBulkAnu()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
-            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">⚙️ EDIÇÃO EM MASSA (ANÚNCIOS)</h3>
-            <form onsubmit="runBulkAnu(event)" class="space-y-4">
-                <select id="bulkGrupo" class="apple-input" onchange="filtrarModelosPorGrupo('bulk')">
-                    <option value="">MANTER GRUPO...</option>
-                    <option value="IPHONE">IPHONE</option>
-                    <option value="APPLEWATCH">APPLEWATCH</option>
-                    <option value="MACBOOK">MACBOOK</option>
-                    <option value="IMAC">IMAC</option>
-                    <option value="IPAD">IPAD</option>
-                    <option value="ACESSORIOS">ACESSORIOS</option>
-                    <!-- NOVOS GRUPOS -->
-                    <option value="AIRPODS">AIRPODS</option>
-                    <option value="PENCIL">PENCIL</option>
-                    <option value="AIRTAG">AIRTAG</option>
-                </select>
-                <div class="grid grid-cols-2 gap-2">
-                    <select id="bulkModelo" class="apple-input" onchange="libMemMBulk()">
+    <!-- MODAL EDIÇÃO EM MASSA (BULK) - AGORA INDEPENDENTE DE CHECKBOXES -->
+    <div id="bulkModal" class="hidden modal-overlay">
+        <div class="modal-content max-w-xl">
+            <h3 class="text-lg font-bold mb-4">⚙️ EDIÇÃO EM MASSA (ANÚNCIOS)</h3>
+            <form onsubmit="doBulkGlobal(event)" id="formBulk">
+                <!-- NOVO SELECT DE FORNECEDOR -->
+                <div class="mb-2">
+                    <select id="bulkFornecedor" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                        <option value="TODOS">TODOS OS LOJISTAS</option>
+                        <!-- opções serão inseridas via JS -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="bulkGrupo" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="filtrarModelosPorGrupo('bulk')">
+                        <option value="">MANTER GRUPO...</option>
+                        <option value="IPHONE">IPHONE</option>
+                        <option value="APPLEWATCH">APPLEWATCH</option>
+                        <option value="MACBOOK">MACBOOK</option>
+                        <option value="IMAC">IMAC</option>
+                        <option value="IPAD">IPAD</option>
+                        <option value="ACESSORIOS">ACESSORIOS</option>
+                        <!-- NOVOS GRUPOS -->
+                        <option value="AIRPODS">AIRPODS</option>
+                        <option value="PENCIL">PENCIL</option>
+                        <option value="AIRTAG">AIRTAG</option>
+                    </select>
+                    <select id="bulkModelo" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="bulkCarregarMemoria()">
                         <option value="">MANTER MODELO...</option>
                     </select>
-                    <select id="bulkCapacidade" class="apple-input" onchange="libCorMBulk()" disabled>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="bulkCapacidade" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="bulkCarregarCor()" disabled>
                         <option value="">MANTER CAPACIDADE...</option>
                     </select>
+                    <select id="bulkCor" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" disabled>
+                        <option value="">MANTER COR...</option>
+                    </select>
                 </div>
-                <select id="bulkCor" class="apple-input" disabled>
-                    <option value="">MANTER COR...</option>
-                </select>
-
-                <div class="grid grid-cols-3 gap-2 mb-2 col-span-2">
-                    <button type="button" id="btBulkNovo" class="btn-tipo" onclick="setBulkCondicao('Novo')">📦 NOVO</button>
-                    <button type="button" id="btBulkSemi" class="btn-tipo" onclick="setBulkCondicao('Seminovo')">♻️ SEMINOVO</button>
-                    <button type="button" id="btBulkCPO" class="btn-tipo" onclick="setBulkCondicao('CPO')">🌟 CPO</button>
-                </div>
-                <input type="hidden" id="bulkCondicao">
-
-                <div class="grid grid-cols-2 gap-2">
-                    <select id="bulkBateria" class="apple-input">
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="bulkCondicao" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
+                        <option value="">MANTER CONDIÇÃO...</option>
+                        <option value="Novo">NOVO</option>
+                        <option value="Seminovo">SEMINOVO</option>
+                        <option value="CPO">CPO</option>
+                        <option value="Grade A">GRADE A</option>
+                        <option value="Grade B">GRADE B</option>
+                        <option value="Grade C">GRADE C</option>
+                    </select>
+                    <select id="bulkBateria" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
                         <option value="">MANTER BATERIA...</option>
                         <option value="Abaixo de 85%">Abaixo de 85%</option>
                         <option value="Acima de 85%">Acima de 85%</option>
@@ -817,7 +827,7 @@
                         <option value="Bateria em 100%">Bateria em 100%</option>
                     </select>
                 </div>
-                <select id="bulkGarantia" class="apple-input">
+                <select id="bulkGarantia" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-2">
                     <option value="">MANTER GARANTIA...</option>
                     <option value="Sem garantia">Sem garantia</option>
                     <option value="1 Mês">1 Mês</option>
@@ -826,14 +836,13 @@
                     <option value="6 Meses">6 Meses</option>
                     <option value="12 Meses">12 Meses</option>
                 </select>
-
                 <div class="localizacao-fieldset">
                     <label class="flex items-center gap-2 text-xs">
                         <input type="checkbox" id="bulkLocalOrigem" checked onchange="document.getElementById('bulkLocAlt').classList.toggle('hidden', this.checked)">
                         Aparelho na minha cidade sede? (aplica a todos)
                     </label>
                     <div id="bulkLocAlt" class="hidden mt-3 space-y-2">
-                        <select id="bulkEstadoAparelho" class="apple-input" onchange="carregarCidadesDinamicoMaster(this.value, 'bulkCidadeAparelho')">
+                        <select id="bulkEstadoAparelho" class="apple-input" onchange="carregarCidadesDinamico(this.value, 'bulkCidadeAparelho')">
                             <option value="">Selecione o estado (aplica a todos)</option>
                         </select>
                         <select id="bulkCidadeAparelho" class="apple-input">
@@ -841,27 +850,27 @@
                         </select>
                     </div>
                 </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <select id="bulkOrigem" class="apple-input">
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <select id="bulkOrigem" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
                         <option value="">MANTER ORIGEM...</option>
                     </select>
-                    <input type="number" id="bulkQuantidade" class="apple-input" placeholder="NOVA QTD (opcional)" min="0">
+                    <input type="number" id="bulkQtd" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="NOVA QTD (opcional)" min="0">
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="bulkPrecoUsd" class="apple-input" placeholder="NOVO $ USD (opcional)" oninput="mascara(this); document.getElementById('bulkPrecoBrl').value=''">
-                    <input type="text" id="bulkPrecoBrl" class="apple-input" placeholder="NOVO R$ BRL (opcional)" oninput="mascara(this); document.getElementById('bulkPrecoUsd').value=''">
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <input type="text" id="bulkUsd" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="NOVO $ USD" oninput="mascara(this); document.getElementById('bulkBrl').value=''">
+                    <input type="text" id="bulkBrl" class="bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" placeholder="NOVO R$ BRL" oninput="mascara(this); document.getElementById('bulkUsd').value=''">
                 </div>
-                <div class="grid grid-cols-3 gap-2 bg-[#1c1c1e] p-3 rounded-lg border border-[#38383a]">
-                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="bulkPix"> PIX</label>
-                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="bulkUsdt"> USDT</label>
-                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="bulkNegocia"> NEGOCIA</label>
-                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="bulkEnvio"> ENVIO</label>
-                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="bulkColeta"> COLETA</label>
-                    <label class="text-[8px] flex items-center gap-1.5 font-black text-gray-300"><input type="checkbox" id="bulkNota"> NF</label>
+                <div class="grid grid-cols-3 gap-2 bg-[#2c2c2e] p-3 rounded-lg mb-3">
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="bulkPix"> PIX</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="bulkUsdt"> USDT</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="bulkNegocia"> NEGOCIA</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="bulkEnvio"> ENVIO</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="bulkColeta"> COLETA</label>
+                    <label class="text-[9px] flex items-center gap-1"><input type="checkbox" id="bulkNota"> NF</label>
                 </div>
-                <div class="flex gap-2 pt-2">
-                    <button type="submit" class="btn-master w-full !bg-blue-600">APLICAR EM MASSA</button>
+                <div class="flex gap-3">
+                    <button type="submit" class="bg-blue-600 text-white flex-1 p-3 rounded-lg">Aplicar</button>
+                    <button type="button" onclick="fecharBulk()" class="bg-zinc-700 text-white flex-1 p-3 rounded-lg">Cancelar</button>
                 </div>
             </form>
         </div>
@@ -938,7 +947,7 @@
     <div id="modalBulkAta" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505] relative"><button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">AÇÕES EM MASSA (ATACADISTAS)</h3><input type="text" id="bulkAtaSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('fornecedores', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('fornecedores', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button><button onclick="runBulk('fornecedores', 'desativar')" class="btn-master w-full bg-zinc-700 mb-2">DESATIVAR SELECIONADOS</button><button onclick="runBulk('fornecedores', 'verificar')" class="btn-master w-full border border-blue-600 text-blue-500 bg-transparent mb-4">APLICAR SELO VERIFICADO</button><button onclick="runBulk('fornecedores', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button></div></div>
     <div id="modalBulkCli" class="hidden modal-overlay"><div class="apple-card w-full max-w-sm bg-[#050505] relative"><button onclick="fecharModais()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button><h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">AÇÕES EM MASSA (BUSCADORES)</h3><input type="text" id="bulkCliSenha" class="apple-input border-red-500 mb-2" placeholder="NOVA SENHA P/ TODOS"><button onclick="runBulk('clientes_buscador', 'senha')" class="btn-master w-full !bg-red-600 mb-4">REDEFINIR SENHAS</button><button onclick="runBulk('clientes_buscador', 'ativar')" class="btn-master w-full !bg-green-600 mb-2">ATIVAR SELECIONADOS</button><button onclick="runBulk('clientes_buscador', 'desativar')" class="btn-master w-full bg-zinc-700 mb-4">DESATIVAR SELECIONADOS</button><button onclick="runBulk('clientes_buscador', 'apagar')" class="btn-master btn-danger w-full">APAGAR DEFINITIVO</button></div></div>
 
-    <!-- MODAL: Lançamento em Massa (ATUALIZADO: grupo global + localização por linha + opção "TODOS") -->
+    <!-- MODAL: Lançamento em Massa (ATUALIZADO: grupo global + localização por linha + opção "TODOS" e botão duplicar) -->
     <div id="modalAddMassa" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-5xl bg-[#050505] border-[#38383a] max-h-[90vh] overflow-y-auto relative">
             <button onclick="fecharModalAddMassa()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
@@ -972,7 +981,7 @@
             </div>
 
             <div id="linhasContainer" class="space-y-2 mb-4">
-                <!-- Linhas serão adicionadas aqui com estado e cidade -->
+                <!-- Linhas serão adicionadas aqui com estado e cidade e botão duplicar -->
             </div>
 
             <!-- NOVO BLOCO DE MOLDURAS GLOBAIS (PIX, USDT, etc.) -->
@@ -1328,7 +1337,7 @@
                 .from('ofertas')
                 .select('*, fornecedores!inner(nome, whatsapp, pais, cidade, estado), variacoes!inner(produtos_mestre!inner(nome, categoria), capacidade, cor), regioes!inner(nome, bandeira)')
                 .gt('quantidade', 0)
-                .gt('preco', 0); // <--- FILTRO ADICIONADO
+                .gt('preco', 0);
             if (error) { alert('Erro ao carregar dados para Horus: ' + error.message); return; }
             ofertasHorus = ofertas;
             const grupos = {};
@@ -1747,15 +1756,8 @@
             
             document.getElementById('gLoja').innerHTML = '<option value="">Selecione a Loja do Lançamento...</option>' + dbAta.map(a => `<option value="${a.id}">${a.nome}</option>`).join('');
             
-            let uM = []; 
-            let mM = new Set(); 
-            dbVar.forEach(va => { 
-                if(va.produtos_mestre && !mM.has(va.produtos_mestre.id)) { 
-                    mM.add(va.produtos_mestre.id); 
-                    uM.push(va.produtos_mestre); 
-                } 
-            });
-            document.getElementById('f_mod_m').innerHTML = '<option value="">MODELO...</option>' + uM.sort((a,b)=>a.nome.localeCompare(b.nome)).map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
+            // Preencher select de modelos do modal principal com dbProdutos (não dbVar)
+            document.getElementById('f_mod_m').innerHTML = '<option value="">MODELO...</option>' + dbProdutos.sort((a,b)=>a.nome.localeCompare(b.nome)).map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
 
             const origensPermitidas = [ { nome: 'BRASIL ANATEL', flag: '🇧🇷' }, { nome: 'EUA', flag: '🇺🇸' }, { nome: 'JAPÃO', flag: '🇯🇵' }, { nome: 'ÍNDIA', flag: '🇮🇳' }, { nome: 'CANADÁ', flag: '🇨🇦' }, { nome: 'CHINA', flag: '🇨🇳' } ];
             let htmlOrigem = '<option value="">ORIGEM...</option>';
@@ -1765,10 +1767,16 @@
                 if(match) htmlOrigem += `<option value="${match.id}">${rm.flag} ${rm.nome}</option>`;
             });
             document.getElementById('f_orig_m').innerHTML = htmlOrigem;
-            document.getElementById('editModelo').innerHTML = '<option value="">MODELO...</option>' + uM.sort((a,b)=>a.nome.localeCompare(b.nome)).map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
+            document.getElementById('editModelo').innerHTML = '<option value="">MODELO...</option>' + dbProdutos.sort((a,b)=>a.nome.localeCompare(b.nome)).map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
             document.getElementById('editOrigem').innerHTML = htmlOrigem;
-            document.getElementById('bulkModelo').innerHTML = '<option value="">MANTER MODELO...</option>' + uM.sort((a,b)=>a.nome.localeCompare(b.nome)).map(m=>`<option value="${m.id}">${m.nome}</option>`).join('');
+            document.getElementById('bulkModelo').innerHTML = '<option value="">MANTER MODELO...</option>' + dbProdutos.sort((a,b)=>a.nome.localeCompare(b.nome)).map(p=>`<option value="${p.id}">${p.nome}</option>`).join('');
             document.getElementById('bulkOrigem').innerHTML = '<option value="">MANTER ORIGEM...</option>' + htmlOrigem.slice(0, -14) + '</select>';
+            // Preencher select de fornecedor no bulk
+            const bulkFornecedor = document.getElementById('bulkFornecedor');
+            if (bulkFornecedor) {
+                bulkFornecedor.innerHTML = '<option value="TODOS">TODOS OS LOJISTAS</option>';
+                dbAta.forEach(f => bulkFornecedor.innerHTML += `<option value="${f.id}">${f.nome}</option>`);
+            }
 
             carregarEstadosMaster();
 
@@ -1796,36 +1804,36 @@
                 }
             }
 
-            // Preencher select de filtro por lojista na aba Gestão Global (já com opção TODOS)
+            // Preencher select de filtro por lojista na aba Gestão Global
             const filtroLojista = document.getElementById('filtroLojistaGlobal');
             if (filtroLojista) {
-                filtroLojista.innerHTML = '<option value="TODOS">TODOS OS LOJISTAS</option>';
+                filtroLojista.innerHTML = '<option value="">SELECIONE UM LOJISTA</option><option value="TODOS">TODOS OS LOJISTAS (ativos)</option>';
                 dbAta.forEach(loja => {
                     filtroLojista.innerHTML += `<option value="${loja.id}">${loja.nome}</option>`;
                 });
             }
 
-            // Inicializar a tabela de anúncios com a opção TODOS (últimas 800)
-            filtrarPorLojistaGlobal();
+            // Inicializar a tabela de anúncios vazia (já tem placeholder)
         }
 
         // ===== NOVA FUNÇÃO: filtrarPorLojistaGlobal =====
         function filtrarPorLojistaGlobal() {
             const lojaId = document.getElementById('filtroLojistaGlobal').value;
             
-            if (lojaId === 'TODOS') {
-                // Renderizar as últimas 800 ofertas para evitar travamento
-                const ultimasOfertas = [...dbAnu].sort((a,b) => new Date(b.criado_em) - new Date(a.criado_em)).slice(0, 800);
-                renderAnuPorLoja(ultimasOfertas);
-                return;
-            }
-            
-            if (!lojaId) {
+            if (lojaId === '') {
                 document.getElementById('listAnu').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Selecione um lojista para visualizar os anúncios</td></tr>';
                 return;
             }
             
-            // Filtrar dbAnu apenas para essa loja (comparação segura com String)
+            if (lojaId === 'TODOS') {
+                // Filtrar apenas anúncios ativos (quantidade > 0 e preco > 0) e pegar os últimos 800
+                const ofertasAtivas = dbAnu.filter(o => o.quantidade > 0 && o.preco > 0);
+                const ultimas = ofertasAtivas.sort((a,b) => new Date(b.criado_em) - new Date(a.criado_em)).slice(0, 800);
+                renderAnuPorLoja(ultimas);
+                return;
+            }
+            
+            // Filtrar por lojista específico
             const anuFiltrados = dbAnu.filter(a => String(a.fornecedores?.id) === String(lojaId));
             renderAnuPorLoja(anuFiltrados);
         }
@@ -1864,6 +1872,109 @@
             });
             tbody.innerHTML = html;
         }
+
+        // ===== NOVA FUNÇÃO: doBulkGlobal (edição em massa independente de checkboxes) =====
+        async function doBulkGlobal(e) {
+            e.preventDefault();
+
+            // Obter IDs com base nos filtros do modal
+            let fornecedorId = document.getElementById('bulkFornecedor').value;
+            const grupo = document.getElementById('bulkGrupo').value;
+            const modeloId = document.getElementById('bulkModelo').value;
+            const cap = document.getElementById('bulkCapacidade').value;
+            const cor = document.getElementById('bulkCor').value;
+            const condicao = document.getElementById('bulkCondicao').value;
+            const bateria = document.getElementById('bulkBateria').value;
+            const garantia = document.getElementById('bulkGarantia').value;
+            const origem = document.getElementById('bulkOrigem').value;
+            const precoUsd = document.getElementById('bulkUsd').value;
+            const precoBrl = document.getElementById('bulkBrl').value;
+            const bulkPix = document.getElementById('bulkPix').checked;
+            const bulkUsdt = document.getElementById('bulkUsdt').checked;
+            const bulkNegocia = document.getElementById('bulkNegocia').checked;
+            const bulkEnvio = document.getElementById('bulkEnvio').checked;
+            const bulkColeta = document.getElementById('bulkColeta').checked;
+            const bulkNota = document.getElementById('bulkNota').checked;
+            const bulkLocalOrigem = document.getElementById('bulkLocalOrigem').checked;
+            const cidade = document.getElementById('bulkCidadeAparelho').value;
+            const estado = document.getElementById('bulkEstadoAparelho').value;
+            const qtd = document.getElementById('bulkQtd').value;
+
+            // Construir filtro sobre dbAnu
+            let ofertasFiltradas = dbAnu.filter(o => {
+                if (fornecedorId !== 'TODOS' && String(o.fornecedores?.id) !== String(fornecedorId)) return false;
+                if (grupo && o.variacoes?.produtos_mestre?.categoria?.toUpperCase() !== grupo?.toUpperCase()) return false;
+                if (modeloId && o.variacoes?.produto_id != modeloId) return false;
+                if (cap && o.variacoes?.capacidade !== cap) return false;
+                if (cor && o.variacoes?.cor?.toUpperCase() !== cor?.toUpperCase()) return false;
+                if (condicao && o.condicao !== condicao) return false;
+                if (bateria && o.saude_bateria !== bateria) return false;
+                if (garantia && o.garantia !== garantia) return false;
+                if (origem && o.regiao_id != origem) return false;
+                return true;
+            });
+
+            if (ofertasFiltradas.length === 0) {
+                alert('Nenhum anúncio encontrado com esses critérios.');
+                return;
+            }
+
+            const ids = ofertasFiltradas.map(o => o.id);
+
+            // Construir objeto de updates
+            let updates = {};
+
+            if (precoUsd) { updates.preco = parseP(precoUsd); updates.moeda = 'USD'; }
+            else if (precoBrl) { updates.preco = parseP(precoBrl); updates.moeda = 'BRL'; }
+
+            if (qtd !== '') updates.quantidade = parseInt(qtd);
+            if (condicao) updates.condicao = condicao;
+            if (bateria) updates.saude_bateria = bateria;
+            if (garantia) updates.garantia = garantia;
+            if (origem) updates.regiao_id = origem;
+
+            if (!bulkLocalOrigem) {
+                if (cidade && estado) {
+                    updates.cidade_aparelho = cidade;
+                    updates.estado_aparelho = estado;
+                }
+            }
+
+            if (bulkPix) updates.aceita_pix = true;
+            if (bulkUsdt) updates.aceita_usdt = true;
+            if (bulkNegocia) updates.aceita_proposta = true;
+            if (bulkEnvio) updates.faz_envio = true;
+            if (bulkColeta) updates.aceita_coleta = true;
+            if (bulkNota) updates.emite_nota = true;
+
+            if (Object.keys(updates).length === 0) {
+                alert('Nenhuma alteração para aplicar.');
+                return;
+            }
+
+            // Atualizar em lotes
+            const chunkSize = 300;
+            let sucessos = 0, erros = 0;
+            for (let i = 0; i < ids.length; i += chunkSize) {
+                const chunk = ids.slice(i, i + chunkSize);
+                const { error } = await _s.from('ofertas').update(updates).in('id', chunk);
+                if (error) {
+                    erros += chunk.length;
+                    console.error('Erro no lote:', error);
+                } else {
+                    sucessos += chunk.length;
+                }
+            }
+            alert(`Atualização concluída: ${sucessos} sucessos, ${erros} erros.`);
+            fecharBulk();
+            loadAll();
+        }
+
+        // Função para abrir o modal de bulk (renomeada)
+        function abrirBulkGlobal() {
+            document.getElementById('bulkModal').classList.remove('hidden');
+        }
+        function fecharBulk() { document.getElementById('bulkModal').classList.add('hidden'); }
 
         function carregarEstadosMaster() {
             const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
@@ -1917,13 +2028,13 @@
 
         function libMemM() {
             let p = parseInt(document.getElementById('f_mod_m').value);
-            let caps = [...new Set(dbVar.filter(v => v.produtos_mestre && v.produtos_mestre.id === p).map(v => v.capacidade))];
+            let caps = [...new Set(dbVar.filter(v => v.produtos_mestre?.id === p).map(v => v.capacidade))];
             document.getElementById('f_cap_m').innerHTML = '<option value="">MEMÓRIA...</option>' + caps.map(c=>`<option value="${c}">${c}</option>`).join('');
             document.getElementById('f_cap_m').disabled = false; 
         }
         function libCorM() {
             let p = parseInt(document.getElementById('f_mod_m').value), c = document.getElementById('f_cap_m').value;
-            let cores = dbVar.filter(v => v.produtos_mestre && v.produtos_mestre.id === p && v.capacidade === c).map(v => v.cor.toUpperCase());
+            let cores = dbVar.filter(v => v.produtos_mestre?.id === p && v.capacidade === c).map(v => v.cor.toUpperCase());
             let coresUnicas = [...new Set(cores)];
             document.getElementById('f_cor_m').innerHTML = '<option value="">COR...</option>' + coresUnicas.map(co=>`<option value="${co}">${co}</option>`).join('');
             document.getElementById('f_cor_m').disabled = false; 
@@ -2665,6 +2776,9 @@
 
         // NOVAS FUNÇÕES EXPORTADAS
         window.filtrarPorLojistaGlobal = filtrarPorLojistaGlobal;
+        window.abrirBulkGlobal = abrirBulkGlobal;
+        window.doBulkGlobal = doBulkGlobal;
+        window.fecharBulk = fecharBulk;
 
         checkAuth();
 
@@ -3059,6 +3173,7 @@
                 </select>
                 <input type="number" class="quantidade" placeholder="Qtd" min="0" value="0" style="width:60px">
                 <input type="number" class="preco" placeholder="Preço R$" step="0.01" min="0" value="0" style="width:90px">
+                <button class="duplicar-linha" onclick="duplicarLinhaAnuncio(this)">📄</button>
                 <button class="remover-linha" onclick="this.parentElement.remove()">🗑️</button>
             `;
             container.appendChild(linha);
@@ -3092,6 +3207,20 @@
                 corSelect.innerHTML = '<option value="">Cor</option>' + coresUnicas.map(c => `<option value="${c}">${c}</option>`).join('');
                 corSelect.disabled = false;
             });
+        }
+
+        // ===== NOVA FUNÇÃO: duplicarLinhaAnuncio =====
+        function duplicarLinhaAnuncio(btn) {
+            let linhaAtual = btn.closest('.linha-anuncio');
+            let clone = linhaAtual.cloneNode(true);
+            
+            // Remover valores dos selects e inputs do clone (para evitar duplicação de valores selecionados, se desejado)
+            // Se quiser manter os valores, remova estas linhas
+            clone.querySelectorAll('select').forEach(select => select.value = '');
+            clone.querySelectorAll('input').forEach(input => input.value = '');
+            
+            // Inserir o clone após a linha atual
+            linhaAtual.parentNode.insertBefore(clone, linhaAtual.nextSibling);
         }
 
         // ===== FUNÇÃO MODIFICADA: executarLancamentoMassa (COM BULK INSERT EM CHUNKS) =====
@@ -3138,15 +3267,17 @@
                 let quantidade = parseInt(linha.querySelector('.quantidade').value) || 0;
                 let preco = parseFloat(linha.querySelector('.preco').value) || 0;
 
-                // VALIDAÇÃO MODIFICADA: exige apenas modelo, capacidade, cor, condicao
-                if (!modeloId || !capacidade || !cor || !condicao) {
-                    logArea.innerHTML += `<div class="text-red-400">⚠️ Linha ignorada: preencha modelo, capacidade, cor e condição (obrigatórios).</div>`;
+                // VALIDAÇÃO: todos os campos obrigatórios
+                if (!modeloId || !capacidade || !cor || !condicao || !regiaoId || !estado || !cidade || quantidade <= 0 || preco <= 0) {
+                    logArea.innerHTML += `<div class="text-red-400">⚠️ Linha ignorada: preencha todos os campos (modelo, capacidade, cor, condição, origem, estado, cidade, quantidade > 0, preço > 0).</div>`;
+                    erros++;
                     continue;
                 }
 
                 let variacao = dbVar.find(v => v.produtos_mestre?.id == modeloId && v.capacidade == capacidade && v.cor.toUpperCase() == cor.toUpperCase());
                 if (!variacao) {
                     logArea.innerHTML += `<div class="text-red-400">❌ Variação não encontrada.</div>`;
+                    erros++;
                     continue;
                 }
 
@@ -3641,6 +3772,7 @@
         window.abrirModalAddMassa = abrirModalAddMassa;
         window.fecharModalAddMassa = fecharModalAddMassa;
         window.adicionarLinhaAnuncio = adicionarLinhaAnuncio;
+        window.duplicarLinhaAnuncio = duplicarLinhaAnuncio;
         window.executarLancamentoMassa = executarLancamentoMassa;
         window.abrirModalMalaDireta = abrirModalMalaDireta;
         window.fecharModalMalaDireta = fecharModalMalaDireta;
