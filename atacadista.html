@@ -494,19 +494,14 @@
         </div>
     </div>
 
-    <!-- MODAL HORUS (ATUALIZADO COM BOTÕES DE CÓPIA) -->
+    <!-- MODAL HORUS (SEM BOTÕES DE CÓPIA) -->
     <div id="modalHorus" class="hidden modal-overlay">
         <div class="modal-content max-w-3xl w-full">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold flex items-center gap-2">👁️‍🗨️ HORUS – MENOR PREÇO</h3>
                 <button onclick="document.getElementById('modalHorus').classList.add('hidden')" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
             </div>
-            <div class="flex flex-wrap gap-2 mb-4">
-                <button onclick="copiarListaHorus('iphone_novo')" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-full text-[9px] font-bold">📋 NOVOS IPHONE</button>
-                <button onclick="copiarListaHorus('seminovos_geral')" class="bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1.5 rounded-full text-[9px] font-bold">📋 SEMINOVOS GERAL</button>
-                <button onclick="copiarListaHorus('novos_mac_ipad')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-full text-[9px] font-bold">📋 NOVOS MAC/IPAD</button>
-                <button onclick="copiarListaHorus('novos_acessorios')" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-full text-[9px] font-bold">📋 ACESSÓRIOS</button>
-            </div>
+            <!-- Botões de cópia removidos conforme solicitado -->
             <input type="text" id="buscaHorus" placeholder="🔍 Buscar modelo, cor, novo, seminovo..." class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-4 text-white" onkeyup="filtrarHorus(this.value)">
             <div id="horusList" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
         </div>
@@ -900,7 +895,21 @@
         </div>
     </div>
 
+    <!-- Botão Voltar ao Topo -->
+    <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-500 text-white w-12 h-12 rounded-full shadow-[0_0_15px_rgba(0,113,227,0.5)] transition-all hidden z-50 flex items-center justify-center">
+        <i class="fas fa-arrow-up text-lg"></i>
+    </button>
+
     <script>
+        // Listener para mostrar/ocultar botão de voltar ao topo
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('backToTop');
+            if (btn) {
+                if (window.scrollY > 300) btn.classList.remove('hidden');
+                else btn.classList.add('hidden');
+            }
+        });
+
         // SUPABASE CLIENT
         const _s = supabase.createClient('https://zmgosywpwidypxyhxkry.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M');
 
@@ -1243,12 +1252,13 @@
             document.getElementById('sugestaoMensagem').value = '';
         }
 
-        // === HORUS REAL ===
+        // === HORUS REAL (COM FILTRO PRECO > 0) ===
         async function abrirModalHorus() {
             const { data: globalOfertas, error } = await _s
                 .from('ofertas')
                 .select('*, fornecedores!inner(nome, whatsapp, pais, cidade, estado), variacoes!inner(produtos_mestre!inner(nome, categoria), capacidade, cor), regioes!inner(nome, bandeira)')
-                .gt('quantidade', 0);
+                .gt('quantidade', 0)
+                .gt('preco', 0); // Filtro de preço zero adicionado
             
             if (error) return alert('Erro ao carregar Horus: ' + error.message);
 
@@ -1318,7 +1328,7 @@
             });
         }
 
-        // Nova função: copiarListaHorus
+        // Função copiarListaHorus (mantida, mas os botões foram removidos do HTML)
         function copiarListaHorus(tipo) {
             if (!horusOfertasGlobal || horusOfertasGlobal.length === 0) {
                 alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
