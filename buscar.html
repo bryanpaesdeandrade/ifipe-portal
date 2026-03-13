@@ -566,12 +566,18 @@
         </div>
     </div>
 
-    <!-- MODAL HORUS -->
+    <!-- MODAL HORUS (ATUALIZADO COM BOTÕES DE CÓPIA) -->
     <div id="modalHorus" class="modal hidden">
         <div class="modal-content max-w-3xl w-full">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold flex items-center gap-2">👁️‍🗨️ HORUS – MENOR PREÇO</h3>
                 <button onclick="fecharModalHorus()" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
+            </div>
+            <div class="flex flex-wrap gap-2 mb-4">
+                <button onclick="copiarListaHorus('iphone_novo')" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-full text-[9px] font-bold">📋 NOVOS IPHONE</button>
+                <button onclick="copiarListaHorus('seminovos_geral')" class="bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1.5 rounded-full text-[9px] font-bold">📋 SEMINOVOS GERAL</button>
+                <button onclick="copiarListaHorus('novos_mac_ipad')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-full text-[9px] font-bold">📋 NOVOS MAC/IPAD</button>
+                <button onclick="copiarListaHorus('novos_acessorios')" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-full text-[9px] font-bold">📋 ACESSÓRIOS</button>
             </div>
             <input type="text" id="buscaHorus" placeholder="🔍 Buscar modelo, cor, novo, seminovo..." class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-4 text-white" onkeyup="filtrarHorus(this.value)">
             <div id="horusList" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
@@ -828,6 +834,9 @@
         let ultimaInteracao = Date.now();
         let pausarAtualizacao = false;
         let timerPausa;
+
+        // ===== NOVA VARIÁVEL PARA HORUS =====
+        let horusOfertasGlobal = [];
 
         function registrarInteracao() {
             ultimaInteracao = Date.now();
@@ -1507,6 +1516,17 @@
                 const v = o.variacoes;
                 const f = o.fornecedores;
                 if (!p || !f || !v) return false;
+
+                // Filtro por categoria da pill
+                const categoriaDoProduto = (p.categoria || '').toUpperCase();
+                if (categoriaSelecionadaPill !== 'todos') {
+                    if (categoriaSelecionadaPill === 'OUTROS') {
+                        const categoriasPrincipais = ['IPHONE', 'IPAD', 'MACBOOK', 'APPLEWATCH', 'AIRPODS', 'PENCIL', 'AIRTAG'];
+                        if (categoriasPrincipais.includes(categoriaDoProduto)) return false;
+                    } else {
+                        if (categoriaDoProduto !== categoriaSelecionadaPill) return false;
+                    }
+                }
                 
                 if (busca) {
                     const searchable = [
@@ -2039,11 +2059,11 @@
                 }
             };
 
-            // Filtrar produtos pela categoria selecionada na pill
+            // Filtrar produtos pela categoria selecionada na pill (CORRIGIDO)
             let produtosFiltrados = produtos;
             if (categoriaSelecionadaPill !== 'todos') {
                 if (categoriaSelecionadaPill === 'OUTROS') {
-                    const categoriasPrincipais = ['IPHONE', 'IPAD', 'MACBOOK', 'APPLEWATCH', 'AIRPODS'];
+                    const categoriasPrincipais = ['IPHONE', 'IPAD', 'MACBOOK', 'APPLEWATCH', 'AIRPODS', 'PENCIL', 'AIRTAG'];
                     produtosFiltrados = produtos.filter(p => !categoriasPrincipais.includes(p.categoria));
                 } else {
                     produtosFiltrados = produtos.filter(p => p.categoria === categoriaSelecionadaPill);
@@ -2112,14 +2132,16 @@
         function abrirLegendaInsignias() { document.getElementById('legendaInsigniasModal').classList.remove('hidden'); }
         function fecharLegendaInsignias() { document.getElementById('legendaInsigniasModal').classList.add('hidden'); }
 
-        // ===== HORUS =====
+        // ===== HORUS (ATUALIZADO COM ARMAZENAMENTO GLOBAL E BOTÕES DE CÓPIA) =====
         async function abrirModalHorus() {
             const { data: globalOfertas, error } = await _s
                 .from('ofertas')
-                .select('*, fornecedores!inner(nome, whatsapp), variacoes!inner(produtos_mestre!inner(nome), capacidade, cor), regioes!inner(nome, bandeira)')
+                .select('*, fornecedores!inner(nome, whatsapp, pais, cidade, estado), variacoes!inner(produtos_mestre!inner(nome, categoria), capacidade, cor), regioes!inner(nome, bandeira)')
                 .gt('quantidade', 0);
             
             if (error) return alert('Erro ao carregar Horus: ' + error.message);
+
+            horusOfertasGlobal = globalOfertas; // Armazena globalmente
 
             const grupos = {};
             globalOfertas.forEach(o => {
@@ -2135,7 +2157,13 @@
                         moeda: o.moeda,
                         fornecedor: o.fornecedores.nome,
                         whatsapp: o.fornecedores.whatsapp,
-                        condicao: o.condicao
+                        pais: o.fornecedores.pais,
+                        cidade_sede: o.fornecedores.cidade,
+                        estado_sede: o.fornecedores.estado,
+                        cidade_aparelho: o.cidade_aparelho,
+                        estado_aparelho: o.estado_aparelho,
+                        condicao: o.condicao,
+                        categoria: (o.variacoes.produtos_mestre.categoria || '').toUpperCase()
                     };
                 }
             });
@@ -2143,24 +2171,31 @@
             const lista = document.getElementById('horusList');
             lista.innerHTML = '';
             
-            Object.values(grupos).sort((a, b) => a.preco - b.preco).forEach(g => {
-                const pFmt = g.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                const msg = encodeURIComponent(`Olá, vi no iFipe que você tem o menor preço do ${g.produto} ${g.capacidade} ${g.cor} ${g.condicao}. Ainda disponível?`);
-                
-                let condBadge = '';
-                if (g.condicao === 'Novo') condBadge = '<span class="bg-green-600 text-white px-2 py-0.5 rounded text-[8px] ml-2">NOVO</span>';
-                else if (g.condicao === 'CPO') condBadge = '<span class="bg-blue-600 text-white px-2 py-0.5 rounded text-[8px] ml-2">CPO</span>';
-                else condBadge = '<span class="bg-yellow-600 text-white px-2 py-0.5 rounded text-[8px] ml-2 uppercase">SEMINOVO</span>';
+            // Ordenação com try/catch para não travar em erros
+            try {
+                const items = Object.values(grupos);
+                items.sort((a, b) => a.preco - b.preco);
+                items.forEach(g => {
+                    const pFmt = g.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                    const msg = encodeURIComponent(`Olá, vi no iFipe que você tem o menor preço do ${g.produto} ${g.capacidade} ${g.cor} ${g.condicao}. Ainda disponível?`);
+                    
+                    let condBadge = '';
+                    if (g.condicao === 'Novo') condBadge = '<span class="bg-green-600 text-white px-2 py-0.5 rounded text-[8px] ml-2">NOVO</span>';
+                    else if (g.condicao === 'CPO') condBadge = '<span class="bg-blue-600 text-white px-2 py-0.5 rounded text-[8px] ml-2">CPO</span>';
+                    else condBadge = '<span class="bg-yellow-600 text-white px-2 py-0.5 rounded text-[8px] ml-2 uppercase">SEMINOVO</span>';
 
-                lista.innerHTML += `
-                    <div class="horus-item border border-[#38383a] rounded-lg p-3 bg-[#141415] flex justify-between items-center mb-2">
-                        <div>
-                            <span class="font-bold text-white">${g.produto} ${g.capacidade} ${g.cor}</span> ${condBadge}<br>
-                            <span class="text-gray-400">${g.regiao} ${g.bandeira} - R$ ${pFmt} (${g.moeda}) - ${g.fornecedor}</span>
-                        </div>
-                        <a href="https://wa.me/55${g.whatsapp.replace(/\D/g, '')}?text=${msg}" target="_blank" class="bg-green-600 text-white text-[9px] px-3 py-1 rounded-full font-bold">WHATSAPP</a>
-                    </div>`;
-            });
+                    lista.innerHTML += `
+                        <div class="horus-item border border-[#38383a] rounded-lg p-3 bg-[#141415] flex justify-between items-center mb-2">
+                            <div>
+                                <span class="font-bold text-white">${g.produto} ${g.capacidade} ${g.cor}</span> ${condBadge}<br>
+                                <span class="text-gray-400">${g.regiao} ${g.bandeira} - R$ ${pFmt} (${g.moeda}) - ${g.fornecedor}</span>
+                            </div>
+                            <a href="https://wa.me/55${g.whatsapp.replace(/\D/g, '')}?text=${msg}" target="_blank" class="bg-green-600 text-white text-[9px] px-3 py-1 rounded-full font-bold">WHATSAPP</a>
+                        </div>`;
+                });
+            } catch (e) {
+                console.warn('Erro ao ordenar Horus:', e);
+            }
             document.getElementById('buscaHorus').value = '';
             document.getElementById('modalHorus').classList.remove('hidden');
         }
@@ -2171,6 +2206,188 @@
             const q = query.toLowerCase();
             document.querySelectorAll('.horus-item').forEach(el => {
                 el.style.display = el.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+            });
+        }
+
+        // Nova função: copiarListaHorus (versão adaptada para buscador)
+        function copiarListaHorus(tipo) {
+            if (!horusOfertasGlobal || horusOfertasGlobal.length === 0) {
+                alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
+                return;
+            }
+
+            // Filtrar ofertas de acordo com o tipo
+            let ofertasFiltradas = horusOfertasGlobal.filter(o => {
+                const cat = o.variacoes?.produtos_mestre?.categoria ? o.variacoes.produtos_mestre.categoria.toUpperCase() : '';
+                const cond = o.condicao;
+
+                if (tipo === 'iphone_novo') {
+                    return (cond === 'Novo' || cond === 'CPO') && cat === 'IPHONE';
+                } else if (tipo === 'seminovos_geral') {
+                    return cond === 'Seminovo' || (cond && cond.includes('Grade'));
+                } else if (tipo === 'novos_mac_ipad') {
+                    return (cond === 'Novo' || cond === 'CPO') && (cat === 'MACBOOK' || cat === 'IMAC' || cat === 'IPAD');
+                } else if (tipo === 'novos_acessorios') {
+                    return (cond === 'Novo' || cond === 'CPO') && (cat === 'ACESSORIOS' || cat === 'AIRPODS' || cat === 'PENCIL' || cat === 'AIRTAG');
+                }
+                return false;
+            });
+
+            if (ofertasFiltradas.length === 0) {
+                alert('Nenhuma oferta encontrada para esta categoria.');
+                return;
+            }
+
+            // Agrupar por produto + capacidade + cor + origem + moeda + condição para pegar o menor preço de cada grupo
+            const grupos = {};
+            ofertasFiltradas.forEach(o => {
+                const key = `${o.variacoes.produto_id}-${o.variacoes.capacidade}-${o.variacoes.cor}-${o.regiao_id}-${o.moeda}-${o.condicao}`;
+                if (!grupos[key] || o.preco < grupos[key].preco) {
+                    grupos[key] = {
+                        produto: o.variacoes.produtos_mestre.nome,
+                        capacidade: o.variacoes.capacidade,
+                        cor: o.variacoes.cor,
+                        bandeira: o.regioes.bandeira,
+                        preco: o.preco,
+                        fornecedor: o.fornecedores.nome,
+                        whatsapp: o.fornecedores.whatsapp,
+                        pais: o.fornecedores.pais,
+                        cidade_sede: o.fornecedores.cidade,
+                        estado_sede: o.fornecedores.estado,
+                        cidade_aparelho: o.cidade_aparelho,
+                        estado_aparelho: o.estado_aparelho,
+                        condicao: o.condicao,
+                        categoria: (o.variacoes.produtos_mestre.categoria || '').toUpperCase()
+                    };
+                }
+            });
+
+            let lista = Object.values(grupos);
+
+            // Funções Anti-Crash (try/catch interno)
+            function extrairNumero(nome) {
+                try {
+                    const match = nome.match(/\d+/);
+                    return match ? parseInt(match[0]) : 0;
+                } catch(e) { return 0; }
+            }
+            function pesoVariante(nome) {
+                try {
+                    if (nome.includes('Pro Max')) return 5;
+                    if (nome.includes('Pro')) return 4;
+                    if (nome.includes('Plus')) return 3;
+                    if (nome.includes('Air')) return 2;
+                    if (nome.includes('mini')) return 1;
+                    return 2.5;
+                } catch(e) { return 2.5; }
+            }
+            function extrairCapacidade(capacidade) {
+                try {
+                    const match = capacidade.match(/\d+/);
+                    return match ? parseInt(match[0]) : 0;
+                } catch(e) { return 0; }
+            }
+
+            try {
+                lista.sort((a, b) => {
+                    const numA = extrairNumero(a.produto);
+                    const numB = extrairNumero(b.produto);
+                    if (numA !== numB) return numB - numA;
+                    const pesoA = pesoVariante(a.produto);
+                    const pesoB = pesoVariante(b.produto);
+                    if (pesoA !== pesoB) return pesoB - pesoA;
+                    const capA = extrairCapacidade(a.capacidade);
+                    const capB = extrairCapacidade(b.capacidade);
+                    return capA - capB; 
+                });
+            } catch (e) {
+                console.warn('Erro na ordenação:', e);
+            }
+
+            // Seleção de Título
+            let titulo = '';
+            if (tipo === 'iphone_novo') titulo = '👁️‍🗨️ *RANKING NOVOS E CPO - IPHONE* 🔥';
+            else if (tipo === 'seminovos_geral') titulo = '👁️‍🗨️ *RANKING SEMINOVOS GERAL* 🔥';
+            else if (tipo === 'novos_mac_ipad') titulo = '👁️‍🗨️ *RANKING NOVOS - MAC/IPAD* 🔥';
+            else if (tipo === 'novos_acessorios') titulo = '👁️‍🗨️ *RANKING ACESSÓRIOS E OUTROS* 🔥';
+
+            let texto = titulo + '\n\n';
+
+            // Gerador de Texto
+            function gerarTextoItens(items) {
+                let resultado = '';
+                let currentModeloBase = '';
+                items.forEach(item => {
+                    // CORREÇÃO: Formatação do modeloBase conforme solicitado
+                    let modeloBase = item.produto;
+                    if (item.categoria === 'IPHONE') {
+                        modeloBase = 'iPhone ' + item.produto.replace(/iPhone\s*/i, '').trim().toUpperCase();
+                    } else {
+                        modeloBase = item.produto.toUpperCase();
+                    }
+
+                    if (modeloBase !== currentModeloBase) {
+                        if (currentModeloBase !== '') resultado += '\n';
+                        resultado += `📲 *${modeloBase}*\n\n`;
+                        currentModeloBase = modeloBase;
+                    }
+                    
+                    let capacidade = item.capacidade.toUpperCase();
+                    let cor = item.cor.toUpperCase();
+                    let bandeira = item.bandeira || '';
+                    let precoFormatado = item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                    let cidadeExibicao = item.cidade_aparelho || item.cidade_sede;
+                    let estadoExibicao = item.estado_aparelho || item.estado_sede;
+                    let localizacao = (cidadeExibicao && estadoExibicao) ? `(📍 *${cidadeExibicao.toUpperCase()}/${estadoExibicao.toUpperCase()}*)` : '';
+
+                    resultado += `*${capacidade} ${cor} ${bandeira} R$ ${precoFormatado.replace('.', ',')}*\n\n`;
+                    
+                    let zapDigits = item.whatsapp.replace(/\D/g, '');
+                    if(item.pais === 'Brasil' || !item.pais) {
+                        if(zapDigits.startsWith('55')) zapDigits = zapDigits.slice(2);
+                        if(zapDigits.length >= 10) {
+                            let ddd = zapDigits.slice(0, 2);
+                            let numero = zapDigits.slice(2);
+                            if(numero.length === 8) numero = numero.slice(0,4) + '-' + numero.slice(4);
+                            else if(numero.length === 9) numero = numero.slice(0,5) + '-' + numero.slice(5);
+                            zapDigits = `+55 ${ddd} ${numero}`;
+                        } else {
+                            zapDigits = `+55 ${zapDigits}`;
+                        }
+                    } else {
+                        zapDigits = `+${zapDigits}`;
+                    }
+
+                    resultado += `Zap: ${zapDigits} — ${item.fornecedor}\n`;
+                    if (localizacao) resultado += `${localizacao}\n`;
+                    resultado += '\n';
+                });
+                return resultado;
+            }
+
+            // Separar os blocos de Novo e CPO
+            if (tipo === 'iphone_novo' || tipo === 'novos_mac_ipad' || tipo === 'novos_acessorios') {
+                const novos = lista.filter(item => item.condicao === 'Novo');
+                const cpos = lista.filter(item => item.condicao === 'CPO');
+
+                if (novos.length > 0) {
+                    texto += '▶️ *NOVOS* ◀️\n\n';
+                    texto += gerarTextoItens(novos);
+                }
+                if (cpos.length > 0) {
+                    if (novos.length > 0) texto += '\n';
+                    texto += '▶️ *CPO* ◀️\n\n';
+                    texto += gerarTextoItens(cpos);
+                }
+            } else {
+                // Seminovos (vai tudo junto)
+                texto += gerarTextoItens(lista);
+            }
+
+            navigator.clipboard.writeText(texto).then(() => {
+                alert('Lista copiada com sucesso!');
+            }).catch(() => {
+                alert('Erro ao copiar lista.');
             });
         }
 
@@ -2218,7 +2435,7 @@
             }
         }
 
-        // EXPOR FUNÇÕES GLOBAIS
+        // EXPOR FUNÇÕES GLOBAIS (incluindo copiarListaHorus)
         window.abrirDrawer = abrirDrawer;
         window.fecharDrawer = fecharDrawer;
         window.logout = logout;
@@ -2255,6 +2472,7 @@
         window.abrirModalHorus = abrirModalHorus;
         window.fecharModalHorus = fecharModalHorus;
         window.filtrarHorus = filtrarHorus;
+        window.copiarListaHorus = copiarListaHorus; // Exportar a nova função
         window.mostrarAbaRespostas = mostrarAbaRespostas;
         window.marcarComoLida = marcarComoLida;
         window.apagarMensagem = apagarMensagem;
