@@ -1296,33 +1296,6 @@
             });
         }
 
-        // === REGRAS DE ACESSÓRIOS ===
-        function aplicarRegrasAcessorios() {
-            if (!loja) return;
-
-            // Verificar se a loja possui a insígnia "AUTORIZADO ACESSORIOS"
-            let manuais = [];
-            try {
-                if (Array.isArray(loja.insignia_manual)) manuais = loja.insignia_manual;
-                else if (typeof loja.insignia_manual === 'string') manuais = JSON.parse(loja.insignia_manual || '[]');
-            } catch(e) { manuais = []; }
-
-            const autorizado = manuais.includes('AUTORIZADO ACESSORIOS');
-
-            if (!autorizado) {
-                // Remover todas as opções ACESSORIOS dos selects
-                const selects = ['f_grupo', 'editGrupo', 'dupGrupo', 'bulkGrupo', 'massaGrupo'];
-                selects.forEach(selId => {
-                    const sel = document.getElementById(selId);
-                    if (sel) {
-                        Array.from(sel.options).forEach(opt => {
-                            if (opt.value === 'ACESSORIOS') opt.remove();
-                        });
-                    }
-                });
-            }
-        }
-
         // === DADOS INICIAIS ===
         window.onload = async () => {
             try {
@@ -1365,9 +1338,6 @@
             let prefixo = (masterAuth === 'gov_absoluto' && tokenAta) ? '👁️ MODO MASTER: ' : '';
             document.getElementById('nomeLojaHeader').innerText = prefixo + loja.nome;
 
-            // Aplicar regras de acessórios após definir loja
-            aplicarRegrasAcessorios();
-
             new WebSocket('wss://stream.binance.com:9443/ws/usdtbrl@ticker').onmessage = e => {
                 let bin = parseFloat(JSON.parse(e.data).c);
                 rate = bin;
@@ -1380,28 +1350,16 @@
                 calcularImportacaoMobile();
             };
 
-            const [p, r, o, oGlobal] = await Promise.all([
+            const [p, v, r, o, oGlobal] = await Promise.all([
                 _s.from('produtos_mestre').select('*').order('id'),
+                _s.from('variacoes').select('id, produtos_mestre(id, nome, categoria), capacidade, cor'),
                 _s.from('regioes').select('*'),
                 _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), regioes(*)').eq('fornecedor_id', loja.id).order('criado_em', { ascending: false }),
                 _s.from('ofertas').select('*, variacoes(*, produtos_mestre(*)), fornecedores(nome, verificado)').gt('quantidade', 0)
             ]);
             
             produtos = p.data || [];
-
-            // Paginação para variacoes
-            let varData = [];
-            let page = 0;
-            while (true) {
-                let res = await _s.from('variacoes').select('id, produto_id, produtos_mestre(id, nome, categoria), capacidade, cor').range(page * 1000, (page + 1) * 1000 - 1);
-                if (res.data && res.data.length > 0) {
-                    varData.push(...res.data);
-                    page++;
-                } else {
-                    break;
-                }
-            }
-            variacoes = varData;
+            variacoes = v.data || [];
 
             const origensPermitidas = ['BRASIL ANATEL', 'CHINA', 'ÍNDIA', 'CANADÁ', 'JAPÃO', 'EUA'];
             regioes = (r.data || []).filter(reg => {
@@ -1456,13 +1414,7 @@
                 modeloSelect.disabled = true;
                 return;
             }
-
-            // Se for ACESSORIOS, forçar tipo Novo
-            if (grupo === 'ACESSORIOS') {
-                selTipo('Novo');
-            }
-
-            const modelosFiltrados = produtos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
+            const modelosFiltrados = produtos.filter(p => p.categoria === grupo);
             modeloSelect.innerHTML = '<option value="">MODELO</option>';
             modelosFiltrados.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
                 modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
@@ -1483,7 +1435,7 @@
                 modeloSelect.disabled = true;
                 return;
             }
-            const modelosFiltrados = produtos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
+            const modelosFiltrados = produtos.filter(p => p.categoria === grupo);
             modeloSelect.innerHTML = '<option value="">MODELO</option>';
             modelosFiltrados.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
                 modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
@@ -1503,7 +1455,7 @@
                 modeloSelect.disabled = true;
                 return;
             }
-            const modelosFiltrados = produtos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
+            const modelosFiltrados = produtos.filter(p => p.categoria === grupo);
             modeloSelect.innerHTML = '<option value="">MODELO</option>';
             modelosFiltrados.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
                 modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
@@ -1523,7 +1475,7 @@
                 modeloSelect.disabled = false; // pode manter modelo anterior
                 return;
             }
-            const modelosFiltrados = produtos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
+            const modelosFiltrados = produtos.filter(p => p.categoria === grupo);
             modeloSelect.innerHTML = '<option value="">MANTER MODELO...</option>';
             modelosFiltrados.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
                 modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
@@ -1543,7 +1495,7 @@
                 const modeloSelect = linha.querySelector('.modelo');
                 modeloSelect.innerHTML = '<option value="">Modelo</option>';
                 if (grupo) {
-                    const modelos = produtos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
+                    const modelos = produtos.filter(p => p.categoria === grupo);
                     modelos.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
                         modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
                     });
@@ -2329,14 +2281,6 @@
             let q = parseInt(document.getElementById(`${prefix}Quantidade`).value) || 0;
             let cond = document.getElementById(`${prefix}Condicao`).value;
 
-            // ===== REGRA DE ACESSÓRIOS =====
-            const produto = produtos.find(p => p.id == modelo);
-            if (produto && produto.categoria === 'ACESSORIOS') {
-                cond = 'Novo';
-                garantia = '1 ANO APPLE';
-                saude_bateria = null;
-            }
-
             let garantia = (cond === 'Novo' || cond === 'CPO') ? '1 ANO APPLE' : document.getElementById(`${prefix}Garantia`).value;
             let bateria = (cond === 'Novo' || cond === 'CPO') ? null : document.getElementById(`${prefix}Bateria`).value;
 
@@ -2383,10 +2327,7 @@
             e.preventDefault();
             let tipo = document.getElementById('f_tipo').value;
             if (!tipo) return alert('Selecione o tipo do produto');
-            let modeloId = document.getElementById('f_mod').value;
-            let capacidade = document.getElementById('f_cap').value;
-            let cor = document.getElementById('f_cor').value;
-            let v = variacoes.find(x => x.produtos_mestre?.id == modeloId && normalizarString(x.capacidade) === normalizarString(capacidade) && normalizarString(x.cor) === normalizarString(cor));
+            let v = variacoes.find(x => x.produtos_mestre?.id == document.getElementById('f_mod').value && normalizarString(x.capacidade) === normalizarString(document.getElementById('f_cap').value) && normalizarString(x.cor) === normalizarString(document.getElementById('f_cor').value));
             if (!v) {
                 alert("Variação não encontrada na base do sistema. Revise as seleções.");
                 return;
@@ -2395,14 +2336,6 @@
             let precoFinal = isBrl ? parseP(document.getElementById('f_brl').value) : parseP(document.getElementById('f_usd').value);
             let moeda = isBrl ? 'BRL' : 'USD';
             let q = parseInt(document.getElementById('f_qtd').value) || 0;
-
-            // ===== REGRA DE ACESSÓRIOS =====
-            const produto = produtos.find(p => p.id == modeloId);
-            if (produto && produto.categoria === 'ACESSORIOS') {
-                tipo = 'Novo';
-                document.getElementById('f_tipo').value = 'Novo';
-                selTipo('Novo');
-            }
 
             let garantia = (tipo === 'Novo' || tipo === 'CPO') ? '1 ANO APPLE' : document.getElementById('f_gar').value;
             if (!garantia && tipo !== 'Novo' && tipo !== 'CPO') return alert('Selecione a garantia');
@@ -2540,6 +2473,7 @@
             linha.innerHTML = `
                 <select class="modelo" data-index="${index}" style="min-width:120px">
                     <option value="">Modelo</option>
+                    <!-- Preenchido dinamicamente via grupo -->
                 </select>
                 <select class="capacidade" data-index="${index}" disabled style="min-width:80px">
                     <option value="">Memória</option>
@@ -2576,16 +2510,6 @@
 
             const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
             estados.forEach(uf => estadoSelect.innerHTML += `<option value="${uf}">${uf}</option>`);
-
-            // Povoar modelo com base no grupo global (se já houver um selecionado)
-            const grupo = document.getElementById('massaGrupo').value;
-            if (grupo) {
-                const modelos = produtos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
-                modelos.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
-                    modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
-                });
-                modeloSelect.disabled = false;
-            }
 
             modeloSelect.addEventListener('change', function() {
                 let prodId = this.value;
@@ -2669,14 +2593,6 @@
                     continue;
                 }
 
-                // ===== REGRA DE ACESSÓRIOS =====
-                const produto = produtos.find(p => p.id == modeloId);
-                if (produto && produto.categoria === 'ACESSORIOS') {
-                    condicao = 'Novo';
-                    garantia = '1 ANO APPLE';
-                    saude_bateria = null;
-                }
-
                 let cidadeAparelho = (estado && cidade) ? cidade : null;
                 let estadoAparelho = (estado && cidade) ? estado : null;
 
@@ -2700,11 +2616,6 @@
                     saude_bateria: null,
                     garantia: (condicao === 'Novo' || condicao === 'CPO') ? '1 ANO APPLE' : null
                 };
-
-                // Se for acessório, já forçamos garantia correta
-                if (produto && produto.categoria === 'ACESSORIOS') {
-                    payload.garantia = '1 ANO APPLE';
-                }
 
                 try {
                     await smartUpsertOferta(payload);
