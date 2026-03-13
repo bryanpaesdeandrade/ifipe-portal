@@ -375,7 +375,11 @@
 
                 <!-- Lista de produtos existentes -->
                 <div>
-                    <h3 class="text-[10px] font-black text-blue-400 mb-4">PRODUTOS EXISTENTES</h3>
+                    <!-- Substituição do título pelo cabeçalho com filtro e contador -->
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-[10px] font-black text-blue-400">PRODUTOS EXISTENTES <span id="countBaseProd" class="text-white ml-2"></span></h3>
+                        <input type="text" id="filtroBaseProd" placeholder="🔍 BUSCAR ID, NOME OU CATEGORIA..." class="apple-input !w-1/2 !py-2 uppercase" onkeyup="filtrarTabelaBase(this.value)">
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead>
@@ -1001,6 +1005,54 @@
             </div>
 
             <div id="massaLog" class="text-[10px] font-mono text-green-400 max-h-40 overflow-y-auto border border-zinc-800 p-2 rounded"></div>
+        </div>
+    </div>
+
+    <!-- NOVO MODAL DE EDIÇÃO DE PRODUTO (GESTÃO DE BASE) - ATUALIZADO COM GERADOR CARTESIANO -->
+    <div id="modalEditarProdutoBase" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-2xl bg-[#050505] border-[#38383a] relative max-h-[90vh] flex flex-col">
+            <button onclick="fecharModalEditarProdutoBase()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80 z-50">X</button>
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4 flex-shrink-0">✏️ EDITAR PRODUTO E VARIAÇÕES</h3>
+
+            <div class="overflow-y-auto pr-2 custom-scroll flex-1">
+                <input type="hidden" id="editBaseProdId">
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="text-[9px] text-gray-400 font-black block mb-1">CATEGORIA</label>
+                        <select id="editBaseProdCat" class="apple-input uppercase"></select>
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-gray-400 font-black block mb-1">NOME DO PRODUTO</label>
+                        <input type="text" id="editBaseProdNome" class="apple-input uppercase">
+                    </div>
+                </div>
+                <button onclick="salvarDadosBaseProduto()" class="btn-master w-full !bg-blue-600 mb-6">SALVAR DADOS DO PRODUTO</button>
+
+                <!-- Gerador Cartesiano -->
+                <h4 class="text-[10px] font-black text-white mb-2 border-b border-zinc-800 pb-1 mt-6">🚀 GERAR VARIAÇÕES EM MASSA (CARTESIANO)</h4>
+                <div class="bg-[#141415] border border-zinc-800 rounded-lg p-4 mb-4">
+                    <div class="mb-4">
+                        <label class="text-[9px] text-gray-400 font-black block mb-2">SELECIONE CAPACIDADES/MODELOS</label>
+                        <div id="editBaseCaps" class="flex flex-wrap gap-2"></div>
+                        <input type="text" id="editBaseNovaCap" class="apple-input text-xs mt-2 uppercase" placeholder="Adicionar nova (separe por vírgula)">
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-gray-400 font-black block mb-2">SELECIONE CORES</label>
+                        <div id="editBaseCores" class="flex flex-wrap gap-2"></div>
+                        <input type="text" id="editBaseNovaCor" class="apple-input text-xs mt-2 uppercase" placeholder="Adicionar nova (separe por vírgula)">
+                    </div>
+                </div>
+                <button onclick="gerarVariacoesMassaEdit(event)" class="btn-master !bg-purple-600 w-full mb-6">GERAR E SALVAR COMBINAÇÕES SELECIONADAS</button>
+
+                <h4 class="text-[10px] font-black text-white mb-2 border-b border-zinc-800 pb-1">📋 VARIAÇÕES EXISTENTES</h4>
+                <div class="overflow-x-auto border border-zinc-800 rounded-lg bg-[#141415]">
+                    <table class="w-full text-left">
+                        <thead><tr class="text-[9px] text-gray-400 bg-black"><th class="pl-3 py-2">CAPACIDADE</th><th class="py-2">COR</th><th class="text-right pr-3 py-2">AÇÃO</th></tr></thead>
+                        <tbody id="listaVarBase"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -3355,6 +3407,7 @@
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">Nenhum produto cadastrado.</td></tr>';
                 return;
             }
+            document.getElementById('countBaseProd').innerText = dbProdutos.length;
             tbody.innerHTML = dbProdutos.map(p => `
                 <tr>
                     <td class="py-2 text-[10px]">${p.id}</td>
@@ -3362,47 +3415,155 @@
                     <td class="py-2 text-[10px]">${p.categoria}</td>
                     <td class="py-2 text-right">
                         <button onclick="delProduto(${p.id})" class="bg-red-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-red-500">🗑️ EXCLUIR</button>
-                        <!-- BOTÃO EDITAR PRODUTO -->
                         <button onclick="editarProduto(${p.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500 ml-1">✏️ EDITAR</button>
                     </td>
                 </tr>
             `).join('');
         }
 
-        // NOVA FUNÇÃO PARA EDITAR PRODUTO
-        async function editarProduto(id) {
-            const produto = dbProdutos.find(p => p.id == id);
-            if (!produto) return;
-
-            // Usando prompt simples para edição (pode ser substituído por um modal mais elaborado se desejar)
-            const novoNome = prompt('Novo nome do produto:', produto.nome);
-            if (novoNome === null) return; // cancelou
-            const novaCategoria = prompt('Nova categoria do produto:', produto.categoria);
-            if (novaCategoria === null) return;
-
-            if (!novoNome.trim() || !novaCategoria.trim()) {
-                alert('Nome e categoria não podem ficar vazios.');
-                return;
-            }
-
-            const { error } = await _s.from('produtos_mestre').update({ nome: novoNome.trim().toUpperCase(), categoria: novaCategoria.trim().toUpperCase() }).eq('id', id);
-            if (error) {
-                alert('Erro ao atualizar: ' + error.message);
-            } else {
-                alert('Produto atualizado com sucesso!');
-                loadAll(); // recarrega tudo
+        // Filtro da Tabela
+        function filtrarTabelaBase(query) {
+            const q = query.toLowerCase();
+            const rows = document.getElementById('listaProdutosBase').getElementsByTagName('tr');
+            let count = 0;
+            for (let r of rows) {
+                if (r.innerText.toLowerCase().includes(q)) {
+                    r.style.display = '';
+                    count++;
+                } else {
+                    r.style.display = 'none';
+                }
             }
         }
 
-        async function delProduto(id) {
-            if (!confirm(`ATENÇÃO: Deseja excluir o produto #${id} e TODAS as suas variações?`)) return;
-            const { error } = await _s.from('produtos_mestre').delete().eq('id', id);
+        // Edição Inline de Variação (Salva ao clicar fora)
+        async function updateVarBase(id, campo, valor) {
+            valor = valor.trim().toUpperCase();
+            const { error } = await _s.from('variacoes').update({ [campo]: valor || null }).eq('id', id);
             if (error) {
-                alert('Erro ao excluir: ' + error.message);
+                alert('Erro ao atualizar: ' + error.message);
             } else {
-                alert('Produto excluído com sucesso!');
-                await loadAll();
+                const v = dbVar.find(x => x.id == id);
+                if (v) v[campo] = valor || null;
+                loadAll(); // Sincroniza fundo
             }
+        }
+
+        // Renderiza a lista de variações como INPUTS editáveis
+        function renderVarBaseList(prodId) {
+            const tbody = document.getElementById('listaVarBase');
+            const vars = dbVar.filter(v => v.produtos_mestre?.id == prodId).sort((a, b) => (a.capacidade||'').localeCompare(b.capacidade||''));
+            
+            if (vars.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500 py-4 text-xs">Nenhuma variação cadastrada.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = vars.map(v => `
+                <tr class="border-b border-[#2c2c2e] last:border-0">
+                    <td class="pl-2 py-1"><input type="text" class="mini-edit !w-full !text-left !border-none !bg-transparent text-white text-xs" value="${v.capacidade || ''}" onblur="updateVarBase(${v.id}, 'capacidade', this.value)"></td>
+                    <td class="py-1"><input type="text" class="mini-edit !w-full !text-left !border-none !bg-transparent text-gray-300 text-xs" value="${v.cor || ''}" onblur="updateVarBase(${v.id}, 'cor', this.value)"></td>
+                    <td class="text-right pr-2 py-1">
+                        <button onclick="delVariacaoBase(${v.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[9px] font-black hover:bg-red-500 hover:text-white transition">X</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Renderiza os Checkboxes do Cartesiano
+        function renderCartesianoEdit() {
+            let caps = [...new Set(dbVar.map(v => v.capacidade).filter(Boolean))].sort();
+            let cores = [...new Set(dbVar.map(v => v.cor).filter(Boolean))].sort();
+            
+            document.getElementById('editBaseCaps').innerHTML = caps.map(c => `<label class="inline-flex items-center gap-1 text-[9px] font-bold bg-black px-2 py-1 rounded border border-zinc-800 cursor-pointer hover:border-blue-500"><input type="checkbox" class="chk-edit-cap" value="${c}"> ${c}</label>`).join('');
+            document.getElementById('editBaseCores').innerHTML = cores.map(c => `<label class="inline-flex items-center gap-1 text-[9px] font-bold bg-black px-2 py-1 rounded border border-zinc-800 cursor-pointer hover:border-blue-500"><input type="checkbox" class="chk-edit-cor" value="${c}"> ${c}</label>`).join('');
+        }
+
+        // Abre o modal
+        function editarProduto(id) {
+            const p = dbProdutos.find(x => x.id == id);
+            if (!p) return;
+            document.getElementById('editBaseProdId').value = p.id;
+            document.getElementById('editBaseProdNome').value = p.nome;
+
+            const catSelect = document.getElementById('editBaseProdCat');
+            catSelect.innerHTML = `
+                <option value="IPHONE">IPHONE</option><option value="APPLEWATCH">APPLEWATCH</option>
+                <option value="MACBOOK">MACBOOK</option><option value="IMAC">IMAC</option>
+                <option value="IPAD">IPAD</option><option value="ACESSORIOS">ACESSORIOS</option>
+                <option value="AIRPODS">AIRPODS</option><option value="PENCIL">PENCIL</option>
+                <option value="AIRTAG">AIRTAG</option><option value="OUTROS">OUTROS</option>
+            `;
+            if (!Array.from(catSelect.options).some(o => o.value === p.categoria)) {
+                catSelect.innerHTML += `<option value="${p.categoria}">${p.categoria}</option>`;
+            }
+            catSelect.value = p.categoria;
+
+            renderVarBaseList(id);
+            renderCartesianoEdit();
+            
+            document.getElementById('editBaseNovaCap').value = '';
+            document.getElementById('editBaseNovaCor').value = '';
+            
+            document.getElementById('modalEditarProdutoBase').classList.remove('hidden');
+        }
+
+        // Lançador Cartesiano dentro da Edição
+        async function gerarVariacoesMassaEdit(e) {
+            const btn = e.target;
+            const prodId = document.getElementById('editBaseProdId').value;
+            btn.disabled = true;
+            btn.innerText = 'GERANDO...';
+
+            let caps = Array.from(document.querySelectorAll('.chk-edit-cap:checked')).map(c => c.value);
+            let extraCaps = document.getElementById('editBaseNovaCap').value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+            caps = [...new Set([...caps, ...extraCaps])];
+
+            let cores = Array.from(document.querySelectorAll('.chk-edit-cor:checked')).map(c => c.value);
+            let extraCores = document.getElementById('editBaseNovaCor').value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+            cores = [...new Set([...cores, ...extraCores])];
+
+            if (caps.length === 0 && cores.length === 0) {
+                alert('Selecione ou digite ao menos uma capacidade ou cor.');
+                btn.disabled = false; btn.innerText = 'GERAR E SALVAR COMBINAÇÕES SELECIONADAS'; return;
+            }
+
+            if (caps.length === 0) caps = [null];
+            if (cores.length === 0) cores = [null];
+
+            let combinacoes = [];
+            caps.forEach(cap => {
+                cores.forEach(cor => {
+                    combinacoes.push({ produto_id: prodId, capacidade: cap, cor: cor });
+                });
+            });
+
+            const varsExistentes = dbVar.filter(v => v.produtos_mestre?.id == prodId);
+            const novas = combinacoes.filter(c => !varsExistentes.some(v => v.capacidade === c.capacidade && v.cor === c.cor));
+
+            if (novas.length === 0) {
+                alert('Todas as combinações selecionadas já existem neste produto.');
+                btn.disabled = false; btn.innerText = 'GERAR E SALVAR COMBINAÇÕES SELECIONADAS'; return;
+            }
+
+            const { data, error } = await _s.from('variacoes').insert(novas).select();
+            
+            if (error) {
+                alert('Erro ao gerar: ' + error.message);
+            } else {
+                const p = dbProdutos.find(x => x.id == prodId);
+                const inserts = data.map(d => ({...d, produtos_mestre: p}));
+                dbVar.push(...inserts);
+                
+                document.querySelectorAll('.chk-edit-cap, .chk-edit-cor').forEach(c => c.checked = false);
+                document.getElementById('editBaseNovaCap').value = '';
+                document.getElementById('editBaseNovaCor').value = '';
+                
+                renderVarBaseList(prodId);
+                loadAll(); // Sincroniza
+                alert(`${novas.length} variações geradas com sucesso!`);
+            }
+            btn.disabled = false; btn.innerText = 'GERAR E SALVAR COMBINAÇÕES SELECIONADAS';
         }
 
         function adicionarCardProduto() {
@@ -3757,8 +3918,39 @@
             });
         }
 
-        // Expor funções globais
+        // Funções de fechar modal
+        function fecharModalEditarProdutoBase() {
+            document.getElementById('modalEditarProdutoBase').classList.add('hidden');
+        }
+
+        // Expor novas funções globalmente
+        window.filtrarTabelaBase = filtrarTabelaBase;
+        window.updateVarBase = updateVarBase;
+        window.renderVarBaseList = renderVarBaseList;
+        window.renderCartesianoEdit = renderCartesianoEdit;
         window.editarProduto = editarProduto;
+        window.gerarVariacoesMassaEdit = gerarVariacoesMassaEdit;
+        window.fecharModalEditarProdutoBase = fecharModalEditarProdutoBase;
+
+        // Funções antigas que foram substituídas
+        // (editarProduto antigo foi sobrescrito, e addVariacaoBase foi removido)
+
+        async function delProduto(id) {
+            if (!confirm(`ATENÇÃO: Deseja excluir o produto #${id} e TODAS as suas variações?`)) return;
+            const { error } = await _s.from('produtos_mestre').delete().eq('id', id);
+            if (error) {
+                alert('Erro ao excluir: ' + error.message);
+            } else {
+                alert('Produto excluído com sucesso!');
+                await loadAll();
+            }
+        }
+
+        // Demais funções já existentes continuam intactas
+        // (abrirModalConfigPix, abrirModalRegrasTrava, etc.)
+
+        // Expor funções globais adicionais (as que já existiam)
+        window.editarProduto = editarProduto; // sobrescrito
         window.abrirModalConfigPix = abrirModalConfigPix;
         window.fecharModalConfigPix = fecharModalConfigPix;
         window.salvarConfigPix = salvarConfigPix;
