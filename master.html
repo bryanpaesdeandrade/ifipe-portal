@@ -244,6 +244,7 @@
                         <thead><tr>
                             <th width="30"><input type="checkbox" onclick="selAll(this, '.chk-anu')"></th>
                             <th>REGISTRO</th>
+                            <th>LOJISTA</th> <!-- NOVA COLUNA ADICIONADA -->
                             <th>PRODUTO / VARIAÇÃO</th>
                             <th>CONDIÇÃO</th>
                             <th>LOCALIZAÇÃO FÍSICA</th>
@@ -252,7 +253,7 @@
                             <th class="text-right">AÇÕES</th>
                         </tr></thead>
                         <tbody id="listAnu">
-                            <tr><td colspan="8" class="text-center py-8 text-gray-400">Selecione um lojista para visualizar os anúncios</td></tr>
+                            <tr><td colspan="9" class="text-center py-8 text-gray-400">Selecione um lojista para visualizar os anúncios</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -506,7 +507,7 @@
                     </button>
                 </div>
             </div>
-            <input type="text" id="buscaHorus" placeholder="🔍 Buscar modelo, cor, novo, seminovo..." class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-4 text-white mt-4" onkeyup="filtrarHorus(this.value)">
+            <input type="text" id="buscaHorus" placeholder="🔍 Buscar modelo, cor, novo, seminovo..." class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-4 text-white" onkeyup="filtrarHorus(this.value)">
             <div id="horusList" class="space-y-2 max-h-96 overflow-y-auto pr-2"></div>
         </div>
     </div>
@@ -1821,7 +1822,7 @@
             const lojaId = document.getElementById('filtroLojistaGlobal').value;
             
             if (lojaId === '') {
-                document.getElementById('listAnu').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Selecione um lojista para visualizar os anúncios</td></tr>';
+                document.getElementById('listAnu').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Selecione um lojista para visualizar os anúncios</td></tr>';
                 return;
             }
             
@@ -1838,11 +1839,11 @@
             renderAnuPorLoja(anuFiltrados);
         }
 
-        // ===== NOVA FUNÇÃO: renderAnuPorLoja =====
+        // ===== NOVA FUNÇÃO: renderAnuPorLoja (com coluna LOJISTA) =====
         function renderAnuPorLoja(anuList) {
             const tbody = document.getElementById('listAnu');
             if (!anuList.length) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-400">Nenhum anúncio encontrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-400">Nenhum anúncio encontrado.</td></tr>';
                 return;
             }
             const regMap = {};
@@ -1851,6 +1852,7 @@
             let html = '';
             anuList.sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em)).forEach(a => {
                 let d = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '--';
+                let lojistaNome = a.fornecedores?.nome || 'DESCONHECIDO';
                 let bandeira = regMap[a.regiao_id] || '';
                 let p = a.variacoes ? `${bandeira} ${a.variacoes.produtos_mestre?.nome} ${a.variacoes.capacidade} <span class="text-zinc-500">${a.variacoes.cor}</span>` : 'Indisponível';
                 let c = a.condicao || 'NOVO';
@@ -1859,6 +1861,7 @@
                 html += `<tr>
                     <td><input type="checkbox" class="chk-anu" value="${a.id}"></td>
                     <td class="text-[9px] text-zinc-400 font-mono">${d}</td>
+                    <td class="text-[10px] font-black text-blue-400 uppercase">${lojistaNome}</td>
                     <td class="text-[10px] font-bold text-white">${p}</td>
                     <td>${c}</td>
                     <td class="text-[9px] text-zinc-400">${localizacaoFisica}</td>
@@ -2206,7 +2209,7 @@
             if (modelo && capacidade && cor) {
                 const variacao = dbVar.find(v => v.produtos_mestre?.id == modelo && v.capacidade == capacidade && v.cor.toUpperCase() == cor.toUpperCase());
                 if (variacao) updates.variacao_id = variacao.id;
-                else { alert('Variação selecionada inválida.'); return; }
+                else { alert('Variação inválida.'); return; }
             } else if (modelo || capacidade || cor) {
                 alert('Para alterar a variação, preencha Modelo, Capacidade e Cor simultaneamente.');
                 return;
