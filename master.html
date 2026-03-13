@@ -217,21 +217,23 @@
             </div>
         </div>
 
-        <!-- Aba Gestão Global (com botão de Lançamento em Massa) -->
+        <!-- Aba Gestão Global (com filtro por lojista) -->
         <div id="v-anuncios" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
                     <h2 class="text-sm font-black text-white">GESTÃO GLOBAL DE ANÚNCIOS</h2>
-                    <div class="flex gap-2 w-2/3 justify-end items-center">
-                        <input type="text" placeholder="🔍 BUSCAR PRODUTO, LOJA, COR..." class="apple-input !w-1/3 !py-2" onkeyup="filterAnuncios(this.value)" id="buscaAnuncios">
+                    <div class="flex gap-2 w-2/3 justify-end items-center flex-wrap">
+                        <!-- NOVO SELECT PARA FILTRAR POR LOJISTA -->
+                        <select id="filtroLojistaGlobal" class="apple-input !w-auto min-w-[200px] !py-2 text-[9px]" onchange="filtrarPorLojistaGlobal()">
+                            <option value="">SELECIONE UM LOJISTA</option>
+                        </select>
+                        <input type="text" placeholder="🔍 BUSCAR PRODUTO, COR..." class="apple-input !w-1/3 !py-2" onkeyup="filterAnuncios(this.value)" id="buscaAnuncios">
                         <button onclick="zerarEstoqueSelecionados()" class="btn-master !bg-orange-600 master-only">🚫 ZERAR SELECIONADOS</button>
-                        <!-- Botão Apagar em Massa -->
                         <button onclick="apagarAnunciosSelecionados()" class="btn-master !bg-red-800 master-only">🗑️ APAGAR SELECIONADOS</button>
                         <button onclick="restaurarEstoqueSelecionados()" class="btn-master !bg-emerald-600 master-only">♻️ RESTAURAR ESTOQUE</button>
                         <button onclick="abrirModalZerarEstoque()" class="btn-master !bg-red-600 master-only">🚫 ZERAR ESTOQUE DE LOJA</button>
                         <button onclick="abrirModalGestaoAnuncio()" class="btn-master !bg-blue-600">➕ LANÇAR ANÚNCIO</button>
                         <button onclick="bulkAnuModal()" class="btn-master bg-zinc-800 text-white">⚙️ EM MASSA</button>
-                        <!-- Botão Lançamento em Massa -->
                         <button onclick="abrirModalAddMassa()" class="btn-master !bg-purple-600">🚀 LANÇAR EM MASSA</button>
                     </div>
                 </div>
@@ -247,7 +249,9 @@
                             <th class="text-center">ESTOQUE (EDITAR)</th>
                             <th class="text-right">AÇÕES</th>
                         </tr></thead>
-                        <tbody id="listAnu"></tbody>
+                        <tbody id="listAnu">
+                            <tr><td colspan="8" class="text-center py-8 text-gray-400">Selecione um lojista para visualizar os anúncios</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -1317,12 +1321,13 @@
             else { alert('Estoque zerado com sucesso!'); fecharModais(); loadAll(); }
         }
 
-        // ===== FUNÇÃO CORRIGIDA: abrirModalHorus =====
+        // ===== FUNÇÃO CORRIGIDA: abrirModalHorus (com filtro preço > 0) =====
         async function abrirModalHorus() {
             const { data: ofertas, error } = await _s
                 .from('ofertas')
                 .select('*, fornecedores!inner(nome, whatsapp, pais, cidade, estado), variacoes!inner(produtos_mestre!inner(nome, categoria), capacidade, cor), regioes!inner(nome, bandeira)')
-                .gt('quantidade', 0);
+                .gt('quantidade', 0)
+                .gt('preco', 0); // <--- FILTRO ADICIONADO
             if (error) { alert('Erro ao carregar dados para Horus: ' + error.message); return; }
             ofertasHorus = ofertas;
             const grupos = {};
@@ -1365,7 +1370,7 @@
                             <span class="font-bold text-white">${g.produto} ${g.capacidade} ${g.cor}</span> ${condBadge}<br>
                             <span class="text-gray-400">${g.regiao} ${g.bandeira} - R$ ${pFmt} (${g.moeda}) - ${g.fornecedor}</span>
                         </div>
-                        <a href="https://wa.me/55${g.whatsapp.replace(/\D/g, '')}?text=${msg}" target="_blank" class="bg-green-600 text-white text-[9px] px-3 py-1 rounded-full font-bold">WHATSAPP</a>
+                        <a href="https://wa.me/${String(g.whatsapp).replace(/\D/g, '')}?text=${msg}" target="_blank" class="bg-green-600 text-white text-[9px] px-3 py-1 rounded-full font-bold">WHATSAPP</a>
                     </div>
                 `;
             });
@@ -1379,7 +1384,7 @@
             });
         }
 
-        // ===== FUNÇÃO REESCRITA: copiarListaHorus =====
+        // ===== FUNÇÃO REESCRITA: copiarListaHorus (sem formatação automática de DDI) =====
         function copiarListaHorus(tipo) {
             if (!ofertasHorus || ofertasHorus.length === 0) {
                 alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
@@ -1483,7 +1488,7 @@
 
             let texto = titulo + '\n\n';
 
-            // Gerador de Texto
+            // Gerador de Texto (SEM formatação de DDI, apenas número puro)
             function gerarTextoItens(items) {
                 let resultado = '';
                 let currentModeloBase = '';
@@ -1511,21 +1516,8 @@
 
                     resultado += `*${capacidade} ${cor} ${bandeira} R$ ${precoFormatado.replace('.', ',')}*\n\n`;
                     
-                    let zapDigits = item.whatsapp.replace(/\D/g, '');
-                    if(item.pais === 'Brasil' || !item.pais) {
-                        if(zapDigits.startsWith('55')) zapDigits = zapDigits.slice(2);
-                        if(zapDigits.length >= 10) {
-                            let ddd = zapDigits.slice(0, 2);
-                            let numero = zapDigits.slice(2);
-                            if(numero.length === 8) numero = numero.slice(0,4) + '-' + numero.slice(4);
-                            else if(numero.length === 9) numero = numero.slice(0,5) + '-' + numero.slice(5);
-                            zapDigits = `+55 ${ddd} ${numero}`;
-                        } else {
-                            zapDigits = `+55 ${zapDigits}`;
-                        }
-                    } else {
-                        zapDigits = `+${zapDigits}`;
-                    }
+                    // 🛡️ NÚMERO PURO, SEM ADICIONAR +55 OU QUALQUER FORMATAÇÃO
+                    let zapDigits = String(item.whatsapp).replace(/\D/g, '');
 
                     resultado += `Zap: ${zapDigits} — ${item.fornecedor}\n`;
                     if (localizacao) resultado += `${localizacao}\n`;
@@ -1748,7 +1740,7 @@
 
             renderAta(); 
             renderCli(); 
-            renderAnu(); 
+            renderAnu(); // Agora renderAnu sem parâmetro inicia vazia (já tem placeholder)
             renderFunc(); 
             loadUsersForSelo();
             renderProdutosList();
@@ -1803,6 +1795,62 @@
                     badgeText.classList.remove('badge-piscante');
                 }
             }
+
+            // Preencher select de filtro por lojista na aba Gestão Global
+            const filtroLojista = document.getElementById('filtroLojistaGlobal');
+            if (filtroLojista) {
+                filtroLojista.innerHTML = '<option value="">SELECIONE UM LOJISTA</option>';
+                dbAta.forEach(loja => {
+                    filtroLojista.innerHTML += `<option value="${loja.id}">${loja.nome}</option>`;
+                });
+            }
+        }
+
+        // ===== NOVA FUNÇÃO: filtrarPorLojistaGlobal =====
+        function filtrarPorLojistaGlobal() {
+            const lojaId = document.getElementById('filtroLojistaGlobal').value;
+            if (!lojaId) {
+                document.getElementById('listAnu').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Selecione um lojista para visualizar os anúncios</td></tr>';
+                return;
+            }
+            // Filtrar dbAnu apenas para essa loja
+            const anuFiltrados = dbAnu.filter(a => a.fornecedores?.id == lojaId);
+            renderAnuPorLoja(anuFiltrados);
+        }
+
+        // ===== NOVA FUNÇÃO: renderAnuPorLoja =====
+        function renderAnuPorLoja(anuList) {
+            const tbody = document.getElementById('listAnu');
+            if (!anuList.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-400">Nenhum anúncio para este lojista.</td></tr>';
+                return;
+            }
+            const regMap = {};
+            dbReg.forEach(r => regMap[r.id] = r.bandeira || '🌍');
+
+            let html = '';
+            anuList.sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em)).forEach(a => {
+                let d = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '--';
+                let bandeira = regMap[a.regiao_id] || '';
+                let p = a.variacoes ? `${bandeira} ${a.variacoes.produtos_mestre?.nome} ${a.variacoes.capacidade} <span class="text-zinc-500">${a.variacoes.cor}</span>` : 'Indisponível';
+                let c = a.condicao || 'NOVO';
+                let pDisp = a.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                let localizacaoFisica = a.cidade_aparelho ? `${a.cidade_aparelho}/${a.estado_aparelho}` : '-';
+                html += `<tr>
+                    <td><input type="checkbox" class="chk-anu" value="${a.id}"></td>
+                    <td class="text-[9px] text-zinc-400 font-mono">${d}</td>
+                    <td class="text-[10px] font-bold text-white">${p}</td>
+                    <td>${c}</td>
+                    <td class="text-[9px] text-zinc-400">${localizacaoFisica}</td>
+                    <td class="text-center font-mono text-white">${a.moeda} <input type="text" class="mini-edit mini-edit-preco" value="${pDisp}" oninput="mascara(this)" onblur="editAnuncio(${a.id}, 'preco', this.value)"></td>
+                    <td class="text-center"><input type="number" class="mini-edit" value="${a.quantidade}" min="0" onblur="editAnuncio(${a.id}, 'quantidade', this.value)"></td>
+                    <td class="text-right">
+                        <button onclick="abrirModalEdicaoCompleta(${a.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-[8px] font-black mr-1">✏️</button>
+                        <button onclick="delRecord('ofertas', ${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black">X</button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
         }
 
         function carregarEstadosMaster() {
@@ -2306,45 +2354,9 @@
             loadAll();
         }
 
-        function renderAnu() { 
-            const tbody = document.getElementById('listAnu'); 
-            if(!dbAnu.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4">Vazio.</td></tr>'; return; } 
-            const regMap = {};
-            dbReg.forEach(r => regMap[r.id] = r.bandeira || '🌍');
-            let grouped = {}; 
-            dbAnu.forEach(a => { 
-                let fNome = a.fornecedores ? a.fornecedores.nome : 'DESCONHECIDO'; 
-                if(!grouped[fNome]) grouped[fNome] = { ads: [], b: a.fornecedores?.insignia_manual || [] }; 
-                grouped[fNome].ads.push(a); 
-            }); 
-            let lojasOrdenadas = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
-            let html = ''; 
-            for(let loja of lojasOrdenadas) { 
-                let b = grouped[loja].b.map(i => `<span class="badge bg-purple-900/30 text-purple-400 border border-purple-500 mr-1 text-[7px]">${i}</span>`).join(''); 
-                html += `<tr class="group-header bg-[#141415] border-y border-zinc-800"><td colspan="8" class="font-black text-blue-500 py-3">🏢 ${loja} ${b}</td></tr>`; 
-                grouped[loja].ads.forEach(a => { 
-                    let d = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '--'; 
-                    let bandeira = regMap[a.regiao_id] || '';
-                    let p = a.variacoes ? `${bandeira} ${a.variacoes.produtos_mestre?.nome} ${a.variacoes.capacidade} <span class="text-zinc-500">${a.variacoes.cor}</span>` : 'Indisponível'; 
-                    let c = a.condicao || 'NOVO'; 
-                    let pDisp = a.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                    let localizacaoFisica = a.cidade_aparelho ? `${a.cidade_aparelho}/${a.estado_aparelho}` : '-';
-                    html += `<tr>
-                        <td><input type="checkbox" class="chk-anu" value="${a.id}"></td>
-                        <td class="text-[9px] text-zinc-400 font-mono">${d}</td>
-                        <td class="text-[10px] font-bold text-white">${p}</td>
-                        <td>${c}</td>
-                        <td class="text-[9px] text-zinc-400">${localizacaoFisica}</td>
-                        <td class="text-center font-mono text-white">${a.moeda} <input type="text" class="mini-edit mini-edit-preco" value="${pDisp}" oninput="mascara(this)" onblur="editAnuncio(${a.id}, 'preco', this.value)"></td>
-                        <td class="text-center"><input type="number" class="mini-edit" value="${a.quantidade}" min="0" onblur="editAnuncio(${a.id}, 'quantidade', this.value)"></td>
-                        <td class="text-right">
-                            <button onclick="abrirModalEdicaoCompleta(${a.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-[8px] font-black mr-1">✏️</button>
-                            <button onclick="delRecord('ofertas', ${a.id})" class="bg-red-900/30 text-red-500 px-3 py-1 rounded text-[8px] font-black">X</button>
-                        </td>
-                    </tr>`; 
-                }); 
-            } 
-            tbody.innerHTML = html; 
+        // renderAnu antigo foi substituído pelas funções de filtro, então deixamos apenas um placeholder
+        function renderAnu() {
+            // Já temos placeholder na tabela, nada a fazer aqui
         }
 
         function loadUsersForSelo() {
@@ -2643,6 +2655,9 @@
         window.deletarFeedbacksSelecionados = deletarFeedbacksSelecionados;
         window.copiarDadosAcesso = copiarDadosAcesso;
         window.copiarListaHorus = copiarListaHorus;
+
+        // NOVAS FUNÇÕES EXPORTADAS
+        window.filtrarPorLojistaGlobal = filtrarPorLojistaGlobal;
 
         checkAuth();
 
