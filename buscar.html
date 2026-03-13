@@ -566,18 +566,12 @@
         </div>
     </div>
 
-    <!-- MODAL HORUS (ATUALIZADO COM BOTÕES DE CÓPIA) -->
+    <!-- MODAL HORUS (sem botões de cópia, apenas visualização) -->
     <div id="modalHorus" class="modal hidden">
         <div class="modal-content max-w-3xl w-full">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold flex items-center gap-2">👁️‍🗨️ HORUS – MENOR PREÇO</h3>
                 <button onclick="fecharModalHorus()" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
-            </div>
-            <div class="flex flex-wrap gap-2 mb-4">
-                <button onclick="copiarListaHorus('iphone_novo')" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-full text-[9px] font-bold">📋 NOVOS IPHONE</button>
-                <button onclick="copiarListaHorus('seminovos_geral')" class="bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1.5 rounded-full text-[9px] font-bold">📋 SEMINOVOS GERAL</button>
-                <button onclick="copiarListaHorus('novos_mac_ipad')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-full text-[9px] font-bold">📋 NOVOS MAC/IPAD</button>
-                <button onclick="copiarListaHorus('novos_acessorios')" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-full text-[9px] font-bold">📋 ACESSÓRIOS</button>
             </div>
             <input type="text" id="buscaHorus" placeholder="🔍 Buscar modelo, cor, novo, seminovo..." class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-4 text-white" onkeyup="filtrarHorus(this.value)">
             <div id="horusList" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
@@ -1288,7 +1282,7 @@
                 }
                 fornecedores = fData;
 
-                // Ofertas com quantidade > 0 (query menos restritiva, removido !inner)
+                // Ofertas com quantidade > 0 (removido !inner para evitar exclusão de ofertas com fornecedor ausente)
                 const oData = [];
                 page = 0;
                 while (true) {
@@ -1605,6 +1599,7 @@
                     const nomeCor = (cor || '').toUpperCase();
                     const fornecedorNome = f?.nome || 'Anunciante';
                     const fornecedorWhats = f?.whatsapp || '';
+                    const wppLimpo = String(fornecedorWhats).replace(/\D/g, ''); // 🛡️ correção principal
                     const fornecedorCidade = f?.cidade || '';
                     const fornecedorEstado = f?.estado || '';
                     const fornecedorPais = f?.pais || '';
@@ -1684,7 +1679,7 @@
                         `${nomeProduto} ${capacidade} ${cor}\n` +
                         `Preço: ${simbolo} ${preco.toFixed(2)}\n` +
                         `Estoque disponível: ${o.quantidade} UN\n\n` +
-                        `Falar com Atacadista: https://wa.me/${fornecedorWhats.replace(/\D/g, '')}\n\n` +
+                        `Falar com Atacadista: https://wa.me/${wppLimpo}\n\n` + // 🛡️ usando wppLimpo
                         `Achei no www.iFipe.com.br | *A Tabela Fipe do iPhone* 📲`
                     );
 
@@ -1699,6 +1694,11 @@
                         badgeEstoque = `<span class="badge-condicao bg-blue-600">📲 EM ESTOQUE: ${o.quantidade} UN</span>`;
                     } else {
                         badgeEstoque = `<span class="badge-condicao bg-green-600">🆙 ALTO ESTOQUE: ${o.quantidade} UN</span>`;
+                    }
+
+                    // Se quantidade zero ou preço zero, badge cinza (não será usado pois filtramos)
+                    if (o.quantidade === 0 || o.preco === 0) {
+                        badgeEstoque = `<span class="badge-condicao badge-reposicao">⏳ AGUARDANDO REPOSIÇÃO</span>`;
                     }
 
                     // Localização híbrida: prioridade cidade_aparelho
@@ -1745,11 +1745,11 @@
                             <button class="action-button hover:text-blue-500" onclick="abrirPerguntas(${o.id}, '${nomeProduto}', ${f?.id || 0})">
                                 <i class="far fa-question-circle"></i> <span>Enviar Proposta</span>
                             </button>
-                            <button class="action-button hover:text-blue-500" onclick="compartilhar('${nomeProduto}', '${capacidade}', '${cor}', ${preco}, '${simbolo}', ${o.quantidade}, '${fornecedorWhats.replace(/\D/g, '')}')">
+                            <button class="action-button hover:text-blue-500" onclick="compartilhar('${nomeProduto}', '${capacidade}', '${cor}', ${preco}, '${simbolo}', ${o.quantidade}, '${wppLimpo}')">
                                 <i class="far fa-share-square"></i> <span>Compartilhar</span>
                             </button>
                         </div>
-                        <a href="https://wa.me/${fornecedorWhats.replace(/\D/g, '')}?text=${msgZap}" target="_blank" class="btn-apple w-full text-center text-xs py-1.5 flex items-center justify-center gap-1">
+                        <a href="https://wa.me/${wppLimpo}?text=${msgZap}" target="_blank" class="btn-apple w-full text-center text-xs py-1.5 flex items-center justify-center gap-1">
                             <i class="fab fa-whatsapp"></i> Comprar no WhatsApp
                         </a>
                     `;
@@ -1797,7 +1797,7 @@
             }
         }
 
-        function compartilhar(nome, capacidade, cor, preco, simbolo, qtd, whatsapp) {
+        function compartilhar(nome, capacidade, cor, preco, simbolo, qtd, wppLimpo) {
             const saudacao = (() => {
                 const h = new Date().getHours();
                 if (h < 12) return 'Bom dia';
@@ -1808,7 +1808,7 @@
                 `${nome} ${capacidade} ${cor}\n` +
                 `Preço: ${simbolo} ${preco.toFixed(2)}\n` +
                 `Estoque disponível: ${qtd} UN\n\n`;
-            if (whatsapp) texto += `Falar com Atacadista: https://wa.me/${whatsapp}\n\n`;
+            if (wppLimpo) texto += `Falar com Atacadista: https://wa.me/${wppLimpo}\n\n`;
             texto += `Achei no www.iFipe.com.br | A Tabela Fipe do iPhone 📲`;
             if (navigator.share) { navigator.share({ title: 'Oferta iFipe', text: texto }); } 
             else { navigator.clipboard.writeText(texto); alert('Texto copiado!'); }
@@ -1910,7 +1910,8 @@
             }));
             lista.innerHTML = comentarios.map(c => {
                 const iphone = c.detalhes?.variacoes?.produtos_mestre?.nome || 'Aparelho Indisponível';
-                const zap = c.detalhes?.fornecedores?.whatsapp?.replace(/\D/g, '') || '';
+                // 🛡️ proteção no whatsapp
+                const zap = String(c.detalhes?.fornecedores?.whatsapp || '').replace(/\D/g, '');
                 return `
                 <div class="border border-[#38383a] rounded-xl p-3 bg-black/20 mb-2">
                     <div class="flex justify-between items-start text-[10px] mb-1">
@@ -2160,7 +2161,7 @@
         function abrirLegendaInsignias() { document.getElementById('legendaInsigniasModal').classList.remove('hidden'); }
         function fecharLegendaInsignias() { document.getElementById('legendaInsigniasModal').classList.add('hidden'); }
 
-        // ===== HORUS (ATUALIZADO COM ARMAZENAMENTO GLOBAL E BOTÕES DE CÓPIA) =====
+        // ===== HORUS (apenas visualização, sem botões de cópia) =====
         async function abrirModalHorus() {
             const { data: globalOfertas, error } = await _s
                 .from('ofertas')
@@ -2218,7 +2219,7 @@
                                 <span class="font-bold text-white">${g.produto} ${g.capacidade} ${g.cor}</span> ${condBadge}<br>
                                 <span class="text-gray-400">${g.regiao} ${g.bandeira} - R$ ${pFmt} (${g.moeda}) - ${g.fornecedor}</span>
                             </div>
-                            <a href="https://wa.me/55${g.whatsapp.replace(/\D/g, '')}?text=${msg}" target="_blank" class="bg-green-600 text-white text-[9px] px-3 py-1 rounded-full font-bold">WHATSAPP</a>
+                            <a href="https://wa.me/55${String(g.whatsapp).replace(/\D/g, '')}?text=${msg}" target="_blank" class="bg-green-600 text-white text-[9px] px-3 py-1 rounded-full font-bold">WHATSAPP</a>
                         </div>`;
                 });
             } catch (e) {
@@ -2234,189 +2235,6 @@
             const q = query.toLowerCase();
             document.querySelectorAll('.horus-item').forEach(el => {
                 el.style.display = el.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
-            });
-        }
-
-        // Nova função: copiarListaHorus (versão adaptada para buscador)
-        function copiarListaHorus(tipo) {
-            if (!horusOfertasGlobal || horusOfertasGlobal.length === 0) {
-                alert('Nenhum dado carregado no Horus. Abra o Horus primeiro.');
-                return;
-            }
-
-            // Filtrar ofertas de acordo com o tipo
-            let ofertasFiltradas = horusOfertasGlobal.filter(o => {
-                // Proteção contra categoria undefined
-                const cat = o.variacoes?.produtos_mestre?.categoria ? o.variacoes.produtos_mestre.categoria.toUpperCase() : '';
-                const cond = o.condicao;
-
-                if (tipo === 'iphone_novo') {
-                    return (cond === 'Novo' || cond === 'CPO') && cat === 'IPHONE';
-                } else if (tipo === 'seminovos_geral') {
-                    return cond === 'Seminovo' || (cond && cond.includes('Grade'));
-                } else if (tipo === 'novos_mac_ipad') {
-                    return (cond === 'Novo' || cond === 'CPO') && (cat === 'MACBOOK' || cat === 'IMAC' || cat === 'IPAD');
-                } else if (tipo === 'novos_acessorios') {
-                    return (cond === 'Novo' || cond === 'CPO') && (cat === 'ACESSORIOS' || cat === 'AIRPODS' || cat === 'PENCIL' || cat === 'AIRTAG');
-                }
-                return false;
-            });
-
-            if (ofertasFiltradas.length === 0) {
-                alert('Nenhuma oferta encontrada para esta categoria.');
-                return;
-            }
-
-            // Agrupar por produto + capacidade + cor + origem + moeda + condição para pegar o menor preço de cada grupo
-            const grupos = {};
-            ofertasFiltradas.forEach(o => {
-                const key = `${o.variacoes.produto_id}-${o.variacoes.capacidade}-${o.variacoes.cor}-${o.regiao_id}-${o.moeda}-${o.condicao}`;
-                if (!grupos[key] || o.preco < grupos[key].preco) {
-                    grupos[key] = {
-                        produto: o.variacoes.produtos_mestre.nome,
-                        capacidade: o.variacoes.capacidade,
-                        cor: o.variacoes.cor,
-                        bandeira: o.regioes.bandeira,
-                        preco: o.preco,
-                        fornecedor: o.fornecedores.nome,
-                        whatsapp: o.fornecedores.whatsapp,
-                        pais: o.fornecedores.pais,
-                        cidade_sede: o.fornecedores.cidade,
-                        estado_sede: o.fornecedores.estado,
-                        cidade_aparelho: o.cidade_aparelho,
-                        estado_aparelho: o.estado_aparelho,
-                        condicao: o.condicao,
-                        categoria: (o.variacoes.produtos_mestre.categoria || '').toUpperCase()
-                    };
-                }
-            });
-
-            let lista = Object.values(grupos);
-
-            // Funções Anti-Crash (try/catch interno)
-            function extrairNumero(nome) {
-                try {
-                    const match = nome.match(/\d+/);
-                    return match ? parseInt(match[0]) : 0;
-                } catch(e) { return 0; }
-            }
-            function pesoVariante(nome) {
-                try {
-                    if (nome.includes('Pro Max')) return 5;
-                    if (nome.includes('Pro')) return 4;
-                    if (nome.includes('Plus')) return 3;
-                    if (nome.includes('Air')) return 2;
-                    if (nome.includes('mini')) return 1;
-                    return 2.5;
-                } catch(e) { return 2.5; }
-            }
-            function extrairCapacidade(capacidade) {
-                try {
-                    const match = capacidade.match(/\d+/);
-                    return match ? parseInt(match[0]) : 0;
-                } catch(e) { return 0; }
-            }
-
-            try {
-                lista.sort((a, b) => {
-                    const numA = extrairNumero(a.produto);
-                    const numB = extrairNumero(b.produto);
-                    if (numA !== numB) return numB - numA;
-                    const pesoA = pesoVariante(a.produto);
-                    const pesoB = pesoVariante(b.produto);
-                    if (pesoA !== pesoB) return pesoB - pesoA;
-                    const capA = extrairCapacidade(a.capacidade);
-                    const capB = extrairCapacidade(b.capacidade);
-                    return capA - capB; 
-                });
-            } catch (e) {
-                console.warn('Erro na ordenação:', e);
-            }
-
-            // Seleção de Título
-            let titulo = '';
-            if (tipo === 'iphone_novo') titulo = '👁️‍🗨️ *RANKING NOVOS E CPO - IPHONE* 🔥';
-            else if (tipo === 'seminovos_geral') titulo = '👁️‍🗨️ *RANKING SEMINOVOS GERAL* 🔥';
-            else if (tipo === 'novos_mac_ipad') titulo = '👁️‍🗨️ *RANKING NOVOS - MAC/IPAD* 🔥';
-            else if (tipo === 'novos_acessorios') titulo = '👁️‍🗨️ *RANKING ACESSÓRIOS E OUTROS* 🔥';
-
-            let texto = titulo + '\n\n';
-
-            // Gerador de Texto
-            function gerarTextoItens(items) {
-                let resultado = '';
-                let currentModeloBase = '';
-                items.forEach(item => {
-                    // CORREÇÃO: Formatação do modeloBase conforme solicitado
-                    let modeloBase = item.produto;
-                    if (item.categoria === 'IPHONE') {
-                        modeloBase = 'iPhone ' + item.produto.replace(/iPhone\s*/i, '').trim().toUpperCase();
-                    } else {
-                        modeloBase = item.produto.toUpperCase();
-                    }
-
-                    if (modeloBase !== currentModeloBase) {
-                        if (currentModeloBase !== '') resultado += '\n';
-                        resultado += `📲 *${modeloBase}*\n\n`;
-                        currentModeloBase = modeloBase;
-                    }
-                    
-                    let capacidade = item.capacidade.toUpperCase();
-                    let cor = item.cor.toUpperCase();
-                    let bandeira = item.bandeira || '';
-                    let precoFormatado = item.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                    let cidadeExibicao = item.cidade_aparelho || item.cidade_sede;
-                    let estadoExibicao = item.estado_aparelho || item.estado_sede;
-                    let localizacao = (cidadeExibicao && estadoExibicao) ? `(📍 *${cidadeExibicao.toUpperCase()}/${estadoExibicao.toUpperCase()}*)` : '';
-
-                    resultado += `*${capacidade} ${cor} ${bandeira} R$ ${precoFormatado.replace('.', ',')}*\n\n`;
-                    
-                    let zapDigits = item.whatsapp.replace(/\D/g, '');
-                    if(item.pais === 'Brasil' || !item.pais) {
-                        if(zapDigits.startsWith('55')) zapDigits = zapDigits.slice(2);
-                        if(zapDigits.length >= 10) {
-                            let ddd = zapDigits.slice(0, 2);
-                            let numero = zapDigits.slice(2);
-                            if(numero.length === 8) numero = numero.slice(0,4) + '-' + numero.slice(4);
-                            else if(numero.length === 9) numero = numero.slice(0,5) + '-' + numero.slice(5);
-                            zapDigits = `+55 ${ddd} ${numero}`;
-                        } else {
-                            zapDigits = `+55 ${zapDigits}`;
-                        }
-                    } else {
-                        zapDigits = `+${zapDigits}`;
-                    }
-
-                    resultado += `Zap: ${zapDigits} — ${item.fornecedor}\n`;
-                    if (localizacao) resultado += `${localizacao}\n`;
-                    resultado += '\n';
-                });
-                return resultado;
-            }
-
-            // Separar os blocos de Novo e CPO
-            if (tipo === 'iphone_novo' || tipo === 'novos_mac_ipad' || tipo === 'novos_acessorios') {
-                const novos = lista.filter(item => item.condicao === 'Novo');
-                const cpos = lista.filter(item => item.condicao === 'CPO');
-
-                if (novos.length > 0) {
-                    texto += '▶️ *NOVOS* ◀️\n\n';
-                    texto += gerarTextoItens(novos);
-                }
-                if (cpos.length > 0) {
-                    if (novos.length > 0) texto += '\n';
-                    texto += '▶️ *CPO* ◀️\n\n';
-                    texto += gerarTextoItens(cpos);
-                }
-            } else {
-                // Seminovos (vai tudo junto)
-                texto += gerarTextoItens(lista);
-            }
-
-            navigator.clipboard.writeText(texto).then(() => {
-                alert('Lista copiada com sucesso!');
-            }).catch(() => {
-                alert('Erro ao copiar lista.');
             });
         }
 
@@ -2464,7 +2282,7 @@
             }
         }
 
-        // EXPOR FUNÇÕES GLOBAIS (incluindo copiarListaHorus)
+        // EXPOR FUNÇÕES GLOBAIS
         window.abrirDrawer = abrirDrawer;
         window.fecharDrawer = fecharDrawer;
         window.logout = logout;
@@ -2501,7 +2319,6 @@
         window.abrirModalHorus = abrirModalHorus;
         window.fecharModalHorus = fecharModalHorus;
         window.filtrarHorus = filtrarHorus;
-        window.copiarListaHorus = copiarListaHorus; // Exportar a nova função
         window.mostrarAbaRespostas = mostrarAbaRespostas;
         window.marcarComoLida = marcarComoLida;
         window.apagarMensagem = apagarMensagem;
