@@ -35,7 +35,7 @@
         .master-view.active { display: block; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; align-items: center; justify-content: center; overflow-y: auto; }
         .hidden { display: none !important; }
-        #scrollTopBtn { opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 9999; position: fixed; bottom: 20px; right: 20px; background: var(--blue-master); color: white; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        #scrollTopBtn { opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 99999; position: fixed; bottom: 20px; right: 20px; background: var(--blue-master); color: white; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         #scrollTopBtn.show { opacity: 1; pointer-events: auto; }
         .mini-edit { background: transparent; border: 1px solid transparent; color: #fff; font-weight: 800; width: 60px; text-align: center; font-family: 'JetBrains Mono'; border-radius: 6px; transition: 0.3s; border-bottom: 1px dashed rgba(255,255,255,0.3); outline: none; }
         .mini-edit:focus { border-color: var(--blue-master); background: rgba(0, 113, 227, 0.1); border-bottom: 1px solid var(--blue-master); }
@@ -217,17 +217,18 @@
             </div>
         </div>
 
-        <!-- Aba Gestão Global (com filtro por lojista) -->
+        <!-- Aba Gestão Global (com filtro por lojista + opção TODOS) -->
         <div id="v-anuncios" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
                     <h2 class="text-sm font-black text-white">GESTÃO GLOBAL DE ANÚNCIOS</h2>
                     <div class="flex gap-2 w-2/3 justify-end items-center flex-wrap">
-                        <!-- NOVO SELECT PARA FILTRAR POR LOJISTA -->
+                        <!-- SELECT DE FILTRO COM OPÇÃO TODOS -->
                         <select id="filtroLojistaGlobal" class="apple-input !w-auto min-w-[200px] !py-2 text-[9px]" onchange="filtrarPorLojistaGlobal()">
-                            <option value="">SELECIONE UM LOJISTA</option>
+                            <option value="TODOS">TODOS OS LOJISTAS</option>
+                            <!-- opções serão inseridas via JS -->
                         </select>
-                        <input type="text" placeholder="🔍 BUSCAR PRODUTO, COR..." class="apple-input !w-1/3 !py-2" onkeyup="filterAnuncios(this.value)" id="buscaAnuncios">
+                        <input type="text" placeholder="🔍 BUSCAR PRODUTO, COR..." class="apple-input !w-1/3 !py-2" onkeyup="filtrarAnunciosTexto(this.value)" id="buscaAnuncios">
                         <button onclick="zerarEstoqueSelecionados()" class="btn-master !bg-orange-600 master-only">🚫 ZERAR SELECIONADOS</button>
                         <button onclick="apagarAnunciosSelecionados()" class="btn-master !bg-red-800 master-only">🗑️ APAGAR SELECIONADOS</button>
                         <button onclick="restaurarEstoqueSelecionados()" class="btn-master !bg-emerald-600 master-only">♻️ RESTAURAR ESTOQUE</button>
@@ -250,7 +251,7 @@
                             <th class="text-right">AÇÕES</th>
                         </tr></thead>
                         <tbody id="listAnu">
-                            <tr><td colspan="8" class="text-center py-8 text-gray-400">Selecione um lojista para visualizar os anúncios</td></tr>
+                            <tr><td colspan="8" class="text-center py-8 text-gray-400">Carregando anúncios...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1150,7 +1151,7 @@
             }
         }
 
-        function filterAnuncios(query) {
+        function filtrarAnunciosTexto(query) {
             const q = query.toLowerCase();
             const tbody = document.getElementById('listAnu');
             const rows = tbody.getElementsByTagName('tr');
@@ -1740,7 +1741,6 @@
 
             renderAta(); 
             renderCli(); 
-            renderAnu(); // Agora renderAnu sem parâmetro inicia vazia (já tem placeholder)
             renderFunc(); 
             loadUsersForSelo();
             renderProdutosList();
@@ -1796,25 +1796,37 @@
                 }
             }
 
-            // Preencher select de filtro por lojista na aba Gestão Global
+            // Preencher select de filtro por lojista na aba Gestão Global (já com opção TODOS)
             const filtroLojista = document.getElementById('filtroLojistaGlobal');
             if (filtroLojista) {
-                filtroLojista.innerHTML = '<option value="">SELECIONE UM LOJISTA</option>';
+                filtroLojista.innerHTML = '<option value="TODOS">TODOS OS LOJISTAS</option>';
                 dbAta.forEach(loja => {
                     filtroLojista.innerHTML += `<option value="${loja.id}">${loja.nome}</option>`;
                 });
             }
+
+            // Inicializar a tabela de anúncios com a opção TODOS (últimas 800)
+            filtrarPorLojistaGlobal();
         }
 
         // ===== NOVA FUNÇÃO: filtrarPorLojistaGlobal =====
         function filtrarPorLojistaGlobal() {
             const lojaId = document.getElementById('filtroLojistaGlobal').value;
+            
+            if (lojaId === 'TODOS') {
+                // Renderizar as últimas 800 ofertas para evitar travamento
+                const ultimasOfertas = [...dbAnu].sort((a,b) => new Date(b.criado_em) - new Date(a.criado_em)).slice(0, 800);
+                renderAnuPorLoja(ultimasOfertas);
+                return;
+            }
+            
             if (!lojaId) {
                 document.getElementById('listAnu').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Selecione um lojista para visualizar os anúncios</td></tr>';
                 return;
             }
-            // Filtrar dbAnu apenas para essa loja
-            const anuFiltrados = dbAnu.filter(a => a.fornecedores?.id == lojaId);
+            
+            // Filtrar dbAnu apenas para essa loja (comparação segura com String)
+            const anuFiltrados = dbAnu.filter(a => String(a.fornecedores?.id) === String(lojaId));
             renderAnuPorLoja(anuFiltrados);
         }
 
@@ -1822,7 +1834,7 @@
         function renderAnuPorLoja(anuList) {
             const tbody = document.getElementById('listAnu');
             if (!anuList.length) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-400">Nenhum anúncio para este lojista.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-400">Nenhum anúncio encontrado.</td></tr>';
                 return;
             }
             const regMap = {};
@@ -2354,11 +2366,6 @@
             loadAll();
         }
 
-        // renderAnu antigo foi substituído pelas funções de filtro, então deixamos apenas um placeholder
-        function renderAnu() {
-            // Já temos placeholder na tabela, nada a fazer aqui
-        }
-
         function loadUsersForSelo() {
             const t = document.getElementById('seloTableSel').value;
             const sel = document.getElementById('seloUser');
@@ -2550,13 +2557,13 @@
                 }).join(''); 
         }
 
-        // Funções expostas globalmente (adicionando a nova função apagarAnunciosSelecionados)
+        // Funções expostas globalmente
         window.apagarAnunciosSelecionados = apagarAnunciosSelecionados;
         window.abrirModalHorus = abrirModalHorus;
         window.filtrarHorus = filtrarHorus;
         window.selAll = selAll;
         window.filterTable = filterTable;
-        window.filterAnuncios = filterAnuncios;
+        window.filtrarAnunciosTexto = filtrarAnunciosTexto;
         window.zerarEstoqueSelecionados = zerarEstoqueSelecionados;
         window.restaurarEstoqueSelecionados = restaurarEstoqueSelecionados;
         window.abrirModalZerarEstoque = abrirModalZerarEstoque;
@@ -3010,6 +3017,7 @@
             document.getElementById('linhasContainer').innerHTML = '';
         }
 
+        // ===== FUNÇÃO MODIFICADA: adicionarLinhaAnuncio (agora usando dbProdutos para modelos) =====
         function adicionarLinhaAnuncio() {
             let container = document.getElementById('linhasContainer');
             let index = container.children.length;
@@ -3020,7 +3028,7 @@
             linha.innerHTML = `
                 <select class="modelo" data-index="${index}" style="min-width:120px">
                     <option value="">Modelo</option>
-                    ${dbVar.map(v => v.produtos_mestre?.id ? `<option value="${v.produtos_mestre.id}" data-produto="${v.produtos_mestre.id}">${v.produtos_mestre.nome}</option>` : '').filter((v,i,a)=>a.indexOf(v)===i).join('')}
+                    ${dbProdutos.sort((a,b)=>a.nome.localeCompare(b.nome)).map(p => `<option value="${p.id}">${p.nome}</option>`).join('')}
                 </select>
                 <select class="capacidade" data-index="${index}" disabled style="min-width:80px">
                     <option value="">Memória</option>
@@ -3086,7 +3094,7 @@
             });
         }
 
-        // ========== FUNÇÃO MODIFICADA: executarLancamentoMassa (COM BULK INSERT EM CHUNKS) ==========
+        // ===== FUNÇÃO MODIFICADA: executarLancamentoMassa (COM BULK INSERT EM CHUNKS) =====
         async function executarLancamentoMassa() {
             let fornecedorInput = document.getElementById('massaFornecedor').value;
             if (!fornecedorInput) { alert('Selecione um fornecedor ou a opção "Lançar para Todos".'); return; }
@@ -3594,7 +3602,7 @@
 
             if (!grupo) return;
 
-            const modelosFiltrados = dbProdutos.filter(p => p.categoria === grupo);
+            const modelosFiltrados = dbProdutos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
             modelosFiltrados.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
                 modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
             });
@@ -3607,7 +3615,7 @@
                 const modeloSelect = linha.querySelector('.modelo');
                 modeloSelect.innerHTML = '<option value="">Modelo</option>';
                 if (grupo) {
-                    const modelos = dbProdutos.filter(p => p.categoria === grupo);
+                    const modelos = dbProdutos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
                     modelos.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
                         modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
                     });
@@ -3616,7 +3624,7 @@
         }
 
         // Expor funções globais
-        window.editarProduto = editarProduto; // adicionada
+        window.editarProduto = editarProduto;
         window.abrirModalConfigPix = abrirModalConfigPix;
         window.fecharModalConfigPix = fecharModalConfigPix;
         window.salvarConfigPix = salvarConfigPix;
