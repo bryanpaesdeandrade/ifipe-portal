@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>iFipe - A Tabela Fipe do iPhone</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👀%3C/text%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -255,18 +256,6 @@
         .uppercase-input { text-transform: uppercase; }
         .uppercase-input::placeholder { text-transform: none; }
 
-        .version-alert {
-            background: #ff3b30;
-            color: white;
-            text-align: center;
-            padding: 8px;
-            font-size: 12px;
-            font-weight: bold;
-            position: sticky;
-            top: 60px;
-            z-index: 100;
-        }
-
         .usdt-widget {
             display: flex;
             align-items: center;
@@ -350,35 +339,6 @@
             #usdtPedidoContainer > div {
                 max-width: 380px;
             }
-        }
-
-        /* Pills de categoria */
-        .category-pills {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin: 12px 0;
-            justify-content: center;
-        }
-        .category-pill {
-            background: var(--input);
-            border: 1px solid var(--border);
-            border-radius: 50px;
-            padding: 6px 16px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: var(--text);
-        }
-        .category-pill.active {
-            background: var(--blue);
-            border-color: var(--blue);
-            color: white;
-        }
-        .category-pill:hover {
-            background: var(--blue);
-            color: white;
         }
     </style>
 </head>
@@ -509,12 +469,6 @@
             </div>
         </div>
     </nav>
-
-    <!-- ALERTA DE VERSÃO DESATUALIZADA -->
-    <div id="versionAlert" class="version-alert hidden flex justify-between items-center px-4 py-2">
-        <span>⚠️ VERSÃO DESATUALIZADA. SAIA E LOGUE NOVAMENTE PARA CARREGAR AS MELHORIAS.</span>
-        <button onclick="fecharAlertaVersao()" class="font-black text-lg">&times;</button>
-    </div>
 
     <!-- MODAL LEGENDA INSÍGNIAS -->
     <div id="legendaInsigniasModal" class="modal hidden">
@@ -735,22 +689,11 @@
             </div>
         </div>
 
-        <!-- Conteúdo principal (busca, pills, filtros, cards) -->
+        <!-- Conteúdo principal (busca, filtros, cards) -->
         <div class="lg:col-span-4">
             <!-- Barra de pesquisa -->
             <div class="mb-3 relative">
                 <input type="text" id="searchInput" placeholder="ENCONTRE O MELHOR PREÇO (produto, loja, cidade...)" class="apple-input pl-4 pr-4 py-3 text-base font-medium border-2 uppercase-input" oninput="registrarInteracao(); renderizarCards()">
-            </div>
-
-            <!-- Pills de categoria (nova) -->
-            <div class="category-pills" id="categoryPills">
-                <button class="category-pill active" data-categoria="todos" onclick="filtrarPorCategoria('todos')">TODOS</button>
-                <button class="category-pill" data-categoria="IPHONE" onclick="filtrarPorCategoria('IPHONE')">IPHONE</button>
-                <button class="category-pill" data-categoria="IPAD" onclick="filtrarPorCategoria('IPAD')">IPAD</button>
-                <button class="category-pill" data-categoria="MACBOOK" onclick="filtrarPorCategoria('MACBOOK')">MACBOOK</button>
-                <button class="category-pill" data-categoria="APPLEWATCH" onclick="filtrarPorCategoria('APPLEWATCH')">WATCH</button>
-                <button class="category-pill" data-categoria="AIRPODS" onclick="filtrarPorCategoria('AIRPODS')">AIRPODS</button>
-                <button class="category-pill" data-categoria="OUTROS" onclick="filtrarPorCategoria('OUTROS')">OUTROS</button>
             </div>
 
             <!-- Container do botão de oportunidades -->
@@ -802,15 +745,6 @@
         const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
         const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        // CONTROLE DE VERSÃO
-        const VERSAO_ATUAL = "1.1";
-        const versaoArmazenada = localStorage.getItem('iFipe_Versao') || "0.0";
-
-        window.fecharAlertaVersao = function() {
-            localStorage.setItem('iFipe_AvisoVisto', VERSAO_ATUAL);
-            document.getElementById('versionAlert').remove();
-        };
 
         let rateBinance = 5.2907;
         let rateOraculo = rateBinance + 0.06;
@@ -1151,10 +1085,6 @@
             }
 
             await carregarInstrucoesPix();
-
-            if (versaoArmazenada < VERSAO_ATUAL && localStorage.getItem('iFipe_AvisoVisto') !== VERSAO_ATUAL) {
-                document.getElementById('versionAlert').classList.remove('hidden');
-            }
 
             const token = localStorage.getItem('iFipe_Token');
             const masterAuth = localStorage.getItem('iFipe_Master_Auth');
@@ -1518,18 +1448,6 @@
                     // Se não tiver produto ou variação, não exibe
                     if (!p || !v) return false;
 
-                    // Filtro por categoria da pill
-                    const categoriaDoProduto = (p.categoria || '').toUpperCase();
-                    if (categoriaSelecionadaPill !== 'todos') {
-                        if (categoriaSelecionadaPill === 'OUTROS') {
-                            const categoriasPrincipais = ['IPHONE', 'IPAD', 'MACBOOK', 'APPLEWATCH', 'AIRPODS', 'PENCIL', 'AIRTAG'];
-                            // Se a categoria estiver vazia, consideramos como "OUTROS"
-                            if (categoriaDoProduto && categoriasPrincipais.includes(categoriaDoProduto)) return false;
-                        } else {
-                            if (categoriaDoProduto !== categoriaSelecionadaPill) return false;
-                        }
-                    }
-                    
                     if (busca) {
                         const searchable = [
                             p.nome || '',
@@ -1583,8 +1501,8 @@
                 });
             }
 
-            // Aplica a nova ordenação
-            const ofertasOrdenadas = ordenarOfertas(filtradas);
+            // Aplica a nova ordenação e limita a 150 itens para melhor performance
+            const ofertasOrdenadas = ordenarOfertas(filtradas).slice(0, 150);
 
             const criarCard = (o) => {
                 try {
@@ -1674,13 +1592,9 @@
                         if (h < 12) return 'Bom dia'; if (h < 18) return 'Boa tarde'; return 'Boa noite';
                     })();
 
+                    // 🛡️ NOVA MENSAGEM DO WHATSAPP (conforme solicitado)
                     const msgZap = encodeURIComponent(
-                        `${saudacao}! Se liga nessa oferta especial 🔥 que encontrei:\n\n` +
-                        `${nomeProduto} ${capacidade} ${cor}\n` +
-                        `Preço: ${simbolo} ${preco.toFixed(2)}\n` +
-                        `Estoque disponível: ${o.quantidade} UN\n\n` +
-                        `Falar com Atacadista: https://wa.me/${wppLimpo}\n\n` + // 🛡️ usando wppLimpo
-                        `Achei no www.iFipe.com.br | *A Tabela Fipe do iPhone* 📲`
+                        `${saudacao}! Vi seu anúncio no iFipe do produto ${nomeProduto} ${capacidade} ${cor} pelo valor ${simbolo} ${preco.toFixed(2)}. Está disponível?\n\nSou uma indicação do https://ifipe.com.br/`
                     );
 
                     const curtido = minhasCurtidas.has(o.id);
@@ -1989,6 +1903,8 @@
             const dezDiasAtras = new Date(); dezDiasAtras.setDate(dezDiasAtras.getDate() - 10);
             const grupos = {};
             ofertas.forEach(o => {
+                // 🔒 Trava de preço zero e estoque zero
+                if (o.preco <= 0 || o.quantidade <= 0) return;
                 if (new Date(o.criado_em) < dezDiasAtras) return;
                 const p = o.variacoes?.produtos_mestre;
                 const v = o.variacoes;
@@ -2062,20 +1978,6 @@
         }
 
         // ===== FILTROS =====
-        let categoriaSelecionadaPill = 'todos';
-
-        function filtrarPorCategoria(categoria) {
-            categoriaSelecionadaPill = categoria;
-            // Atualizar classe das pills
-            document.querySelectorAll('.category-pill').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.dataset.categoria === categoria) btn.classList.add('active');
-            });
-            // Filtrar ofertas e repopular o select de modelo
-            popularFiltros();
-            renderizarCards();
-        }
-
         function popularFiltros() {
             const pop = (id, arr, prop) => {
                 const el = document.getElementById(id);
@@ -2088,17 +1990,7 @@
                 }
             };
 
-            // Filtrar produtos pela categoria selecionada na pill
-            let produtosFiltrados = produtos;
-            if (categoriaSelecionadaPill !== 'todos') {
-                if (categoriaSelecionadaPill === 'OUTROS') {
-                    const categoriasPrincipais = ['IPHONE', 'IPAD', 'MACBOOK', 'APPLEWATCH', 'AIRPODS', 'PENCIL', 'AIRTAG'];
-                    produtosFiltrados = produtos.filter(p => !categoriasPrincipais.includes(p.categoria));
-                } else {
-                    produtosFiltrados = produtos.filter(p => p.categoria === categoriaSelecionadaPill);
-                }
-            }
-            const produtosOrdenados = ordenarProdutosMestre([...produtosFiltrados]);
+            const produtosOrdenados = ordenarProdutosMestre([...produtos]);
 
             const popProdutos = (id) => {
                 const el = document.getElementById(id);
@@ -2331,8 +2223,8 @@
         window.enviarComprovante = enviarComprovante;
         window.fecharPedidoUsdt = fecharPedidoUsdt;
 
-        // Funções para as pills
-        window.filtrarPorCategoria = filtrarPorCategoria;
+        // Funções para as pills (removidas)
+        // As funções foram removidas conforme solicitado.
         window.registrarInteracao = registrarInteracao;
     </script>
 </body>
