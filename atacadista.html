@@ -199,6 +199,16 @@
             cursor: pointer;
             font-size: 10px;
         }
+        .linha-anuncio .duplicar-linha {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 10px;
+            margin-right: 4px;
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -501,7 +511,6 @@
                 <h3 class="text-lg font-bold flex items-center gap-2">👁️‍🗨️ HORUS – MENOR PREÇO</h3>
                 <button onclick="document.getElementById('modalHorus').classList.add('hidden')" class="text-gray-400 hover:text-white text-2xl font-bold">&times;</button>
             </div>
-            <!-- Botões de cópia removidos conforme solicitado -->
             <input type="text" id="buscaHorus" placeholder="🔍 Buscar modelo, cor, novo, seminovo..." class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs mb-4 text-white" onkeyup="filtrarHorus(this.value)">
             <div id="horusList" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div>
         </div>
@@ -863,7 +872,7 @@
     <!-- Container do Card PIX (USDT) -->
     <div id="usdtPedidoContainer" class="fixed bottom-4 right-4 w-80 z-50 hidden"></div>
 
-    <!-- NOVO MODAL: Lançamento em Massa (adaptado com grupo) -->
+    <!-- NOVO MODAL: Lançamento em Massa (REFATORADO COM GARANTIA E MOLDURAS POR LINHA) -->
     <div id="modalAddMassa" class="hidden modal-overlay">
         <div class="apple-card w-full max-w-4xl bg-[#050505] border-[#38383a] max-h-[90vh] overflow-y-auto relative">
             <button onclick="fecharModalAddMassa()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
@@ -1084,7 +1093,9 @@
             let container = document.getElementById('usdtPedidoContainer');
             container.innerHTML = `
                 <div class="pedido-card" id="reciboPrint">
-                    <div class="text-[9px] text-gray-400 mb-1">ID DO PEDIDO:</div>
+                    <div class="text-[10px] text-gray-300 mb-3 whitespace-pre-wrap text-center bg-[#1c1c1e] p-3 rounded border border-dashed border-[#38383a]">${pixInstrucoes}</div>
+                    
+                    <div class="text-[9px] text-gray-400 mb-1 border-t border-zinc-800 pt-3">ID DO PEDIDO:</div>
                     <div class="text-[10px] text-green-400 break-all mb-3 font-mono" id="usdtIdDisplay">${usdtPedidoId}</div>
                     
                     <div class="grid grid-cols-2 gap-2 mb-3">
@@ -1625,8 +1636,6 @@
             todasOfertas = oGlobal.data || [];
 
             popularOrigens();
-            // Não popular modelos diretamente, pois agora depende do grupo
-            // popularModelos(); removido
             upTab();
             carregarPropostas();
             atualizarInsignias();
@@ -1818,7 +1827,6 @@
         // === IBGE ===
         function carregarEstadosBrasil() {
             const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
-            // Adicionados os IDs 'bulkEstadoAparelho' e 'massaEstadoAparelho'
             ['estadoAparelho', 'editEstadoAparelho', 'dupEstadoAparelho', 'bulkEstadoAparelho', 'massaEstadoAparelho'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
@@ -2413,18 +2421,6 @@
                     }
                 }
             } else {
-                // Se não alterou variação, verificar cada anúncio individualmente? Isso é complexo. 
-                // Para simplificar, se algum dos anúncios for de acessório e o bulk estiver alterando condição/garantia,
-                // podemos sobrescrever para garantir que fique Novo. Mas o melhor é aplicar a regra para cada anúncio
-                // ao processar o bulk? Como estamos usando update em lote, não temos como. 
-                // Vamos assumir que o usuário não tentará alterar um acessório para seminovo, mas se tentar, a regra
-                // deve impedir. Como não podemos verificar cada item individualmente sem buscar, 
-                // vamos sobrescrever condicao/garantia para Novo se algum dos anúncios selecionados for acessório.
-                // Para isso, precisaríamos buscar os produtos dos anúncios selecionados. 
-                // Como isso é complexo e pode ser custoso, deixamos a regra ser aplicada apenas quando a variação é alterada.
-                // O usuário que tentar alterar um acessório manualmente via bulk sem mudar a variação terá que lidar com as consequências.
-                // Mas para ser seguro, podemos buscar os produtos dos ids selecionados e verificar se algum é acessório.
-                // Vamos fazer uma consulta simples:
                 const ofertasSelecionadas = ofertas.filter(o => ids.includes(o.id));
                 const variacoesIds = ofertasSelecionadas.map(o => o.variacao_id);
                 const variacoesEncontradas = variacoes.filter(v => variacoesIds.includes(v.id));
@@ -2432,14 +2428,12 @@
                 const produtosEncontrados = produtos.filter(p => produtosIds.includes(p.id));
                 const temAcessorio = produtosEncontrados.some(p => p.categoria === 'ACESSORIOS');
                 if (temAcessorio) {
-                    // Forçar condicao e garantia para Novo se estiverem sendo alterados
                     if ('condicao' in updates && updates.condicao !== 'Novo') {
                         updates.condicao = 'Novo';
                     }
                     if ('garantia' in updates && updates.garantia !== '1 ANO APPLE') {
                         updates.garantia = '1 ANO APPLE';
                     }
-                    // Se saude_bateria estiver sendo alterada, removemos
                     if ('saude_bateria' in updates) {
                         updates.saude_bateria = null;
                     }
@@ -2799,14 +2793,16 @@
             document.getElementById(`lista${aba === 'pendentes' ? 'Pendentes' : (aba === 'respondidas' ? 'Respondidas' : 'Mensagens')}`).classList.remove('hidden');
         }
 
-        // ===== LANÇADOR EM MASSA =====
+        // ===== LANÇADOR EM MASSA REFATORADO =====
         function abrirModalAddMassa() {
             document.getElementById('modalAddMassa').classList.remove('hidden');
         }
+
         function fecharModalAddMassa() {
             document.getElementById('modalAddMassa').classList.add('hidden');
             document.getElementById('linhasContainer').innerHTML = '';
         }
+
         function adicionarLinhaAnuncio() {
             let container = document.getElementById('linhasContainer');
             let index = container.children.length;
@@ -2829,6 +2825,27 @@
                     <option value="Seminovo">Seminovo</option>
                     <option value="CPO">CPO</option>
                 </select>
+                <select class="bateria" data-index="${index}" style="min-width:80px">
+                    <option value="">Bateria</option>
+                    <option value="Abaixo de 85%">Abaixo de 85%</option>
+                    <option value="Acima de 85%">Acima de 85%</option>
+                    <option value="Acima de 90%">Acima de 90%</option>
+                    <option value="Acima de 95%">Acima de 95%</option>
+                    <option value="Bateria em 100%">Bateria em 100%</option>
+                </select>
+                <select class="garantia" data-index="${index}" style="min-width:80px">
+                    <option value="">Garantia</option>
+                    <option value="Sem garantia">Sem garantia</option>
+                    <option value="1 Mês">1 Mês</option>
+                    <option value="2 Meses">2 Meses</option>
+                    <option value="3 Meses">3 Meses</option>
+                    <option value="6 Meses">6 Meses</option>
+                    <option value="12 Meses">12 Meses</option>
+                </select>
+                <select class="molduras" data-index="${index}" style="min-width:120px">
+                    <option value="SIM">Molduras Padrão: SIM</option>
+                    <option value="NAO">Molduras Padrão: NÃO</option>
+                </select>
                 <select class="origem" data-index="${index}" style="min-width:100px">
                     <option value="">Origem</option>
                     ${regioes.map(r => `<option value="${r.id}">${r.nome}</option>`).join('')}
@@ -2841,6 +2858,7 @@
                 </select>
                 <input type="number" class="quantidade" placeholder="Qtd" min="1" value="1" style="width:60px">
                 <input type="number" class="preco" placeholder="Preço R$" step="0.01" min="0" style="width:90px">
+                <button type="button" class="duplicar-linha" onclick="duplicarLinhaAnuncio(this)">📄</button>
                 <button class="remover-linha" onclick="this.parentElement.remove()">🗑️</button>
             `;
             container.appendChild(linha);
@@ -2907,6 +2925,26 @@
             });
         }
 
+        // === NOVA FUNÇÃO: duplicarLinhaAnuncio ===
+        function duplicarLinhaAnuncio(btn) {
+            let linhaAtual = btn.closest('.linha-anuncio');
+            let clone = linhaAtual.cloneNode(true);
+
+            // Copiar valores dos selects manualmente
+            let selects = linhaAtual.querySelectorAll('select');
+            let cloneSelects = clone.querySelectorAll('select');
+            for (let i = 0; i < selects.length; i++) {
+                cloneSelects[i].value = selects[i].value;
+            }
+
+            // Limpar quantidade e preço
+            clone.querySelector('.quantidade').value = '';
+            clone.querySelector('.preco').value = '';
+
+            // Inserir após a linha atual
+            linhaAtual.parentNode.insertBefore(clone, linhaAtual.nextSibling);
+        }
+
         async function executarLancamentoMassa() {
             const lojaId = loja?.id;
             if (!lojaId) {
@@ -2926,15 +2964,25 @@
                 let capacidade = linha.querySelector('.capacidade').value;
                 let cor = linha.querySelector('.cor').value;
                 let condicao = linha.querySelector('.condicao').value;
+                let bateria = linha.querySelector('.bateria').value;
+                let garantia = linha.querySelector('.garantia').value;
+                let molduras = linha.querySelector('.molduras').value;
                 let regiaoId = linha.querySelector('.origem').value;
                 let estado = linha.querySelector('.estado').value;
                 let cidade = linha.querySelector('.cidade').value;
                 let quantidade = parseInt(linha.querySelector('.quantidade').value) || 0;
                 let preco = parseFloat(linha.querySelector('.preco').value) || 0;
 
-                // Validação obrigatória: todos os campos essenciais + estado e cidade
+                // Validação obrigatória: todos os campos essenciais
                 if (!modeloId || !capacidade || !cor || !condicao || !regiaoId || !estado || !cidade || quantidade <= 0 || preco <= 0) {
                     logArea.innerHTML += `<div class="text-red-400">⚠️ Linha ignorada: preencha todos os campos (modelo, capacidade, cor, condição, origem, estado, cidade, quantidade > 0, preço > 0).</div>`;
+                    erros++;
+                    continue;
+                }
+
+                // Validação de garantia para seminovos
+                if ((condicao !== 'Novo' && condicao !== 'CPO') && !garantia) {
+                    logArea.innerHTML += `<div class="text-red-400">⚠️ Linha ignorada: selecione a garantia para itens seminovos/CPO.</div>`;
                     erros++;
                     continue;
                 }
@@ -2950,6 +2998,22 @@
                 const produto = produtos.find(p => p.id == modeloId);
                 if (produto && produto.categoria === 'ACESSORIOS') {
                     condicao = 'Novo';
+                    garantia = '1 ANO APPLE';
+                    bateria = null;
+                }
+
+                // Se for novo ou CPO, força garantia
+                if (condicao === 'Novo' || condicao === 'CPO') {
+                    garantia = '1 ANO APPLE';
+                }
+
+                // Definir molduras com base na seleção
+                let aceita_pix = false, aceita_usdt = false, aceita_proposta = false, faz_envio = false, aceita_coleta = false, emite_nota = false;
+                if (molduras === 'SIM') {
+                    aceita_pix = true;
+                    aceita_coleta = true;
+                    faz_envio = true;
+                    aceita_proposta = true;
                 }
 
                 let cidadeAparelho = (estado && cidade) ? cidade : null;
@@ -2960,26 +3024,21 @@
                     variacao_id: variacao.id,
                     regiao_id: regiaoId,
                     condicao: condicao,
+                    saude_bateria: bateria || null,
+                    garantia: garantia,
                     preco: preco,
                     moeda: 'BRL',
                     quantidade: quantidade,
                     status_aprovacao: 'aprovado',
-                    aceita_pix: false,
-                    aceita_usdt: false,
-                    aceita_proposta: false,
-                    faz_envio: false,
-                    aceita_coleta: false,
-                    emite_nota: false,
+                    aceita_pix,
+                    aceita_usdt,
+                    aceita_proposta,
+                    faz_envio,
+                    aceita_coleta,
+                    emite_nota,
                     cidade_aparelho: cidadeAparelho,
-                    estado_aparelho: estadoAparelho,
-                    saude_bateria: null,
-                    garantia: (condicao === 'Novo' || condicao === 'CPO') ? '1 ANO APPLE' : null
+                    estado_aparelho: estadoAparelho
                 };
-
-                // Se for acessório, já forçamos garantia correta
-                if (produto && produto.categoria === 'ACESSORIOS') {
-                    payload.garantia = '1 ANO APPLE';
-                }
 
                 try {
                     await smartUpsertOferta(payload);
@@ -2996,7 +3055,7 @@
             }
         }
 
-        // Expor funções globais (removidas as funções do Seth)
+        // Expor funções globais
         window.abrirSugestao = abrirSugestao;
         window.fecharSugestao = fecharSugestao;
         window.enviarSugestao = enviarSugestao;
@@ -3047,7 +3106,7 @@
         window.filtrarMeusAnuncios = filtrarMeusAnuncios;
         window.abrirModalHorus = abrirModalHorus;
         window.filtrarHorus = filtrarHorus;
-        window.copiarListaHorus = copiarListaHorus; // Exportar a nova função
+        window.copiarListaHorus = copiarListaHorus;
         window.toggleCondicaoModal = toggleCondicaoModal;
         window.carregarCidadesDinamico = carregarCidadesDinamico;
         window.setEditCondicao = setEditCondicao;
@@ -3066,13 +3125,14 @@
         window.fecharModalAddMassa = fecharModalAddMassa;
         window.adicionarLinhaAnuncio = adicionarLinhaAnuncio;
         window.executarLancamentoMassa = executarLancamentoMassa;
+        window.duplicarLinhaAnuncio = duplicarLinhaAnuncio;
         window.normalizarString = normalizarString;
         window.filtrarModelosPorGrupoPublicar = filtrarModelosPorGrupoPublicar;
         window.filtrarModelosPorGrupoEdit = filtrarModelosPorGrupoEdit;
         window.filtrarModelosPorGrupoDup = filtrarModelosPorGrupoDup;
         window.filtrarModelosPorGrupoBulk = filtrarModelosPorGrupoBulk;
         window.atualizarModelosMassa = atualizarModelosMassa;
-        window.formatarBateria = formatarBateria; // exporta para uso em outros lugares se necessário
+        window.formatarBateria = formatarBateria;
     </script>
 </body>
 </html>
