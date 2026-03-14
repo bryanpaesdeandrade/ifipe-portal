@@ -1345,6 +1345,7 @@
             });
         }
 
+        // ===== CORREÇÃO 2: OTIMIZAÇÃO DA ORDENAÇÃO =====
         function ordenarOfertas(lista) {
             return lista.sort((a, b) => {
                 try {
@@ -1354,8 +1355,9 @@
                     if (!aZero && bZero) return -1;
                     if (aZero && bZero) return 0;
 
-                    const produtoA = produtos.find(p => p.id == a.variacoes?.produto_id);
-                    const produtoB = produtos.find(p => p.id == b.variacoes?.produto_id);
+                    // Usar produtos_mestre já embutidos nos dados
+                    const produtoA = a.variacoes?.produtos_mestre;
+                    const produtoB = b.variacoes?.produtos_mestre;
                     if (!produtoA || !produtoB) return 0;
 
                     const catA = produtoA.categoria || '';
@@ -1446,7 +1448,7 @@
             renderizarCards();
         }
 
-        // ===== RENDERIZAR CARDS (MODIFICADO: botão Curtir reduzido a emoji, botão Proposta renomeado e estilizado) =====
+        // ===== RENDERIZAR CARDS =====
         function renderizarCards() {
             const container = document.getElementById('container-produtos');
             container.innerHTML = '';
@@ -1706,13 +1708,13 @@
 
         // ===== NOVAS FUNÇÕES PARA REPUTAÇÃO DO ANUNCIANTE =====
 
-        let currentReputacaoOfertaId = null; // NOVA VARIÁVEL PARA ARMAZENAR O ID DA OFERTA
+        let currentReputacaoOfertaId = null;
         let currentReputacaoFornecedorId = null;
         let currentReputacaoFornecedorNome = '';
 
-        async function abrirReputacaoAnunciante(ofertaId, fornecedorId, fornecedorNome) { // ASSINATURA ALTERADA
+        async function abrirReputacaoAnunciante(ofertaId, fornecedorId, fornecedorNome) {
             if (!currentUser) return alert('Faça login para ver a reputação.');
-            currentReputacaoOfertaId = ofertaId; // ARMAZENA O ID DA OFERTA
+            currentReputacaoOfertaId = ofertaId;
             currentReputacaoFornecedorId = fornecedorId;
             currentReputacaoFornecedorNome = fornecedorNome;
             document.getElementById('reputacaoTitulo').innerText = `Reputação de ${fornecedorNome}`;
@@ -1728,7 +1730,6 @@
             const container = document.getElementById('reputacaoFeed');
             container.innerHTML = '<p class="text-center text-gray-400">Carregando...</p>';
 
-            // Buscar todas as interações públicas (validacoes e denúncias aprovadas) deste fornecedor
             const { data: interacoes, error } = await _s
                 .from('comentarios')
                 .select('*, clientes_buscador!cliente_id(*)')
@@ -1748,7 +1749,6 @@
                 return;
             }
 
-            // Para cada interação, buscar respostas e likes
             const feedHTML = await Promise.all(interacoes.map(async (item) => {
                 const respostas = await buscarRespostas(item.id);
                 const likes = await buscarLikes(item.id);
@@ -1838,24 +1838,21 @@
 
         function abrirModalValidarDenunciarDeReputacao(tipo) {
             if (!currentUser) return alert('Faça login.');
-            // REMOVIDO O BLOCO QUE BLOQUEAVA O MASTER
 
-            // FECHA O MODAL DE REPUTAÇÃO ANTES DE ABRIR O DE VALIDAÇÃO
             fecharModalReputacao();
 
-            document.getElementById('validarOfertaId').value = currentReputacaoOfertaId; // USA O ID ARMAZENADO
+            document.getElementById('validarOfertaId').value = currentReputacaoOfertaId;
             document.getElementById('validarFornecedorId').value = currentReputacaoFornecedorId;
             document.getElementById('tipoValidacao').value = tipo;
             document.getElementById('textoValidacao').value = '';
 
-            // ===== CORREÇÃO 2: OCULTAR O BOTÃO OPOSTO E AJUSTAR TÍTULO =====
             const btnValidar = document.getElementById('btnTipoValidacao');
             const btnDenunciar = document.getElementById('btnTipoDenuncia');
             const titulo = document.getElementById('modalValidarTitulo');
 
             if (tipo === 'validacao') {
-                btnValidar.style.display = ''; // mostra
-                btnDenunciar.style.display = 'none'; // oculta
+                btnValidar.style.display = '';
+                btnDenunciar.style.display = 'none';
                 titulo.innerText = 'Validar Anunciante';
             } else {
                 btnValidar.style.display = 'none';
@@ -1866,21 +1863,16 @@
             document.getElementById('modalValidarDenunciar').classList.remove('hidden');
         }
 
-        // ===== FUNÇÃO ENVIAR VALIDAÇÃO/DENÚNCIA (REFATORADA COM CORREÇÃO DE FK) =====
+        // ===== FUNÇÃO ENVIAR VALIDAÇÃO/DENÚNCIA =====
         async function enviarValidacaoDenuncia() {
             const tipo = document.getElementById('tipoValidacao').value;
             if (!tipo) return alert('Selecione Validar ou Denunciar.');
-
-            // REMOVIDO O BLOCO QUE BLOQUEAVA O MASTER
 
             const ofertaId = document.getElementById('validarOfertaId').value;
             const fornecedorId = document.getElementById('validarFornecedorId').value;
             const texto = document.getElementById('textoValidacao').value.trim();
 
-            // Converter IDs para número
             const fornecedorNum = Number(fornecedorId);
-
-            // ===== CORREÇÃO 1: SE FOR MASTER (id === 0), ENVIA null =====
             const clienteId = (currentUser.id === 0) ? null : Number(currentUser.id);
 
             const payload = {
@@ -1901,17 +1893,16 @@
                 alert(tipo === 'validacao' ? 'Validação publicada com sucesso!' : 'Denúncia enviada e aguarda aprovação.');
                 fecharModalValidarDenunciar();
                 if (tipo === 'validacao') {
-                    // Se estava no modal de reputação, recarrega o feed
                     if (currentReputacaoFornecedorId) {
                         carregarReputacaoFeed(currentReputacaoFornecedorId);
                     } else {
-                        carregarFeed(); // atualiza feed global
+                        carregarFeed();
                     }
                 }
             }
         }
 
-        // ===== FUNÇÕES DO FÓRUM GLOBAL (mantidas) =====
+        // ===== FUNÇÕES DO FÓRUM GLOBAL =====
 
         function abrirForum() {
             document.getElementById('modalForum').classList.remove('hidden');
@@ -2081,16 +2072,27 @@
             if (box) box.classList.toggle('hidden');
         }
 
+        // ===== CORREÇÃO 1: FUNÇÃO ENVIAR RESPOSTA (HERDA OFERTA_ID E FORNECEDOR_ID DO PAI) =====
         async function enviarRespostaForum(parentId) {
             if (!currentUser) return alert('Faça login.');
-            // REMOVIDO O BLOCO QUE BLOQUEAVA O MASTER
 
             const box = document.getElementById(`respostaBox_${parentId}`);
             const textarea = box.querySelector('textarea');
             const texto = textarea.value.trim();
             if (!texto) return alert('Digite uma resposta.');
 
-            // ===== CORREÇÃO 1: SE FOR MASTER (id === 0), ENVIA null =====
+            // Buscar o comentário pai para obter oferta_id e fornecedor_id
+            const { data: parent, error: parentError } = await _s
+                .from('comentarios')
+                .select('oferta_id, fornecedor_id')
+                .eq('id', parentId)
+                .single();
+
+            if (parentError || !parent) {
+                alert('Erro ao recuperar informações do comentário original.');
+                return;
+            }
+
             const clienteId = (currentUser.id === 0) ? null : Number(currentUser.id);
 
             const payload = {
@@ -2100,22 +2102,22 @@
                 pergunta: texto,
                 tipo_interacao: 'resposta',
                 status: 'publico',
-                oferta_id: null,
-                fornecedor_id: null
+                oferta_id: parent.oferta_id,   // HERDA DO PAI
+                fornecedor_id: parent.fornecedor_id // HERDA DO PAI
             };
+
             const { error } = await _s.from('comentarios').insert(payload);
             if (error) {
                 alert('Erro ao responder: ' + error.message);
             } else {
                 textarea.value = '';
                 box.classList.add('hidden');
-                // Recarrega o feed atual (global ou reputação)
                 if (currentReputacaoFornecedorId) {
                     carregarReputacaoFeed(currentReputacaoFornecedorId);
                 } else {
                     carregarFeed();
                 }
-                // Disparar notificação para o autor original
+                // Notificar autor original
                 const { data: original } = await _s.from('comentarios').select('cliente_id').eq('id', parentId).single();
                 if (original && original.cliente_id) {
                     const { data: autor } = await _s.from('clientes_buscador').select('nome').eq('id', original.cliente_id).single();
@@ -2154,7 +2156,6 @@
         }
 
         // ===== DEMAIS FUNÇÕES (mantidas) =====
-
         async function toggleCurtir(ofertaId, btn) {
             if (!currentUser) return alert('Faça login para curtir.');
             if (currentUser.id === 0) {
@@ -2688,7 +2689,7 @@
         // NOVAS EXPORTAÇÕES
         window.abrirReputacaoAnunciante = abrirReputacaoAnunciante;
         window.fecharModalReputacao = fecharModalReputacao;
-        window.abrirModalValidarDenunciar = abrirModalValidarDenunciarDeReputacao; // para os botões do modal de reputação
+        window.abrirModalValidarDenunciar = abrirModalValidarDenunciarDeReputacao;
         window.fecharModalValidarDenunciar = fecharModalValidarDenunciar;
         window.selecionarTipoValidacao = selecionarTipoValidacao;
         window.enviarValidacaoDenuncia = enviarValidacaoDenuncia;
