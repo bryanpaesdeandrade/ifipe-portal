@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* (mesmo estilo existente, nada a alterar) */
         :root {
             --bg: #f5f5f7;
             --card: #ffffff;
@@ -396,7 +395,6 @@
         <div class="drawer-item" onclick="abrirLegendaInsignias(); fecharDrawer()">
             <i class="fas fa-crown w-5"></i> 👑 Insígnias de Poder
         </div>
-        <!-- NOVO ITEM: Fórum -->
         <div class="drawer-item" onclick="abrirForum(); fecharDrawer()">
             <i class="fas fa-comments w-5"></i> Fórum
         </div>
@@ -633,7 +631,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE ENVIAR PROPOSTA (será substituído pelo novo modal, mas mantido para compatibilidade) -->
+    <!-- MODAL DE ENVIAR PROPOSTA (mantido para compatibilidade) -->
     <div id="perguntasModal" class="modal hidden">
         <div class="modal-content">
             <span class="close-modal" onclick="fecharPerguntas()">&times;</span>
@@ -651,7 +649,7 @@
         </div>
     </div>
 
-    <!-- MODAL RESPOSTAS RECEBIDAS (agora abriga também o feed social, mas vamos criar um modal separado para o fórum) -->
+    <!-- MODAL RESPOSTAS RECEBIDAS -->
     <div id="respostasModal" class="modal hidden">
         <div class="modal-content max-w-2xl w-full">
             <div class="flex justify-between items-center mb-4">
@@ -670,16 +668,16 @@
         </div>
     </div>
 
-    <!-- NOVO MODAL: VALIDAR / DENUNCIAR -->
+    <!-- NOVO MODAL: VALIDAR / DENUNCIAR (para input rápido, ainda usado pelo fórum) -->
     <div id="modalValidarDenunciar" class="modal hidden">
         <div class="modal-content">
             <span class="close-modal" onclick="fecharModalValidarDenunciar()">&times;</span>
-            <h2 class="text-2xl font-bold mb-4">Validar / Denunciar</h2>
+            <h2 class="text-2xl font-bold mb-4" id="modalValidarTitulo">Validar / Denunciar</h2>
             <input type="hidden" id="validarOfertaId">
             <input type="hidden" id="validarFornecedorId">
             <div class="space-y-4">
                 <div class="flex gap-4 justify-center">
-                    <button onclick="selecionarTipoValidacao('validacao')" class="btn-apple bg-green-600 flex-1" id="btnTipoValidacao">✅ Validar Anunciante</button>
+                    <button onclick="selecionarTipoValidacao('validacao')" class="btn-apple bg-green-600 flex-1" id="btnTipoValidacao">✅ Validar</button>
                     <button onclick="selecionarTipoValidacao('denuncia')" class="btn-apple bg-red-600 flex-1" id="btnTipoDenuncia">🚨 Denunciar</button>
                 </div>
                 <input type="hidden" id="tipoValidacao" value="">
@@ -692,7 +690,24 @@
         </div>
     </div>
 
-    <!-- NOVO MODAL: FÓRUM SOCIAL -->
+    <!-- NOVO MODAL: REPUTAÇÃO DO ANUNCIANTE -->
+    <div id="modalReputacao" class="modal hidden">
+        <div class="modal-content max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 sticky top-0 bg-[#1c1c1e] p-2 z-10">
+                <h2 class="text-2xl font-bold" id="reputacaoTitulo">Reputação da Loja</h2>
+                <button onclick="fecharModalReputacao()" class="text-gray-400 hover:text-white text-3xl font-bold">&times;</button>
+            </div>
+            <div id="reputacaoFeed" class="space-y-4 mb-6">
+                <!-- feed será inserido aqui -->
+            </div>
+            <div class="flex gap-3 justify-center border-t border-[#38383a] pt-4">
+                <button onclick="abrirModalValidarDenunciarDeReputacao('validacao')" class="btn-apple bg-green-600 flex-1 animate-pulse">✅ Validar Este Anunciante</button>
+                <button onclick="abrirModalValidarDenunciarDeReputacao('denuncia')" class="btn-apple bg-red-600 flex-1 animate-pulse">🚨 Denunciar Este Anunciante</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO MODAL: FÓRUM SOCIAL (global) -->
     <div id="modalForum" class="modal hidden">
         <div class="modal-content max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-4 sticky top-0 bg-[#1c1c1e] p-2 z-10">
@@ -1431,7 +1446,7 @@
             renderizarCards();
         }
 
-        // ===== RENDERIZAR CARDS (MODIFICADO: botão Curtir reduzido a emoji, botão Proposta renomeado) =====
+        // ===== RENDERIZAR CARDS (MODIFICADO: botão Curtir reduzido a emoji, botão Proposta renomeado e estilizado) =====
         function renderizarCards() {
             const container = document.getElementById('container-produtos');
             container.innerHTML = '';
@@ -1655,9 +1670,9 @@
                         </div>
                         <div class="flex justify-between items-center py-1 border-t border-[#38383a] mb-1">
                             ${btnCurtir}
-                            <!-- Botão alterado para Validar / Denunciar -->
-                            <button class="action-button hover:text-blue-500" onclick="abrirModalValidarDenunciar(${o.id}, ${f?.id || 0}, '${nomeProduto}')">
-                                <i class="fas fa-check-circle"></i> <span>Validar / Denunciar</span>
+                            <!-- Botão reformulado com gradiente e animação -->
+                            <button class="action-button bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold px-3 py-1 rounded-full text-[9px] animate-pulse shadow-lg" onclick="abrirReputacaoAnunciante(${f?.id || 0}, '${fornecedorNome}')">
+                                <i class="fas fa-star"></i> Reputação
                             </button>
                             <button class="action-button hover:text-blue-500" onclick="compartilhar('${nomeProduto}', '${capacidade}', '${cor}', ${preco}, '${simbolo}', ${o.quantidade}, '${wppLimpo}')">
                                 <i class="far fa-share-square"></i> <span>Compartilhar</span>
@@ -1689,118 +1704,68 @@
             atualizarBadgeAlertas();
         }
 
-        // ===== NOVAS FUNÇÕES PARA O FÓRUM =====
+        // ===== NOVAS FUNÇÕES PARA REPUTAÇÃO DO ANUNCIANTE =====
 
-        // Abrir modal de validação/denúncia
-        function abrirModalValidarDenunciar(ofertaId, fornecedorId, titulo) {
-            if (!currentUser) return alert('Faça login para interagir.');
-            document.getElementById('validarOfertaId').value = ofertaId;
-            document.getElementById('validarFornecedorId').value = fornecedorId;
-            document.getElementById('tipoValidacao').value = '';
-            document.getElementById('textoValidacao').value = '';
-            document.getElementById('btnTipoValidacao').classList.remove('bg-green-600', 'bg-red-600');
-            document.getElementById('btnTipoDenuncia').classList.remove('bg-green-600', 'bg-red-600');
-            document.getElementById('btnTipoValidacao').classList.add('bg-green-600');
-            document.getElementById('btnTipoDenuncia').classList.add('bg-red-600');
-            document.getElementById('modalValidarDenunciar').classList.remove('hidden');
+        let currentReputacaoFornecedorId = null;
+        let currentReputacaoFornecedorNome = '';
+
+        async function abrirReputacaoAnunciante(fornecedorId, fornecedorNome) {
+            if (!currentUser) return alert('Faça login para ver a reputação.');
+            currentReputacaoFornecedorId = fornecedorId;
+            currentReputacaoFornecedorNome = fornecedorNome;
+            document.getElementById('reputacaoTitulo').innerText = `Reputação de ${fornecedorNome}`;
+            await carregarReputacaoFeed(fornecedorId);
+            document.getElementById('modalReputacao').classList.remove('hidden');
         }
 
-        function fecharModalValidarDenunciar() {
-            document.getElementById('modalValidarDenunciar').classList.add('hidden');
+        function fecharModalReputacao() {
+            document.getElementById('modalReputacao').classList.add('hidden');
         }
 
-        function selecionarTipoValidacao(tipo) {
-            document.getElementById('tipoValidacao').value = tipo;
-        }
-
-        async function enviarValidacaoDenuncia() {
-            const tipo = document.getElementById('tipoValidacao').value;
-            if (!tipo) return alert('Selecione Validar ou Denunciar.');
-            const ofertaId = document.getElementById('validarOfertaId').value;
-            const fornecedorId = document.getElementById('validarFornecedorId').value;
-            const texto = document.getElementById('textoValidacao').value.trim();
-
-            const payload = {
-                oferta_id: ofertaId,
-                fornecedor_id: fornecedorId,
-                cliente_id: currentUser.id,
-                autor_nome: currentUser.nome,
-                pergunta: texto, // campo reutilizado como mensagem
-                tipo_interacao: tipo,
-                status: tipo === 'validacao' ? 'publico' : 'pendente_aprovacao',
-                parent_id: null
-            };
-
-            const { error } = await _s.from('comentarios').insert(payload);
-            if (error) {
-                alert('Erro ao enviar: ' + error.message);
-            } else {
-                alert(tipo === 'validacao' ? 'Validação publicada com sucesso!' : 'Denúncia enviada e aguarda aprovação.');
-                fecharModalValidarDenunciar();
-                if (tipo === 'validacao') {
-                    carregarFeed(); // atualiza feed se for público
-                }
-            }
-        }
-
-        // Abrir fórum
-        function abrirForum() {
-            document.getElementById('modalForum').classList.remove('hidden');
-            carregarFeed();
-        }
-
-        function fecharForum() {
-            document.getElementById('modalForum').classList.add('hidden');
-        }
-
-        async function carregarFeed() {
-            const container = document.getElementById('feedContainer');
+        async function carregarReputacaoFeed(fornecedorId) {
+            const container = document.getElementById('reputacaoFeed');
             container.innerHTML = '<p class="text-center text-gray-400">Carregando...</p>';
 
-            // Buscar todas as interações públicas (validacoes) e denúncias aprovadas
+            // Buscar todas as interações públicas (validacoes e denúncias aprovadas) deste fornecedor
             const { data: interacoes, error } = await _s
                 .from('comentarios')
-                .select('*, ofertas(*, variacoes(*, produtos_mestre(*)), fornecedores(*)), clientes_buscador!cliente_id(*)')
+                .select('*, clientes_buscador!cliente_id(*)')
+                .eq('fornecedor_id', fornecedorId)
                 .or('tipo_interacao.eq.validacao,tipo_interacao.eq.denuncia')
                 .eq('status', 'publico')
                 .is('parent_id', null)
                 .order('criado_em', { ascending: false });
 
             if (error) {
-                container.innerHTML = '<p class="text-center text-red-400">Erro ao carregar feed.</p>';
+                container.innerHTML = '<p class="text-center text-red-400">Erro ao carregar.</p>';
                 return;
             }
 
             if (!interacoes || interacoes.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-400">Nenhuma interação ainda.</p>';
+                container.innerHTML = '<p class="text-center text-gray-400">Nenhuma validação ou denúncia ainda para este anunciante.</p>';
                 return;
             }
 
-            // Para cada interação, buscar suas respostas e likes
+            // Para cada interação, buscar respostas e likes
             const feedHTML = await Promise.all(interacoes.map(async (item) => {
                 const respostas = await buscarRespostas(item.id);
                 const likes = await buscarLikes(item.id);
-                const usuario = item.clientes_buscador || {}; // pode ser null se for master?
+                const usuario = item.clientes_buscador || {};
                 const nomeExibicao = usuario.nome ? usuario.nome.split(' ')[0] : 'Usuário';
                 const whatsapp = usuario.whatsapp ? usuario.whatsapp.replace(/\D/g, '') : '';
                 const linkWhats = whatsapp ? `https://wa.me/55${whatsapp}` : '#';
 
-                // Link do nome
                 const nomeLink = `<a href="${linkWhats}" target="_blank" class="font-bold hover:text-blue-400">${nomeExibicao}</a>`;
 
-                // Tipo de badge
                 let badgeTipo = '';
                 if (item.tipo_interacao === 'validacao') badgeTipo = '<span class="badge-condicao bg-green-600 text-[8px]">✅ VALIDAÇÃO</span>';
                 else if (item.tipo_interacao === 'denuncia') badgeTipo = '<span class="badge-condicao bg-red-600 text-[8px]">🚨 DENÚNCIA</span>';
 
-                // Botão curtir
                 const curtido = await verificarLike(item.id);
                 const btnLike = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="likeComentario(${item.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-heart"></i> ${likes}</button>`;
 
-                // Botão responder
                 const btnResponder = `<button class="action-button" onclick="mostrarCaixaResposta(${item.id})"><i class="fas fa-reply"></i> Responder</button>`;
 
-                // Lixeira para master
                 const lixeira = (currentUser && currentUser.id === 0) ? 
                     `<button class="action-button text-red-500" onclick="excluirComentario(${item.id})"><i class="fas fa-trash"></i></button>` : '';
 
@@ -1834,7 +1799,182 @@
                     respostasHTML += '</div>';
                 }
 
-                // Caixa de resposta inline (inicialmente oculta)
+                const respostaBoxId = `respostaBox_${item.id}`;
+                const respostaBox = `
+                    <div id="${respostaBoxId}" class="hidden mt-2">
+                        <textarea class="apple-input text-xs h-16" placeholder="Digite sua resposta..."></textarea>
+                        <div class="flex gap-2 mt-1">
+                            <button onclick="enviarRespostaForum(${item.id})" class="btn-apple text-[9px] px-2 py-1">Enviar</button>
+                            <button onclick="document.getElementById('${respostaBoxId}').classList.add('hidden')" class="btn-apple bg-gray-600 text-[9px] px-2 py-1">Cancelar</button>
+                        </div>
+                    </div>
+                `;
+
+                return `
+                    <div class="bg-[#1c1c1e] border border-[#38383a] rounded-xl p-3">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center gap-2">
+                                ${nomeLink}
+                                ${badgeTipo}
+                            </div>
+                            <span class="text-[9px] text-gray-500">${new Date(item.criado_em).toLocaleString()}</span>
+                        </div>
+                        <p class="text-sm mt-2">${item.pergunta || ''}</p>
+                        <div class="flex items-center gap-4 mt-3">
+                            ${btnLike}
+                            ${btnResponder}
+                            ${lixeira}
+                        </div>
+                        ${respostaBox}
+                        ${respostasHTML}
+                    </div>
+                `;
+            }));
+
+            container.innerHTML = feedHTML.join('');
+        }
+
+        function abrirModalValidarDenunciarDeReputacao(tipo) {
+            if (!currentUser) return alert('Faça login.');
+            if (currentUser.id === 0) return alert('Master não pode criar validações/denúncias.');
+            document.getElementById('validarOfertaId').value = ''; // null para reputação geral
+            document.getElementById('validarFornecedorId').value = currentReputacaoFornecedorId;
+            document.getElementById('tipoValidacao').value = tipo;
+            document.getElementById('textoValidacao').value = '';
+            document.getElementById('modalValidarDenunciar').classList.remove('hidden');
+            // Ajustar título do modal
+            document.getElementById('modalValidarTitulo').innerText = tipo === 'validacao' ? 'Validar Anunciante' : 'Denunciar Anunciante';
+        }
+
+        // ===== FUNÇÃO ENVIAR VALIDAÇÃO/DENÚNCIA (REFATORADA COM CORREÇÃO DE FK) =====
+        async function enviarValidacaoDenuncia() {
+            const tipo = document.getElementById('tipoValidacao').value;
+            if (!tipo) return alert('Selecione Validar ou Denunciar.');
+
+            // Bloquear master
+            if (currentUser.id === 0) return alert('O Modo Master apenas modera o fórum e não pode criar validações/denúncias.');
+
+            const ofertaId = document.getElementById('validarOfertaId').value;
+            const fornecedorId = document.getElementById('validarFornecedorId').value;
+            const texto = document.getElementById('textoValidacao').value.trim();
+
+            // Converter IDs para número
+            const clienteId = Number(currentUser.id);
+            const fornecedorNum = Number(fornecedorId);
+
+            const payload = {
+                oferta_id: ofertaId ? Number(ofertaId) : null,
+                fornecedor_id: fornecedorNum,
+                cliente_id: clienteId,
+                autor_nome: currentUser.nome,
+                pergunta: texto,
+                tipo_interacao: tipo,
+                status: tipo === 'validacao' ? 'publico' : 'pendente_aprovacao',
+                parent_id: null
+            };
+
+            const { error } = await _s.from('comentarios').insert(payload);
+            if (error) {
+                alert('Erro ao enviar: ' + error.message);
+            } else {
+                alert(tipo === 'validacao' ? 'Validação publicada com sucesso!' : 'Denúncia enviada e aguarda aprovação.');
+                fecharModalValidarDenunciar();
+                if (tipo === 'validacao') {
+                    // Se estava no modal de reputação, recarrega o feed
+                    if (currentReputacaoFornecedorId) {
+                        carregarReputacaoFeed(currentReputacaoFornecedorId);
+                    } else {
+                        carregarFeed(); // atualiza feed global
+                    }
+                }
+            }
+        }
+
+        // ===== FUNÇÕES DO FÓRUM GLOBAL (mantidas) =====
+
+        function abrirForum() {
+            document.getElementById('modalForum').classList.remove('hidden');
+            carregarFeed();
+        }
+
+        function fecharForum() {
+            document.getElementById('modalForum').classList.add('hidden');
+        }
+
+        async function carregarFeed() {
+            const container = document.getElementById('feedContainer');
+            container.innerHTML = '<p class="text-center text-gray-400">Carregando...</p>';
+
+            const { data: interacoes, error } = await _s
+                .from('comentarios')
+                .select('*, ofertas(*, variacoes(*, produtos_mestre(*)), fornecedores(*)), clientes_buscador!cliente_id(*)')
+                .or('tipo_interacao.eq.validacao,tipo_interacao.eq.denuncia')
+                .eq('status', 'publico')
+                .is('parent_id', null)
+                .order('criado_em', { ascending: false });
+
+            if (error) {
+                container.innerHTML = '<p class="text-center text-red-400">Erro ao carregar feed.</p>';
+                return;
+            }
+
+            if (!interacoes || interacoes.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400">Nenhuma interação ainda.</p>';
+                return;
+            }
+
+            const feedHTML = await Promise.all(interacoes.map(async (item) => {
+                const respostas = await buscarRespostas(item.id);
+                const likes = await buscarLikes(item.id);
+                const usuario = item.clientes_buscador || {};
+                const nomeExibicao = usuario.nome ? usuario.nome.split(' ')[0] : 'Usuário';
+                const whatsapp = usuario.whatsapp ? usuario.whatsapp.replace(/\D/g, '') : '';
+                const linkWhats = whatsapp ? `https://wa.me/55${whatsapp}` : '#';
+
+                const nomeLink = `<a href="${linkWhats}" target="_blank" class="font-bold hover:text-blue-400">${nomeExibicao}</a>`;
+
+                let badgeTipo = '';
+                if (item.tipo_interacao === 'validacao') badgeTipo = '<span class="badge-condicao bg-green-600 text-[8px]">✅ VALIDAÇÃO</span>';
+                else if (item.tipo_interacao === 'denuncia') badgeTipo = '<span class="badge-condicao bg-red-600 text-[8px]">🚨 DENÚNCIA</span>';
+
+                const curtido = await verificarLike(item.id);
+                const btnLike = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="likeComentario(${item.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-heart"></i> ${likes}</button>`;
+
+                const btnResponder = `<button class="action-button" onclick="mostrarCaixaResposta(${item.id})"><i class="fas fa-reply"></i> Responder</button>`;
+
+                const lixeira = (currentUser && currentUser.id === 0) ? 
+                    `<button class="action-button text-red-500" onclick="excluirComentario(${item.id})"><i class="fas fa-trash"></i></button>` : '';
+
+                let respostasHTML = '';
+                if (respostas.length > 0) {
+                    respostasHTML = '<div class="ml-6 mt-2 space-y-2 border-l-2 border-[#38383a] pl-3">';
+                    respostasHTML += respostas.map(r => {
+                        const rUser = r.clientes_buscador || {};
+                        const rNome = rUser.nome ? rUser.nome.split(' ')[0] : 'Usuário';
+                        const rWhats = rUser.whatsapp ? rUser.whatsapp.replace(/\D/g, '') : '';
+                        const rLink = rWhats ? `https://wa.me/55${rWhats}` : '#';
+                        const rLikes = r.likes_count || 0;
+                        const rCurtido = r.curtido_por_mim || false;
+                        const rBtnLike = `<button class="action-button ${rCurtido ? 'text-blue-500' : ''}" onclick="likeComentario(${r.id}, this)"><i class="fa${rCurtido ? 's' : 'r'} fa-heart"></i> ${rLikes}</button>`;
+                        const rLixeira = (currentUser && currentUser.id === 0) ? 
+                            `<button class="action-button text-red-500" onclick="excluirComentario(${r.id})"><i class="fas fa-trash"></i></button>` : '';
+                        return `
+                            <div class="bg-[#141415] p-2 rounded">
+                                <div class="flex justify-between items-start">
+                                    <a href="${rLink}" target="_blank" class="text-xs font-bold hover:text-blue-400">${rNome}</a>
+                                    <span class="text-[8px] text-gray-500">${new Date(r.criado_em).toLocaleString()}</span>
+                                </div>
+                                <p class="text-xs mt-1">${r.pergunta || ''}</p>
+                                <div class="flex gap-3 mt-1">
+                                    ${rBtnLike}
+                                    ${rLixeira}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    respostasHTML += '</div>';
+                }
+
                 const respostaBoxId = `respostaBox_${item.id}`;
                 const respostaBox = `
                     <div id="${respostaBoxId}" class="hidden mt-2">
@@ -1876,7 +2016,6 @@
                 .select('*, clientes_buscador(*)')
                 .eq('parent_id', parentId)
                 .order('criado_em', { ascending: true });
-            // Para cada resposta, contar likes
             if (data) {
                 for (let r of data) {
                     const { count } = await _s.from('comentarios_likes').select('*', { count: 'exact', head: true }).eq('comentario_id', r.id);
@@ -1911,7 +2050,6 @@
             } else {
                 await _s.from('comentarios_likes').insert({ comentario_id: comentarioId, usuario_id: usuarioId, usuario_tipo: tipo });
             }
-            // Atualiza contador no botão
             const atual = await buscarLikes(comentarioId);
             btn.innerHTML = `<i class="fa${!existe ? 's' : 'r'} fa-heart"></i> ${atual}`;
             btn.classList.toggle('text-blue-500', !existe);
@@ -1924,6 +2062,7 @@
 
         async function enviarRespostaForum(parentId) {
             if (!currentUser) return alert('Faça login.');
+            if (currentUser.id === 0) return alert('Master não pode responder.');
             const box = document.getElementById(`respostaBox_${parentId}`);
             const textarea = box.querySelector('textarea');
             const texto = textarea.value.trim();
@@ -1931,7 +2070,7 @@
 
             const payload = {
                 parent_id: parentId,
-                cliente_id: currentUser.id,
+                cliente_id: Number(currentUser.id),
                 autor_nome: currentUser.nome,
                 pergunta: texto,
                 tipo_interacao: 'resposta',
@@ -1945,9 +2084,13 @@
             } else {
                 textarea.value = '';
                 box.classList.add('hidden');
-                carregarFeed(); // recarrega
-                // Disparar notificação para o autor original (simplificado: enviar mensagem interna)
-                // Obter o comentário original para saber o autor
+                // Recarrega o feed atual (global ou reputação)
+                if (currentReputacaoFornecedorId) {
+                    carregarReputacaoFeed(currentReputacaoFornecedorId);
+                } else {
+                    carregarFeed();
+                }
+                // Disparar notificação para o autor original
                 const { data: original } = await _s.from('comentarios').select('cliente_id').eq('id', parentId).single();
                 if (original && original.cliente_id) {
                     const { data: autor } = await _s.from('clientes_buscador').select('nome').eq('id', original.cliente_id).single();
@@ -1969,15 +2112,21 @@
             if (error) {
                 alert('Erro ao excluir: ' + error.message);
             } else {
-                carregarFeed();
+                if (currentReputacaoFornecedorId) {
+                    carregarReputacaoFeed(currentReputacaoFornecedorId);
+                } else {
+                    carregarFeed();
+                }
             }
         }
 
-        // Função para aprovar denúncia (no master, mas implementaremos no master.html)
-        // Aqui apenas placeholder
-        window.aprovarDenuncia = async (id) => {
-            // a ser usado no master
-        };
+        function fecharModalValidarDenunciar() {
+            document.getElementById('modalValidarDenunciar').classList.add('hidden');
+        }
+
+        function selecionarTipoValidacao(tipo) {
+            document.getElementById('tipoValidacao').value = tipo;
+        }
 
         // ===== DEMAIS FUNÇÕES (mantidas) =====
 
@@ -2512,7 +2661,9 @@
         window.registrarInteracao = registrarInteracao;
 
         // NOVAS EXPORTAÇÕES
-        window.abrirModalValidarDenunciar = abrirModalValidarDenunciar;
+        window.abrirReputacaoAnunciante = abrirReputacaoAnunciante;
+        window.fecharModalReputacao = fecharModalReputacao;
+        window.abrirModalValidarDenunciar = abrirModalValidarDenunciarDeReputacao; // para os botões do modal de reputação
         window.fecharModalValidarDenunciar = fecharModalValidarDenunciar;
         window.selecionarTipoValidacao = selecionarTipoValidacao;
         window.enviarValidacaoDenuncia = enviarValidacaoDenuncia;
