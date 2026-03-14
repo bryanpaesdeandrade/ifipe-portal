@@ -1570,14 +1570,14 @@
                     if (o.condicao === 'Novo' || o.condicao === 'CPO') {
                         garantiaBadge = '<span class="badge-condicao bg-zinc-700">🛡️ 💎 1 ANO</span>';
                     } else {
-                        // Garantia Seminovos (Remove letras, pega só número)
+                        // Garantia Seminovos
                         const garText = String(o.garantia || '').replace(/\D/g, '');
                         const garNum = parseInt(garText);
                         if (!isNaN(garNum) && garNum > 0) {
                             garantiaBadge = `<span class="badge-condicao bg-zinc-700">🛡️ ${garNum} M.</span>`;
                         }
                         
-                        // Bateria Seminovos (Filtro anti-sujeira do banco)
+                        // Bateria Seminovos
                         const batText = String(o.saude_bateria || '').replace(/\D/g, '');
                         const batNum = parseInt(batText);
                         if (!isNaN(batNum) && batNum > 0) {
@@ -1690,7 +1690,7 @@
             atualizarBadgeAlertas();
         }
 
-        // ===== NOVAS FUNÇÕES PARA REPUTAÇÃO DO ANUNCIANTE =====
+        // ===== NOVAS FUNÇÕES PARA REPUTAÇÃO DO ANUNCIANTE E FÓRUM =====
 
         let currentReputacaoOfertaId = null;
         let currentReputacaoFornecedorId = null;
@@ -1750,6 +1750,7 @@
                 const curtido = await verificarLike(item.id);
                 const btnLike = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="likeComentario(${item.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-heart"></i> ${likes}</button>`;
 
+                // Mudança na chamada: não abre o modal de validação, apenas o box de textarea
                 const btnResponder = `<button class="action-button" onclick="mostrarCaixaResposta(${item.id})"><i class="fas fa-reply"></i> Responder</button>`;
 
                 const lixeira = (currentUser && currentUser.id === 0) ? 
@@ -1787,7 +1788,7 @@
 
                 const respostaBoxId = `respostaBox_${item.id}`;
                 const respostaBox = `
-                    <div id="${respostaBoxId}" class="hidden mt-2 ml-8">
+                    <div id="${respostaBoxId}" class="hidden mt-2 ml-6">
                         <textarea class="apple-input text-xs h-16" placeholder="Digite sua resposta..."></textarea>
                         <div class="flex gap-2 mt-1">
                             <button onclick="enviarRespostaForum(${item.id})" class="btn-apple text-[9px] px-2 py-1">Enviar</button>
@@ -1820,76 +1821,8 @@
             container.innerHTML = feedHTML.join('');
         }
 
-        function abrirModalValidarDenunciarDeReputacao(tipo) {
-            if (!currentUser) return alert('Faça login.');
-
-            fecharModalReputacao();
-
-            document.getElementById('validarOfertaId').value = currentReputacaoOfertaId;
-            document.getElementById('validarFornecedorId').value = currentReputacaoFornecedorId;
-            document.getElementById('tipoValidacao').value = tipo;
-            document.getElementById('textoValidacao').value = '';
-
-            const btnValidar = document.getElementById('btnTipoValidacao');
-            const btnDenunciar = document.getElementById('btnTipoDenuncia');
-            const titulo = document.getElementById('modalValidarTitulo');
-
-            if (tipo === 'validacao') {
-                btnValidar.style.display = '';
-                btnDenunciar.style.display = 'none';
-                titulo.innerText = 'Validar Anunciante';
-            } else {
-                btnValidar.style.display = 'none';
-                btnDenunciar.style.display = '';
-                titulo.innerText = 'Denunciar Anunciante';
-            }
-
-            document.getElementById('modalValidarDenunciar').classList.remove('hidden');
-        }
-
-        // ===== FUNÇÃO ENVIAR VALIDAÇÃO/DENÚNCIA =====
-        async function enviarValidacaoDenuncia() {
-            const tipo = document.getElementById('tipoValidacao').value;
-            if (!tipo) return alert('Selecione Validar ou Denunciar.');
-
-            const ofertaId = document.getElementById('validarOfertaId').value;
-            const fornecedorId = document.getElementById('validarFornecedorId').value;
-            const texto = document.getElementById('textoValidacao').value.trim();
-
-            const fornecedorNum = Number(fornecedorId);
-            const clienteId = (currentUser.id === 0) ? null : Number(currentUser.id);
-
-            const payload = {
-                oferta_id: ofertaId ? Number(ofertaId) : null,
-                fornecedor_id: fornecedorNum,
-                cliente_id: clienteId,
-                autor_nome: currentUser.nome,
-                pergunta: texto,
-                tipo_interacao: tipo,
-                status: 'publico',
-                parent_id: null
-            };
-
-            const { error } = await _s.from('comentarios').insert(payload);
-            if (error) {
-                alert('Erro ao enviar: ' + error.message);
-            } else {
-                alert(tipo === 'validacao' ? 'Validação publicada com sucesso!' : 'Denúncia enviada e aguarda aprovação.');
-                fecharModalValidarDenunciar();
-                if (tipo === 'validacao') {
-                    if (currentReputacaoFornecedorId) {
-                        carregarReputacaoFeed(currentReputacaoFornecedorId);
-                    } else {
-                        carregarFeed();
-                    }
-                }
-            }
-        }
-
-        // ===== FUNÇÕES DO FÓRUM GLOBAL =====
-
+        // FÓRUM GLOBAL
         function abrirForum() {
-            // ===== CORREÇÃO 1: LIMPAR ESTADO =====
             currentReputacaoFornecedorId = null;
             document.getElementById('modalForum').classList.remove('hidden');
             carregarFeed();
@@ -1975,7 +1908,7 @@
 
                 const respostaBoxId = `respostaBox_${item.id}`;
                 const respostaBox = `
-                    <div id="${respostaBoxId}" class="hidden mt-2 ml-8">
+                    <div id="${respostaBoxId}" class="hidden mt-2 ml-6">
                         <textarea class="apple-input text-xs h-16" placeholder="Digite sua resposta..."></textarea>
                         <div class="flex gap-2 mt-1">
                             <button onclick="enviarRespostaForum(${item.id})" class="btn-apple text-[9px] px-2 py-1">Enviar</button>
@@ -2006,6 +1939,79 @@
             }));
 
             container.innerHTML = feedHTML.join('');
+        }
+
+        function abrirModalValidarDenunciarDeReputacao(tipo) {
+            if (!currentUser) return alert('Faça login.');
+
+            fecharModalReputacao();
+
+            document.getElementById('validarOfertaId').value = currentReputacaoOfertaId;
+            document.getElementById('validarFornecedorId').value = currentReputacaoFornecedorId;
+            document.getElementById('tipoValidacao').value = tipo;
+            document.getElementById('textoValidacao').value = '';
+
+            const btnValidar = document.getElementById('btnTipoValidacao');
+            const btnDenunciar = document.getElementById('btnTipoDenuncia');
+            const titulo = document.getElementById('modalValidarTitulo');
+
+            if (tipo === 'validacao') {
+                btnValidar.style.display = '';
+                btnDenunciar.style.display = 'none';
+                titulo.innerText = 'Validar Anunciante';
+            } else {
+                btnValidar.style.display = 'none';
+                btnDenunciar.style.display = '';
+                titulo.innerText = 'Denunciar Anunciante';
+            }
+
+            document.getElementById('modalValidarDenunciar').classList.remove('hidden');
+        }
+
+        async function enviarValidacaoDenuncia() {
+            const tipo = document.getElementById('tipoValidacao').value;
+            if (!tipo) return alert('Selecione Validar ou Denunciar.');
+
+            const ofertaId = document.getElementById('validarOfertaId').value;
+            const fornecedorId = document.getElementById('validarFornecedorId').value;
+            const texto = document.getElementById('textoValidacao').value.trim();
+
+            const fornecedorNum = Number(fornecedorId);
+            const clienteId = (currentUser.id === 0) ? null : Number(currentUser.id);
+
+            const payload = {
+                oferta_id: ofertaId ? Number(ofertaId) : null,
+                fornecedor_id: fornecedorNum,
+                cliente_id: clienteId,
+                autor_nome: currentUser.nome,
+                pergunta: texto,
+                tipo_interacao: tipo,
+                status: 'publico',
+                parent_id: null
+            };
+
+            const { error } = await _s.from('comentarios').insert(payload);
+            if (error) {
+                alert('Erro ao enviar: ' + error.message);
+            } else {
+                alert(tipo === 'validacao' ? 'Validação publicada com sucesso!' : 'Denúncia enviada e aguarda aprovação.');
+                fecharModalValidarDenunciar();
+                if (tipo === 'validacao') {
+                    if (currentReputacaoFornecedorId) {
+                        carregarReputacaoFeed(currentReputacaoFornecedorId);
+                    } else {
+                        carregarFeed();
+                    }
+                }
+            }
+        }
+
+        function fecharModalValidarDenunciar() {
+            document.getElementById('modalValidarDenunciar').classList.add('hidden');
+        }
+
+        function selecionarTipoValidacao(tipo) {
+            document.getElementById('tipoValidacao').value = tipo;
         }
 
         async function buscarRespostas(parentId) {
@@ -2109,14 +2115,6 @@
                     carregarFeed();
                 }
             }
-        }
-
-        function fecharModalValidarDenunciar() {
-            document.getElementById('modalValidarDenunciar').classList.add('hidden');
-        }
-
-        function selecionarTipoValidacao(tipo) {
-            document.getElementById('tipoValidacao').value = tipo;
         }
 
         // ===== DEMAIS FUNÇÕES (mantidas) =====
