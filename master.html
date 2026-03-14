@@ -107,6 +107,37 @@
             border-color: #0071e3;
             color: #0071e3;
         }
+        /* Paginação */
+        .pagination {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 16px;
+        }
+        .pagination button {
+            background: #2c2c2e;
+            border: 1px solid #38383a;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .pagination button:hover:not(:disabled) {
+            background: #0071e3;
+            border-color: #0071e3;
+        }
+        .pagination button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .pagination span {
+            font-size: 10px;
+            color: #aaa;
+        }
     </style>
 </head>
 <body>
@@ -245,7 +276,7 @@
             </div>
         </div>
 
-        <!-- Aba Gestão Global (com filtro inteligente) -->
+        <!-- Aba Gestão Global (com paginação) -->
         <div id="v-anuncios" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
@@ -271,7 +302,7 @@
                         <thead><tr>
                             <th width="30"><input type="checkbox" onclick="selAll(this, '.chk-anu')"></th>
                             <th>REGISTRO</th>
-                            <th>LOJISTA</th> <!-- NOVA COLUNA ADICIONADA -->
+                            <th>LOJISTA</th>
                             <th>PRODUTO / VARIAÇÃO</th>
                             <th>CONDIÇÃO</th>
                             <th>LOCALIZAÇÃO FÍSICA</th>
@@ -283,6 +314,14 @@
                             <tr><td colspan="9" class="text-center py-8 text-gray-400">Selecione um lojista para visualizar os anúncios</td></tr>
                         </tbody>
                     </table>
+                </div>
+                <!-- Paginação -->
+                <div class="pagination" id="paginacaoContainer">
+                    <button onclick="mudarPagina('primeira')" id="btnPrimeira" disabled>⏮️</button>
+                    <button onclick="mudarPagina('anterior')" id="btnAnterior" disabled>◀️</button>
+                    <span id="paginaInfo">Página 1 de 1</span>
+                    <button onclick="mudarPagina('proxima')" id="btnProxima" disabled>▶️</button>
+                    <button onclick="mudarPagina('ultima')" id="btnUltima" disabled>⏭️</button>
                 </div>
             </div>
         </div>
@@ -396,12 +435,16 @@
                 <div>
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-[10px] font-black text-blue-400">PRODUTOS EXISTENTES <span id="countBaseProd" class="text-white ml-2"></span></h3>
-                        <input type="text" id="filtroBaseProd" placeholder="🔍 BUSCAR ID, NOME OU CATEGORIA..." class="apple-input !w-64 !py-2 uppercase" onkeyup="filtrarTabelaBase(this.value)">
+                        <div class="flex gap-2">
+                            <input type="text" id="filtroBaseProd" placeholder="🔍 BUSCAR ID, NOME OU CATEGORIA..." class="apple-input !w-64 !py-2 uppercase" onkeyup="filtrarTabelaBase(this.value)">
+                            <button onclick="abrirBulkBase()" class="btn-master bg-zinc-800 text-white">⚙️ EDITAR LOTE</button>
+                        </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead>
                                 <tr class="text-[9px] text-gray-400">
+                                    <th class="pb-2" width="30"><input type="checkbox" onclick="selAll(this, '.chk-base-prod')"></th>
                                     <th class="pb-2">ID</th>
                                     <th class="pb-2">NOME (clique para editar)</th>
                                     <th class="pb-2">CATEGORIA (clique para editar)</th>
@@ -1139,6 +1182,12 @@
         let pixInstrucoes = '';
         let ofertasHorus = [];
 
+        // Variáveis de paginação
+        let paginaAtual = 1;
+        let itensPorPagina = 100;
+        let totalPaginas = 1;
+        let listaCompletaAnuncios = []; // armazena os anúncios filtrados atuais
+
         const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
 
@@ -1279,26 +1328,18 @@
 
         function filtrarAnunciosTexto(query) {
             const q = query.toLowerCase();
-            const tbody = document.getElementById('listAnu');
-            const rows = tbody.getElementsByTagName('tr');
-            let currentLojistaMatch = false;
-            for (let i = 0; i < rows.length; i++) {
-                const row = rows[i];
-                if (row.classList.contains('group-header')) {
-                    currentLojistaMatch = row.innerText.toLowerCase().includes(q);
-                    row.style.display = currentLojistaMatch ? '' : 'none';
-                    continue;
-                }
-                const productMatch = row.innerText.toLowerCase().includes(q);
-                if (currentLojistaMatch || productMatch) {
-                    row.style.display = '';
-                    let j = i - 1;
-                    while (j >= 0 && !rows[j].classList.contains('group-header')) j--;
-                    if (j >= 0) rows[j].style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            }
+            // Filtra a listaCompletaAnuncios e atualiza a página
+            if (!listaCompletaAnuncios || listaCompletaAnuncios.length === 0) return;
+            const filtrados = listaCompletaAnuncios.filter(item => 
+                item.variacoes?.produtos_mestre?.nome.toLowerCase().includes(q) ||
+                item.variacoes?.cor.toLowerCase().includes(q) ||
+                item.condicao.toLowerCase().includes(q)
+            );
+            // Atualiza a lista completa para os filtrados e reinicia na página 1
+            listaCompletaAnuncios = filtrados;
+            paginaAtual = 1;
+            totalPaginas = Math.ceil(listaCompletaAnuncios.length / itensPorPagina);
+            renderAnuPorLoja(listaCompletaAnuncios);
         }
 
         async function zerarEstoqueSelecionados() {
@@ -1933,40 +1974,60 @@
             // Inicializar a tabela de anúncios vazia (já tem placeholder)
         }
 
-        // ===== NOVA FUNÇÃO: filtrarPorLojistaGlobal =====
+        // ===== NOVA FUNÇÃO: filtrarPorLojistaGlobal (com paginação) =====
         function filtrarPorLojistaGlobal() {
             const lojaId = document.getElementById('filtroLojistaGlobal').value;
             
             if (lojaId === '') {
                 document.getElementById('listAnu').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Selecione um lojista para visualizar os anúncios</td></tr>';
+                // Esconde paginação
+                document.getElementById('paginacaoContainer').style.display = 'none';
                 return;
             }
             
             if (lojaId === 'TODOS') {
-                // Filtrar apenas anúncios ativos (quantidade > 0 e preco > 0) e pegar os últimos 800
-                const ofertasAtivas = dbAnu.filter(o => o.quantidade > 0 && o.preco > 0);
-                const ultimas = ofertasAtivas.sort((a,b) => new Date(b.criado_em) - new Date(a.criado_em)).slice(0, 800);
-                renderAnuPorLoja(ultimas);
+                // Filtrar apenas anúncios ativos (quantidade > 0 e preco > 0) - sem limite
+                listaCompletaAnuncios = dbAnu.filter(o => o.quantidade > 0 && o.preco > 0);
+            } else {
+                // Filtrar por lojista específico (inclui todos os anúncios, ativos ou não)
+                listaCompletaAnuncios = dbAnu.filter(a => String(a.fornecedores?.id) === String(lojaId));
+            }
+            
+            // Ordenar por data de criação decrescente
+            listaCompletaAnuncios.sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em));
+            
+            totalPaginas = Math.ceil(listaCompletaAnuncios.length / itensPorPagina);
+            paginaAtual = 1;
+            
+            renderAnuPorLoja(listaCompletaAnuncios);
+        }
+
+        // ===== NOVA FUNÇÃO: renderAnuPorLoja (com paginação) =====
+        function renderAnuPorLoja(anuList) {
+            listaCompletaAnuncios = anuList; // atualiza a lista completa
+            totalPaginas = Math.ceil(listaCompletaAnuncios.length / itensPorPagina);
+            
+            if (paginaAtual < 1) paginaAtual = 1;
+            if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+            
+            const inicio = (paginaAtual - 1) * itensPorPagina;
+            const fim = inicio + itensPorPagina;
+            const paginaItens = listaCompletaAnuncios.slice(inicio, fim);
+            
+            const tbody = document.getElementById('listAnu');
+            if (!paginaItens.length) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-400">Nenhum anúncio encontrado.</td></tr>';
+                document.getElementById('paginacaoContainer').style.display = 'none';
                 return;
             }
             
-            // Filtrar por lojista específico
-            const anuFiltrados = dbAnu.filter(a => String(a.fornecedores?.id) === String(lojaId));
-            renderAnuPorLoja(anuFiltrados);
-        }
-
-        // ===== NOVA FUNÇÃO: renderAnuPorLoja (com coluna LOJISTA) =====
-        function renderAnuPorLoja(anuList) {
-            const tbody = document.getElementById('listAnu');
-            if (!anuList.length) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-400">Nenhum anúncio encontrado.</td></tr>';
-                return;
-            }
+            document.getElementById('paginacaoContainer').style.display = 'flex';
+            
             const regMap = {};
             dbReg.forEach(r => regMap[r.id] = r.bandeira || '🌍');
 
             let html = '';
-            anuList.sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em)).forEach(a => {
+            paginaItens.forEach(a => {
                 let d = a.criado_em ? new Date(a.criado_em).toLocaleDateString('pt-BR') : '--';
                 let lojistaNome = a.fornecedores?.nome || 'DESCONHECIDO';
                 let bandeira = regMap[a.regiao_id] || '';
@@ -1990,6 +2051,23 @@
                 </tr>`;
             });
             tbody.innerHTML = html;
+            
+            // Atualizar informações da paginação
+            document.getElementById('paginaInfo').innerText = `Página ${paginaAtual} de ${totalPaginas}`;
+            document.getElementById('btnPrimeira').disabled = (paginaAtual === 1);
+            document.getElementById('btnAnterior').disabled = (paginaAtual === 1);
+            document.getElementById('btnProxima').disabled = (paginaAtual === totalPaginas || totalPaginas === 0);
+            document.getElementById('btnUltima').disabled = (paginaAtual === totalPaginas || totalPaginas === 0);
+        }
+
+        // Função para mudar de página
+        function mudarPagina(direcao) {
+            if (direcao === 'primeira') paginaAtual = 1;
+            else if (direcao === 'anterior') paginaAtual--;
+            else if (direcao === 'proxima') paginaAtual++;
+            else if (direcao === 'ultima') paginaAtual = totalPaginas;
+            
+            renderAnuPorLoja(listaCompletaAnuncios);
         }
 
         // ===== NOVA FUNÇÃO: doBulkGlobal (edição em massa independente de checkboxes) =====
@@ -2895,6 +2973,7 @@
 
         // NOVAS FUNÇÕES EXPORTADAS
         window.filtrarPorLojistaGlobal = filtrarPorLojistaGlobal;
+        window.mudarPagina = mudarPagina;
         window.abrirBulkGlobal = abrirBulkGlobal;
         window.doBulkGlobal = doBulkGlobal;
         window.fecharBulk = fecharBulk;
@@ -3528,12 +3607,13 @@
             const tbody = document.getElementById('listaProdutosBase');
             if (!tbody) return;
             if (!dbProdutos || dbProdutos.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">Nenhum produto cadastrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">Nenhum produto cadastrado.</td></tr>';
                 return;
             }
             document.getElementById('countBaseProd').innerText = dbProdutos.length;
             tbody.innerHTML = dbProdutos.map(p => `
                 <tr>
+                    <td class="py-2"><input type="checkbox" class="chk-base-prod" value="${p.id}"></td>
                     <td class="py-2 text-[10px]">${p.id}</td>
                     <td class="py-2"><input type="text" class="mini-edit !w-full !text-left" value="${p.nome}" onblur="updateProdutoMestre(${p.id}, 'nome', this.value)"></td>
                     <td class="py-2"><input type="text" class="mini-edit !w-full !text-left" value="${p.categoria}" onblur="updateProdutoMestre(${p.id}, 'categoria', this.value)"></td>
@@ -3558,16 +3638,16 @@
             }
         }
 
-        // Filtro da Tabela
+        // Filtro da Tabela (CORRIGIDO: lê valores dos inputs)
         function filtrarTabelaBase(query) {
             const q = query.toLowerCase();
             const rows = document.getElementById('listaProdutosBase').getElementsByTagName('tr');
             for (let r of rows) {
-                if (r.innerText.toLowerCase().includes(q)) {
-                    r.style.display = '';
-                } else {
-                    r.style.display = 'none';
-                }
+                // Pega o texto visível da linha, incluindo valores dos inputs
+                const id = r.cells[1]?.innerText || '';
+                const inputsText = Array.from(r.querySelectorAll('input[type="text"]')).map(i => i.value).join(' ').toLowerCase();
+                const rowText = (id + ' ' + inputsText).toLowerCase();
+                r.style.display = rowText.includes(q) ? '' : 'none';
             }
         }
 
@@ -3744,14 +3824,14 @@
             input.value = '';
         }
 
-        // Salvar produto e gerar combinações
+        // Salvar produto e gerar combinações (CORRIGIDO: salva produto antes de verificar variações)
         async function salvarGestaoBase() {
             const prodId = document.getElementById('gestaoBaseProdId').value;
             let categoria = document.getElementById('gestaoBaseCategoria').value;
             const nome = document.getElementById('gestaoBaseNome').value.trim().toUpperCase();
             const novaCategoriaInput = document.getElementById('gestaoBaseNovaCategoria');
 
-            // Validações
+            // Validações básicas
             if (!categoria) {
                 alert('Selecione ou crie uma categoria.');
                 return;
@@ -3768,16 +3848,7 @@
                 return;
             }
 
-            // Coletar capacidades e cores selecionadas
-            const capsSelecionadas = Array.from(document.querySelectorAll('#gestaoBaseCapsContainer .tag.selected')).map(t => t.getAttribute('data-value'));
-            const coresSelecionadas = Array.from(document.querySelectorAll('#gestaoBaseCoresContainer .tag.selected')).map(t => t.getAttribute('data-value'));
-
-            if (capsSelecionadas.length === 0 || coresSelecionadas.length === 0) {
-                alert('Selecione pelo menos uma capacidade e uma cor para gerar variações.');
-                return;
-            }
-
-            // Inserir ou atualizar produto
+            // 1. SALVAR O PRODUTO MESTRE (sempre salva)
             let produtoId = prodId;
             if (prodId) {
                 // Atualizar existente
@@ -3794,6 +3865,17 @@
                     return;
                 }
                 produtoId = data[0].id;
+            }
+
+            // 2. AGORA VERIFICAR SE HÁ VARIAÇÕES PARA GERAR
+            const capsSelecionadas = Array.from(document.querySelectorAll('#gestaoBaseCapsContainer .tag.selected')).map(t => t.getAttribute('data-value'));
+            const coresSelecionadas = Array.from(document.querySelectorAll('#gestaoBaseCoresContainer .tag.selected')).map(t => t.getAttribute('data-value'));
+
+            if (capsSelecionadas.length === 0 || coresSelecionadas.length === 0) {
+                alert('Produto salvo com sucesso! (Nenhuma variação foi gerada.)');
+                fecharModalGestaoBase();
+                await loadAll();
+                return;
             }
 
             // Gerar combinações cartesianas
