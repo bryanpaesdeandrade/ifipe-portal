@@ -235,7 +235,7 @@
         .filters-grid {
             display: grid; grid-template-columns: repeat(2,1fr); gap: 0.5rem;
         }
-        @media (min-width:1024px) { .filters-grid { grid-template-columns: repeat(7,1fr); } }
+        @media (min-width:1024px) { .filters-grid { grid-template-columns: repeat(8,1fr); } }
         .filters-grid select { width: 100%; font-size: 0.7rem; padding: 0.4rem; }
         
         .grid-cards {
@@ -418,12 +418,12 @@
         </div>
     </div>
 
-    <!-- NAVBAR (ajustada para ficar mais fina) -->
+    <!-- NAVBAR MINIMALISTA (logo oculto em mobile, sem texto extra) -->
     <nav class="nav-blur fixed top-0 w-full z-50 px-4 lg:px-5 py-1 flex items-center justify-between">
         <div class="flex items-center gap-2 lg:gap-3">
             <button class="text-2xl mr-2 text-gray-400 hover:text-white transition" onclick="abrirDrawer()">☰</button>
-            <h1 class="text-xl lg:text-2xl font-black tracking-tight">iFipe</h1>
-            <span class="text-[10px] lg:text-sm text-gray-400 hidden sm:inline">A TABELA FIPE DO IPHONE</span>
+            <!-- Logo oculto em mobile (hidden lg:block) -->
+            <h1 class="text-xl lg:text-2xl font-black tracking-tight hidden lg:block">iFipe</h1>
             <button class="header-btn btn-insignia ml-2 hidden lg:flex text-[10px]" onclick="abrirLegendaInsignias()">
                 <i class="fas fa-crown"></i> Insígnias de Poder
             </button>
@@ -432,9 +432,6 @@
             </button>
             <button class="header-btn ml-2 hidden lg:flex text-[10px]" onclick="abrirModalHorus()">
                 👁️‍🗨️ Horus
-            </button>
-            <button onclick="forcarAtualizacao()" class="header-btn text-[10px] text-green-400 border-green-900/30 hover:bg-green-500/10 hidden lg:flex">
-                <i id="syncIconDesktop" class="fas fa-sync-alt mr-1"></i> Atualizar
             </button>
         </div>
         
@@ -462,6 +459,7 @@
                 <i class="fas fa-chart-line mr-1"></i> Histórico
             </button>
             
+            <!-- Ícone de sincronização (visível em todas as telas) -->
             <div class="notification-icon ml-2 text-green-400" onclick="forcarAtualizacao()">
                 <i id="syncIconMobile" class="fas fa-sync-alt"></i>
             </div>
@@ -523,7 +521,7 @@
         </div>
     </div>
 
-    <!-- MODAL HORUS (sem botões de cópia, apenas visualização) -->
+    <!-- MODAL HORUS (sem botões de cópia) -->
     <div id="modalHorus" class="modal hidden">
         <div class="modal-content max-w-3xl w-full">
             <div class="flex justify-between items-center mb-4">
@@ -757,12 +755,20 @@
             <!-- Container do botão de oportunidades -->
             <div id="btn-oportunidade-container" class="w-full"></div>
 
-            <!-- Filtros em grid -->
+            <!-- Filtros em grid (incluindo novo filtro de grupos) -->
             <div class="filters-grid mb-4">
+                <!-- NOVO FILTRO DE GRUPOS (primeiro elemento) -->
+                <select id="filtroGrupo" class="apple-input text-xs py-2" onchange="registrarInteracao(); renderizarCards()">
+                    <option value="">Grupo</option>
+                    <option value="IPHONE">IPHONE</option>
+                    <option value="IPAD">IPAD</option>
+                    <option value="MACBOOK">MACBOOK</option>
+                    <option value="APPLEWATCH">APPLEWATCH</option>
+                    <option value="AIRPODS">AIRPODS</option>
+                </select>
                 <select id="filtroCategoria" class="apple-input text-xs py-2" onchange="registrarInteracao(); renderizarCards()">
                     <option value="">Modelos</option>
                 </select>
-                <!-- Filtro de Condição com opções fixas -->
                 <select id="filtroCondicao" class="apple-input text-xs py-2" onchange="registrarInteracao(); renderizarCards()">
                     <option value="">Condição</option>
                     <option value="Novo">Novo</option>
@@ -1113,14 +1119,11 @@
         });
 
         window.forcarAtualizacao = function() {
-            const desktopIcon = document.getElementById('syncIconDesktop');
             const mobileIcon = document.getElementById('syncIconMobile');
-            if (desktopIcon) desktopIcon.classList.add('animate-spin');
             if (mobileIcon) mobileIcon.classList.add('animate-spin');
             
             carregarDados().finally(() => {
                 setTimeout(() => {
-                    if (desktopIcon) desktopIcon.classList.remove('animate-spin');
                     if (mobileIcon) mobileIcon.classList.remove('animate-spin');
                 }, 1000);
             });
@@ -1171,23 +1174,6 @@
                     minhasCurtidas = new Set(curtidas?.map(c => c.oferta_id) || []);
                 } catch (err) { logout(); return; }
             }
-
-            // ===== MIGRAÇÃO DO BANCO (executar uma vez manualmente) =====
-            // As colunas e tabelas devem ser criadas via SQL no painel do Supabase.
-            // Script de referência:
-            /*
-            ALTER TABLE comentarios ADD COLUMN IF NOT EXISTS tipo_interacao TEXT CHECK (tipo_interacao IN ('validacao','denuncia','resposta')) DEFAULT 'resposta';
-            ALTER TABLE comentarios ADD COLUMN IF NOT EXISTS status TEXT CHECK (status IN ('publico','pendente_aprovacao')) DEFAULT 'publico';
-            ALTER TABLE comentarios ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES comentarios(id) ON DELETE CASCADE;
-            CREATE TABLE IF NOT EXISTS comentarios_likes (
-                id SERIAL PRIMARY KEY,
-                comentario_id INTEGER REFERENCES comentarios(id) ON DELETE CASCADE,
-                usuario_id INTEGER NOT NULL,
-                usuario_tipo TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT NOW(),
-                UNIQUE(comentario_id, usuario_id, usuario_tipo)
-            );
-            */
 
             atualizarStatusUsuario();
             atualizarStatusUsuarioMobile();
@@ -1345,7 +1331,7 @@
             });
         }
 
-        // ===== CORREÇÃO 2: OTIMIZAÇÃO DA ORDENAÇÃO =====
+        // ===== ORDENAÇÃO DE OFERTAS =====
         function ordenarOfertas(lista) {
             return lista.sort((a, b) => {
                 try {
@@ -1355,7 +1341,6 @@
                     if (!aZero && bZero) return -1;
                     if (aZero && bZero) return 0;
 
-                    // Usar produtos_mestre já embutidos nos dados
                     const produtoA = a.variacoes?.produtos_mestre;
                     const produtoB = b.variacoes?.produtos_mestre;
                     if (!produtoA || !produtoB) return 0;
@@ -1448,12 +1433,13 @@
             renderizarCards();
         }
 
-        // ===== RENDERIZAR CARDS (COM BADGES DE BATERIA E GARANTIA) =====
+        // ===== RENDERIZAR CARDS (COM BADGES DE BATERIA E GARANTIA ATUALIZADOS) =====
         function renderizarCards() {
             const container = document.getElementById('container-produtos');
             container.innerHTML = '';
 
             const busca = document.getElementById('searchInput').value.toLowerCase().trim();
+            const fGrupo = document.getElementById('filtroGrupo').value;
             const fCat = document.getElementById('filtroCategoria').value;
             const fCond = document.getElementById('filtroCondicao').value;
             const fCap = document.getElementById('filtroCapacidade').value;
@@ -1482,6 +1468,8 @@
                         ].map(s => s.toLowerCase()).join(' ');
                         if (!searchable.includes(busca)) return false;
                     }
+                    // NOVO FILTRO DE GRUPO
+                    if (fGrupo && p.categoria?.toUpperCase() !== fGrupo) return false;
                     if (fCat && v.produto_id != fCat) return false;
                     if (fCond && o.condicao !== fCond) return false;
                     if (fCap && v.capacidade !== fCap) return false;
@@ -1606,32 +1594,34 @@
                     else if (o.condicao && o.condicao.includes('Grade')) condCls = 'badge-grade';
                     else condCls = 'badge-outros';
 
-                    // ===== BADGE DE BATERIA (Melhoria 3) =====
+                    // ===== BADGES DE BATERIA E GARANTIA (LÓGICA ATUALIZADA) =====
                     let bateriaBadge = '';
-                    if (o.saude_bateria) {
-                        const bateriaNum = parseInt(o.saude_bateria) || 0;
-                        if (bateriaNum < 85) {
-                            bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔻${bateriaNum}% 🪫</span>`;
-                        } else if (bateriaNum >= 85 && bateriaNum < 90) {
-                            bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪${bateriaNum}% 🔋</span>`;
-                        } else if (bateriaNum >= 90 && bateriaNum < 95) {
-                            bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪${bateriaNum}% 🔋</span>`;
-                        } else if (bateriaNum >= 95 && bateriaNum < 100) {
-                            bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪${bateriaNum}% 🔋</span>`;
-                        } else if (bateriaNum == 100) {
-                            bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔝 100% 🔋</span>`;
-                        }
-                    }
-
-                    // ===== BADGE DE GARANTIA (Melhoria 3) =====
                     let garantiaBadge = '';
-                    if (o.garantia) {
-                        const garantiaStr = String(o.garantia).toLowerCase();
-                        const garantiaNum = parseInt(o.garantia) || 0;
-                        if (garantiaStr.includes('ano') || garantiaNum == 12) {
-                            garantiaBadge = `<span class="badge-condicao bg-zinc-700">🛡️ 12 M.</span>`;
-                        } else if (garantiaNum >= 1 && garantiaNum <= 11) {
-                            garantiaBadge = `<span class="badge-condicao bg-zinc-700">🛡️ ${garantiaNum} M.</span>`;
+
+                    if (o.condicao === 'Novo' || o.condicao === 'CPO') {
+                        garantiaBadge = '<span class="badge-condicao bg-zinc-700">🛡️ 💎 1 ANO</span>';
+                        // bateria vazia
+                    } else {
+                        // Seminovos / Grade
+                        if (o.saude_bateria) {
+                            const bateriaNum = parseInt(o.saude_bateria) || 0;
+                            if (bateriaNum < 85) {
+                                bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔻${bateriaNum}% 🪫</span>`;
+                            } else if (bateriaNum >= 85 && bateriaNum < 90) {
+                                bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪${bateriaNum}% 🔋</span>`;
+                            } else if (bateriaNum >= 90 && bateriaNum < 95) {
+                                bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪${bateriaNum}% 🔋</span>`;
+                            } else if (bateriaNum >= 95 && bateriaNum < 100) {
+                                bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪${bateriaNum}% 🔋</span>`;
+                            } else if (bateriaNum == 100) {
+                                bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔝 100% 🔋</span>`;
+                            }
+                        }
+                        if (o.garantia) {
+                            const garantiaNum = parseInt(o.garantia) || 0;
+                            if (garantiaNum >= 1 && garantiaNum <= 12) {
+                                garantiaBadge = `<span class="badge-condicao bg-zinc-700">🛡️ ${garantiaNum} M</span>`; // sem ponto
+                            }
                         }
                     }
 
@@ -1645,7 +1635,6 @@
                     );
 
                     const curtido = minhasCurtidas.has(o.id);
-                    // Botão Curtir reduzido a emoji (apenas ícone)
                     const btnCurtir = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="toggleCurtir(${o.id}, this)" title="Curtir"><i class="fa${curtido ? 's' : 'r'} fa-heart text-red-500 text-sm"></i></button>`;
 
                     let badgeEstoque;
@@ -1703,7 +1692,6 @@
                         </div>
                         <div class="flex justify-between items-center py-1 border-t border-[#38383a] mb-1">
                             ${btnCurtir}
-                            <!-- Botão reformulado com gradiente e animação -->
                             <button class="action-button bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold px-3 py-1 rounded-full text-[9px] animate-pulse shadow-lg" onclick="abrirReputacaoAnunciante(${o.id}, ${f?.id || 0}, '${fornecedorNome}')">
                                 <i class="fas fa-star"></i> Reputação
                             </button>
@@ -1784,7 +1772,6 @@
                 const respostas = await buscarRespostas(item.id);
                 const likes = await buscarLikes(item.id);
                 const usuario = item.clientes_buscador || {};
-                // ===== CORREÇÃO 2: PRIORIZAR autor_nome =====
                 const nomeExibicao = item.autor_nome || (usuario.nome ? usuario.nome.split(' ')[0] : 'Usuário');
                 const whatsapp = usuario.whatsapp ? usuario.whatsapp.replace(/\D/g, '') : '';
                 const linkWhats = whatsapp ? `https://wa.me/55${whatsapp}` : '#';
@@ -1805,10 +1792,10 @@
 
                 let respostasHTML = '';
                 if (respostas.length > 0) {
-                    respostasHTML = '<div class="ml-6 mt-2 space-y-2 border-l-2 border-[#38383a] pl-3">';
+                    // Estilo cascata: margem esquerda, borda e padding
+                    respostasHTML = '<div class="ml-8 mt-4 space-y-3 border-l-2 border-zinc-800 pl-3">';
                     respostasHTML += respostas.map(r => {
                         const rUser = r.clientes_buscador || {};
-                        // ===== CORREÇÃO 2: PRIORIZAR autor_nome =====
                         const rNome = r.autor_nome || (rUser.nome ? rUser.nome.split(' ')[0] : 'Usuário');
                         const rWhats = rUser.whatsapp ? rUser.whatsapp.replace(/\D/g, '') : '';
                         const rLink = rWhats ? `https://wa.me/55${rWhats}` : '#';
@@ -1836,7 +1823,7 @@
 
                 const respostaBoxId = `respostaBox_${item.id}`;
                 const respostaBox = `
-                    <div id="${respostaBoxId}" class="hidden mt-2">
+                    <div id="${respostaBoxId}" class="hidden mt-2 ml-8">
                         <textarea class="apple-input text-xs h-16" placeholder="Digite sua resposta..."></textarea>
                         <div class="flex gap-2 mt-1">
                             <button onclick="enviarRespostaForum(${item.id})" class="btn-apple text-[9px] px-2 py-1">Enviar</button>
@@ -1974,7 +1961,6 @@
                 const respostas = await buscarRespostas(item.id);
                 const likes = await buscarLikes(item.id);
                 const usuario = item.clientes_buscador || {};
-                // ===== CORREÇÃO 2: PRIORIZAR autor_nome =====
                 const nomeExibicao = item.autor_nome || (usuario.nome ? usuario.nome.split(' ')[0] : 'Usuário');
                 const whatsapp = usuario.whatsapp ? usuario.whatsapp.replace(/\D/g, '') : '';
                 const linkWhats = whatsapp ? `https://wa.me/55${whatsapp}` : '#';
@@ -1995,10 +1981,10 @@
 
                 let respostasHTML = '';
                 if (respostas.length > 0) {
-                    respostasHTML = '<div class="ml-6 mt-2 space-y-2 border-l-2 border-[#38383a] pl-3">';
+                    // Estilo cascata
+                    respostasHTML = '<div class="ml-8 mt-4 space-y-3 border-l-2 border-zinc-800 pl-3">';
                     respostasHTML += respostas.map(r => {
                         const rUser = r.clientes_buscador || {};
-                        // ===== CORREÇÃO 2: PRIORIZAR autor_nome =====
                         const rNome = r.autor_nome || (rUser.nome ? rUser.nome.split(' ')[0] : 'Usuário');
                         const rWhats = rUser.whatsapp ? rUser.whatsapp.replace(/\D/g, '') : '';
                         const rLink = rWhats ? `https://wa.me/55${rWhats}` : '#';
@@ -2026,7 +2012,7 @@
 
                 const respostaBoxId = `respostaBox_${item.id}`;
                 const respostaBox = `
-                    <div id="${respostaBoxId}" class="hidden mt-2">
+                    <div id="${respostaBoxId}" class="hidden mt-2 ml-8">
                         <textarea class="apple-input text-xs h-16" placeholder="Digite sua resposta..."></textarea>
                         <div class="flex gap-2 mt-1">
                             <button onclick="enviarRespostaForum(${item.id})" class="btn-apple text-[9px] px-2 py-1">Enviar</button>
