@@ -290,7 +290,6 @@
     </nav>
 
     <main class="pt-20 px-4 pb-10 max-w-7xl mx-auto grid lg:grid-cols-12 gap-6">
-
         <div class="lg:col-span-4 space-y-6">
             <div class="bg-[#1c1c1e] border border-[#38383a] rounded-2xl p-5" id="dashboard">
                 <h3 class="text-[10px] font-bold text-gray-400 uppercase mb-3">Seu status no iFipe 🏆</h3>
@@ -754,10 +753,10 @@
                         Aparelho na minha cidade sede? (aplica a todos)
                     </label>
                     <div id="bulkLocAlt" class="hidden mt-3 space-y-2">
-                        <select id="bulkEstadoAparelho" class="apple-input" onchange="carregarCidadesDinamico(this.value, 'bulkCidadeAparelho')">
+                        <select id="bulkEstadoAparelho" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs" onchange="carregarCidadesDinamico(this.value, 'bulkCidadeAparelho')">
                             <option value="">Selecione o estado (aplica a todos)</option>
                         </select>
-                        <select id="bulkCidadeAparelho" class="apple-input">
+                        <select id="bulkCidadeAparelho" class="w-full bg-[#2c2c2e] border border-[#38383a] rounded-lg p-3 text-xs">
                             <option value="">Selecione a cidade (aplica a todos)</option>
                         </select>
                     </div>
@@ -1744,13 +1743,14 @@
                     const batNum = parseInt(batStr.replace(/\D/g, ''));
                     if (!isNaN(batNum) && batNum > 0) {
                         if (batNum < 85 || batStr.includes('abaixo') || batStr.includes('<')) {
-                            bateriaBadge = `<div class="mt-1"><span class="badge-condicao bg-zinc-700 w-max">🔻85% 🪫</span></div>`;
+                            // Regra rigorosa solicitada:
+                            bateriaBadge = `<div class="mt-1"><span class="badge-condicao bg-zinc-700 w-max">🔻${batNum < 85 ? batNum : 85}% 🪫</span></div>`;
                         } else if (batNum >= 85 && batNum < 90) {
-                            bateriaBadge = `<div class="mt-1"><span class="badge-condicao bg-zinc-700 w-max">⇪ 85% 🔋</span></div>`;
+                            bateriaBadge = `<div class="mt-1"><span class="badge-condicao bg-zinc-700 w-max">⇪ ${batNum}% 🔋</span></div>`;
                         } else if (batNum >= 90 && batNum < 95) {
-                            bateriaBadge = `<div class="mt-1"><span class="badge-condicao bg-zinc-700 w-max">⇪ 90% 🔋</span></div>`;
+                            bateriaBadge = `<div class="mt-1"><span class="badge-condicao bg-zinc-700 w-max">⇪ ${batNum}% 🔋</span></div>`;
                         } else if (batNum >= 95 && batNum < 100) {
-                            bateriaBadge = `<div class="mt-1"><span class="badge-condicao bg-zinc-700 w-max">⇪ 95% 🔋</span></div>`;
+                            bateriaBadge = `<div class="mt-1"><span class="badge-condicao bg-zinc-700 w-max">⇪ ${batNum}% 🔋</span></div>`;
                         } else if (batNum === 100) {
                             bateriaBadge = `<div class="mt-1"><span class="badge-condicao bg-zinc-700 w-max">🔝 100% 🔋</span></div>`;
                         }
@@ -1928,7 +1928,7 @@
                     if (pesoA !== pesoB) return pesoB - pesoA;
                     const capA = parseInt(a.variacoes?.capacidade) || 0;
                     const capB = parseInt(b.variacoes?.capacidade) || 0;
-                    if (capA !== capB) return capB - capA;
+                    if (capA !== capB) return capA - capB;
                     return indiceCor(a.variacoes?.cor || '') - indiceCor(b.variacoes?.cor || '');
                 });
 
@@ -1957,10 +1957,10 @@
                         const batStr = String(o.saude_bateria).toLowerCase();
                         const batNum = parseInt(batStr.replace(/\D/g, ''));
                         if (!isNaN(batNum) && batNum > 0) {
-                            if (batNum < 85 || batStr.includes('abaixo') || batStr.includes('<')) texto += `🔻85% 🪫\n`;
-                            else if (batNum >= 85 && batNum < 90) texto += `⇪ 85% 🔋\n`;
-                            else if (batNum >= 90 && batNum < 95) texto += `⇪ 90% 🔋\n`;
-                            else if (batNum >= 95 && batNum < 100) texto += `⇪ 95% 🔋\n`;
+                            if (batNum < 85 || batStr.includes('abaixo') || batStr.includes('<')) texto += `🔻${batNum < 85 ? batNum : 85}% 🪫\n`;
+                            else if (batNum >= 85 && batNum < 90) texto += `⇪ ${batNum}% 🔋\n`;
+                            else if (batNum >= 90 && batNum < 95) texto += `⇪ ${batNum}% 🔋\n`;
+                            else if (batNum >= 95 && batNum < 100) texto += `⇪ ${batNum}% 🔋\n`;
                             else if (batNum === 100) texto += `🔝 100% 🔋\n`;
                         }
                     }
@@ -2311,9 +2311,9 @@
                     if (cliente) p.clientes_buscador = cliente;
                 }
                 
-                // Busca respostas vinculadas a esse comentário
+                // Busca respostas vinculadas a esse comentário (CORREÇÃO DO BUG)
                 const { data: filhas } = await _s.from('comentarios')
-                    .select('*, clientes_buscador!cliente_id(nome, whatsapp)')
+                    .select('*, clientes_buscador(*)') // Usando select aberto para não travar nos IDs null do master
                     .eq('parent_id', p.id)
                     .order('criado_em', { ascending: true });
                 p.threads = filhas || [];
@@ -2387,7 +2387,7 @@
                 if (p.threads && p.threads.length > 0) {
                     respostasHTML += p.threads.map(r => {
                         const rNome = r.autor_nome || (r.clientes_buscador?.nome ? r.clientes_buscador.nome.split(' ')[0] : 'Usuário');
-                        const isMe = (r.fornecedor_id === loja.id && !r.cliente_id);
+                        const isMe = (r.autor_nome === loja.nome); // Garantia de que a cor fica certa baseada no nome
                         return `
                             <div class="bg-[#1a1a1c] p-2.5 rounded-lg border border-[#2c2c2e] mb-2">
                                 <div class="flex justify-between items-start">
