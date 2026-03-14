@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* (mesmo estilo existente, nada a alterar) */
         :root {
             --bg: #f5f5f7;
             --card: #ffffff;
@@ -395,6 +396,10 @@
         <div class="drawer-item" onclick="abrirLegendaInsignias(); fecharDrawer()">
             <i class="fas fa-crown w-5"></i> 👑 Insígnias de Poder
         </div>
+        <!-- NOVO ITEM: Fórum -->
+        <div class="drawer-item" onclick="abrirForum(); fecharDrawer()">
+            <i class="fas fa-comments w-5"></i> Fórum
+        </div>
         <div class="drawer-item text-red-500 mt-4 border border-[#38383a]" onclick="logout()">
             <i class="fas fa-sign-out-alt w-5"></i> Sair do Sistema
         </div>
@@ -628,7 +633,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE ENVIAR PROPOSTA -->
+    <!-- MODAL DE ENVIAR PROPOSTA (será substituído pelo novo modal, mas mantido para compatibilidade) -->
     <div id="perguntasModal" class="modal hidden">
         <div class="modal-content">
             <span class="close-modal" onclick="fecharPerguntas()">&times;</span>
@@ -646,7 +651,7 @@
         </div>
     </div>
 
-    <!-- MODAL RESPOSTAS RECEBIDAS -->
+    <!-- MODAL RESPOSTAS RECEBIDAS (agora abriga também o feed social, mas vamos criar um modal separado para o fórum) -->
     <div id="respostasModal" class="modal hidden">
         <div class="modal-content max-w-2xl w-full">
             <div class="flex justify-between items-center mb-4">
@@ -662,6 +667,44 @@
             </div>
             <div id="listaRespostas" class="space-y-3 max-h-80 overflow-y-auto pr-2"></div>
             <div id="listaMensagens" class="space-y-3 max-h-80 overflow-y-auto pr-2 hidden"></div>
+        </div>
+    </div>
+
+    <!-- NOVO MODAL: VALIDAR / DENUNCIAR -->
+    <div id="modalValidarDenunciar" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="fecharModalValidarDenunciar()">&times;</span>
+            <h2 class="text-2xl font-bold mb-4">Validar / Denunciar</h2>
+            <input type="hidden" id="validarOfertaId">
+            <input type="hidden" id="validarFornecedorId">
+            <div class="space-y-4">
+                <div class="flex gap-4 justify-center">
+                    <button onclick="selecionarTipoValidacao('validacao')" class="btn-apple bg-green-600 flex-1" id="btnTipoValidacao">✅ Validar Anunciante</button>
+                    <button onclick="selecionarTipoValidacao('denuncia')" class="btn-apple bg-red-600 flex-1" id="btnTipoDenuncia">🚨 Denunciar</button>
+                </div>
+                <input type="hidden" id="tipoValidacao" value="">
+                <textarea id="textoValidacao" class="apple-input h-24" placeholder="Escreva seu comentário (opcional)..."></textarea>
+                <div class="flex gap-3">
+                    <button onclick="enviarValidacaoDenuncia()" class="btn-apple bg-blue-600 flex-1">Enviar</button>
+                    <button onclick="fecharModalValidarDenunciar()" class="btn-apple bg-zinc-700 flex-1">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOVO MODAL: FÓRUM SOCIAL -->
+    <div id="modalForum" class="modal hidden">
+        <div class="modal-content max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 sticky top-0 bg-[#1c1c1e] p-2 z-10">
+                <h2 class="text-2xl font-bold">Fórum de Validação e Denúncia</h2>
+                <button onclick="fecharForum()" class="text-gray-400 hover:text-white text-3xl font-bold">&times;</button>
+            </div>
+            <div id="feedContainer" class="space-y-6">
+                <!-- preenchido via JS -->
+            </div>
+            <div class="mt-4 text-center">
+                <button onclick="carregarFeed()" class="btn-apple">Atualizar</button>
+            </div>
         </div>
     </div>
 
@@ -748,7 +791,9 @@
     </button>
 
     <script>
-        // CONFIGURAÇÃO SUPABASE
+        // ============================================================
+        // 1. CONFIGURAÇÃO SUPABASE E VARIÁVEIS GLOBAIS (MANTIDAS)
+        // ============================================================
         const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
         const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -775,7 +820,6 @@
 
         function registrarInteracao() {
             ultimaInteracao = Date.now();
-            // Se houver um timer de pausa, reinicia
             if (timerPausa) clearTimeout(timerPausa);
             timerPausa = setTimeout(() => {
                 pausarAtualizacao = false;
@@ -853,13 +897,11 @@
 
         function confirmarTrava() {
             fecharModalRegrasTrava();
-
             let usd = parseFloat(document.getElementById('usdAmount').value) || 0;
             if (usd < 500) {
                 alert('Valor mínimo: 500 USD');
                 return;
             }
-
             usdtLockedUsd = usd;
             usdtLockedRate = rateOraculo;
             usdtLockedTotal = usd * usdtLockedRate;
@@ -872,12 +914,9 @@
             let brlFormatado = usdtLockedTotal.toFixed(2);
             usdtPedidoId = `TRVX>-$DTX>*${usdFormatado}*-CTX>${taxaStr}-R$X>*${brlFormatado}*-Printx>${hh}:${mm}:${ss}`;
             usdtTimeLeft = 120;
-
             mostrarPedido();
-
             if (usdtTimer) clearInterval(usdtTimer);
             iniciarTimerUsdt();
-
             if (usdtInterval) clearInterval(usdtInterval);
             usdtInterval = setInterval(() => {
                 let novaTaxa = rateOraculo;
@@ -992,7 +1031,6 @@
                 link.download = 'comprovante.png';
                 link.href = canvas.toDataURL();
                 link.click();
-
                 let msg = `OLÁ TUDO BEM, TRAVEI O DOLAR. SEGUE O COMPROVANTE PARA VALIDAÇÃO.\n\n${usdtPedidoId}`;
                 window.open(`https://wa.me/15616760652?text=${encodeURIComponent(msg)}`, '_blank');
             });
@@ -1119,6 +1157,23 @@
                 } catch (err) { logout(); return; }
             }
 
+            // ===== MIGRAÇÃO DO BANCO (executar uma vez manualmente) =====
+            // As colunas e tabelas devem ser criadas via SQL no painel do Supabase.
+            // Script de referência:
+            /*
+            ALTER TABLE comentarios ADD COLUMN IF NOT EXISTS tipo_interacao TEXT CHECK (tipo_interacao IN ('validacao','denuncia','resposta')) DEFAULT 'resposta';
+            ALTER TABLE comentarios ADD COLUMN IF NOT EXISTS status TEXT CHECK (status IN ('publico','pendente_aprovacao')) DEFAULT 'publico';
+            ALTER TABLE comentarios ADD COLUMN IF NOT EXISTS parent_id INTEGER REFERENCES comentarios(id) ON DELETE CASCADE;
+            CREATE TABLE IF NOT EXISTS comentarios_likes (
+                id SERIAL PRIMARY KEY,
+                comentario_id INTEGER REFERENCES comentarios(id) ON DELETE CASCADE,
+                usuario_id INTEGER NOT NULL,
+                usuario_tipo TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE(comentario_id, usuario_id, usuario_tipo)
+            );
+            */
+
             atualizarStatusUsuario();
             atualizarStatusUsuarioMobile();
 
@@ -1168,7 +1223,7 @@
                 const { data, error } = await req;
                 if (error) throw error;
                 if (data && data.length > 0) allData.push(...data);
-                if (!data || data.length < pageSize) break; // Interrompe requisições inúteis se a página não vier cheia
+                if (!data || data.length < pageSize) break;
                 page++;
             }
             return allData;
@@ -1177,7 +1232,6 @@
         // ===== CARREGAR DADOS OTIMIZADO =====
         async function carregarDados() {
             try {
-                // Dispara todas as consultas ao mesmo tempo (Paralelismo)
                 const [pData, vData, fData, oData, rData] = await Promise.all([
                     fetchAllOptimized('produtos_mestre', '*'),
                     fetchAllOptimized('variacoes', '*'),
@@ -1276,16 +1330,14 @@
             });
         }
 
-        // NOVA FUNÇÃO DE ORDENAÇÃO COM HIERARQUIA E ANTI-CRASH
         function ordenarOfertas(lista) {
             return lista.sort((a, b) => {
                 try {
-                    // Primeiro: itens com quantidade 0 ou preço 0 vão para o final
                     const aZero = (a.quantidade === 0 || a.preco === 0);
                     const bZero = (b.quantidade === 0 || b.preco === 0);
                     if (aZero && !bZero) return 1;
                     if (!aZero && bZero) return -1;
-                    if (aZero && bZero) return 0; // ambos zerados, mantém ordem
+                    if (aZero && bZero) return 0;
 
                     const produtoA = produtos.find(p => p.id == a.variacoes?.produto_id);
                     const produtoB = produtos.find(p => p.id == b.variacoes?.produto_id);
@@ -1294,7 +1346,6 @@
                     const catA = produtoA.categoria || '';
                     const catB = produtoB.categoria || '';
 
-                    // Hierarquia de categorias: G1 (iPhone), G2 (iPad, MacBook, iMac), G3 (Apple Watch, AirPods, Pencil, AirTag), G4 (outros)
                     const getGrupo = (cat) => {
                         if (cat === 'IPHONE') return 1;
                         if (cat === 'IPAD' || cat === 'MACBOOK' || cat === 'IMAC') return 2;
@@ -1305,12 +1356,10 @@
                     const grupoB = getGrupo(catB);
                     if (grupoA !== grupoB) return grupoA - grupoB;
 
-                    // Dentro do mesmo grupo, produtos mais novos primeiro
                     const numA = parseInt(produtoA.nome.replace(/\D/g, '')) || 0;
                     const numB = parseInt(produtoB.nome.replace(/\D/g, '')) || 0;
                     if (numA !== numB) return numB - numA;
 
-                    // Mesmo número, ordenar por variante: Pro Max > Pro > Plus > Base > mini
                     const pesoVariante = (nome) => {
                         if (nome.includes('Pro Max')) return 5;
                         if (nome.includes('Pro')) return 4;
@@ -1323,12 +1372,10 @@
                     const pesoB = pesoVariante(produtoB.nome);
                     if (pesoA !== pesoB) return pesoB - pesoA;
 
-                    // Mesma variante, ordenar por capacidade descendente
                     const capA = parseInt(a.variacoes?.capacidade) || 0;
                     const capB = parseInt(b.variacoes?.capacidade) || 0;
                     if (capA !== capB) return capB - capA;
 
-                    // Por fim, preço ascendente
                     return a.preco - b.preco;
                 } catch (e) {
                     console.warn('Erro na ordenação de ofertas:', e);
@@ -1384,7 +1431,7 @@
             renderizarCards();
         }
 
-        // ===== RENDERIZAR CARDS (SEM RESQUÍCIOS DE PILLS) =====
+        // ===== RENDERIZAR CARDS (MODIFICADO: botão Curtir reduzido a emoji, botão Proposta renomeado) =====
         function renderizarCards() {
             const container = document.getElementById('container-produtos');
             container.innerHTML = '';
@@ -1460,7 +1507,6 @@
                 });
             }
 
-            // Aplica a nova ordenação e limita a 150 itens para melhor performance
             const ofertasOrdenadas = ordenarOfertas(filtradas).slice(0, 150);
 
             const criarCard = (o) => {
@@ -1548,13 +1594,13 @@
                         if (h < 12) return 'Bom dia'; if (h < 18) return 'Boa tarde'; return 'Boa noite';
                     })();
 
-                    // NOVA MENSAGEM DO WHATSAPP
                     const msgZap = encodeURIComponent(
                         `${saudacao}! Vi seu anúncio no iFipe do produto ${nomeProduto} ${capacidade} ${cor} pelo valor ${simbolo} ${preco.toFixed(2)}. Está disponível?\n\nSou uma indicação do https://ifipe.com.br/`
                     );
 
                     const curtido = minhasCurtidas.has(o.id);
-                    const btnCurtir = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="toggleCurtir(${o.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-heart text-red-500 text-sm"></i> <span>${curtido ? 'Curtido' : 'Curtir'}</span></button>`;
+                    // Botão Curtir reduzido a emoji (apenas ícone)
+                    const btnCurtir = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="toggleCurtir(${o.id}, this)" title="Curtir"><i class="fa${curtido ? 's' : 'r'} fa-heart text-red-500 text-sm"></i></button>`;
 
                     let badgeEstoque;
                     if (o.quantidade <= 5) {
@@ -1609,8 +1655,9 @@
                         </div>
                         <div class="flex justify-between items-center py-1 border-t border-[#38383a] mb-1">
                             ${btnCurtir}
-                            <button class="action-button hover:text-blue-500" onclick="abrirPerguntas(${o.id}, '${nomeProduto}', ${f?.id || 0})">
-                                <i class="far fa-question-circle"></i> <span>Enviar Proposta</span>
+                            <!-- Botão alterado para Validar / Denunciar -->
+                            <button class="action-button hover:text-blue-500" onclick="abrirModalValidarDenunciar(${o.id}, ${f?.id || 0}, '${nomeProduto}')">
+                                <i class="fas fa-check-circle"></i> <span>Validar / Denunciar</span>
                             </button>
                             <button class="action-button hover:text-blue-500" onclick="compartilhar('${nomeProduto}', '${capacidade}', '${cor}', ${preco}, '${simbolo}', ${o.quantidade}, '${wppLimpo}')">
                                 <i class="far fa-share-square"></i> <span>Compartilhar</span>
@@ -1642,12 +1689,304 @@
             atualizarBadgeAlertas();
         }
 
+        // ===== NOVAS FUNÇÕES PARA O FÓRUM =====
+
+        // Abrir modal de validação/denúncia
+        function abrirModalValidarDenunciar(ofertaId, fornecedorId, titulo) {
+            if (!currentUser) return alert('Faça login para interagir.');
+            document.getElementById('validarOfertaId').value = ofertaId;
+            document.getElementById('validarFornecedorId').value = fornecedorId;
+            document.getElementById('tipoValidacao').value = '';
+            document.getElementById('textoValidacao').value = '';
+            document.getElementById('btnTipoValidacao').classList.remove('bg-green-600', 'bg-red-600');
+            document.getElementById('btnTipoDenuncia').classList.remove('bg-green-600', 'bg-red-600');
+            document.getElementById('btnTipoValidacao').classList.add('bg-green-600');
+            document.getElementById('btnTipoDenuncia').classList.add('bg-red-600');
+            document.getElementById('modalValidarDenunciar').classList.remove('hidden');
+        }
+
+        function fecharModalValidarDenunciar() {
+            document.getElementById('modalValidarDenunciar').classList.add('hidden');
+        }
+
+        function selecionarTipoValidacao(tipo) {
+            document.getElementById('tipoValidacao').value = tipo;
+        }
+
+        async function enviarValidacaoDenuncia() {
+            const tipo = document.getElementById('tipoValidacao').value;
+            if (!tipo) return alert('Selecione Validar ou Denunciar.');
+            const ofertaId = document.getElementById('validarOfertaId').value;
+            const fornecedorId = document.getElementById('validarFornecedorId').value;
+            const texto = document.getElementById('textoValidacao').value.trim();
+
+            const payload = {
+                oferta_id: ofertaId,
+                fornecedor_id: fornecedorId,
+                cliente_id: currentUser.id,
+                autor_nome: currentUser.nome,
+                pergunta: texto, // campo reutilizado como mensagem
+                tipo_interacao: tipo,
+                status: tipo === 'validacao' ? 'publico' : 'pendente_aprovacao',
+                parent_id: null
+            };
+
+            const { error } = await _s.from('comentarios').insert(payload);
+            if (error) {
+                alert('Erro ao enviar: ' + error.message);
+            } else {
+                alert(tipo === 'validacao' ? 'Validação publicada com sucesso!' : 'Denúncia enviada e aguarda aprovação.');
+                fecharModalValidarDenunciar();
+                if (tipo === 'validacao') {
+                    carregarFeed(); // atualiza feed se for público
+                }
+            }
+        }
+
+        // Abrir fórum
+        function abrirForum() {
+            document.getElementById('modalForum').classList.remove('hidden');
+            carregarFeed();
+        }
+
+        function fecharForum() {
+            document.getElementById('modalForum').classList.add('hidden');
+        }
+
+        async function carregarFeed() {
+            const container = document.getElementById('feedContainer');
+            container.innerHTML = '<p class="text-center text-gray-400">Carregando...</p>';
+
+            // Buscar todas as interações públicas (validacoes) e denúncias aprovadas
+            const { data: interacoes, error } = await _s
+                .from('comentarios')
+                .select('*, ofertas(*, variacoes(*, produtos_mestre(*)), fornecedores(*)), clientes_buscador!cliente_id(*)')
+                .or('tipo_interacao.eq.validacao,tipo_interacao.eq.denuncia')
+                .eq('status', 'publico')
+                .is('parent_id', null)
+                .order('criado_em', { ascending: false });
+
+            if (error) {
+                container.innerHTML = '<p class="text-center text-red-400">Erro ao carregar feed.</p>';
+                return;
+            }
+
+            if (!interacoes || interacoes.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400">Nenhuma interação ainda.</p>';
+                return;
+            }
+
+            // Para cada interação, buscar suas respostas e likes
+            const feedHTML = await Promise.all(interacoes.map(async (item) => {
+                const respostas = await buscarRespostas(item.id);
+                const likes = await buscarLikes(item.id);
+                const usuario = item.clientes_buscador || {}; // pode ser null se for master?
+                const nomeExibicao = usuario.nome ? usuario.nome.split(' ')[0] : 'Usuário';
+                const whatsapp = usuario.whatsapp ? usuario.whatsapp.replace(/\D/g, '') : '';
+                const linkWhats = whatsapp ? `https://wa.me/55${whatsapp}` : '#';
+
+                // Link do nome
+                const nomeLink = `<a href="${linkWhats}" target="_blank" class="font-bold hover:text-blue-400">${nomeExibicao}</a>`;
+
+                // Tipo de badge
+                let badgeTipo = '';
+                if (item.tipo_interacao === 'validacao') badgeTipo = '<span class="badge-condicao bg-green-600 text-[8px]">✅ VALIDAÇÃO</span>';
+                else if (item.tipo_interacao === 'denuncia') badgeTipo = '<span class="badge-condicao bg-red-600 text-[8px]">🚨 DENÚNCIA</span>';
+
+                // Botão curtir
+                const curtido = await verificarLike(item.id);
+                const btnLike = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="likeComentario(${item.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-heart"></i> ${likes}</button>`;
+
+                // Botão responder
+                const btnResponder = `<button class="action-button" onclick="mostrarCaixaResposta(${item.id})"><i class="fas fa-reply"></i> Responder</button>`;
+
+                // Lixeira para master
+                const lixeira = (currentUser && currentUser.id === 0) ? 
+                    `<button class="action-button text-red-500" onclick="excluirComentario(${item.id})"><i class="fas fa-trash"></i></button>` : '';
+
+                let respostasHTML = '';
+                if (respostas.length > 0) {
+                    respostasHTML = '<div class="ml-6 mt-2 space-y-2 border-l-2 border-[#38383a] pl-3">';
+                    respostasHTML += respostas.map(r => {
+                        const rUser = r.clientes_buscador || {};
+                        const rNome = rUser.nome ? rUser.nome.split(' ')[0] : 'Usuário';
+                        const rWhats = rUser.whatsapp ? rUser.whatsapp.replace(/\D/g, '') : '';
+                        const rLink = rWhats ? `https://wa.me/55${rWhats}` : '#';
+                        const rLikes = r.likes_count || 0;
+                        const rCurtido = r.curtido_por_mim || false;
+                        const rBtnLike = `<button class="action-button ${rCurtido ? 'text-blue-500' : ''}" onclick="likeComentario(${r.id}, this)"><i class="fa${rCurtido ? 's' : 'r'} fa-heart"></i> ${rLikes}</button>`;
+                        const rLixeira = (currentUser && currentUser.id === 0) ? 
+                            `<button class="action-button text-red-500" onclick="excluirComentario(${r.id})"><i class="fas fa-trash"></i></button>` : '';
+                        return `
+                            <div class="bg-[#141415] p-2 rounded">
+                                <div class="flex justify-between items-start">
+                                    <a href="${rLink}" target="_blank" class="text-xs font-bold hover:text-blue-400">${rNome}</a>
+                                    <span class="text-[8px] text-gray-500">${new Date(r.criado_em).toLocaleString()}</span>
+                                </div>
+                                <p class="text-xs mt-1">${r.pergunta || ''}</p>
+                                <div class="flex gap-3 mt-1">
+                                    ${rBtnLike}
+                                    ${rLixeira}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    respostasHTML += '</div>';
+                }
+
+                // Caixa de resposta inline (inicialmente oculta)
+                const respostaBoxId = `respostaBox_${item.id}`;
+                const respostaBox = `
+                    <div id="${respostaBoxId}" class="hidden mt-2">
+                        <textarea class="apple-input text-xs h-16" placeholder="Digite sua resposta..."></textarea>
+                        <div class="flex gap-2 mt-1">
+                            <button onclick="enviarRespostaForum(${item.id})" class="btn-apple text-[9px] px-2 py-1">Enviar</button>
+                            <button onclick="document.getElementById('${respostaBoxId}').classList.add('hidden')" class="btn-apple bg-gray-600 text-[9px] px-2 py-1">Cancelar</button>
+                        </div>
+                    </div>
+                `;
+
+                return `
+                    <div class="bg-[#1c1c1e] border border-[#38383a] rounded-xl p-3">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-center gap-2">
+                                ${nomeLink}
+                                ${badgeTipo}
+                            </div>
+                            <span class="text-[9px] text-gray-500">${new Date(item.criado_em).toLocaleString()}</span>
+                        </div>
+                        <p class="text-sm mt-2">${item.pergunta || ''}</p>
+                        <div class="flex items-center gap-4 mt-3">
+                            ${btnLike}
+                            ${btnResponder}
+                            ${lixeira}
+                        </div>
+                        ${respostaBox}
+                        ${respostasHTML}
+                    </div>
+                `;
+            }));
+
+            container.innerHTML = feedHTML.join('');
+        }
+
+        async function buscarRespostas(parentId) {
+            const { data } = await _s
+                .from('comentarios')
+                .select('*, clientes_buscador(*)')
+                .eq('parent_id', parentId)
+                .order('criado_em', { ascending: true });
+            // Para cada resposta, contar likes
+            if (data) {
+                for (let r of data) {
+                    const { count } = await _s.from('comentarios_likes').select('*', { count: 'exact', head: true }).eq('comentario_id', r.id);
+                    r.likes_count = count;
+                    if (currentUser && currentUser.id !== 0) {
+                        const { data: like } = await _s.from('comentarios_likes').select('id').eq('comentario_id', r.id).eq('usuario_id', currentUser.id).eq('usuario_tipo', 'buscador').maybeSingle();
+                        r.curtido_por_mim = !!like;
+                    }
+                }
+            }
+            return data || [];
+        }
+
+        async function buscarLikes(comentarioId) {
+            const { count } = await _s.from('comentarios_likes').select('*', { count: 'exact', head: true }).eq('comentario_id', comentarioId);
+            return count || 0;
+        }
+
+        async function verificarLike(comentarioId) {
+            if (!currentUser || currentUser.id === 0) return false;
+            const { data } = await _s.from('comentarios_likes').select('id').eq('comentario_id', comentarioId).eq('usuario_id', currentUser.id).eq('usuario_tipo', 'buscador').maybeSingle();
+            return !!data;
+        }
+
+        async function likeComentario(comentarioId, btn) {
+            if (!currentUser) return alert('Faça login para curtir.');
+            const tipo = currentUser.id === 0 ? 'master' : 'buscador';
+            const usuarioId = currentUser.id;
+            const existe = await verificarLike(comentarioId);
+            if (existe) {
+                await _s.from('comentarios_likes').delete().eq('comentario_id', comentarioId).eq('usuario_id', usuarioId).eq('usuario_tipo', tipo);
+            } else {
+                await _s.from('comentarios_likes').insert({ comentario_id: comentarioId, usuario_id: usuarioId, usuario_tipo: tipo });
+            }
+            // Atualiza contador no botão
+            const atual = await buscarLikes(comentarioId);
+            btn.innerHTML = `<i class="fa${!existe ? 's' : 'r'} fa-heart"></i> ${atual}`;
+            btn.classList.toggle('text-blue-500', !existe);
+        }
+
+        function mostrarCaixaResposta(comentarioId) {
+            const box = document.getElementById(`respostaBox_${comentarioId}`);
+            if (box) box.classList.toggle('hidden');
+        }
+
+        async function enviarRespostaForum(parentId) {
+            if (!currentUser) return alert('Faça login.');
+            const box = document.getElementById(`respostaBox_${parentId}`);
+            const textarea = box.querySelector('textarea');
+            const texto = textarea.value.trim();
+            if (!texto) return alert('Digite uma resposta.');
+
+            const payload = {
+                parent_id: parentId,
+                cliente_id: currentUser.id,
+                autor_nome: currentUser.nome,
+                pergunta: texto,
+                tipo_interacao: 'resposta',
+                status: 'publico',
+                oferta_id: null,
+                fornecedor_id: null
+            };
+            const { error } = await _s.from('comentarios').insert(payload);
+            if (error) {
+                alert('Erro ao responder: ' + error.message);
+            } else {
+                textarea.value = '';
+                box.classList.add('hidden');
+                carregarFeed(); // recarrega
+                // Disparar notificação para o autor original (simplificado: enviar mensagem interna)
+                // Obter o comentário original para saber o autor
+                const { data: original } = await _s.from('comentarios').select('cliente_id').eq('id', parentId).single();
+                if (original && original.cliente_id) {
+                    const { data: autor } = await _s.from('clientes_buscador').select('nome').eq('id', original.cliente_id).single();
+                    if (autor) {
+                        await _s.from('mensagens_internas').insert({
+                            destinatario_nome: autor.nome,
+                            destinatario_tipo: 'BUSCADOR',
+                            mensagem: `${currentUser.nome} respondeu seu comentário no fórum.`,
+                            lida: false
+                        });
+                    }
+                }
+            }
+        }
+
+        async function excluirComentario(id) {
+            if (!confirm('Excluir permanentemente este comentário?')) return;
+            const { error } = await _s.from('comentarios').delete().eq('id', id);
+            if (error) {
+                alert('Erro ao excluir: ' + error.message);
+            } else {
+                carregarFeed();
+            }
+        }
+
+        // Função para aprovar denúncia (no master, mas implementaremos no master.html)
+        // Aqui apenas placeholder
+        window.aprovarDenuncia = async (id) => {
+            // a ser usado no master
+        };
+
+        // ===== DEMAIS FUNÇÕES (mantidas) =====
+
         async function toggleCurtir(ofertaId, btn) {
             if (!currentUser) return alert('Faça login para curtir.');
             if (currentUser.id === 0) {
                 const curtido = btn.classList.contains('text-blue-500');
-                if (curtido) { btn.classList.remove('text-blue-500'); btn.innerHTML = '<i class="far fa-heart text-red-500 text-sm"></i> <span>Curtir</span>'; }
-                else { btn.classList.add('text-blue-500'); btn.innerHTML = '<i class="fas fa-heart text-red-500 text-sm"></i> <span>Curtido</span>'; }
+                if (curtido) { btn.classList.remove('text-blue-500'); btn.innerHTML = '<i class="far fa-heart text-red-500 text-sm"></i>'; }
+                else { btn.classList.add('text-blue-500'); btn.innerHTML = '<i class="fas fa-heart text-red-500 text-sm"></i>'; }
                 return;
             }
             const temCurtida = minhasCurtidas.has(ofertaId);
@@ -1655,12 +1994,12 @@
                 await _s.from('curtidas').delete().eq('cliente_id', currentUser.id).eq('oferta_id', ofertaId);
                 minhasCurtidas.delete(ofertaId);
                 btn.classList.remove('text-blue-500');
-                btn.innerHTML = '<i class="far fa-heart text-red-500 text-sm"></i> <span>Curtir</span>';
+                btn.innerHTML = '<i class="far fa-heart text-red-500 text-sm"></i>';
             } else {
                 await _s.from('curtidas').insert({ cliente_id: currentUser.id, oferta_id: ofertaId });
                 minhasCurtidas.add(ofertaId);
                 btn.classList.add('text-blue-500');
-                btn.innerHTML = '<i class="fas fa-heart text-red-500 text-sm"></i> <span>Curtido</span>';
+                btn.innerHTML = '<i class="fas fa-heart text-red-500 text-sm"></i>';
             }
         }
 
@@ -1681,7 +2020,7 @@
             else { navigator.clipboard.writeText(texto); alert('Texto copiado!'); }
         }
 
-        // ===== SISTEMA DE PERGUNTAS =====
+        // ===== SISTEMA DE PERGUNTAS (mantido para compatibilidade) =====
         async function abrirPerguntas(ofertaId, titulo, fornecedorId) {
             document.getElementById('perguntaOfertaId').value = ofertaId;
             document.getElementById('perguntaFornecedorId').value = fornecedorId;
@@ -1705,7 +2044,6 @@
                 </div>
             `).join('');
         }
-
         async function enviarPergunta(e) {
             e.preventDefault();
             const ofertaId = Number(document.getElementById('perguntaOfertaId').value);
@@ -1735,7 +2073,7 @@
             fecharPerguntas();
         }
 
-        // ===== NOTIFICAÇÕES =====
+        // ===== NOTIFICAÇÕES (mantidas) =====
         async function checarNotificacoes() {
             if (!currentUser || currentUser.id === 0) return;
             const { data } = await _s.from('comentarios')
@@ -1847,7 +2185,7 @@
             } catch (err) { alert('Erro: ' + err.message); }
         }
 
-        // ===== HISTÓRICO GERAL (COM TRAVA DE PREÇO ZERO) =====
+        // ===== HISTÓRICO GERAL =====
         async function abrirHistoricoGeral() {
             document.getElementById('historicoGeralModal').classList.remove('hidden');
             const lista = document.getElementById('listaHistorico');
@@ -1855,7 +2193,6 @@
             const dezDiasAtras = new Date(); dezDiasAtras.setDate(dezDiasAtras.getDate() - 10);
             const grupos = {};
             ofertas.forEach(o => {
-                // 🔒 Trava de preço zero e estoque zero
                 if (o.preco <= 0 || o.quantidade <= 0) return;
                 if (new Date(o.criado_em) < dezDiasAtras) return;
                 const p = o.variacoes?.produtos_mestre;
@@ -1929,7 +2266,7 @@
             document.getElementById('precoVarejoMobile').innerText = `R$ ${c.toFixed(2)}`;
         }
 
-        // ===== FILTROS (CORRIGIDO, SEM RESQUÍCIOS DE PILLS) =====
+        // ===== FILTROS =====
         function popularFiltros() {
             const pop = (id, arr, prop) => {
                 const el = document.getElementById(id);
@@ -1957,8 +2294,6 @@
             pop('filtroCor', variacoes, v => v.cor);
             pop('filtroCidade', fornecedores, f => f.cidade);
             pop('filtroAnunciante', fornecedores, f => f);
-
-            // ⚠️ NÃO sobrescrevemos mais o filtroCondicao - ele agora é fixo no HTML
         }
 
         function popularFiltrosAlerta() {
@@ -2004,13 +2339,13 @@
         function abrirLegendaInsignias() { document.getElementById('legendaInsigniasModal').classList.remove('hidden'); }
         function fecharLegendaInsignias() { document.getElementById('legendaInsigniasModal').classList.add('hidden'); }
 
-        // ===== HORUS (CORRIGIDO: FILTRO PRECO > 0) =====
+        // ===== HORUS =====
         async function abrirModalHorus() {
             const { data: globalOfertas, error } = await _s
                 .from('ofertas')
                 .select('*, fornecedores!inner(nome, whatsapp, pais, cidade, estado), variacoes!inner(produtos_mestre!inner(nome, categoria), capacidade, cor), regioes!inner(nome, bandeira)')
                 .gt('quantidade', 0)
-                .gt('preco', 0); // 🔒 TRAVA DE PREÇO ZERO
+                .gt('preco', 0);
             
             if (error) return alert('Erro ao carregar Horus: ' + error.message);
 
@@ -2175,6 +2510,19 @@
         window.fecharPedidoUsdt = fecharPedidoUsdt;
 
         window.registrarInteracao = registrarInteracao;
+
+        // NOVAS EXPORTAÇÕES
+        window.abrirModalValidarDenunciar = abrirModalValidarDenunciar;
+        window.fecharModalValidarDenunciar = fecharModalValidarDenunciar;
+        window.selecionarTipoValidacao = selecionarTipoValidacao;
+        window.enviarValidacaoDenuncia = enviarValidacaoDenuncia;
+        window.abrirForum = abrirForum;
+        window.fecharForum = fecharForum;
+        window.carregarFeed = carregarFeed;
+        window.likeComentario = likeComentario;
+        window.mostrarCaixaResposta = mostrarCaixaResposta;
+        window.enviarRespostaForum = enviarRespostaForum;
+        window.excluirComentario = excluirComentario;
     </script>
 </body>
 </html>
