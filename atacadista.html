@@ -1818,7 +1818,8 @@
         // === IBGE ===
         function carregarEstadosBrasil() {
             const estados = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
-            ['estadoAparelho', 'editEstadoAparelho', 'dupEstadoAparelho', 'bulkEstadoAparelho'].forEach(id => {
+            // Adicionados os IDs 'bulkEstadoAparelho' e 'massaEstadoAparelho'
+            ['estadoAparelho', 'editEstadoAparelho', 'dupEstadoAparelho', 'bulkEstadoAparelho', 'massaEstadoAparelho'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.innerHTML = '<option value="">Selecione o estado</option>';
@@ -1877,6 +1878,24 @@
                 btn.classList.add('active', 'border-blue-500', 'text-blue-500');
             }
             toggleCondicaoModal(cond, 'dup');
+        }
+
+        // === FUNÇÃO AUXILIAR PARA FORMATAR BATERIA ===
+        function formatarBateria(saude_bateria) {
+            if (!saude_bateria) return '';
+            const texto = saude_bateria.toLowerCase();
+            if (texto.includes('abaixo') || texto.includes('<')) {
+                return '🔻85% 🪫';
+            } else if (texto.includes('acima de 85')) {
+                return '⇪ 85% 🔋';
+            } else if (texto.includes('acima de 90')) {
+                return '⇪ 90% 🔋';
+            } else if (texto.includes('acima de 95')) {
+                return '⇪ 95% 🔋';
+            } else if (texto.includes('100') || texto.includes('cem')) {
+                return '🔝 100% 🔋';
+            }
+            return ''; // fallback
         }
 
         // === TABELA DE OFERTAS (COM ORDENAÇÃO E PRIORIDADE POR ESTOQUE > 0) ===
@@ -1952,12 +1971,22 @@
                     }
                 }
 
+                // Gerar badge de bateria se for seminovo
+                let bateriaBadge = '';
+                if (o.condicao !== 'Novo' && o.condicao !== 'CPO' && o.saude_bateria) {
+                    const bateriaFormatada = formatarBateria(o.saude_bateria);
+                    if (bateriaFormatada) {
+                        bateriaBadge = `<div class="mt-1"><span class="badge-condicao bg-zinc-700 w-max">${bateriaFormatada}</span></div>`;
+                    }
+                }
+
                 html += `<tr>
                     <td><input type="checkbox" class="chk" value="${o.id}" onclick="upBulkCount()"></td>
                     <td>
                         <div class="font-bold text-sm">${o.variacoes?.produtos_mestre?.nome} ${o.variacoes?.capacidade}</div>
                         <div class="text-[10px] text-gray-400">${o.variacoes?.cor}</div>
                         ${o.cidade_aparelho ? `<div class="text-[8px] text-gray-500">📍 ${o.cidade_aparelho}/${o.estado_aparelho}</div>` : ''}
+                        ${bateriaBadge}
                     </td>
                     <td><span class="px-2 py-1 rounded-full text-[9px] ${o.condicao === 'Novo' ? 'bg-green-600' : o.condicao === 'CPO' ? 'bg-blue-600' : 'bg-yellow-600'} text-white">${o.condicao}</span></td>
                     <td>${o.regioes?.bandeira || ''} ${o.regioes?.nome || ''}</td>
@@ -2053,37 +2082,19 @@
             const hora = new Date().getHours();
             let saudacao = hora < 12 ? '🚀 *BOM DIA* 🔥' : (hora < 18 ? '🚀 *BOA TARDE* 🔥' : '🚀 *BOA NOITE* 🔥');
             
-            let cidadeBase;
-            let bandeiraPais = '';
-            let tipoAtacadista = '';
-
-            if (loja.pais === 'EUA') {
-                cidadeBase = 'EUA';
-                bandeiraPais = '🇺🇸';
-                tipoAtacadista = 'ATACADISTA INTERNACIONAL';
-            } else if (loja.pais === 'Paraguai') {
-                cidadeBase = 'PY';
-                bandeiraPais = '🇵🇾';
-                tipoAtacadista = 'ATACADISTA INTERNACIONAL';
-            } else {
-                cidadeBase = loja.cidade ? loja.cidade.toUpperCase() : 'LOCAL NÃO DEFINIDO';
-                bandeiraPais = '🇧🇷';
-                tipoAtacadista = 'ATACADISTA NACIONAL';
-            }
+            let cidadeBase = loja.cidade ? loja.cidade.toUpperCase() : 'LOCAL NÃO DEFINIDO';
+            let bandeiraPais = loja.pais === 'EUA' ? '🇺🇸' : (loja.pais === 'Paraguai' ? '🇵🇾' : '🇧🇷');
+            let tipoAtacadista = (loja.pais === 'EUA' || loja.pais === 'Paraguai') ? 'ATACADISTA INTERNACIONAL' : 'ATACADISTA NACIONAL';
 
             let texto = `${saudacao}\n\n`;
             // Cabeçalho único do atacadista
             texto += `*${tipoAtacadista} ${bandeiraPais} | ${loja.nome}* \n\n`;
 
-            const categorias = {
-                'NovosCPO': { 
-                    titulo: `📦 *NOVOS / CPO PRONTA ENTREGA${(loja.pais === 'Brasil' && cidadeBase) ? ' ' + cidadeBase : ''}* 📍`, 
-                    itens: ativas.filter(o => o.condicao === 'Novo' || o.condicao === 'CPO') 
-                },
-                'Seminovo': { 
-                    titulo: `📦 *SEMINOVOS PRONTA ENTREGA*`, 
-                    itens: ativas.filter(o => o.condicao !== 'Novo' && o.condicao !== 'CPO') 
-                }
+            // Agrupar em 3 categorias exatas
+            const grupos = {
+                'Novos': ativas.filter(o => o.condicao === 'Novo'),
+                'CPO': ativas.filter(o => o.condicao === 'CPO'),
+                'Seminovos': ativas.filter(o => o.condicao !== 'Novo' && o.condicao !== 'CPO')
             };
 
             const ordemCores = [
@@ -2112,10 +2123,11 @@
                 return 2.5;
             }
 
-            for (const [cond, cat] of Object.entries(categorias)) {
-                if (cat.itens.length === 0) continue;
-                
-                cat.itens.sort((a, b) => {
+            // Para cada grupo, ordenar e gerar texto
+            for (let [nomeGrupo, itens] of Object.entries(grupos)) {
+                if (itens.length === 0) continue;
+
+                itens.sort((a, b) => {
                     const nomeA = a.variacoes.produtos_mestre.nome;
                     const nomeB = b.variacoes.produtos_mestre.nome;
                     const numA = extrairNumeroModelo(nomeA);
@@ -2130,18 +2142,17 @@
                     return indiceCor(a.variacoes.cor) - indiceCor(b.variacoes.cor);
                 });
 
-                const temLocalizacaoAlternativa = cat.itens.some(o => o.cidade_aparelho);
-                let tituloCategoria = cat.titulo;
-                if ((loja.pais === 'EUA' || loja.pais === 'Paraguai') && temLocalizacaoAlternativa) {
-                    tituloCategoria = `📦 *NOVOS PRONTA ENTREGA* \n\n📍 *COM ESTOQUE NO BRASIL* 🇧🇷`;
-                }
-                texto += `${tituloCategoria}\n\n`;
+                // Cabeçalho do grupo
+                texto += `▶️ *📲 ${nomeGrupo.toUpperCase()} PRONTA ENTREGA EM ${cidadeBase}* 📍\n\n`;
 
                 let lastModeloBase = '';
-                for (const o of cat.itens) {
+                for (const o of itens) {
                     const produto = o.variacoes.produtos_mestre;
-                    // Corrige prefixo: se categoria for IPHONE, usa "iPhone X", senão apenas o nome
-                    const modeloBase = (produto.categoria === 'IPHONE') ? `iPhone ${produto.nome}` : produto.nome;
+                    // Nome exato do produto (iPhone mantém "iPhone")
+                    let modeloBase = produto.nome;
+                    if (produto.categoria === 'IPHONE' && !modeloBase.toUpperCase().startsWith('IPHONE')) {
+                        modeloBase = `iPhone ${modeloBase}`;
+                    }
                     if (modeloBase !== lastModeloBase) {
                         texto += `*${modeloBase}*\n\n`;
                         lastModeloBase = modeloBase;
@@ -2153,10 +2164,17 @@
                     let bandeira = o.regioes?.bandeira || '';
                     
                     texto += `*${o.quantidade}* - ${bandeira} ${corStr} R$ ${precoStr}${local}\n`;
-                    if (cond === 'Seminovo' && o.saude_bateria) texto += `🔋 ${o.saude_bateria}\n`;
+
+                    // Bateria (apenas para seminovos)
+                    if (nomeGrupo === 'Seminovos' && o.saude_bateria) {
+                        const bateriaFormatada = formatarBateria(o.saude_bateria);
+                        if (bateriaFormatada) {
+                            texto += `${bateriaFormatada}\n`;
+                        }
+                    }
                     
                     let gar = o.garantia ? o.garantia.toUpperCase() : 'NÃO INFORMADA';
-                    if (cond === 'NovosCPO' && (o.condicao === 'Novo' || o.condicao === 'CPO')) gar = '1 ANO APPLE';
+                    if (nomeGrupo !== 'Seminovos') gar = '1 ANO APPLE';
                     
                     texto += `🛡️ *GARANTIA ${gar}*\n\n`;
                 }
@@ -3054,6 +3072,7 @@
         window.filtrarModelosPorGrupoDup = filtrarModelosPorGrupoDup;
         window.filtrarModelosPorGrupoBulk = filtrarModelosPorGrupoBulk;
         window.atualizarModelosMassa = atualizarModelosMassa;
+        window.formatarBateria = formatarBateria; // exporta para uso em outros lugares se necessário
     </script>
 </body>
 </html>
