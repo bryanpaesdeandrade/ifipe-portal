@@ -378,12 +378,16 @@
                     <!-- Substituição do título pelo cabeçalho com filtro e contador -->
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-[10px] font-black text-blue-400">PRODUTOS EXISTENTES <span id="countBaseProd" class="text-white ml-2"></span></h3>
-                        <input type="text" id="filtroBaseProd" placeholder="🔍 BUSCAR ID, NOME OU CATEGORIA..." class="apple-input !w-1/2 !py-2 uppercase" onkeyup="filtrarTabelaBase(this.value)">
+                        <div class="flex gap-2">
+                            <input type="text" id="filtroBaseProd" placeholder="🔍 BUSCAR ID, NOME OU CATEGORIA..." class="apple-input !w-64 !py-2 uppercase" onkeyup="filtrarTabelaBase(this.value)">
+                            <button onclick="abrirBulkBase()" class="btn-master bg-zinc-800 text-white">⚙️ EDITAR BASE EM MASSA</button>
+                        </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead>
                                 <tr class="text-[9px] text-gray-400">
+                                    <th class="pb-2" width="30"><input type="checkbox" onclick="selAll(this, '.chk-base-prod')"></th>
                                     <th class="pb-2">ID</th>
                                     <th class="pb-2">NOME</th>
                                     <th class="pb-2">CATEGORIA</th>
@@ -1037,6 +1041,64 @@
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- NOVO MODAL: EDIÇÃO EM MASSA DA BASE (BULK BASE) -->
+    <div id="modalBulkBase" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-2xl bg-[#050505] border-[#38383a] relative">
+            <button onclick="fecharModalBulkBase()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4">⚙️ EDITAR BASE EM MASSA</h3>
+            <form onsubmit="salvarBulkBase(event)" class="space-y-4">
+                <!-- Alterar Categoria -->
+                <div>
+                    <label class="text-[9px] text-gray-400 font-black block mb-1">ALTERAR CATEGORIA (opcional)</label>
+                    <select id="bulkBaseCategoria" class="apple-input">
+                        <option value="">MANTER CATEGORIA ATUAL</option>
+                        <option value="IPHONE">IPHONE</option>
+                        <option value="APPLEWATCH">APPLEWATCH</option>
+                        <option value="MACBOOK">MACBOOK</option>
+                        <option value="IMAC">IMAC</option>
+                        <option value="IPAD">IPAD</option>
+                        <option value="ACESSORIOS">ACESSORIOS</option>
+                        <option value="AIRPODS">AIRPODS</option>
+                        <option value="PENCIL">PENCIL</option>
+                        <option value="AIRTAG">AIRTAG</option>
+                    </select>
+                </div>
+
+                <!-- Find & Replace -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[9px] text-gray-400 font-black block mb-1">PROCURAR PALAVRA</label>
+                        <input type="text" id="bulkBaseFind" class="apple-input" placeholder="Ex: Iphone">
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-gray-400 font-black block mb-1">SUBSTITUIR POR</label>
+                        <input type="text" id="bulkBaseReplace" class="apple-input" placeholder="Ex: iPhone">
+                    </div>
+                </div>
+
+                <!-- Gerador Cartesiano em Massa -->
+                <div class="bg-[#141415] border border-zinc-800 rounded-lg p-4">
+                    <h4 class="text-[10px] font-black text-white mb-2 border-b border-zinc-800 pb-1">🚀 GERAR VARIAÇÕES EM MASSA</h4>
+                    <div class="mb-4">
+                        <label class="text-[9px] text-gray-400 font-black block mb-2">SELECIONE CAPACIDADES/MODELOS</label>
+                        <div id="bulkBaseCaps" class="flex flex-wrap gap-2"></div>
+                        <input type="text" id="bulkBaseNovaCap" class="apple-input text-xs mt-2 uppercase" placeholder="Adicionar nova (separe por vírgula)">
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-gray-400 font-black block mb-2">SELECIONE CORES</label>
+                        <div id="bulkBaseCores" class="flex flex-wrap gap-2"></div>
+                        <input type="text" id="bulkBaseNovaCor" class="apple-input text-xs mt-2 uppercase" placeholder="Adicionar nova (separe por vírgula)">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="btn-master !bg-green-600 flex-1">APLICAR LOTE</button>
+                    <button type="button" onclick="fecharModalBulkBase()" class="btn-master !bg-zinc-700 flex-1">CANCELAR</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -3303,21 +3365,8 @@
             clone.querySelectorAll('select').forEach(select => select.value = '');
             clone.querySelectorAll('input[type="number"]').forEach(input => input.value = '');
             
-            // Reaplicar eventos de cascata (opcional, mas os listeners serão re-adicionados se chamarmos adicionarLinhaAnuncio novamente? Melhor manter simples e não reutilizar listeners antigos)
-            // Para simplificar, após clonar, vamos substituir o clone por uma nova linha limpa (chamando adicionarLinhaAnuncio novamente) – mas isso perderia os valores atuais se quisesse duplicar com os mesmos valores.
-            // O comando pede para duplicar a linha, mantendo os valores? Não especifica, mas o botão existe. Vou manter como está, mas os eventos não serão copiados. Para garantir, podemos criar uma nova linha com os mesmos valores.
-            // Vou implementar de forma que a duplicação crie uma nova linha com os mesmos valores (copiando os valores selecionados).
-            // Mas como os eventos são adicionados via addEventListener, eles não são clonados. Então vamos recriar os eventos.
-            // A maneira mais simples é chamar adicionarLinhaAnuncio() e depois tentar copiar os valores, mas isso é complexo.
-            // Vou manter a função de duplicar apenas criando uma nova linha vazia (chamando adicionarLinhaAnuncio). O botão "duplicar" pode ser substituído por um botão "adicionar linha" normal. O usuário pode ter vários botões. Vou manter a função atual simplesmente chamando adicionarLinhaAnuncio().
-            // Para não complicar, vou fazer a duplicação chamar adicionarLinhaAnuncio() e ignorar os valores da linha original.
-            btn.closest('.linha-anuncio').parentNode.insertBefore(document.createElement('div'), btn.closest('.linha-anuncio').nextSibling);
-            // Recria uma nova linha chamando adicionarLinhaAnuncio novamente.
-            adicionarLinhaAnuncio();
-            // Mas isso adiciona no final, não após a linha atual. Vou ajustar:
-            // Remover o clone e adicionar uma nova linha após a atual.
-            clone.remove();
-            adicionarLinhaAnuncio(); // será adicionada no final, não importa muito.
+            // Inserir o clone após a linha atual
+            linhaAtual.parentNode.insertBefore(clone, linhaAtual.nextSibling);
         }
 
         // ===== FUNÇÃO MODIFICADA: executarLancamentoMassa (COM BULK INSERT EM CHUNKS E CAMPOS COMPLETOS) =====
@@ -3461,12 +3510,13 @@
             const tbody = document.getElementById('listaProdutosBase');
             if (!tbody) return;
             if (!dbProdutos || dbProdutos.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">Nenhum produto cadastrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">Nenhum produto cadastrado.</td></tr>';
                 return;
             }
             document.getElementById('countBaseProd').innerText = dbProdutos.length;
             tbody.innerHTML = dbProdutos.map(p => `
                 <tr>
+                    <td class="py-2"><input type="checkbox" class="chk-base-prod" value="${p.id}"></td>
                     <td class="py-2 text-[10px]">${p.id}</td>
                     <td class="py-2 text-xs font-bold">${p.nome}</td>
                     <td class="py-2 text-[10px]">${p.categoria}</td>
@@ -3970,6 +4020,120 @@
             document.getElementById('modalEditarProdutoBase').classList.add('hidden');
         }
 
+        // ===== FUNÇÕES DA SPRINT 2 (EDIÇÃO EM MASSA NA BASE) =====
+
+        function abrirBulkBase() {
+            const selecionados = document.querySelectorAll('.chk-base-prod:checked');
+            if (selecionados.length === 0) {
+                alert('Selecione pelo menos um produto na lista.');
+                return;
+            }
+
+            // Popular checkboxes de capacidades e cores
+            const capsUnicas = [...new Set(dbVar.map(v => v.capacidade).filter(Boolean))].sort();
+            const coresUnicas = [...new Set(dbVar.map(v => v.cor).filter(Boolean))].sort();
+
+            document.getElementById('bulkBaseCaps').innerHTML = capsUnicas.map(c => `
+                <label class="inline-flex items-center gap-1 text-[9px] font-bold bg-black px-2 py-1 rounded border border-zinc-800 cursor-pointer hover:border-blue-500">
+                    <input type="checkbox" class="chk-bulk-cap" value="${c}"> ${c}
+                </label>
+            `).join('');
+
+            document.getElementById('bulkBaseCores').innerHTML = coresUnicas.map(c => `
+                <label class="inline-flex items-center gap-1 text-[9px] font-bold bg-black px-2 py-1 rounded border border-zinc-800 cursor-pointer hover:border-blue-500">
+                    <input type="checkbox" class="chk-bulk-cor" value="${c}"> ${c}
+                </label>
+            `).join('');
+
+            // Limpar campos
+            document.getElementById('bulkBaseCategoria').value = '';
+            document.getElementById('bulkBaseFind').value = '';
+            document.getElementById('bulkBaseReplace').value = '';
+            document.getElementById('bulkBaseNovaCap').value = '';
+            document.getElementById('bulkBaseNovaCor').value = '';
+
+            document.getElementById('modalBulkBase').classList.remove('hidden');
+        }
+
+        function fecharModalBulkBase() {
+            document.getElementById('modalBulkBase').classList.add('hidden');
+        }
+
+        async function salvarBulkBase(e) {
+            e.preventDefault();
+
+            const selecionados = document.querySelectorAll('.chk-base-prod:checked');
+            if (selecionados.length === 0) {
+                alert('Nenhum produto selecionado.');
+                return;
+            }
+            const ids = Array.from(selecionados).map(cb => parseInt(cb.value));
+
+            const novaCategoria = document.getElementById('bulkBaseCategoria').value;
+            const findText = document.getElementById('bulkBaseFind').value;
+            const replaceText = document.getElementById('bulkBaseReplace').value;
+            const capsSelecionadas = Array.from(document.querySelectorAll('.chk-bulk-cap:checked')).map(cb => cb.value);
+            const coresSelecionadas = Array.from(document.querySelectorAll('.chk-bulk-cor:checked')).map(cb => cb.value);
+            const extraCaps = document.getElementById('bulkBaseNovaCap').value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+            const extraCores = document.getElementById('bulkBaseNovaCor').value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+
+            const todasCaps = [...new Set([...capsSelecionadas, ...extraCaps])];
+            const todasCores = [...new Set([...coresSelecionadas, ...extraCores])];
+
+            // 1. Processar alteração de nomes (find & replace)
+            if (findText && replaceText) {
+                for (const id of ids) {
+                    const produto = dbProdutos.find(p => p.id === id);
+                    if (produto) {
+                        const novoNome = produto.nome.replace(new RegExp(findText, 'gi'), replaceText).toUpperCase();
+                        if (novoNome !== produto.nome) {
+                            const { error } = await _s.from('produtos_mestre').update({ nome: novoNome }).eq('id', id);
+                            if (error) alert(`Erro ao atualizar nome do produto ${id}: ${error.message}`);
+                        }
+                    }
+                }
+            }
+
+            // 2. Processar alteração de categoria
+            if (novaCategoria) {
+                const { error } = await _s.from('produtos_mestre').update({ categoria: novaCategoria }).in('id', ids);
+                if (error) alert(`Erro ao atualizar categoria: ${error.message}`);
+            }
+
+            // 3. Gerar variações cartesianas
+            if (todasCaps.length > 0 && todasCores.length > 0) {
+                for (const id of ids) {
+                    const produto = dbProdutos.find(p => p.id === id);
+                    if (!produto) continue;
+
+                    const variacoesExistentes = dbVar.filter(v => v.produtos_mestre?.id === id);
+                    const combinacoes = [];
+                    todasCaps.forEach(cap => {
+                        todasCores.forEach(cor => {
+                            combinacoes.push({ produto_id: id, capacidade: cap, cor });
+                        });
+                    });
+
+                    const novasCombinacoes = combinacoes.filter(c => 
+                        !variacoesExistentes.some(v => v.capacidade === c.capacidade && v.cor === c.cor)
+                    );
+
+                    if (novasCombinacoes.length === 0) continue;
+
+                    const { error } = await _s.from('variacoes').insert(novasCombinacoes);
+                    if (error) {
+                        alert(`Erro ao inserir variações para produto ${id}: ${error.message}`);
+                    } else {
+                        // Atualizar dbVar local (opcional, loadAll fará depois)
+                    }
+                }
+            }
+
+            alert('Operação em lote concluída!');
+            fecharModalBulkBase();
+            await loadAll(); // Recarrega todos os dados
+        }
+
         // Expor novas funções globalmente
         window.filtrarTabelaBase = filtrarTabelaBase;
         window.updateVarBase = updateVarBase;
@@ -3978,6 +4142,9 @@
         window.editarProduto = editarProduto;
         window.gerarVariacoesMassaEdit = gerarVariacoesMassaEdit;
         window.fecharModalEditarProdutoBase = fecharModalEditarProdutoBase;
+        window.abrirBulkBase = abrirBulkBase;
+        window.fecharModalBulkBase = fecharModalBulkBase;
+        window.salvarBulkBase = salvarBulkBase;
 
         async function delProduto(id) {
             if (!confirm(`ATENÇÃO: Deseja excluir o produto #${id} e TODAS as suas variações?`)) return;
