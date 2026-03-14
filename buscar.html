@@ -583,7 +583,7 @@
         <div class="modal-content max-w-3xl w-full">
             <span class="close-modal" onclick="fecharHistoricoGeral()">&times;</span>
             <h2 class="text-2xl font-bold mb-4">Histórico de Mercado (últimos 10 dias)</h2>
-            <p class="text-sm text-gray-400 mb-4">Média de preços por combinação exata (Modelo + Capacidade + Cor + Origem + Condição + Moeda)</p>
+            <p class="text-sm text-gray-400 mb-4">Média de preços por combination exata (Modelo + Capacidade + Cor + Origem + Condição + Moeda)</p>
             <div id="listaHistorico" class="space-y-6 max-h-96 overflow-y-auto pr-2"></div>
         </div>
     </div>
@@ -655,12 +655,8 @@
             <input type="hidden" id="validarOfertaId">
             <input type="hidden" id="validarFornecedorId">
             <div class="space-y-4">
-                <div class="flex gap-4 justify-center">
-                    <button onclick="selecionarTipoValidacao('validacao')" class="btn-apple bg-green-600 flex-1" id="btnTipoValidacao">✅ Validar</button>
-                    <button onclick="selecionarTipoValidacao('denuncia')" class="btn-apple bg-red-600 flex-1" id="btnTipoDenuncia">🚨 Denunciar</button>
-                </div>
                 <input type="hidden" id="tipoValidacao" value="">
-                <textarea id="textoValidacao" class="apple-input h-24" placeholder="Escreva seu comentário (opcional)..."></textarea>
+                <textarea id="textoValidacao" class="apple-input h-24" placeholder="Escreva seu comentário..."></textarea>
                 <div class="flex gap-3">
                     <button onclick="enviarValidacaoDenuncia()" class="btn-apple bg-blue-600 flex-1">Enviar</button>
                     <button onclick="fecharModalValidarDenunciar()" class="btn-apple bg-zinc-700 flex-1">Cancelar</button>
@@ -1570,22 +1566,32 @@
                     if (o.condicao === 'Novo' || o.condicao === 'CPO') {
                         garantiaBadge = '<span class="badge-condicao bg-zinc-700">🛡️ 💎 1 ANO</span>';
                     } else {
-                        // Garantia Seminovos
+                        // Garantia Seminovos (Remove letras, pega só número)
                         const garText = String(o.garantia || '').replace(/\D/g, '');
                         const garNum = parseInt(garText);
                         if (!isNaN(garNum) && garNum > 0) {
                             garantiaBadge = `<span class="badge-condicao bg-zinc-700">🛡️ ${garNum} M.</span>`;
                         }
                         
-                        // Bateria Seminovos
-                        const batText = String(o.saude_bateria || '').replace(/\D/g, '');
-                        const batNum = parseInt(batText);
-                        if (!isNaN(batNum) && batNum > 0) {
-                            if (batNum < 85) bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔻${batNum}% 🪫</span>`;
-                            else if (batNum >= 85 && batNum < 90) bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪ ${batNum}% 🔋</span>`;
-                            else if (batNum >= 90 && batNum < 95) bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪ ${batNum}% 🔋</span>`;
-                            else if (batNum >= 95 && batNum < 100) bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪ ${batNum}% 🔋</span>`;
-                            else if (batNum === 100) bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔝 100% 🔋</span>`;
+                        // Bateria Seminovos (Filtro anti-sujeira do banco)
+                        if (o.saude_bateria) {
+                            const batOriginal = String(o.saude_bateria).toUpperCase();
+                            const batNum = parseInt(batOriginal.replace(/\D/g, ''));
+                            if (!isNaN(batNum) && batNum > 0) {
+                                if (batNum < 85 || batOriginal.includes('<') || batOriginal.includes('-') || batOriginal.includes('ABAIXO')) {
+                                    bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔻${batNum}% 🪫</span>`;
+                                } else if (batNum >= 85 && batNum < 90) {
+                                    bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪ ${batNum}% 🔋</span>`;
+                                } else if (batNum >= 90 && batNum < 95) {
+                                    bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪ ${batNum}% 🔋</span>`;
+                                } else if (batNum >= 95 && batNum < 100) {
+                                    bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪ ${batNum}% 🔋</span>`;
+                                } else if (batNum === 100) {
+                                    bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔝 100% 🔋</span>`;
+                                }
+                            } else if (batOriginal) {
+                                bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔻${batOriginal} 🪫</span>`;
+                            }
                         }
                     }
                     // ===== FIM DA LÓGICA =====
@@ -1690,7 +1696,7 @@
             atualizarBadgeAlertas();
         }
 
-        // ===== NOVAS FUNÇÕES PARA REPUTAÇÃO DO ANUNCIANTE E FÓRUM =====
+        // ===== NOVAS FUNÇÕES PARA REPUTAÇÃO DO ANUNCIANTE =====
 
         let currentReputacaoOfertaId = null;
         let currentReputacaoFornecedorId = null;
@@ -1730,127 +1736,6 @@
 
             if (!interacoes || interacoes.length === 0) {
                 container.innerHTML = '<p class="text-center text-gray-400">Nenhuma validação ou denúncia ainda para este anunciante.</p>';
-                return;
-            }
-
-            const feedHTML = await Promise.all(interacoes.map(async (item) => {
-                const respostas = await buscarRespostas(item.id);
-                const likes = await buscarLikes(item.id);
-                const usuario = item.clientes_buscador || {};
-                const nomeExibicao = item.autor_nome || (usuario.nome ? usuario.nome.split(' ')[0] : 'Usuário');
-                const whatsapp = usuario.whatsapp ? usuario.whatsapp.replace(/\D/g, '') : '';
-                const linkWhats = whatsapp ? `https://wa.me/55${whatsapp}` : '#';
-
-                const nomeLink = `<a href="${linkWhats}" target="_blank" class="font-bold hover:text-blue-400">${nomeExibicao}</a>`;
-
-                let badgeTipo = '';
-                if (item.tipo_interacao === 'validacao') badgeTipo = '<span class="badge-condicao bg-green-600 text-[8px]">✅ VALIDAÇÃO</span>';
-                else if (item.tipo_interacao === 'denuncia') badgeTipo = '<span class="badge-condicao bg-red-600 text-[8px]">🚨 DENÚNCIA</span>';
-
-                const curtido = await verificarLike(item.id);
-                const btnLike = `<button class="action-button ${curtido ? 'text-blue-500' : ''}" onclick="likeComentario(${item.id}, this)"><i class="fa${curtido ? 's' : 'r'} fa-heart"></i> ${likes}</button>`;
-
-                // Mudança na chamada: não abre o modal de validação, apenas o box de textarea
-                const btnResponder = `<button class="action-button" onclick="mostrarCaixaResposta(${item.id})"><i class="fas fa-reply"></i> Responder</button>`;
-
-                const lixeira = (currentUser && currentUser.id === 0) ? 
-                    `<button class="action-button text-red-500" onclick="excluirComentario(${item.id})"><i class="fas fa-trash"></i></button>` : '';
-
-                let respostasHTML = '';
-                if (respostas.length > 0) {
-                    respostasHTML = '<div class="ml-6 mt-3 space-y-2 border-l-2 border-zinc-700 pl-3">';
-                    respostasHTML += respostas.map(r => {
-                        const rUser = r.clientes_buscador || {};
-                        const rNome = r.autor_nome || (rUser.nome ? rUser.nome.split(' ')[0] : 'Usuário');
-                        const rWhats = rUser.whatsapp ? rUser.whatsapp.replace(/\D/g, '') : '';
-                        const rLink = rWhats ? `https://wa.me/55${rWhats}` : '#';
-                        const rLikes = r.likes_count || 0;
-                        const rCurtido = r.curtido_por_mim || false;
-                        const rBtnLike = `<button class="action-button ${rCurtido ? 'text-blue-500' : ''}" onclick="likeComentario(${r.id}, this)"><i class="fa${rCurtido ? 's' : 'r'} fa-heart"></i> ${rLikes}</button>`;
-                        const rLixeira = (currentUser && currentUser.id === 0) ? `<button class="action-button text-red-500" onclick="excluirComentario(${r.id})"><i class="fas fa-trash"></i></button>` : '';
-                        
-                        return `
-                            <div class="bg-[#1a1a1c] p-2.5 rounded-lg border border-[#2c2c2e]">
-                                <div class="flex justify-between items-start">
-                                    <a href="${rLink}" target="_blank" class="text-[11px] font-bold hover:text-blue-400 text-blue-400">↳ ${rNome}</a>
-                                    <span class="text-[8px] text-gray-500">${new Date(r.criado_em).toLocaleString()}</span>
-                                </div>
-                                <p class="text-xs mt-1 text-gray-300">${r.pergunta || ''}</p>
-                                <div class="flex gap-3 mt-2">
-                                    ${rBtnLike}
-                                    ${rLixeira}
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                    respostasHTML += '</div>';
-                }
-
-                const respostaBoxId = `respostaBox_${item.id}`;
-                const respostaBox = `
-                    <div id="${respostaBoxId}" class="hidden mt-2 ml-6">
-                        <textarea class="apple-input text-xs h-16" placeholder="Digite sua resposta..."></textarea>
-                        <div class="flex gap-2 mt-1">
-                            <button onclick="enviarRespostaForum(${item.id})" class="btn-apple text-[9px] px-2 py-1">Enviar</button>
-                            <button onclick="document.getElementById('${respostaBoxId}').classList.add('hidden')" class="btn-apple bg-gray-600 text-[9px] px-2 py-1">Cancelar</button>
-                        </div>
-                    </div>
-                `;
-
-                return `
-                    <div class="bg-[#1c1c1e] border border-[#38383a] rounded-xl p-3">
-                        <div class="flex justify-between items-start">
-                            <div class="flex items-center gap-2">
-                                ${nomeLink}
-                                ${badgeTipo}
-                            </div>
-                            <span class="text-[9px] text-gray-500">${new Date(item.criado_em).toLocaleString()}</span>
-                        </div>
-                        <p class="text-sm mt-2">${item.pergunta || ''}</p>
-                        <div class="flex items-center gap-4 mt-3">
-                            ${btnLike}
-                            ${btnResponder}
-                            ${lixeira}
-                        </div>
-                        ${respostaBox}
-                        ${respostasHTML}
-                    </div>
-                `;
-            }));
-
-            container.innerHTML = feedHTML.join('');
-        }
-
-        // FÓRUM GLOBAL
-        function abrirForum() {
-            currentReputacaoFornecedorId = null;
-            document.getElementById('modalForum').classList.remove('hidden');
-            carregarFeed();
-        }
-
-        function fecharForum() {
-            document.getElementById('modalForum').classList.add('hidden');
-        }
-
-        async function carregarFeed() {
-            const container = document.getElementById('feedContainer');
-            container.innerHTML = '<p class="text-center text-gray-400">Carregando...</p>';
-
-            const { data: interacoes, error } = await _s
-                .from('comentarios')
-                .select('*, ofertas(*, variacoes(*, produtos_mestre(*)), fornecedores(*)), clientes_buscador!cliente_id(*)')
-                .or('tipo_interacao.eq.validacao,tipo_interacao.eq.denuncia')
-                .eq('status', 'publico')
-                .is('parent_id', null)
-                .order('criado_em', { ascending: false });
-
-            if (error) {
-                container.innerHTML = '<p class="text-center text-red-400">Erro ao carregar feed.</p>';
-                return;
-            }
-
-            if (!interacoes || interacoes.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-400">Nenhuma interação ainda.</p>';
                 return;
             }
 
@@ -1951,18 +1836,12 @@
             document.getElementById('tipoValidacao').value = tipo;
             document.getElementById('textoValidacao').value = '';
 
-            const btnValidar = document.getElementById('btnTipoValidacao');
-            const btnDenunciar = document.getElementById('btnTipoDenuncia');
             const titulo = document.getElementById('modalValidarTitulo');
 
             if (tipo === 'validacao') {
-                btnValidar.style.display = '';
-                btnDenunciar.style.display = 'none';
-                titulo.innerText = 'Validar Anunciante';
+                titulo.innerText = '✅ Validar Anunciante';
             } else {
-                btnValidar.style.display = 'none';
-                btnDenunciar.style.display = '';
-                titulo.innerText = 'Denunciar Anunciante';
+                titulo.innerText = '🚨 Denunciar Anunciante';
             }
 
             document.getElementById('modalValidarDenunciar').classList.remove('hidden');
@@ -2017,7 +1896,7 @@
         async function buscarRespostas(parentId) {
             const { data } = await _s
                 .from('comentarios')
-                .select('*, clientes_buscador(*)')
+                .select('*, clientes_buscador!cliente_id(*)')
                 .eq('parent_id', parentId)
                 .order('criado_em', { ascending: true });
             if (data) {
