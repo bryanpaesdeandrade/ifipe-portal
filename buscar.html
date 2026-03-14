@@ -1671,7 +1671,7 @@
                         <div class="flex justify-between items-center py-1 border-t border-[#38383a] mb-1">
                             ${btnCurtir}
                             <!-- Botão reformulado com gradiente e animação -->
-                            <button class="action-button bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold px-3 py-1 rounded-full text-[9px] animate-pulse shadow-lg" onclick="abrirReputacaoAnunciante(${f?.id || 0}, '${fornecedorNome}')">
+                            <button class="action-button bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold px-3 py-1 rounded-full text-[9px] animate-pulse shadow-lg" onclick="abrirReputacaoAnunciante(${o.id}, ${f?.id || 0}, '${fornecedorNome}')">
                                 <i class="fas fa-star"></i> Reputação
                             </button>
                             <button class="action-button hover:text-blue-500" onclick="compartilhar('${nomeProduto}', '${capacidade}', '${cor}', ${preco}, '${simbolo}', ${o.quantidade}, '${wppLimpo}')">
@@ -1706,11 +1706,13 @@
 
         // ===== NOVAS FUNÇÕES PARA REPUTAÇÃO DO ANUNCIANTE =====
 
+        let currentReputacaoOfertaId = null; // NOVA VARIÁVEL PARA ARMAZENAR O ID DA OFERTA
         let currentReputacaoFornecedorId = null;
         let currentReputacaoFornecedorNome = '';
 
-        async function abrirReputacaoAnunciante(fornecedorId, fornecedorNome) {
+        async function abrirReputacaoAnunciante(ofertaId, fornecedorId, fornecedorNome) { // ASSINATURA ALTERADA
             if (!currentUser) return alert('Faça login para ver a reputação.');
+            currentReputacaoOfertaId = ofertaId; // ARMAZENA O ID DA OFERTA
             currentReputacaoFornecedorId = fornecedorId;
             currentReputacaoFornecedorNome = fornecedorNome;
             document.getElementById('reputacaoTitulo').innerText = `Reputação de ${fornecedorNome}`;
@@ -1836,8 +1838,12 @@
 
         function abrirModalValidarDenunciarDeReputacao(tipo) {
             if (!currentUser) return alert('Faça login.');
-            if (currentUser.id === 0) return alert('Master não pode criar validações/denúncias.');
-            document.getElementById('validarOfertaId').value = ''; // null para reputação geral
+            // REMOVIDO O BLOCO QUE BLOQUEAVA O MASTER
+
+            // FECHA O MODAL DE REPUTAÇÃO ANTES DE ABRIR O DE VALIDAÇÃO
+            fecharModalReputacao();
+
+            document.getElementById('validarOfertaId').value = currentReputacaoOfertaId; // USA O ID ARMAZENADO
             document.getElementById('validarFornecedorId').value = currentReputacaoFornecedorId;
             document.getElementById('tipoValidacao').value = tipo;
             document.getElementById('textoValidacao').value = '';
@@ -1851,8 +1857,7 @@
             const tipo = document.getElementById('tipoValidacao').value;
             if (!tipo) return alert('Selecione Validar ou Denunciar.');
 
-            // Bloquear master
-            if (currentUser.id === 0) return alert('O Modo Master apenas modera o fórum e não pode criar validações/denúncias.');
+            // REMOVIDO O BLOCO QUE BLOQUEAVA O MASTER
 
             const ofertaId = document.getElementById('validarOfertaId').value;
             const fornecedorId = document.getElementById('validarFornecedorId').value;
@@ -2062,7 +2067,8 @@
 
         async function enviarRespostaForum(parentId) {
             if (!currentUser) return alert('Faça login.');
-            if (currentUser.id === 0) return alert('Master não pode responder.');
+            // REMOVIDO O BLOCO QUE BLOQUEAVA O MASTER
+
             const box = document.getElementById(`respostaBox_${parentId}`);
             const textarea = box.querySelector('textarea');
             const texto = textarea.value.trim();
