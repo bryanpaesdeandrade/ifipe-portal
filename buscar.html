@@ -1448,7 +1448,7 @@
             renderizarCards();
         }
 
-        // ===== RENDERIZAR CARDS =====
+        // ===== RENDERIZAR CARDS (COM BADGES DE BATERIA E GARANTIA) =====
         function renderizarCards() {
             const container = document.getElementById('container-produtos');
             container.innerHTML = '';
@@ -1606,6 +1606,35 @@
                     else if (o.condicao && o.condicao.includes('Grade')) condCls = 'badge-grade';
                     else condCls = 'badge-outros';
 
+                    // ===== BADGE DE BATERIA (Melhoria 3) =====
+                    let bateriaBadge = '';
+                    if (o.saude_bateria) {
+                        const bateriaNum = parseInt(o.saude_bateria) || 0;
+                        if (bateriaNum < 85) {
+                            bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔻${bateriaNum}% 🪫</span>`;
+                        } else if (bateriaNum >= 85 && bateriaNum < 90) {
+                            bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪${bateriaNum}% 🔋</span>`;
+                        } else if (bateriaNum >= 90 && bateriaNum < 95) {
+                            bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪${bateriaNum}% 🔋</span>`;
+                        } else if (bateriaNum >= 95 && bateriaNum < 100) {
+                            bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪${bateriaNum}% 🔋</span>`;
+                        } else if (bateriaNum == 100) {
+                            bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔝 100% 🔋</span>`;
+                        }
+                    }
+
+                    // ===== BADGE DE GARANTIA (Melhoria 3) =====
+                    let garantiaBadge = '';
+                    if (o.garantia) {
+                        const garantiaStr = String(o.garantia).toLowerCase();
+                        const garantiaNum = parseInt(o.garantia) || 0;
+                        if (garantiaStr.includes('ano') || garantiaNum == 12) {
+                            garantiaBadge = `<span class="badge-condicao bg-zinc-700">🛡️ 12 M.</span>`;
+                        } else if (garantiaNum >= 1 && garantiaNum <= 11) {
+                            garantiaBadge = `<span class="badge-condicao bg-zinc-700">🛡️ ${garantiaNum} M.</span>`;
+                        }
+                    }
+
                     const saudacao = (() => {
                         const h = new Date().getHours();
                         if (h < 12) return 'Bom dia'; if (h < 18) return 'Boa tarde'; return 'Boa noite';
@@ -1657,6 +1686,8 @@
                         <div class="flex items-center gap-1 mb-1 flex-wrap">
                             <span class="badge-condicao ${condCls}">${o.condicao}</span>
                             ${origemHTML}
+                            ${bateriaBadge}
+                            ${garantiaBadge}
                         </div>
                         ${tagTrend ? `<div class="mb-1">${tagTrend}</div>` : ''}
                         <div class="flex flex-wrap gap-1 mb-1">${comerciais}</div>
@@ -1753,7 +1784,8 @@
                 const respostas = await buscarRespostas(item.id);
                 const likes = await buscarLikes(item.id);
                 const usuario = item.clientes_buscador || {};
-                const nomeExibicao = usuario.nome ? usuario.nome.split(' ')[0] : 'Usuário';
+                // ===== CORREÇÃO 2: PRIORIZAR autor_nome =====
+                const nomeExibicao = item.autor_nome || (usuario.nome ? usuario.nome.split(' ')[0] : 'Usuário');
                 const whatsapp = usuario.whatsapp ? usuario.whatsapp.replace(/\D/g, '') : '';
                 const linkWhats = whatsapp ? `https://wa.me/55${whatsapp}` : '#';
 
@@ -1776,7 +1808,8 @@
                     respostasHTML = '<div class="ml-6 mt-2 space-y-2 border-l-2 border-[#38383a] pl-3">';
                     respostasHTML += respostas.map(r => {
                         const rUser = r.clientes_buscador || {};
-                        const rNome = rUser.nome ? rUser.nome.split(' ')[0] : 'Usuário';
+                        // ===== CORREÇÃO 2: PRIORIZAR autor_nome =====
+                        const rNome = r.autor_nome || (rUser.nome ? rUser.nome.split(' ')[0] : 'Usuário');
                         const rWhats = rUser.whatsapp ? rUser.whatsapp.replace(/\D/g, '') : '';
                         const rLink = rWhats ? `https://wa.me/55${rWhats}` : '#';
                         const rLikes = r.likes_count || 0;
@@ -1905,6 +1938,8 @@
         // ===== FUNÇÕES DO FÓRUM GLOBAL =====
 
         function abrirForum() {
+            // ===== CORREÇÃO 1: LIMPAR ESTADO =====
+            currentReputacaoFornecedorId = null;
             document.getElementById('modalForum').classList.remove('hidden');
             carregarFeed();
         }
@@ -1939,7 +1974,8 @@
                 const respostas = await buscarRespostas(item.id);
                 const likes = await buscarLikes(item.id);
                 const usuario = item.clientes_buscador || {};
-                const nomeExibicao = usuario.nome ? usuario.nome.split(' ')[0] : 'Usuário';
+                // ===== CORREÇÃO 2: PRIORIZAR autor_nome =====
+                const nomeExibicao = item.autor_nome || (usuario.nome ? usuario.nome.split(' ')[0] : 'Usuário');
                 const whatsapp = usuario.whatsapp ? usuario.whatsapp.replace(/\D/g, '') : '';
                 const linkWhats = whatsapp ? `https://wa.me/55${whatsapp}` : '#';
 
@@ -1962,7 +1998,8 @@
                     respostasHTML = '<div class="ml-6 mt-2 space-y-2 border-l-2 border-[#38383a] pl-3">';
                     respostasHTML += respostas.map(r => {
                         const rUser = r.clientes_buscador || {};
-                        const rNome = rUser.nome ? rUser.nome.split(' ')[0] : 'Usuário';
+                        // ===== CORREÇÃO 2: PRIORIZAR autor_nome =====
+                        const rNome = r.autor_nome || (rUser.nome ? rUser.nome.split(' ')[0] : 'Usuário');
                         const rWhats = rUser.whatsapp ? rUser.whatsapp.replace(/\D/g, '') : '';
                         const rLink = rWhats ? `https://wa.me/55${rWhats}` : '#';
                         const rLikes = r.likes_count || 0;
