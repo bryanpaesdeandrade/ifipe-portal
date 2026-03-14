@@ -755,16 +755,19 @@
             <!-- Container do botão de oportunidades -->
             <div id="btn-oportunidade-container" class="w-full"></div>
 
-            <!-- Filtros em grid (incluindo novo filtro de grupos) -->
+            <!-- Filtros em grid (incluindo filtro de grupos completo) -->
             <div class="filters-grid mb-4">
-                <!-- NOVO FILTRO DE GRUPOS (primeiro elemento) -->
+                <!-- FILTRO DE GRUPOS (agora com todas as categorias) -->
                 <select id="filtroGrupo" class="apple-input text-xs py-2" onchange="registrarInteracao(); renderizarCards()">
                     <option value="">Grupo</option>
                     <option value="IPHONE">IPHONE</option>
-                    <option value="IPAD">IPAD</option>
-                    <option value="MACBOOK">MACBOOK</option>
                     <option value="APPLEWATCH">APPLEWATCH</option>
+                    <option value="MACBOOK">MACBOOK</option>
+                    <option value="IMAC">IMAC</option>
+                    <option value="IPAD">IPAD</option>
                     <option value="AIRPODS">AIRPODS</option>
+                    <option value="PENCIL">PENCIL</option>
+                    <option value="AIRTAG">AIRTAG</option>
                 </select>
                 <select id="filtroCategoria" class="apple-input text-xs py-2" onchange="registrarInteracao(); renderizarCards()">
                     <option value="">Modelos</option>
@@ -813,7 +816,7 @@
 
     <script>
         // ============================================================
-        // 1. CONFIGURAÇÃO SUPABASE E VARIÁVEIS GLOBAIS (MANTIDAS)
+        // 1. CONFIGURAÇÃO SUPABASE E VARIÁVEIS GLOBAIS
         // ============================================================
         const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
@@ -1433,7 +1436,7 @@
             renderizarCards();
         }
 
-        // ===== RENDERIZAR CARDS (COM BADGES DE BATERIA E GARANTIA ATUALIZADOS) =====
+        // ===== RENDERIZAR CARDS (COM BADGES DE BATERIA E GARANTIA SEGUNDO CÉLULA 2) =====
         function renderizarCards() {
             const container = document.getElementById('container-produtos');
             container.innerHTML = '';
@@ -1468,7 +1471,7 @@
                         ].map(s => s.toLowerCase()).join(' ');
                         if (!searchable.includes(busca)) return false;
                     }
-                    // NOVO FILTRO DE GRUPO
+                    // FILTRO DE GRUPO (trava)
                     if (fGrupo && p.categoria?.toUpperCase() !== fGrupo) return false;
                     if (fCat && v.produto_id != fCat) return false;
                     if (fCond && o.condicao !== fCond) return false;
@@ -1594,35 +1597,20 @@
                     else if (o.condicao && o.condicao.includes('Grade')) condCls = 'badge-grade';
                     else condCls = 'badge-outros';
 
-                    // ===== BADGES DE BATERIA E GARANTIA (LÓGICA ATUALIZADA) =====
+                    // ===== BADGES DE BATERIA E GARANTIA (CÓDIGO EXATO DA CÉLULA 2) =====
                     let bateriaBadge = '';
                     let garantiaBadge = '';
 
                     if (o.condicao === 'Novo' || o.condicao === 'CPO') {
                         garantiaBadge = '<span class="badge-condicao bg-zinc-700">🛡️ 💎 1 ANO</span>';
-                        // bateria vazia
                     } else {
-                        // Seminovos / Grade
-                        if (o.saude_bateria) {
-                            const bateriaNum = parseInt(o.saude_bateria) || 0;
-                            if (bateriaNum < 85) {
-                                bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔻${bateriaNum}% 🪫</span>`;
-                            } else if (bateriaNum >= 85 && bateriaNum < 90) {
-                                bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪${bateriaNum}% 🔋</span>`;
-                            } else if (bateriaNum >= 90 && bateriaNum < 95) {
-                                bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪${bateriaNum}% 🔋</span>`;
-                            } else if (bateriaNum >= 95 && bateriaNum < 100) {
-                                bateriaBadge = `<span class="badge-condicao bg-zinc-700">⇪${bateriaNum}% 🔋</span>`;
-                            } else if (bateriaNum == 100) {
-                                bateriaBadge = `<span class="badge-condicao bg-zinc-700">🔝 100% 🔋</span>`;
-                            }
+                        const bat = parseInt(o.saude_bateria) || 0;
+                        if (bat > 0) {
+                            let icon = bat < 85 ? '🔻' : (bat === 100 ? '🔝' : '⇪');
+                            let emo = bat < 85 ? '🪫' : '🔋';
+                            bateriaBadge = `<span class="badge-condicao bg-zinc-700">${icon} ${bat}% ${emo}</span>`;
                         }
-                        if (o.garantia) {
-                            const garantiaNum = parseInt(o.garantia) || 0;
-                            if (garantiaNum >= 1 && garantiaNum <= 12) {
-                                garantiaBadge = `<span class="badge-condicao bg-zinc-700">🛡️ ${garantiaNum} M</span>`; // sem ponto
-                            }
-                        }
+                        garantiaBadge = `<span class="badge-condicao bg-zinc-700">🛡️ ${parseInt(o.garantia) || 0} M</span>`;
                     }
 
                     const saudacao = (() => {
