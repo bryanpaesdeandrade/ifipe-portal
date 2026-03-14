@@ -80,6 +80,33 @@
             50% { background-color: #7f1d1d; color: #ccc; }
             100% { background-color: #ef4444; color: white; }
         }
+        /* Estilo para tags (capacidades/cores) */
+        .tag {
+            display: inline-block;
+            background: #2c2c2e;
+            border: 1px solid #38383a;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 9px;
+            font-weight: 700;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 0 4px 4px 0;
+        }
+        .tag.selected {
+            background: #0071e3;
+            border-color: #0071e3;
+        }
+        .tag-add {
+            background: #141415;
+            border: 1px dashed #38383a;
+            color: #aaa;
+        }
+        .tag-add:hover {
+            border-color: #0071e3;
+            color: #0071e3;
+        }
     </style>
 </head>
 <body>
@@ -357,40 +384,27 @@
             </div>
         </div>
 
-        <!-- NOVA ABA: GESTÃO DE BASE (Versão Cartesiana - Cards no topo) -->
+        <!-- NOVA ABA: GESTÃO DE BASE (Versão Clean) -->
         <div id="v-gestao-base" class="master-view">
             <div class="apple-card">
                 <div class="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
                     <h2 class="text-sm font-black text-white">📦 GESTÃO DE BASE - PRODUTOS</h2>
-                    <button onclick="adicionarCardProduto()" class="btn-master bg-green-600 text-white">➕ ADICIONAR NOVO PRODUTO</button>
-                </div>
-
-                <!-- Container dos cards de novos produtos (inseridos no topo) -->
-                <div id="cardsNovosProdutos" class="space-y-4 mb-8"></div>
-
-                <!-- Botão para processar todos os cards -->
-                <div class="mb-6 flex justify-end">
-                    <button onclick="salvarBaseMassa()" class="btn-master !bg-blue-600 text-white px-6 py-3 text-xs font-black">🚀 PROCESSAR E SALVAR BASE</button>
+                    <button onclick="abrirModalGestaoBase()" class="btn-master bg-green-600 text-white">➕ NOVO PRODUTO</button>
                 </div>
 
                 <!-- Lista de produtos existentes -->
                 <div>
-                    <!-- Substituição do título pelo cabeçalho com filtro e contador -->
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-[10px] font-black text-blue-400">PRODUTOS EXISTENTES <span id="countBaseProd" class="text-white ml-2"></span></h3>
-                        <div class="flex gap-2">
-                            <input type="text" id="filtroBaseProd" placeholder="🔍 BUSCAR ID, NOME OU CATEGORIA..." class="apple-input !w-64 !py-2 uppercase" onkeyup="filtrarTabelaBase(this.value)">
-                            <button onclick="abrirBulkBase()" class="btn-master bg-zinc-800 text-white">⚙️ EDITAR BASE EM MASSA</button>
-                        </div>
+                        <input type="text" id="filtroBaseProd" placeholder="🔍 BUSCAR ID, NOME OU CATEGORIA..." class="apple-input !w-64 !py-2 uppercase" onkeyup="filtrarTabelaBase(this.value)">
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
                             <thead>
                                 <tr class="text-[9px] text-gray-400">
-                                    <th class="pb-2" width="30"><input type="checkbox" onclick="selAll(this, '.chk-base-prod')"></th>
                                     <th class="pb-2">ID</th>
-                                    <th class="pb-2">NOME</th>
-                                    <th class="pb-2">CATEGORIA</th>
+                                    <th class="pb-2">NOME (clique para editar)</th>
+                                    <th class="pb-2">CATEGORIA (clique para editar)</th>
                                     <th class="pb-2 text-right">AÇÕES</th>
                                 </tr>
                             </thead>
@@ -996,50 +1010,55 @@
         </div>
     </div>
 
-    <!-- NOVO MODAL DE EDIÇÃO DE PRODUTO (GESTÃO DE BASE) - ATUALIZADO COM GERADOR CARTESIANO -->
-    <div id="modalEditarProdutoBase" class="hidden modal-overlay">
-        <div class="apple-card w-full max-w-2xl bg-[#050505] border-[#38383a] relative max-h-[90vh] flex flex-col">
-            <button onclick="fecharModalEditarProdutoBase()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80 z-50">X</button>
-            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4 flex-shrink-0">✏️ EDITAR PRODUTO E VARIAÇÕES</h3>
+    <!-- NOVO MODAL DE EDIÇÃO DE PRODUTO (GESTÃO DE BASE) - Versão Clean -->
+    <div id="modalGestaoBase" class="hidden modal-overlay">
+        <div class="apple-card w-full max-w-2xl bg-[#050505] border-[#38383a] relative max-h-[90vh] overflow-y-auto">
+            <button onclick="fecharModalGestaoBase()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
+            <h3 class="text-sm font-black mb-4 border-b border-zinc-800 pb-2 mt-4 flex-shrink-0" id="modalGestaoBaseTitle">➕ CRIAR NOVO PRODUTO</h3>
 
-            <div class="overflow-y-auto pr-2 custom-scroll flex-1">
-                <input type="hidden" id="editBaseProdId">
+            <input type="hidden" id="gestaoBaseProdId" value="">
 
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <label class="text-[9px] text-gray-400 font-black block mb-1">CATEGORIA</label>
-                        <select id="editBaseProdCat" class="apple-input uppercase"></select>
-                    </div>
-                    <div>
-                        <label class="text-[9px] text-gray-400 font-black block mb-1">NOME DO PRODUTO</label>
-                        <input type="text" id="editBaseProdNome" class="apple-input uppercase">
-                    </div>
+            <!-- Step 0: Categoria -->
+            <div class="mb-4">
+                <label class="text-[9px] text-gray-400 font-black block mb-1">0. CATEGORIA (GRUPO)</label>
+                <select id="gestaoBaseCategoria" class="apple-input" onchange="gestaoBaseCategoriaChange()">
+                    <option value="">SELECIONE UMA CATEGORIA</option>
+                    <!-- opções serão inseridas via JS -->
+                </select>
+                <div id="gestaoBaseNovaCategoriaWrapper" class="mt-2 hidden">
+                    <input type="text" id="gestaoBaseNovaCategoria" class="apple-input" placeholder="NOME DA NOVA CATEGORIA">
                 </div>
-                <button onclick="salvarDadosBaseProduto()" class="btn-master w-full !bg-blue-600 mb-6">SALVAR DADOS DO PRODUTO</button>
+            </div>
 
-                <!-- Gerador Cartesiano -->
-                <h4 class="text-[10px] font-black text-white mb-2 border-b border-zinc-800 pb-1 mt-6">🚀 GERAR VARIAÇÕES EM MASSA (CARTESIANO)</h4>
-                <div class="bg-[#141415] border border-zinc-800 rounded-lg p-4 mb-4">
-                    <div class="mb-4">
-                        <label class="text-[9px] text-gray-400 font-black block mb-2">SELECIONE CAPACIDADES/MODELOS</label>
-                        <div id="editBaseCaps" class="flex flex-wrap gap-2"></div>
-                        <input type="text" id="editBaseNovaCap" class="apple-input text-xs mt-2 uppercase" placeholder="Adicionar nova (separe por vírgula)">
-                    </div>
-                    <div>
-                        <label class="text-[9px] text-gray-400 font-black block mb-2">SELECIONE CORES</label>
-                        <div id="editBaseCores" class="flex flex-wrap gap-2"></div>
-                        <input type="text" id="editBaseNovaCor" class="apple-input text-xs mt-2 uppercase" placeholder="Adicionar nova (separe por vírgula)">
-                    </div>
-                </div>
-                <button onclick="gerarVariacoesMassaEdit(event)" class="btn-master !bg-purple-600 w-full mb-6">GERAR E SALVAR COMBINAÇÕES SELECIONADAS</button>
+            <!-- Step 1: Nome do Produto -->
+            <div class="mb-4">
+                <label class="text-[9px] text-gray-400 font-black block mb-1">1. NOME DO PRODUTO</label>
+                <input type="text" id="gestaoBaseNome" class="apple-input" placeholder="EX: 15 PRO MAX">
+            </div>
 
-                <h4 class="text-[10px] font-black text-white mb-2 border-b border-zinc-800 pb-1">📋 VARIAÇÕES EXISTENTES</h4>
-                <div class="overflow-x-auto border border-zinc-800 rounded-lg bg-[#141415]">
-                    <table class="w-full text-left">
-                        <thead><tr class="text-[9px] text-gray-400 bg-black"><th class="pl-3 py-2">CAPACIDADE</th><th class="py-2">COR</th><th class="text-right pr-3 py-2">AÇÃO</th></tr></thead>
-                        <tbody id="listaVarBase"></tbody>
-                    </table>
+            <!-- Step 2: Capacidades -->
+            <div class="mb-4">
+                <label class="text-[9px] text-gray-400 font-black block mb-1">2. CAPACIDADES</label>
+                <div id="gestaoBaseCapsContainer" class="flex flex-wrap gap-2 mb-2"></div>
+                <div class="flex gap-2">
+                    <input type="text" id="gestaoBaseNovaCap" class="apple-input text-xs flex-1" placeholder="+ NOVA CAPACIDADE">
+                    <button type="button" onclick="adicionarNovaCapacidade()" class="btn-master text-xs px-3 py-1">ADD</button>
                 </div>
+            </div>
+
+            <!-- Step 3: Cores -->
+            <div class="mb-4">
+                <label class="text-[9px] text-gray-400 font-black block mb-1">3. CORES</label>
+                <div id="gestaoBaseCoresContainer" class="flex flex-wrap gap-2 mb-2"></div>
+                <div class="flex gap-2">
+                    <input type="text" id="gestaoBaseNovaCor" class="apple-input text-xs flex-1" placeholder="+ NOVA COR">
+                    <button type="button" onclick="adicionarNovaCor()" class="btn-master text-xs px-3 py-1">ADD</button>
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-4">
+                <button onclick="salvarGestaoBase()" class="btn-master !bg-green-600 flex-1">🚀 GERAR PRODUTO E COMBINAÇÕES</button>
+                <button type="button" onclick="fecharModalGestaoBase()" class="btn-master !bg-zinc-700 flex-1">CANCELAR</button>
             </div>
         </div>
     </div>
@@ -1119,7 +1138,6 @@
         let usdtPedidoId = '';
         let pixInstrucoes = '';
         let ofertasHorus = [];
-        let cardCounter = 0;
 
         const parseP = v => v ? parseFloat(v.toString().replace(/\./g, '').replace(',', '.')) : 0;
         const mascara = i => { let v=i.value.replace(/\D/g, ''); if(!v){i.value='';return;} i.value=(parseFloat(v)/100).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, "."); };
@@ -3504,22 +3522,21 @@
             }
         }
 
-        // ===== FUNÇÕES PARA GESTÃO DE BASE CARTESIANA =====
+        // ===== FUNÇÕES PARA GESTÃO DE BASE CARTESIANA (REFATORADAS) =====
 
         function renderProdutosList() {
             const tbody = document.getElementById('listaProdutosBase');
             if (!tbody) return;
             if (!dbProdutos || dbProdutos.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-400">Nenhum produto cadastrado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">Nenhum produto cadastrado.</td></tr>';
                 return;
             }
             document.getElementById('countBaseProd').innerText = dbProdutos.length;
             tbody.innerHTML = dbProdutos.map(p => `
                 <tr>
-                    <td class="py-2"><input type="checkbox" class="chk-base-prod" value="${p.id}"></td>
                     <td class="py-2 text-[10px]">${p.id}</td>
-                    <td class="py-2 text-xs font-bold">${p.nome}</td>
-                    <td class="py-2 text-[10px]">${p.categoria}</td>
+                    <td class="py-2"><input type="text" class="mini-edit !w-full !text-left" value="${p.nome}" onblur="updateProdutoMestre(${p.id}, 'nome', this.value)"></td>
+                    <td class="py-2"><input type="text" class="mini-edit !w-full !text-left" value="${p.categoria}" onblur="updateProdutoMestre(${p.id}, 'categoria', this.value)"></td>
                     <td class="py-2 text-right">
                         <button onclick="delProduto(${p.id})" class="bg-red-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-red-500">🗑️ EXCLUIR</button>
                         <button onclick="editarProduto(${p.id})" class="bg-yellow-600 text-white px-2 py-1 rounded text-[8px] font-black hover:bg-yellow-500 ml-1">✏️ EDITAR</button>
@@ -3528,15 +3545,26 @@
             `).join('');
         }
 
+        // Atualiza produto mestre via inline edit
+        async function updateProdutoMestre(id, campo, valor) {
+            valor = valor.trim().toUpperCase();
+            const { error } = await _s.from('produtos_mestre').update({ [campo]: valor }).eq('id', id);
+            if (error) {
+                alert('Erro ao atualizar: ' + error.message);
+            } else {
+                const idx = dbProdutos.findIndex(p => p.id === id);
+                if (idx !== -1) dbProdutos[idx][campo] = valor;
+                renderProdutosList(); // atualiza a tabela
+            }
+        }
+
         // Filtro da Tabela
         function filtrarTabelaBase(query) {
             const q = query.toLowerCase();
             const rows = document.getElementById('listaProdutosBase').getElementsByTagName('tr');
-            let count = 0;
             for (let r of rows) {
                 if (r.innerText.toLowerCase().includes(q)) {
                     r.style.display = '';
-                    count++;
                 } else {
                     r.style.display = 'none';
                 }
@@ -3552,11 +3580,11 @@
             } else {
                 const v = dbVar.find(x => x.id == id);
                 if (v) v[campo] = valor || null;
-                loadAll(); // Sincroniza fundo
+                // loadAll(); // não precisa, só atualiza localmente
             }
         }
 
-        // Renderiza a lista de variações como INPUTS editáveis
+        // Renderiza a lista de variações como INPUTS editáveis (para o modal de edição)
         function renderVarBaseList(prodId) {
             const tbody = document.getElementById('listaVarBase');
             const vars = dbVar.filter(v => v.produtos_mestre?.id == prodId).sort((a, b) => (a.capacidade||'').localeCompare(b.capacidade||''));
@@ -3577,447 +3605,237 @@
             `).join('');
         }
 
-        // Renderiza os Checkboxes do Cartesiano
-        function renderCartesianoEdit() {
-            let caps = [...new Set(dbVar.map(v => v.capacidade).filter(Boolean))].sort();
-            let cores = [...new Set(dbVar.map(v => v.cor).filter(Boolean))].sort();
-            
-            document.getElementById('editBaseCaps').innerHTML = caps.map(c => `<label class="inline-flex items-center gap-1 text-[9px] font-bold bg-black px-2 py-1 rounded border border-zinc-800 cursor-pointer hover:border-blue-500"><input type="checkbox" class="chk-edit-cap" value="${c}"> ${c}</label>`).join('');
-            document.getElementById('editBaseCores').innerHTML = cores.map(c => `<label class="inline-flex items-center gap-1 text-[9px] font-bold bg-black px-2 py-1 rounded border border-zinc-800 cursor-pointer hover:border-blue-500"><input type="checkbox" class="chk-edit-cor" value="${c}"> ${c}</label>`).join('');
-        }
+        // Abre o modal de gestão base (criação/edição)
+        function abrirModalGestaoBase(prodId = null) {
+            const modal = document.getElementById('modalGestaoBase');
+            const title = document.getElementById('modalGestaoBaseTitle');
+            const prodIdField = document.getElementById('gestaoBaseProdId');
+            const categoriaSelect = document.getElementById('gestaoBaseCategoria');
+            const nomeInput = document.getElementById('gestaoBaseNome');
+            const capsContainer = document.getElementById('gestaoBaseCapsContainer');
+            const coresContainer = document.getElementById('gestaoBaseCoresContainer');
+            const novaCapInput = document.getElementById('gestaoBaseNovaCap');
+            const novaCorInput = document.getElementById('gestaoBaseNovaCor');
 
-        // Abre o modal
-        function editarProduto(id) {
-            const p = dbProdutos.find(x => x.id == id);
-            if (!p) return;
-            document.getElementById('editBaseProdId').value = p.id;
-            document.getElementById('editBaseProdNome').value = p.nome;
+            // Limpar campos
+            nomeInput.value = '';
+            novaCapInput.value = '';
+            novaCorInput.value = '';
 
-            const catSelect = document.getElementById('editBaseProdCat');
-            catSelect.innerHTML = `
-                <option value="IPHONE">IPHONE</option><option value="APPLEWATCH">APPLEWATCH</option>
-                <option value="MACBOOK">MACBOOK</option><option value="IMAC">IMAC</option>
-                <option value="IPAD">IPAD</option><option value="ACESSORIOS">ACESSORIOS</option>
-                <option value="AIRPODS">AIRPODS</option><option value="PENCIL">PENCIL</option>
-                <option value="AIRTAG">AIRTAG</option><option value="OUTROS">OUTROS</option>
-            `;
-            if (!Array.from(catSelect.options).some(o => o.value === p.categoria)) {
-                catSelect.innerHTML += `<option value="${p.categoria}">${p.categoria}</option>`;
-            }
-            catSelect.value = p.categoria;
-
-            renderVarBaseList(id);
-            renderCartesianoEdit();
-            
-            document.getElementById('editBaseNovaCap').value = '';
-            document.getElementById('editBaseNovaCor').value = '';
-            
-            document.getElementById('modalEditarProdutoBase').classList.remove('hidden');
-        }
-
-        // Lançador Cartesiano dentro da Edição
-        async function gerarVariacoesMassaEdit(e) {
-            const btn = e.target;
-            const prodId = document.getElementById('editBaseProdId').value;
-            btn.disabled = true;
-            btn.innerText = 'GERANDO...';
-
-            let caps = Array.from(document.querySelectorAll('.chk-edit-cap:checked')).map(c => c.value);
-            let extraCaps = document.getElementById('editBaseNovaCap').value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
-            caps = [...new Set([...caps, ...extraCaps])];
-
-            let cores = Array.from(document.querySelectorAll('.chk-edit-cor:checked')).map(c => c.value);
-            let extraCores = document.getElementById('editBaseNovaCor').value.split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
-            cores = [...new Set([...cores, ...extraCores])];
-
-            if (caps.length === 0 && cores.length === 0) {
-                alert('Selecione ou digite ao menos uma capacidade ou cor.');
-                btn.disabled = false; btn.innerText = 'GERAR E SALVAR COMBINAÇÕES SELECIONADAS'; return;
-            }
-
-            if (caps.length === 0) caps = [null];
-            if (cores.length === 0) cores = [null];
-
-            let combinacoes = [];
-            caps.forEach(cap => {
-                cores.forEach(cor => {
-                    combinacoes.push({ produto_id: prodId, capacidade: cap, cor: cor });
-                });
+            // Popular categorias existentes
+            const categorias = [...new Set(dbProdutos.map(p => p.categoria))].sort();
+            categoriaSelect.innerHTML = '<option value="">SELECIONE UMA CATEGORIA</option>';
+            categorias.forEach(cat => {
+                categoriaSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
             });
+            categoriaSelect.innerHTML += '<option value="__nova">+ CRIAR NOVA CATEGORIA</option>';
 
-            const varsExistentes = dbVar.filter(v => v.produtos_mestre?.id == prodId);
-            const novas = combinacoes.filter(c => !varsExistentes.some(v => v.capacidade === c.capacidade && v.cor === c.cor));
-
-            if (novas.length === 0) {
-                alert('Todas as combinações selecionadas já existem neste produto.');
-                btn.disabled = false; btn.innerText = 'GERAR E SALVAR COMBINAÇÕES SELECIONADAS'; return;
-            }
-
-            const { data, error } = await _s.from('variacoes').insert(novas).select();
-            
-            if (error) {
-                alert('Erro ao gerar: ' + error.message);
-            } else {
-                const p = dbProdutos.find(x => x.id == prodId);
-                const inserts = data.map(d => ({...d, produtos_mestre: p}));
-                dbVar.push(...inserts);
-                
-                document.querySelectorAll('.chk-edit-cap, .chk-edit-cor').forEach(c => c.checked = false);
-                document.getElementById('editBaseNovaCap').value = '';
-                document.getElementById('editBaseNovaCor').value = '';
-                
-                renderVarBaseList(prodId);
-                loadAll(); // Sincroniza
-                alert(`${novas.length} variações geradas com sucesso!`);
-            }
-            btn.disabled = false; btn.innerText = 'GERAR E SALVAR COMBINAÇÕES SELECIONADAS';
-        }
-
-        function adicionarCardProduto() {
-            const container = document.getElementById('cardsNovosProdutos');
-            const cardId = `card_${cardCounter++}`;
-            const cardDiv = document.createElement('div');
-            cardDiv.className = 'bg-[#141415] border border-[#38383a] rounded-xl p-4';
-            cardDiv.id = cardId;
-            cardDiv.innerHTML = `
-                <div class="flex justify-between items-center mb-3">
-                    <h4 class="text-xs font-bold text-blue-400">NOVO PRODUTO</h4>
-                    <button type="button" onclick="removerCard('${cardId}')" class="text-red-500 text-lg font-black hover:text-red-400">&times;</button>
-                </div>
-                <div class="grid grid-cols-2 gap-3 mb-3">
-                    <select class="categoria apple-input text-xs" onchange="renderizarAtributosCard('${cardId}', this.value)">
-                        <option value="">CATEGORIA</option>
-                        <option value="IPHONE">IPHONE</option>
-                        <option value="APPLEWATCH">APPLEWATCH</option>
-                        <option value="MACBOOK">MACBOOK</option>
-                        <option value="IMAC">IMAC</option>
-                        <option value="IPAD">IPAD</option>
-                        <option value="ACESSORIOS">ACESSORIOS</option>
-                        <!-- NOVOS GRUPOS -->
-                        <option value="AIRPODS">AIRPODS</option>
-                        <option value="PENCIL">PENCIL</option>
-                        <option value="AIRTAG">AIRTAG</option>
-                        <!-- OPÇÃO PARA CRIAR NOVO GRUPO -->
-                        <option value="OUTRO">+ CRIAR NOVO GRUPO</option>
-                    </select>
-                    <input type="text" class="nome-produto apple-input text-xs" placeholder="NOME DO PRODUTO">
-                </div>
-                <!-- Input para novo grupo (inicialmente oculto) -->
-                <div class="novo-grupo-wrapper hidden mb-3">
-                    <input type="text" class="novo-grupo-input apple-input text-xs" placeholder="NOME DO NOVO GRUPO">
-                </div>
-                <div class="atributos-container space-y-3"></div>
-            `;
-            container.prepend(cardDiv);
-
-            // Adicionar evento para mostrar/esconder o input de novo grupo
-            const categoriaSelect = cardDiv.querySelector('.categoria');
-            const novoGrupoWrapper = cardDiv.querySelector('.novo-grupo-wrapper');
-            categoriaSelect.addEventListener('change', function() {
-                if (this.value === 'OUTRO') {
-                    novoGrupoWrapper.classList.remove('hidden');
-                } else {
-                    novoGrupoWrapper.classList.add('hidden');
+            // Se for edição, preencher dados
+            if (prodId) {
+                const prod = dbProdutos.find(p => p.id === prodId);
+                if (prod) {
+                    prodIdField.value = prod.id;
+                    title.innerText = '✏️ EDITAR PRODUTO';
+                    categoriaSelect.value = prod.categoria;
+                    nomeInput.value = prod.nome;
+                    // Forçar carregar tags com base na categoria
+                    setTimeout(() => {
+                        gestaoBaseCategoriaChange();
+                        // Marcar tags correspondentes às variações existentes
+                        const varsProd = dbVar.filter(v => v.produtos_mestre?.id === prodId);
+                        const capsSelecionadas = [...new Set(varsProd.map(v => v.capacidade))];
+                        const coresSelecionadas = [...new Set(varsProd.map(v => v.cor))];
+                        document.querySelectorAll('#gestaoBaseCapsContainer .tag').forEach(tag => {
+                            if (capsSelecionadas.includes(tag.getAttribute('data-value'))) {
+                                tag.classList.add('selected');
+                            }
+                        });
+                        document.querySelectorAll('#gestaoBaseCoresContainer .tag').forEach(tag => {
+                            if (coresSelecionadas.includes(tag.getAttribute('data-value'))) {
+                                tag.classList.add('selected');
+                            }
+                        });
+                    }, 100);
                 }
+            } else {
+                prodIdField.value = '';
+                title.innerText = '➕ CRIAR NOVO PRODUTO';
+                capsContainer.innerHTML = '';
+                coresContainer.innerHTML = '';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function fecharModalGestaoBase() {
+            document.getElementById('modalGestaoBase').classList.add('hidden');
+        }
+
+        // Quando a categoria muda, atualiza as tags de capacidade e cor
+        function gestaoBaseCategoriaChange() {
+            const categoria = document.getElementById('gestaoBaseCategoria').value;
+            const novaCatWrapper = document.getElementById('gestaoBaseNovaCategoriaWrapper');
+            if (categoria === '__nova') {
+                novaCatWrapper.classList.remove('hidden');
+            } else {
+                novaCatWrapper.classList.add('hidden');
+            }
+
+            // Filtrar capacidades e cores usadas nessa categoria
+            const produtosDaCat = dbProdutos.filter(p => p.categoria === categoria).map(p => p.id);
+            const varsDaCat = dbVar.filter(v => produtosDaCat.includes(v.produto_id));
+            const caps = [...new Set(varsDaCat.map(v => v.capacidade).filter(Boolean))].sort();
+            const cores = [...new Set(varsDaCat.map(v => v.cor).filter(Boolean))].sort();
+
+            renderTags('gestaoBaseCapsContainer', caps);
+            renderTags('gestaoBaseCoresContainer', cores);
+        }
+
+        // Renderiza tags clicáveis
+        function renderTags(containerId, valores) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            valores.forEach(val => {
+                const tag = document.createElement('span');
+                tag.className = 'tag';
+                tag.setAttribute('data-value', val);
+                tag.innerText = val;
+                tag.onclick = () => tag.classList.toggle('selected');
+                container.appendChild(tag);
             });
         }
 
-        function removerCard(cardId) {
-            document.getElementById(cardId)?.remove();
-        }
-
-        function adicionarNovoCheckbox(btn, tipo) {
-            const grupo = btn.closest('div.mb-2');
-            const input = grupo.querySelector(`.novo-valor-${tipo}`);
+        // Adicionar nova capacidade (vinda do input)
+        function adicionarNovaCapacidade() {
+            const input = document.getElementById('gestaoBaseNovaCap');
             const valor = input.value.trim().toUpperCase();
             if (!valor) return;
-
-            const checkContainer = grupo.querySelector('.flex.flex-wrap');
-            const existente = Array.from(checkContainer.querySelectorAll('input[type="checkbox"]')).some(cb => cb.value === valor);
-            if (existente) {
-                alert('Valor já existe na lista.');
+            const container = document.getElementById('gestaoBaseCapsContainer');
+            // Verificar se já existe
+            if (Array.from(container.querySelectorAll('.tag')).some(t => t.getAttribute('data-value') === valor)) {
+                alert('Esta capacidade já está na lista.');
                 return;
             }
-
-            const newCb = document.createElement('div');
-            newCb.innerHTML = `
-                <label class="inline-flex items-center gap-1 text-[10px]">
-                    <input type="checkbox" class="checkbox-${tipo}" value="${valor}" checked> ${valor}
-                </label>
-            `;
-            checkContainer.appendChild(newCb);
+            const tag = document.createElement('span');
+            tag.className = 'tag selected';
+            tag.setAttribute('data-value', valor);
+            tag.innerText = valor;
+            tag.onclick = () => tag.classList.toggle('selected');
+            container.appendChild(tag);
             input.value = '';
         }
 
-        function renderizarAtributosCard(cardId, categoria) {
-            const card = document.getElementById(cardId);
-            if (!card) return;
-            const container = card.querySelector('.atributos-container');
-            container.innerHTML = '';
+        // Adicionar nova cor
+        function adicionarNovaCor() {
+            const input = document.getElementById('gestaoBaseNovaCor');
+            const valor = input.value.trim().toUpperCase();
+            if (!valor) return;
+            const container = document.getElementById('gestaoBaseCoresContainer');
+            if (Array.from(container.querySelectorAll('.tag')).some(t => t.getAttribute('data-value') === valor)) {
+                alert('Esta cor já está na lista.');
+                return;
+            }
+            const tag = document.createElement('span');
+            tag.className = 'tag selected';
+            tag.setAttribute('data-value', valor);
+            tag.innerText = valor;
+            tag.onclick = () => tag.classList.toggle('selected');
+            container.appendChild(tag);
+            input.value = '';
+        }
 
-            if (!categoria || categoria === 'OUTRO') {
-                // Para "OUTRO", não renderiza atributos pré-definidos, mas podemos deixar o usuário adicionar livremente via inputs genéricos
-                // Por simplicidade, vamos permitir apenas que ele crie variações depois manualmente, mas aqui vamos mostrar um aviso.
-                container.innerHTML = '<p class="text-[9px] text-gray-400">Categoria personalizada. Você poderá adicionar variações depois manualmente.</p>';
+        // Salvar produto e gerar combinações
+        async function salvarGestaoBase() {
+            const prodId = document.getElementById('gestaoBaseProdId').value;
+            let categoria = document.getElementById('gestaoBaseCategoria').value;
+            const nome = document.getElementById('gestaoBaseNome').value.trim().toUpperCase();
+            const novaCategoriaInput = document.getElementById('gestaoBaseNovaCategoria');
+
+            // Validações
+            if (!categoria) {
+                alert('Selecione ou crie uma categoria.');
+                return;
+            }
+            if (categoria === '__nova') {
+                categoria = novaCategoriaInput.value.trim().toUpperCase();
+                if (!categoria) {
+                    alert('Digite o nome da nova categoria.');
+                    return;
+                }
+            }
+            if (!nome) {
+                alert('Digite o nome do produto.');
                 return;
             }
 
-            const criarGrupo = (titulo, opcoes, tipo) => {
-                const grupo = document.createElement('div');
-                grupo.className = 'mb-2';
-                grupo.innerHTML = `<label class="text-[9px] text-gray-400">${titulo}</label>`;
-                const checkContainer = document.createElement('div');
-                checkContainer.className = 'flex flex-wrap gap-2 mt-1';
-                opcoes.forEach(val => {
-                    const cb = document.createElement('div');
-                    cb.innerHTML = `
-                        <label class="inline-flex items-center gap-1 text-[10px]">
-                            <input type="checkbox" class="checkbox-${tipo}" value="${val}"> ${val}
-                        </label>
-                    `;
-                    checkContainer.appendChild(cb);
+            // Coletar capacidades e cores selecionadas
+            const capsSelecionadas = Array.from(document.querySelectorAll('#gestaoBaseCapsContainer .tag.selected')).map(t => t.getAttribute('data-value'));
+            const coresSelecionadas = Array.from(document.querySelectorAll('#gestaoBaseCoresContainer .tag.selected')).map(t => t.getAttribute('data-value'));
+
+            if (capsSelecionadas.length === 0 || coresSelecionadas.length === 0) {
+                alert('Selecione pelo menos uma capacidade e uma cor para gerar variações.');
+                return;
+            }
+
+            // Inserir ou atualizar produto
+            let produtoId = prodId;
+            if (prodId) {
+                // Atualizar existente
+                const { error } = await _s.from('produtos_mestre').update({ nome, categoria }).eq('id', prodId);
+                if (error) {
+                    alert('Erro ao atualizar produto: ' + error.message);
+                    return;
+                }
+            } else {
+                // Inserir novo
+                const { data, error } = await _s.from('produtos_mestre').insert([{ nome, categoria }]).select();
+                if (error) {
+                    alert('Erro ao criar produto: ' + error.message);
+                    return;
+                }
+                produtoId = data[0].id;
+            }
+
+            // Gerar combinações cartesianas
+            const combinacoes = [];
+            capsSelecionadas.forEach(cap => {
+                coresSelecionadas.forEach(cor => {
+                    combinacoes.push({ produto_id: produtoId, capacidade: cap, cor });
                 });
-                grupo.appendChild(checkContainer);
-
-                const addDiv = document.createElement('div');
-                addDiv.className = 'flex gap-2 mt-2';
-                addDiv.innerHTML = `
-                    <input type="text" class="novo-valor-${tipo} apple-input text-xs flex-1" placeholder="NOVO ${titulo.toUpperCase()}">
-                    <button type="button" class="btn-add-${tipo} btn-master text-xs px-3 py-1" onclick="adicionarNovoCheckbox(this, '${tipo}')">ADD</button>
-                `;
-                grupo.appendChild(addDiv);
-                return grupo;
-            };
-
-            const memoriasUnicas = [...new Set(dbVar.map(v => v.capacidade).filter(Boolean))].sort();
-            // Adicionar 2TB se for iPhone
-            if (categoria === 'IPHONE' && !memoriasUnicas.includes('2TB')) {
-                memoriasUnicas.push('2TB');
-            }
-            const coresUnicas = [...new Set(dbVar.map(v => v.cor).filter(Boolean))].sort();
-
-            const processadores = ['M1', 'M2', 'M3', 'M4', 'M5'];
-            const memoriasRam = ['4GB', '8GB', '16GB', '24GB', '32GB', '48GB', '64GB'];
-            const ssd = ['128GB', '256GB', '512GB', '1TB', '2TB', '4TB', '8TB'];
-            const milimetros = ['38MM', '40MM', '41MM', '42MM', '44MM', '45MM', '46MM', '49MM'];
-            const versoesIpad = ['PRO', 'AIR', 'MINI', 'BASE'];
-            const subGrupo = ['FONTES', 'CABOS', 'FONES', 'ADAPTADORES', 'OUTROS'];
-
-            switch (categoria) {
-                case 'IPHONE':
-                    container.appendChild(criarGrupo('Memórias', memoriasUnicas, 'memoria'));
-                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
-                    break;
-                case 'IPAD':
-                    container.appendChild(criarGrupo('Versão', versoesIpad, 'versao'));
-                    container.appendChild(criarGrupo('Processador', processadores, 'processador'));
-                    container.appendChild(criarGrupo('Memórias', memoriasUnicas, 'memoria'));
-                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
-                    break;
-                case 'APPLEWATCH':
-                    container.appendChild(criarGrupo('Milímetros', milimetros, 'milimetro'));
-                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
-                    break;
-                case 'MACBOOK':
-                case 'IMAC':
-                    container.appendChild(criarGrupo('Processador', processadores, 'processador'));
-                    container.appendChild(criarGrupo('Memória RAM', memoriasRam, 'ram'));
-                    container.appendChild(criarGrupo('SSD', ssd, 'ssd'));
-                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
-                    break;
-                case 'ACESSORIOS':
-                    container.appendChild(criarGrupo('Sub-grupo', subGrupo, 'subgrupo'));
-                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
-                    break;
-                case 'AIRPODS':
-                    // Para AIRPODS, podemos ter modelo (geração) e cor? Vamos simplificar com capacidade (geração) e cor
-                    const geracoesAirpods = ['1ª GERAÇÃO', '2ª GERAÇÃO', '3ª GERAÇÃO', 'PRO', 'PRO 2', 'MAX'];
-                    container.appendChild(criarGrupo('Geração', geracoesAirpods, 'memoria'));
-                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
-                    break;
-                case 'PENCIL':
-                    const modelosPencil = ['1ª GERAÇÃO', '2ª GERAÇÃO', 'USB-C', 'PRO'];
-                    container.appendChild(criarGrupo('Modelo', modelosPencil, 'memoria'));
-                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
-                    break;
-                case 'AIRTAG':
-                    // AIRTAG geralmente não tem muitas variações, mas podemos permitir gravação personalizada
-                    container.appendChild(criarGrupo('Modelo', ['PADRÃO'], 'memoria'));
-                    container.appendChild(criarGrupo('Cores', coresUnicas, 'cor'));
-                    break;
-                default: break;
-            }
-        }
-
-        async function salvarBaseMassa() {
-            const cards = document.querySelectorAll('#cardsNovosProdutos > div');
-            if (cards.length === 0) {
-                alert('Adicione pelo menos um card de produto.');
-                return;
-            }
-
-            let totalProdutos = 0;
-            let totalVariacoes = 0;
-
-            for (const card of cards) {
-                const categoriaSelect = card.querySelector('.categoria');
-                let categoria = categoriaSelect.value;
-                let nomeProduto = card.querySelector('.nome-produto').value.trim().toUpperCase();
-
-                // Se for OUTRO, pegar o valor do input de novo grupo
-                if (categoria === 'OUTRO') {
-                    const novoGrupoInput = card.querySelector('.novo-grupo-input');
-                    categoria = novoGrupoInput.value.trim().toUpperCase();
-                    if (!categoria) {
-                        alert('Preencha o nome do novo grupo.');
-                        return;
-                    }
-                }
-
-                if (!categoria || !nomeProduto) {
-                    alert('Preencha categoria e nome do produto em todos os cards.');
-                    return;
-                }
-
-                const { data: novoProd, error: errProd } = await _s
-                    .from('produtos_mestre')
-                    .insert([{ nome: nomeProduto, categoria }])
-                    .select()
-                    .single();
-                if (errProd) {
-                    alert('Erro ao criar produto: ' + errProd.message);
-                    return;
-                }
-                const produtoId = novoProd.id;
-
-                const grupos = {
-                    memorias: [],
-                    cores: [],
-                    milimetros: [],
-                    processadores: [],
-                    rams: [],
-                    ssds: [],
-                    versoes: [],
-                    subgrupos: []
-                };
-
-                card.querySelectorAll('.checkbox-memoria:checked').forEach(cb => grupos.memorias.push(cb.value));
-                card.querySelectorAll('.checkbox-cor:checked').forEach(cb => grupos.cores.push(cb.value));
-                card.querySelectorAll('.checkbox-milimetro:checked').forEach(cb => grupos.milimetros.push(cb.value));
-                card.querySelectorAll('.checkbox-processador:checked').forEach(cb => grupos.processadores.push(cb.value));
-                card.querySelectorAll('.checkbox-ram:checked').forEach(cb => grupos.rams.push(cb.value));
-                card.querySelectorAll('.checkbox-ssd:checked').forEach(cb => grupos.ssds.push(cb.value));
-                card.querySelectorAll('.checkbox-versao:checked').forEach(cb => grupos.versoes.push(cb.value));
-                card.querySelectorAll('.checkbox-subgrupo:checked').forEach(cb => grupos.subgrupos.push(cb.value));
-
-                let combinacoes = [];
-
-                if (categoria === 'IPHONE') {
-                    for (const mem of grupos.memorias) {
-                        for (const cor of grupos.cores) {
-                            combinacoes.push({ capacidade: mem, cor });
-                        }
-                    }
-                } else if (categoria === 'IPAD') {
-                    for (const ver of grupos.versoes) {
-                        for (const proc of grupos.processadores) {
-                            for (const mem of grupos.memorias) {
-                                for (const cor of grupos.cores) {
-                                    const capacidade = `${ver} - ${proc} - ${mem}`;
-                                    combinacoes.push({ capacidade, cor });
-                                }
-                            }
-                        }
-                    }
-                } else if (categoria === 'APPLEWATCH') {
-                    for (const mm of grupos.milimetros) {
-                        for (const cor of grupos.cores) {
-                            combinacoes.push({ capacidade: mm, cor });
-                        }
-                    }
-                } else if (categoria === 'MACBOOK' || categoria === 'IMAC') {
-                    for (const proc of grupos.processadores) {
-                        for (const ram of grupos.rams) {
-                            for (const ssd of grupos.ssds) {
-                                for (const cor of grupos.cores) {
-                                    const capacidade = `${proc} - ${ram} - ${ssd}`;
-                                    combinacoes.push({ capacidade, cor });
-                                }
-                            }
-                        }
-                    }
-                } else if (categoria === 'ACESSORIOS') {
-                    for (const sub of grupos.subgrupos) {
-                        for (const cor of grupos.cores) {
-                            combinacoes.push({ capacidade: sub, cor });
-                        }
-                    }
-                } else if (categoria === 'AIRPODS' || categoria === 'PENCIL' || categoria === 'AIRTAG') {
-                    // Para novos grupos, tratar como combinação de capacidade (ou modelo) e cor
-                    for (const mem of grupos.memorias) {
-                        for (const cor of grupos.cores) {
-                            combinacoes.push({ capacidade: mem, cor });
-                        }
-                    }
-                } else {
-                    // Para categorias personalizadas (OUTRO), podemos permitir combinações livres? Por simplicidade, não criaremos variações automáticas, mas podemos pedir para inserir manualmente depois.
-                    // Neste caso, vamos pular a criação de variações e apenas criar o produto.
-                    combinacoes = []; // nenhuma variação automática
-                }
-
-                if (combinacoes.length === 0) {
-                    // Apenas produto sem variações
-                    totalProdutos++;
-                    continue;
-                }
-
-                const payloads = combinacoes.map(c => ({
-                    produto_id: produtoId,
-                    capacidade: c.capacidade,
-                    cor: c.cor
-                }));
-
-                const { error: errVar } = await _s.from('variacoes').insert(payloads);
-                if (errVar) {
-                    alert('Erro ao criar variações: ' + errVar.message);
-                    await _s.from('produtos_mestre').delete().eq('id', produtoId);
-                    return;
-                }
-
-                totalProdutos++;
-                totalVariacoes += payloads.length;
-            }
-
-            alert(`Sucesso! ${totalProdutos} produto(s) criado(s) com ${totalVariacoes} variações.`);
-            document.getElementById('cardsNovosProdutos').innerHTML = '';
-            await loadAll();
-        }
-
-        // ===== FUNÇÕES DE FILTRO POR GRUPO PARA OS LANÇADORES =====
-        function filtrarModelosPorGrupo(prefixo) {
-            const grupo = document.getElementById(prefixo + 'Grupo')?.value;
-            const modeloSelect = document.getElementById(prefixo + 'Modelo');
-            if (!modeloSelect) return;
-
-            modeloSelect.innerHTML = '<option value="">MODELO...</option>';
-            modeloSelect.disabled = !grupo;
-
-            if (!grupo) return;
-
-            const modelosFiltrados = dbProdutos.filter(p => p.categoria?.toUpperCase() === grupo?.toUpperCase());
-            modelosFiltrados.sort((a, b) => a.nome.localeCompare(b.nome)).forEach(m => {
-                modeloSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
             });
+
+            // Filtrar as que já existem
+            const varsExistentes = dbVar.filter(v => v.produtos_mestre?.id == produtoId);
+            const novas = combinacoes.filter(c => !varsExistentes.some(v => v.capacidade === c.capacidade && v.cor === c.cor));
+
+            if (novas.length > 0) {
+                const { error } = await _s.from('variacoes').insert(novas);
+                if (error) {
+                    alert('Erro ao inserir variações: ' + error.message);
+                    return;
+                }
+            }
+
+            alert('Produto e variações salvos com sucesso!');
+            fecharModalGestaoBase();
+            await loadAll(); // recarrega tudo
         }
 
-        // A função atualizarModelosMassa não é mais necessária (grupo global removido), mas vamos mantê-la vazia para evitar erros.
-        function atualizarModelosMassa() {
-            // Não faz mais nada
+        // Editar produto (chama o modal de gestão base)
+        function editarProduto(id) {
+            abrirModalGestaoBase(id);
         }
 
-        // Funções de fechar modal
-        function fecharModalEditarProdutoBase() {
-            document.getElementById('modalEditarProdutoBase').classList.add('hidden');
+        // Excluir produto e suas variações
+        async function delProduto(id) {
+            if (!confirm(`ATENÇÃO: Deseja excluir o produto #${id} e TODAS as suas variações?`)) return;
+            const { error } = await _s.from('produtos_mestre').delete().eq('id', id);
+            if (error) {
+                alert('Erro ao excluir: ' + error.message);
+            } else {
+                alert('Produto excluído com sucesso!');
+                await loadAll();
+            }
         }
 
         // ===== FUNÇÕES DA SPRINT 2 (EDIÇÃO EM MASSA NA BASE) =====
@@ -4123,8 +3941,6 @@
                     const { error } = await _s.from('variacoes').insert(novasCombinacoes);
                     if (error) {
                         alert(`Erro ao inserir variações para produto ${id}: ${error.message}`);
-                    } else {
-                        // Atualizar dbVar local (opcional, loadAll fará depois)
                     }
                 }
             }
@@ -4136,59 +3952,19 @@
 
         // Expor novas funções globalmente
         window.filtrarTabelaBase = filtrarTabelaBase;
+        window.updateProdutoMestre = updateProdutoMestre;
         window.updateVarBase = updateVarBase;
         window.renderVarBaseList = renderVarBaseList;
-        window.renderCartesianoEdit = renderCartesianoEdit;
         window.editarProduto = editarProduto;
-        window.gerarVariacoesMassaEdit = gerarVariacoesMassaEdit;
-        window.fecharModalEditarProdutoBase = fecharModalEditarProdutoBase;
+        window.abrirModalGestaoBase = abrirModalGestaoBase;
+        window.fecharModalGestaoBase = fecharModalGestaoBase;
+        window.gestaoBaseCategoriaChange = gestaoBaseCategoriaChange;
+        window.adicionarNovaCapacidade = adicionarNovaCapacidade;
+        window.adicionarNovaCor = adicionarNovaCor;
+        window.salvarGestaoBase = salvarGestaoBase;
         window.abrirBulkBase = abrirBulkBase;
         window.fecharModalBulkBase = fecharModalBulkBase;
         window.salvarBulkBase = salvarBulkBase;
-
-        async function delProduto(id) {
-            if (!confirm(`ATENÇÃO: Deseja excluir o produto #${id} e TODAS as suas variações?`)) return;
-            const { error } = await _s.from('produtos_mestre').delete().eq('id', id);
-            if (error) {
-                alert('Erro ao excluir: ' + error.message);
-            } else {
-                alert('Produto excluído com sucesso!');
-                await loadAll();
-            }
-        }
-
-        // Demais funções já existentes continuam intactas
-        // (abrirModalConfigPix, abrirModalRegrasTrava, etc.)
-
-        // Expor funções globais adicionais (as que já existiam)
-        window.editarProduto = editarProduto; // sobrescrito
-        window.abrirModalConfigPix = abrirModalConfigPix;
-        window.fecharModalConfigPix = fecharModalConfigPix;
-        window.salvarConfigPix = salvarConfigPix;
-        window.abrirModalRegrasTrava = abrirModalRegrasTrava;
-        window.fecharModalRegrasTrava = fecharModalRegrasTrava;
-        window.confirmarTrava = confirmarTrava;
-        window.copiarDadosPix = copiarDadosPix;
-        window.enviarComprovante = enviarComprovante;
-        window.fecharPedidoUsdt = fecharPedidoUsdt;
-        window.exportarContatos = exportarContatos;
-        window.importarFornecedores = importarFornecedores;
-        window.exportarBuscadores = exportarBuscadores;
-        window.importarBuscadores = importarBuscadores;
-        window.abrirModalAddMassa = abrirModalAddMassa;
-        window.fecharModalAddMassa = fecharModalAddMassa;
-        window.adicionarLinhaAnuncio = adicionarLinhaAnuncio;
-        window.duplicarLinhaAnuncio = duplicarLinhaAnuncio;
-        window.executarLancamentoMassa = executarLancamentoMassa;
-        window.abrirModalMalaDireta = abrirModalMalaDireta;
-        window.fecharModalMalaDireta = fecharModalMalaDireta;
-        window.enviarMalaDireta = enviarMalaDireta;
-        window.filtrarApenasBloqueados = filtrarApenasBloqueados;
-        window.adicionarCardProduto = adicionarCardProduto;
-        window.removerCard = removerCard;
-        window.renderizarAtributosCard = renderizarAtributosCard;
-        window.adicionarNovoCheckbox = adicionarNovoCheckbox;
-        window.salvarBaseMassa = salvarBaseMassa;
         window.delProduto = delProduto;
         window.renderProdutosList = renderProdutosList;
         window.filtrarModelosPorGrupo = filtrarModelosPorGrupo;
