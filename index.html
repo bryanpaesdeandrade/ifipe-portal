@@ -941,7 +941,7 @@
             }
 
             const uLower = user.toLowerCase();
-            const uDigits = user.replace(/\D/g, ''); // apenas dígitos do input
+            const uDigits = user.replace(/\D/g, '');
             const tabela = currentProfile === 'buscador' ? 'clientes_buscador' : 'fornecedores';
 
             const { data, error } = await _s.from(tabela).select('*');
@@ -950,16 +950,15 @@
                 return;
             }
 
-            // Função para comparar sufixo de 10 ou 11 dígitos
+            // Função para comparar sufixo dos últimos 10 ou 11 dígitos
             function correspondeWhatsApp(whatsappBanco, digitosInput) {
                 if (!whatsappBanco) return false;
                 const bancoDigits = String(whatsappBanco).replace(/\D/g, '');
-                // Se o input tem 10 ou 11 dígitos, verifica se os últimos N do banco batem
+                // Se o input tem 10 ou 11 dígitos, verifica se o final do banco termina com esses dígitos
                 if (digitosInput.length >= 10 && digitosInput.length <= 11) {
-                    const sufixoBanco = bancoDigits.slice(-digitosInput.length);
-                    return sufixoBanco === digitosInput;
+                    return bancoDigits.endsWith(digitosInput);
                 }
-                // Se o input tem mais de 11 (ex: com DDI), compara exato (já que pode ter vindo completo)
+                // Se tiver mais que 11, tenta igualdade exata
                 return bancoDigits === digitosInput;
             }
 
@@ -1048,26 +1047,14 @@
             ddiInput.value = ddiPorPais[pais] || '+55';
         }
 
-        // ===== VALIDAÇÃO DE DUPLICIDADE (APENAS WHATSAPP) =====
-        async function verificarWhatsappDuplicado(tabela, whatsappCompleto) {
-            const { data, error } = await _s
-                .from(tabela)
-                .select('id')
-                .eq('whatsapp', whatsappCompleto);
-            if (error) {
-                console.error('Erro ao verificar duplicidade de whatsapp:', error);
-                return false;
-            }
-            return data && data.length > 0;
-        }
-
-        // ===== CADASTRO BUSCADOR (COMBO 1-2: SIGNUP + INSERT) =====
+        // ===== CADASTRO BUSCADOR (Combo 1-2: Auth + Insert) =====
         async function cadastrarBuscador(e) {
             e.preventDefault();
             const btn = document.getElementById('btnCadastrarBuscador');
             btn.disabled = true;
             btn.innerText = 'PROCESSANDO...';
 
+            // Captura os dados do formulário
             const nome = document.getElementById('buscadorNome').value.trim().toUpperCase();
             const pais = document.getElementById('buscadorPais').value;
             const estado = pais === 'Brasil' ? document.getElementById('buscadorEstado').value : null;
@@ -1077,7 +1064,7 @@
             const email = document.getElementById('buscadorEmail').value.trim().toLowerCase();
             const senha = document.getElementById('buscadorSenha').value.trim();
 
-            // Validações básicas
+            // Validação básica
             if (!nome || !pais || !ddi || !numero || !email || !senha) {
                 alert('Preencha todos os campos.');
                 btn.disabled = false; btn.innerText = 'CADASTRAR'; return;
@@ -1089,55 +1076,55 @@
 
             const whatsappCompleto = ddi + numero;
 
-            // Verificar se o whatsapp já está cadastrado na tabela clientes_buscador
-            const jaExisteWhats = await verificarWhatsappDuplicado('clientes_buscador', whatsappCompleto);
-            if (jaExisteWhats) {
-                alert('Este WhatsApp já possui cadastro.');
-                btn.disabled = false; btn.innerText = 'CADASTRAR'; return;
-            }
-
-            // PASSO 1: Criar usuário no Auth
+            // 1. Criar o usuário no Auth
             const { data: authData, error: authError } = await _s.auth.signUp({
                 email: email,
                 password: senha
             });
 
             if (authError) {
+                btn.disabled = false; btn.innerText = 'CADASTRAR';
                 if (authError.message.includes('User already registered')) {
                     alert('Este e-mail já está cadastrado.');
                 } else {
                     alert('Erro ao criar conta: ' + authError.message);
                 }
-                btn.disabled = false; btn.innerText = 'CADASTRAR';
                 return;
             }
 
-            // PASSO 2: Inserir dados na tabela clientes_buscador
-            const { error: insertError } = await _s.from('clientes_buscador').insert([{
-                nome,
-                whatsapp: whatsappCompleto,
-                email,
-                pais,
-                estado,
-                cidade,
-                senha, // senha em texto puro? Idealmente não, mas por enquanto manteremos como estava
-                ativo: true,
-                logins_count: 0
-            }]);
+            // 2. Se o Auth criou com sucesso, insere na tabela clientes_buscador
+            if (authData?.user) {
+                const { error: insertError } = await _s
+                    .from('clientes_buscador')
+                    .insert([{
+                        auth_id: authData.user.id,      // UUID do Auth
+                        nome: nome,
+                        email: email,
+                        whatsapp: whatsappCompleto,
+                        pais: pais,
+                        estado: estado,
+                        cidade: cidade,
+                        senha: senha,                   // mantido por compatibilidade
+                        ativo: true,
+                        logins_count: 0
+                    }]);
 
-            if (insertError) {
-                alert('Erro ao salvar dados do perfil: ' + insertError.message);
-                // Opcional: poderíamos tentar excluir o usuário do auth? Deixamos para o suporte.
-                btn.disabled = false; btn.innerText = 'CADASTRAR';
-                return;
+                if (insertError) {
+                    btn.disabled = false; btn.innerText = 'CADASTRAR';
+                    alert('Erro ao salvar dados do perfil. Contate o suporte.');
+                    console.error(insertError);
+                    return;
+                }
+
+                // Sucesso
+                alert('Cadastro realizado! Verifique seu e-mail para confirmar sua conta e faça login.');
+                fecharModalCadastro('buscador');
             }
 
             btn.disabled = false; btn.innerText = 'CADASTRAR';
-            alert('Cadastro realizado! Verifique seu e-mail para confirmar sua conta e faça login.');
-            fecharModalCadastro('buscador');
         }
 
-        // ===== CADASTRO ANUNCIANTE (permanece com insert direto, pois anunciantes precisam de aprovação) =====
+        // ===== CADASTRO ANUNCIANTE (permanece com insert direto) =====
         async function cadastrarAnunciante(e) {
             e.preventDefault();
             const btn = document.getElementById('btnCadastrarAnunciante');
@@ -1165,8 +1152,17 @@
 
             const whatsappCompleto = ddi + numero;
 
-            const jaExiste = await verificarWhatsappDuplicado('fornecedores', whatsappCompleto);
-            if (jaExiste) {
+            // Verificar duplicidade de WhatsApp
+            const { data: existente, error: checkError } = await _s
+                .from('fornecedores')
+                .select('id')
+                .eq('whatsapp', whatsappCompleto)
+                .maybeSingle();
+
+            if (checkError) {
+                console.error('Erro ao verificar duplicidade:', checkError);
+            }
+            if (existente) {
                 alert('Este WhatsApp já possui cadastro.');
                 btn.disabled = false; btn.innerText = 'CADASTRAR'; return;
             }
