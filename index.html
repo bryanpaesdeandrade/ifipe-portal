@@ -921,7 +921,7 @@
             atualizarBanner(bannerIndex - 1);
         }
 
-        // ===== LOGIN (SEM BLOQUEIO DE HORÁRIO) =====
+        // ===== LOGIN (COM COMPARAÇÃO FLEXÍVEL DE WHATSAPP) =====
         async function handleLogin() {
             const user = document.getElementById('loginUser').value.trim();
             const pass = document.getElementById('loginPass').value.trim();
@@ -941,7 +941,7 @@
             }
 
             const uLower = user.toLowerCase();
-            const uDigits = user.replace(/\D/g, '');
+            const uDigits = user.replace(/\D/g, ''); // apenas dígitos do input
             const tabela = currentProfile === 'buscador' ? 'clientes_buscador' : 'fornecedores';
 
             const { data, error } = await _s.from(tabela).select('*');
@@ -950,9 +950,22 @@
                 return;
             }
 
+            // Função para comparar sufixo de 10 ou 11 dígitos
+            function correspondeWhatsApp(whatsappBanco, digitosInput) {
+                if (!whatsappBanco) return false;
+                const bancoDigits = String(whatsappBanco).replace(/\D/g, '');
+                // Se o input tem 10 ou 11 dígitos, verifica se os últimos N do banco batem
+                if (digitosInput.length >= 10 && digitosInput.length <= 11) {
+                    const sufixoBanco = bancoDigits.slice(-digitosInput.length);
+                    return sufixoBanco === digitosInput;
+                }
+                // Se o input tem mais de 11 (ex: com DDI), compara exato (já que pode ter vindo completo)
+                return bancoDigits === digitosInput;
+            }
+
             const encontrado = data.find(r => {
                 const emailMatch = (r.email || '').toLowerCase() === uLower;
-                const whatsMatch = (r.whatsapp || '').replace(/\D/g, '') === uDigits;
+                const whatsMatch = correspondeWhatsApp(r.whatsapp, uDigits);
                 return (emailMatch || whatsMatch) && r.senha === pass && r.ativo === true;
             });
 
