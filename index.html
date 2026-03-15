@@ -1116,9 +1116,9 @@
                     return;
                 }
 
-                // Sucesso
-                alert('Cadastro realizado! Verifique seu e-mail para confirmar sua conta e faça login.');
-                fecharModalCadastro('buscador');
+                // Sucesso: loga o usuário automaticamente e redireciona
+                localStorage.setItem('iFipe_Token', authData.user.id);
+                window.location.replace('buscar.html');
             }
 
             btn.disabled = false; btn.innerText = 'CADASTRAR';
@@ -1252,6 +1252,13 @@
 
         // ===== INICIALIZAÇÃO =====
         window.onload = async () => {
+            // Verifica se a URL contém #access_token e type=recovery (deep link de recuperação)
+            if (window.location.hash && window.location.hash.includes('access_token') && window.location.hash.includes('type=recovery')) {
+                // Redireciona para redefinir-senha.html mantendo o hash na URL
+                window.location.replace('/redefinir-senha.html' + window.location.hash);
+                return;
+            }
+
             try {
                 const { data: config, error } = await _s
                     .from('sistema_config')
