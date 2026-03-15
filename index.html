@@ -1035,20 +1035,20 @@
             ddiInput.value = ddiPorPais[pais] || '+55';
         }
 
-        // ===== VALIDAÇÃO DE DUPLICIDADE =====
-        async function verificarDuplicidade(tabela, email, whatsappCompleto) {
+        // ===== VALIDAÇÃO DE DUPLICIDADE (APENAS WHATSAPP) =====
+        async function verificarWhatsappDuplicado(tabela, whatsappCompleto) {
             const { data, error } = await _s
                 .from(tabela)
                 .select('id')
-                .or(`email.eq.${email},whatsapp.eq.${whatsappCompleto}`);
+                .eq('whatsapp', whatsappCompleto);
             if (error) {
-                console.error('Erro ao verificar duplicidade:', error);
+                console.error('Erro ao verificar duplicidade de whatsapp:', error);
                 return false;
             }
             return data && data.length > 0;
         }
 
-        // ===== CADASTRO BUSCADOR =====
+        // ===== CADASTRO BUSCADOR (VIA SUPABASE AUTH) =====
         async function cadastrarBuscador(e) {
             e.preventDefault();
             const btn = document.getElementById('btnCadastrarBuscador');
@@ -1075,34 +1075,44 @@
 
             const whatsappCompleto = ddi + numero;
 
-            const jaExiste = await verificarDuplicidade('clientes_buscador', email, whatsappCompleto);
-            if (jaExiste) {
-                alert('Este usuário já possui cadastro.');
+            // Verificar se o whatsapp já está cadastrado na tabela clientes_buscador
+            const jaExisteWhats = await verificarWhatsappDuplicado('clientes_buscador', whatsappCompleto);
+            if (jaExisteWhats) {
+                alert('Este WhatsApp já possui cadastro.');
                 btn.disabled = false; btn.innerText = 'CADASTRAR'; return;
             }
 
-            const { error } = await _s.from('clientes_buscador').insert([{
-                nome,
-                whatsapp: whatsappCompleto,
-                email,
-                pais,
-                estado,
-                cidade,
-                senha,
-                ativo: true,
-                logins_count: 0
-            }]);
+            // Usar signUp do Supabase Auth
+            const { data, error } = await _s.auth.signUp({
+                email: email,
+                password: senha,
+                options: {
+                    data: {
+                        display_name: nome,
+                        whatsapp: whatsappCompleto,
+                        pais: pais,
+                        estado: estado,
+                        cidade: cidade,
+                        role: 'buscador'
+                    }
+                }
+            });
 
             btn.disabled = false; btn.innerText = 'CADASTRAR';
+
             if (error) {
-                alert('Erro ao cadastrar: ' + error.message);
+                if (error.message.includes('User already registered')) {
+                    alert('Este e-mail já está cadastrado.');
+                } else {
+                    alert('Erro ao cadastrar: ' + error.message);
+                }
             } else {
-                alert('Cadastro realizado! Faça login.');
+                alert('Cadastro realizado! Verifique seu e-mail para confirmar sua conta e faça login.');
                 fecharModalCadastro('buscador');
             }
         }
 
-        // ===== CADASTRO ANUNCIANTE =====
+        // ===== CADASTRO ANUNCIANTE (permanece com insert direto, pois anunciantes precisam de aprovação) =====
         async function cadastrarAnunciante(e) {
             e.preventDefault();
             const btn = document.getElementById('btnCadastrarAnunciante');
@@ -1130,9 +1140,9 @@
 
             const whatsappCompleto = ddi + numero;
 
-            const jaExiste = await verificarDuplicidade('fornecedores', email, whatsappCompleto);
+            const jaExiste = await verificarWhatsappDuplicado('fornecedores', whatsappCompleto);
             if (jaExiste) {
-                alert('Este usuário já possui cadastro.');
+                alert('Este WhatsApp já possui cadastro.');
                 btn.disabled = false; btn.innerText = 'CADASTRAR'; return;
             }
 
@@ -1167,7 +1177,7 @@
             document.getElementById(`${tipo}CidadeDiv`).classList.add('hidden');
         }
 
-        // ===== RECUPERAÇÃO DE SENHA =====
+        // ===== RECUPERAÇÃO DE SENHA VIA SUPABASE AUTH =====
         function abrirModalRecuperarSenha() {
             document.getElementById('recuperarEmail').value = '';
             document.getElementById('recuperarMsg').innerText = '';
@@ -1182,8 +1192,22 @@
             e.preventDefault();
             const email = document.getElementById('recuperarEmail').value.trim();
             const msg = document.getElementById('recuperarMsg');
-            msg.innerText = 'Se este e-mail estiver na nossa base, você receberá um link de redefinição.';
-            document.getElementById('recuperarEmail').value = '';
+            msg.innerText = '';
+
+            const { error } = await _s.auth.resetPasswordForEmail(email, {
+                redirectTo: 'https://ifipe.com.br/redefinir-senha.html'
+            });
+
+            if (error) {
+                msg.innerText = 'Erro: ' + error.message;
+                msg.classList.remove('text-green-400');
+                msg.classList.add('text-red-400');
+            } else {
+                msg.innerText = 'Se este e-mail estiver na nossa base, você receberá um link de redefinição.';
+                msg.classList.remove('text-red-400');
+                msg.classList.add('text-green-400');
+                document.getElementById('recuperarEmail').value = '';
+            }
         }
 
         // ===== CALCULADORA =====
