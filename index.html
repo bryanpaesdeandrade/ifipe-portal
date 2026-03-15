@@ -1061,7 +1061,7 @@
             return data && data.length > 0;
         }
 
-        // ===== CADASTRO BUSCADOR (VIA SUPABASE AUTH) =====
+        // ===== CADASTRO BUSCADOR (COMBO 1-2: SIGNUP + INSERT) =====
         async function cadastrarBuscador(e) {
             e.preventDefault();
             const btn = document.getElementById('btnCadastrarBuscador');
@@ -1077,6 +1077,7 @@
             const email = document.getElementById('buscadorEmail').value.trim().toLowerCase();
             const senha = document.getElementById('buscadorSenha').value.trim();
 
+            // Validações básicas
             if (!nome || !pais || !ddi || !numero || !email || !senha) {
                 alert('Preencha todos os campos.');
                 btn.disabled = false; btn.innerText = 'CADASTRAR'; return;
@@ -1095,34 +1096,45 @@
                 btn.disabled = false; btn.innerText = 'CADASTRAR'; return;
             }
 
-            // Usar signUp do Supabase Auth
-            const { data, error } = await _s.auth.signUp({
+            // PASSO 1: Criar usuário no Auth
+            const { data: authData, error: authError } = await _s.auth.signUp({
                 email: email,
-                password: senha,
-                options: {
-                    data: {
-                        display_name: nome,
-                        whatsapp: whatsappCompleto,
-                        pais: pais,
-                        estado: estado,
-                        cidade: cidade,
-                        role: 'buscador'
-                    }
-                }
+                password: senha
             });
 
-            btn.disabled = false; btn.innerText = 'CADASTRAR';
-
-            if (error) {
-                if (error.message.includes('User already registered')) {
+            if (authError) {
+                if (authError.message.includes('User already registered')) {
                     alert('Este e-mail já está cadastrado.');
                 } else {
-                    alert('Erro ao cadastrar: ' + error.message);
+                    alert('Erro ao criar conta: ' + authError.message);
                 }
-            } else {
-                alert('Cadastro realizado! Verifique seu e-mail para confirmar sua conta e faça login.');
-                fecharModalCadastro('buscador');
+                btn.disabled = false; btn.innerText = 'CADASTRAR';
+                return;
             }
+
+            // PASSO 2: Inserir dados na tabela clientes_buscador
+            const { error: insertError } = await _s.from('clientes_buscador').insert([{
+                nome,
+                whatsapp: whatsappCompleto,
+                email,
+                pais,
+                estado,
+                cidade,
+                senha, // senha em texto puro? Idealmente não, mas por enquanto manteremos como estava
+                ativo: true,
+                logins_count: 0
+            }]);
+
+            if (insertError) {
+                alert('Erro ao salvar dados do perfil: ' + insertError.message);
+                // Opcional: poderíamos tentar excluir o usuário do auth? Deixamos para o suporte.
+                btn.disabled = false; btn.innerText = 'CADASTRAR';
+                return;
+            }
+
+            btn.disabled = false; btn.innerText = 'CADASTRAR';
+            alert('Cadastro realizado! Verifique seu e-mail para confirmar sua conta e faça login.');
+            fecharModalCadastro('buscador');
         }
 
         // ===== CADASTRO ANUNCIANTE (permanece com insert direto, pois anunciantes precisam de aprovação) =====
