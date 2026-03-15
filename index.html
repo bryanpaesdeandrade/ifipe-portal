@@ -544,8 +544,8 @@
             <form onsubmit="enviarRecuperacao(event)">
                 <input type="email" id="recuperarEmail" class="apple-input mb-4" placeholder="SEU E-MAIL" required>
                 <div class="flex gap-2">
-                    <button type="submit" class="btn-primary flex-1">ENVIAR</button>
-                    <button type="button" onclick="fecharModalRecuperarSenha()" class="btn-secondary flex-1">CANCELAR</button>
+                    <button type="submit" class="btn-primary flex-1" id="btnRecuperarEnviar">ENVIAR</button>
+                    <button type="button" onclick="fecharModalRecuperarSenha()" class="btn-secondary flex-1" id="btnRecuperarCancelar">CANCELAR</button>
                 </div>
                 <p id="recuperarMsg" class="text-xs text-center mt-2 text-green-400"></p>
             </form>
@@ -648,6 +648,9 @@
             'EUA': '+1',
             'Paraguai': '+595'
         };
+
+        // Variável de bloqueio para recuperação de senha
+        let enviandoRecuperacao = false;
 
         // ===== VERIFICAÇÃO DE HORÁRIO COMERCIAL (apenas para a trava USDT) =====
         function isHorarioComercial() {
@@ -1211,13 +1214,32 @@
 
         async function enviarRecuperacao(e) {
             e.preventDefault();
+            if (enviandoRecuperacao) return;
+
             const email = document.getElementById('recuperarEmail').value.trim();
             const msg = document.getElementById('recuperarMsg');
+            const btnEnviar = document.getElementById('btnRecuperarEnviar');
+            const btnCancelar = document.getElementById('btnRecuperarCancelar');
+            
             msg.innerText = '';
+
+            enviandoRecuperacao = true;
+            if (btnEnviar) {
+                btnEnviar.disabled = true;
+                btnEnviar.innerText = 'ENVIANDO...';
+            }
+            if (btnCancelar) btnCancelar.disabled = true;
 
             const { error } = await _s.auth.resetPasswordForEmail(email, {
                 redirectTo: 'https://ifipe.com.br/redefinir-senha.html'
             });
+
+            enviandoRecuperacao = false;
+            if (btnEnviar) {
+                btnEnviar.disabled = false;
+                btnEnviar.innerText = 'ENVIAR';
+            }
+            if (btnCancelar) btnCancelar.disabled = false;
 
             if (error) {
                 msg.innerText = 'Erro: ' + error.message;
