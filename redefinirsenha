@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iFipe - Redefinir Senha</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000;
+            --card: #1c1c1e;
+            --text: #fff;
+            --border: #38383a;
+            --input: #2c2c2e;
+            --blue: #0071e3;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        .glass-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+        .apple-input {
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            color: var(--text);
+            outline: none;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .apple-input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(0,113,227,0.2);
+        }
+        .btn-primary {
+            background: var(--blue);
+            color: white;
+            font-weight: 600;
+            padding: 12px;
+            border-radius: 14px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background: #005bb5;
+            transform: scale(1.02);
+        }
+        .btn-primary:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .footer-link {
+            color: #86868b;
+            text-decoration: none;
+            font-size: 0.8rem;
+        }
+        .footer-link:hover {
+            color: var(--blue);
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-card">
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-black italic text-white">iFipe</h1>
+            <p class="text-gray-400 text-sm">Redefinir senha</p>
+        </div>
+
+        <form id="resetForm" onsubmit="salvarSenha(event)">
+            <div class="mb-4">
+                <input type="password" id="novaSenha" class="apple-input" placeholder="Nova senha" required minlength="6">
+            </div>
+            <div class="mb-6">
+                <input type="password" id="confirmarSenha" class="apple-input" placeholder="Confirmar nova senha" required minlength="6">
+            </div>
+            <button type="submit" id="resetBtn" class="btn-primary">SALVAR NOVA SENHA</button>
+            <p id="resetMsg" class="text-xs text-center mt-4 h-4 text-red-500"></p>
+        </form>
+
+        <div class="mt-6 text-center">
+            <a href="index.html" class="footer-link">← Voltar para o início</a>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://zmgosywpwidypxyhxkry.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InptZ29zeXdwd2lkeXB4eWh4a3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTg3MTYsImV4cCI6MjA4NzM5NDcxNn0.qE_JfgeSOF7VzsySjmnnAQkYngGJ_Lc5scOXLrhut-M';
+        const _s = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function salvarSenha(e) {
+            e.preventDefault();
+            const novaSenha = document.getElementById('novaSenha').value.trim();
+            const confirmar = document.getElementById('confirmarSenha').value.trim();
+            const msg = document.getElementById('resetMsg');
+            const btn = document.getElementById('resetBtn');
+
+            msg.innerText = '';
+            if (novaSenha.length < 6) {
+                msg.innerText = 'A senha deve ter no mínimo 6 caracteres.';
+                return;
+            }
+            if (novaSenha !== confirmar) {
+                msg.innerText = 'As senhas não coincidem.';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = 'PROCESSANDO...';
+
+            const { error } = await _s.auth.updateUser({ password: novaSenha });
+
+            btn.disabled = false;
+            btn.innerText = 'SALVAR NOVA SENHA';
+
+            if (error) {
+                msg.innerText = 'Erro: ' + error.message;
+            } else {
+                alert('Senha alterada com sucesso!');
+                window.location.assign('index.html');
+            }
+        }
+
+        // Extrai o hash da URL e passa para o Supabase (necessário para recuperação)
+        (async () => {
+            const hash = window.location.hash;
+            if (hash) {
+                // O Supabase já lida com o hash automaticamente se estivermos na página correta
+                // Apenas garantimos que a sessão seja estabelecida
+                const { data, error } = await _s.auth.getSession();
+                if (error || !data.session) {
+                    // Se não houver sessão, talvez o hash seja inválido ou expirado
+                    console.warn('Sessão não encontrada, redirecionando...');
+                    window.location.assign('index.html');
+                }
+            }
+        })();
+    </script>
+</body>
+</html>
