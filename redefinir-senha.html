@@ -132,30 +132,68 @@
             btn.disabled = true;
             btn.innerText = 'PROCESSANDO...';
 
-            const { error } = await _s.auth.updateUser({ password: novaSenha });
+            // 1. Atualizar senha no Auth
+            const { data: authData, error: authError } = await _s.auth.updateUser({ password: novaSenha });
+
+            if (authError) {
+                btn.disabled = false;
+                btn.innerText = 'SALVAR NOVA SENHA';
+                msg.innerText = 'Erro: ' + authError.message;
+                return;
+            }
+
+            // 2. Obter o ID do usuário autenticado
+            const { data: { user }, error: userError } = await _s.auth.getUser();
+            if (userError || !user) {
+                btn.disabled = false;
+                btn.innerText = 'SALVAR NOVA SENHA';
+                msg.innerText = 'Erro ao obter usuário.';
+                return;
+            }
+
+            const userId = user.id;
+
+            // 3. Tentar atualizar na tabela clientes_buscador
+            const { error: updateBuscadorError } = await _s
+                .from('clientes_buscador')
+                .update({ senha: novaSenha })
+                .eq('auth_id', userId);
+
+            if (updateBuscadorError && !updateBuscadorError.message.includes('0 rows')) {
+                // Se houve erro diferente de "não encontrou nenhuma linha", reportar
+                console.warn('Erro ao atualizar buscador:', updateBuscadorError);
+            } else {
+                // Se não houve erro ou foi porque não encontrou, segue
+            }
+
+            // 4. Tentar atualizar na tabela fornecedores
+            const { error: updateFornecedorError } = await _s
+                .from('fornecedores')
+                .update({ senha: novaSenha })
+                .eq('auth_id', userId);
+
+            if (updateFornecedorError && !updateFornecedorError.message.includes('0 rows')) {
+                console.warn('Erro ao atualizar fornecedor:', updateFornecedorError);
+            }
+
+            // 5. Verificar se pelo menos uma atualização funcionou (opcional)
+            // Como não sabemos qual tabela, apenas seguimos
 
             btn.disabled = false;
             btn.innerText = 'SALVAR NOVA SENHA';
-
-            if (error) {
-                msg.innerText = 'Erro: ' + error.message;
-            } else {
-                alert('Senha alterada com sucesso!');
-                window.location.assign('index.html');
-            }
+            alert('Senha alterada com sucesso!');
+            window.location.replace('index.html'); // remove a página de redefinição do histórico
         }
 
-        // Extrai o hash da URL e passa para o Supabase (necessário para recuperação)
+        // Ao carregar, verifica se o hash está presente para manter a sessão
         (async () => {
             const hash = window.location.hash;
             if (hash) {
-                // O Supabase já lida com o hash automaticamente se estivermos na página correta
-                // Apenas garantimos que a sessão seja estabelecida
+                // O Supabase já lida com o hash automaticamente, só aguardamos a sessão
                 const { data, error } = await _s.auth.getSession();
                 if (error || !data.session) {
-                    // Se não houver sessão, talvez o hash seja inválido ou expirado
                     console.warn('Sessão não encontrada, redirecionando...');
-                    window.location.assign('index.html');
+                    window.location.replace('index.html');
                 }
             }
         })();
