@@ -40,7 +40,7 @@
         }
         .modal-content {
             background: #1c1c1e; border: 1px solid #38383a; border-radius: 24px;
-            padding: 2rem; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;
+            padding: 2rem; max-width: 450px; width: 90%; max-height: 80vh; overflow-y: auto;
         }
         .hidden { display: none !important; }
         .uppercase-input { text-transform: uppercase; }
@@ -87,18 +87,6 @@
         /* Esconder campos de bateria e garantia por padrão */
         .campo-bateria, .campo-garantia { display: none; }
         .campo-bateria.visible, .campo-garantia.visible { display: block; }
-        /* Estilo para o textarea de importação */
-        .import-textarea {
-            width: 100%;
-            height: 250px;
-            background: #2c2c2e;
-            border: 1px solid #38383a;
-            border-radius: 8px;
-            padding: 12px;
-            color: white;
-            font-size: 12px;
-            resize: vertical;
-        }
     </style>
 </head>
 <body class="antialiased">
@@ -146,7 +134,7 @@
         </div>
     </div>
 
-    <!-- NAVBAR ATUALIZADA (COM NOVO BOTÃO IMPORTAR LISTA IA) -->
+    <!-- NAVBAR ATUALIZADA (SEM SETH E SEM EXCEL) -->
     <nav class="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-[#38383a] px-4 py-3 flex justify-between items-center z-50">
         <div class="flex items-center gap-3">
             <button class="text-2xl text-gray-400 lg:hidden" onclick="abrirDrawer()">☰</button>
@@ -180,13 +168,9 @@
             <button onclick="abrirModalHorus()" class="btn-master !bg-transparent border border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 text-[9px] px-3 py-1.5 rounded-full flex items-center gap-1">
                 👁️‍🗨️ HORUS O OLHO QUE MENOR PREÇO VÊ
             </button>
-            <!-- Botão Lançamento em Massa (existente) -->
+            <!-- Apenas o botão de lançamento em massa pelo sistema permanece -->
             <button onclick="abrirModalAddMassa()" class="bg-purple-700 text-white px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-purple-600 flex items-center gap-1" title="Lançamento em massa pelo sistema">
                 🚀 ANUNCIAR EM MASSA NO SISTEMA
-            </button>
-            <!-- NOVO BOTÃO: IMPORTAR LISTA COM IA -->
-            <button onclick="abrirModalImportarListaIA()" class="bg-blue-600 text-white px-3 py-1.5 rounded-full text-[10px] font-bold hover:bg-blue-500 flex items-center gap-1" title="Importar lista com IA">
-                🤖 LER LISTA COM IA
             </button>
             <span onclick="abrirSino()" class="cursor-pointer text-xl hover:opacity-80 relative" title="Mensagens e Propostas">
                 🔔<span id="badgeSino" class="hidden absolute -top-1 -right-2 bg-red-600 text-white text-[8px] w-4 h-4 rounded-full flex items-center justify-center">0</span>
@@ -764,21 +748,6 @@
 
     <!-- Container do Card PIX (USDT) -->
     <div id="usdtPedidoContainer" class="fixed bottom-4 right-4 w-80 z-50 hidden"></div>
-
-    <!-- NOVO MODAL: Importar Lista com IA -->
-    <div id="modalImportarListaIA" class="hidden modal-overlay">
-        <div class="modal-content max-w-2xl">
-            <button onclick="fecharModalImportarListaIA()" class="absolute top-4 right-4 text-red-500 font-black text-lg hover:opacity-80">X</button>
-            <h3 class="text-lg font-bold mb-4">🤖 Importar Lista com IA</h3>
-            <p class="text-xs text-gray-400 mb-2">Cole a lista de produtos abaixo. A IA vai extrair os dados e preencher automaticamente as linhas do lançador em massa.</p>
-            <textarea id="listaTextoIA" class="import-textarea" placeholder="Cole aqui a lista do anunciante..."></textarea>
-            <div class="flex gap-3 mt-4">
-                <button onclick="processarListaIA()" class="bg-blue-600 text-white flex-1 p-3 rounded-lg font-bold">🚀 PROCESSAR COM IA</button>
-                <button onclick="fecharModalImportarListaIA()" class="bg-zinc-700 text-white flex-1 p-3 rounded-lg font-bold">CANCELAR</button>
-            </div>
-            <div id="iaLog" class="mt-4 text-xs text-green-400 max-h-32 overflow-y-auto"></div>
-        </div>
-    </div>
 
     <!-- NOVO MODAL: Lançamento em Massa (REFATORADO COM GARANTIA E MOLDURAS POR LINHA) -->
     <div id="modalAddMassa" class="hidden modal-overlay">
@@ -3019,124 +2988,6 @@
             }
         }
 
-        // ===== NOVAS FUNÇÕES PARA IMPORTAR LISTA COM IA =====
-
-        function abrirModalImportarListaIA() {
-            document.getElementById('modalImportarListaIA').classList.remove('hidden');
-            document.getElementById('listaTextoIA').value = '';
-            document.getElementById('iaLog').innerHTML = '';
-        }
-
-        function fecharModalImportarListaIA() {
-            document.getElementById('modalImportarListaIA').classList.add('hidden');
-        }
-
-        async function processarListaIA() {
-            const texto = document.getElementById('listaTextoIA').value.trim();
-            if (!texto) {
-                alert('Cole a lista primeiro.');
-                return;
-            }
-
-            const log = document.getElementById('iaLog');
-            log.innerHTML = '⏳ Enviando para a IA...';
-
-            try {
-                const resposta = await fetch('https://ponte-ifipe.vercel.app/api/extrair', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ texto })
-                });
-
-                if (!resposta.ok) {
-                    throw new Error(`Erro ${resposta.status}: ${await resposta.text()}`);
-                }
-
-                const dados = await resposta.json();
-                if (!dados || !Array.isArray(dados)) {
-                    throw new Error('Resposta inválida da IA');
-                }
-
-                log.innerHTML += `<br>✅ Recebidos ${dados.length} itens. Preparando linhas...`;
-
-                // Fecha o modal de importação
-                fecharModalImportarListaIA();
-
-                // Abre o modal de lançamento em massa (se já estiver aberto, apenas usa)
-                abrirModalAddMassa();
-
-                // Para cada item, cria uma linha e preenche
-                for (let i = 0; i < dados.length; i++) {
-                    const item = dados[i];
-                    adicionarLinhaAnuncio(); // Cria a linha
-
-                    // Pega a última linha adicionada
-                    const linhas = document.querySelectorAll('#linhasContainer .linha-anuncio');
-                    const linha = linhas[linhas.length - 1];
-
-                    // Preenche modelo (aguarda o change para carregar capacidades)
-                    await preencherSelectComDelay(linha.querySelector('.modelo'), item.modelo);
-
-                    // Se modelo foi preenchido, aguarda um pouco e preenche capacidade
-                    if (linha.querySelector('.modelo').value) {
-                        await delay(200);
-                        await preencherSelectComDelay(linha.querySelector('.capacidade'), item.capacidade);
-                    }
-
-                    // Se capacidade foi preenchida, aguarda e preenche cor
-                    if (linha.querySelector('.capacidade').value) {
-                        await delay(200);
-                        await preencherSelectComDelay(linha.querySelector('.cor'), item.cor);
-                    }
-
-                    // Preenche condição
-                    if (item.condicao) {
-                        const condSelect = linha.querySelector('.condicao');
-                        const opcoes = Array.from(condSelect.options).map(opt => opt.value);
-                        if (opcoes.includes(item.condicao)) {
-                            condSelect.value = item.condicao;
-                            // Dispara evento change para mostrar/esconder campos de seminovo
-                            condSelect.dispatchEvent(new Event('change'));
-                        }
-                    }
-
-                    // Preenche preço e quantidade
-                    if (item.preco) {
-                        linha.querySelector('.preco').value = item.preco.toFixed(2);
-                    }
-                    if (item.quantidade) {
-                        linha.querySelector('.quantidade').value = item.quantidade;
-                    } else {
-                        linha.querySelector('.quantidade').value = 1; // padrão
-                    }
-                }
-
-                log.innerHTML += `<br>✅ Linhas criadas com sucesso! Revise e clique em EXECUTAR.`;
-
-            } catch (err) {
-                log.innerHTML += `<br>❌ Erro: ${err.message}`;
-                alert('Erro ao processar lista: ' + err.message);
-            }
-        }
-
-        // Função auxiliar para preencher select disparando change
-        async function preencherSelectComDelay(select, valor) {
-            if (!valor) return false;
-            const opcoes = Array.from(select.options).map(opt => opt.value);
-            // Tenta encontrar opção que contenha o valor (case insensitive)
-            const encontrada = opcoes.find(op => normalizarString(op).includes(normalizarString(valor)));
-            if (encontrada) {
-                select.value = encontrada;
-                select.dispatchEvent(new Event('change'));
-                return true;
-            }
-            return false;
-        }
-
-        function delay(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
         // Expor funções globais
         window.abrirSugestao = abrirSugestao;
         window.fecharSugestao = fecharSugestao;
@@ -3216,10 +3067,6 @@
         window.filtrarModelosPorGrupoBulk = filtrarModelosPorGrupoBulk;
         window.atualizarModelosMassa = atualizarModelosMassa;
         window.formatarBateria = formatarBateria;
-        // Novas funções de importação
-        window.abrirModalImportarListaIA = abrirModalImportarListaIA;
-        window.fecharModalImportarListaIA = fecharModalImportarListaIA;
-        window.processarListaIA = processarListaIA;
     </script>
 </body>
 </html>
